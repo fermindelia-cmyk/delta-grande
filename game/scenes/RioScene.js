@@ -198,8 +198,8 @@ const DEFAULT_PARAMS = {
   waterSurfaceOpacity: 0.8,
 
   /** Fog (enabled when camera is UNDER the surfaceLevel) */
-  fogNear: 5.0,   // distance where fog starts (no hidden derivation)
-  fogFar:  60.0,  // distance where fog fully obscures
+  fogNear: 1.0,   // distance where fog starts (no hidden derivation)
+  fogFar:  30.0,  // distance where fog fully obscures
 
   /** Base model scale and tiling (floor/walls GLB) */
   overrideScale: 129.36780721031408, // explicit scale; if null, scale to modelLongestTarget
@@ -208,6 +208,7 @@ const DEFAULT_PARAMS = {
 
   /** Fish baseline behavior (species modify around these) */
   fish: {
+    renderDistance: 50.0,
     speedMin: 2.0,
     speedMax: 4.0,
     accel: 8.0,
@@ -232,6 +233,16 @@ const DEFAULT_PARAMS = {
     sigmaX: { near: 0.20,  mid: 0.20, deep: 0.20 }, // set >0 later (e.g., 0.10)
     meansY: { surface: 0.92, midwater: 0.50, bottom: 0.05 },
     sigmaY: { surface: 0.20, midwater: 0.20, bottom: 0.20 }, // set >0 later (e.g., 0.12)
+  },
+
+  debug: {
+    tiles: true,       // floor/walls tiling
+    water: true,       // water surface plane
+    fog: true,         // underwater fog
+    fish: true,        // spawn + render fish
+    fishUpdate: true,  // per-frame fish simulation
+    deck: true,        // create deck UI
+    deckRender: true   // per-frame deck mini-canvas renders
   },
 };
 
@@ -634,6 +645,11 @@ export class RioScene extends BaseScene {
     this.fishGroup = new THREE.Group();
     this.fishGroup.name = 'fish-group';
     this.scene.add(this.fishGroup);
+
+    // respect debug visibility
+    this.tilesGroup.visible    = this.params.debug.tiles;
+    this.instancedGroup.visible= this.params.debug.fish;
+    this.fishGroup.visible     = this.params.debug.fish;
   }
 
   /* --------------------------------- Lifecycle --------------------------------- */
@@ -674,14 +690,14 @@ export class RioScene extends BaseScene {
     this.camera.lookAt(this.camera.position.clone().add(this.forward));
 
     this.camera.near = 0.1;
-    this.camera.far  = 120;   // try 80–150; lower = faster
+    this.camera.far  = 70;   // try 80–150; lower = faster
     this.camera.updateProjectionMatrix();
 
     // Build tiling & water after model is in the scene
     if (this.model) {
       this.scene.updateMatrixWorld(true);
-      this.rebuildTiles();
-      this.buildOrUpdateWaterSurface();
+      if (this.params.debug.tiles) this.rebuildTiles();
+      if (this.params.debug.water) this.buildOrUpdateWaterSurface();
     }
 
     // Initialize explicit swimBox using the world parameters directly
@@ -693,12 +709,14 @@ export class RioScene extends BaseScene {
     );
     
     // Build the Deck UI
-    this.deck = new Deck(SPECIES, this.speciesObjs);
-    await this.deck.build();
-
+    if (this.params.debug.deck) {
+      this.deck = new Deck(SPECIES, this.speciesObjs);
+      await this.deck.build();
+    }
     // Spawn fish by abundance
-    await this.spawnFishBySpecies();
-
+    if (this.params.debug.fish) {
+      await this.spawnFishBySpecies();
+    }
     // Ensure all agents are inside the initial swimBox
     for (const a of this.fish) {
       this.projectInsideSwimBox(a.pos);
@@ -1154,13 +1172,13 @@ export class RioScene extends BaseScene {
     this.updateSwimBoxDynamic();
 
     // Update fish
-    if (this.fish.length) this.updateFish(dt);
+    if (this.params.debug.fishUpdate && this.fish.length) this.updateFish(dt);
 
     // Update fog with explicit rules
-    this.updateFog();
+    if (this.params.debug.fog) this.updateFog(); else this.scene.fog = null;
     
     // Update the deck UI
-    if (this.deck) this.deck.update(dt);
+    if (this.deck && this.params.debug.deckRender) this.deck.update(dt);
   }
 
   updateFish(dt) {
@@ -1174,6 +1192,10 @@ export class RioScene extends BaseScene {
       this._hash.s = Math.max(1e-3, pf.separationRadius); // cell ~= radius
       this._hash.rebuild(this.fish);
     }
+
+    const renderDistSq = pf.renderDistance * pf.renderDistance;
+    const reusableMatrix = new THREE.Matrix4();
+    const zeroScale = new THREE.Vector3(0, 0, 0);
 
     for (const a of this.fish) {
       // Retarget if reached, timed out, or target left the box (due to camera X change)
@@ -1209,6 +1231,9 @@ export class RioScene extends BaseScene {
       a.pos.addScaledVector(a.vel, dt);
       this.projectInsideSwimBox(a.pos);
 
+      const distSq = this.camera.position.distanceToSquared(a.pos);
+      const isVisible = distSq <= renderDistSq;
+
       // Apply to renderable (instanced or non-instanced)
       if (a.instanceId !== undefined) {
         // Instanced: write transform into the instance matrix
@@ -1216,16 +1241,20 @@ export class RioScene extends BaseScene {
         if (v.lengthSq() > 1e-10) v.normalize();
         const localFwd = a._detectLocalForward ? a._detectLocalForward() : new THREE.Vector3(1, 0, 0);
         const q = new THREE.Quaternion().setFromUnitVectors(localFwd, v);
-        const m = new THREE.Matrix4();
-        const scl = a.mesh?.scale || new THREE.Vector3(1, 1, 1);
-        m.compose(a.pos, q, scl);
+        //const m = new THREE.Matrix4();
+        const scl = isVisible ? (a.mesh?.scale || new THREE.Vector3(1, 1, 1)) : zeroScale;
+        //m.compose(a.pos, q, scl);
+        reusableMatrix.compose(a.pos, q, scl);
 
         const bag = this.instanced.get(a.species.def.key);
-        if (bag) bag.inst.setMatrixAt(a.instanceId, m);
+        if (bag) bag.inst.setMatrixAt(a.instanceId, reusableMatrix);
       } else {
         // Non-instanced fallback (if any species fell back)
-        a.applyOrientation();
-        a.mesh.position.copy(a.pos);
+        a.mesh.visible = isVisible;
+        if (isVisible) {
+          a.applyOrientation();
+          a.mesh.position.copy(a.pos);
+        }
       }
     }
     // Flush instance matrices once per species
@@ -1243,6 +1272,7 @@ export class RioScene extends BaseScene {
     if (this.instanced.has(key)) return this.instanced.get(key);
 
     let baseMesh = null;
+    speciesObj.template.updateMatrixWorld(true);
     speciesObj.template.traverse(o => {
       if (o.isMesh && !baseMesh) baseMesh = o;
     });
@@ -1256,8 +1286,9 @@ export class RioScene extends BaseScene {
       baseMesh.material, // shared across instances
       count
     );
+    
     inst.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-    inst.frustumCulled = true;
+    inst.frustumCulled = false;
     inst.userData.speciesKey = key;
 
     const bag = {
@@ -1324,8 +1355,8 @@ export class RioScene extends BaseScene {
     this.camera.lookAt(this.camera.position.clone().add(this.forward));
     if (this.model) {
       this.scene.updateMatrixWorld(true);
-      this.rebuildTiles();
-      this.buildOrUpdateWaterSurface();
+      if (this.params.debug.tiles) this.rebuildTiles();
+      if (this.params.debug.water) this.buildOrUpdateWaterSurface();
       // Keep swimBox aligned to explicit params and current cameraLevel
       this.updateSwimBoxDynamic();
     }
