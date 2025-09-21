@@ -84,7 +84,7 @@ class SpatialHash {
  * Param scales and species configuration
  * ------------------------------------------------------------- */
 const SizeScale       = { small: 1.0,  medium: 1.5,  large: 2.0 };
-const SpeedScale      = { slow: 0.3,   medium: 1.0,  fast: 2.0 };
+const SpeedScale      = { slow: 0.3,   medium: 0.8,  fast: 1.5 };
 const AbundanceCount  = { scarce: 5,   usual: 20,    veryCommon: 50 };
 
 /**
@@ -193,8 +193,8 @@ const DEFAULT_PARAMS = {
   damping: 0.15,
 
   /** Visuals */
-  skyColor: 0x87ceeb,
-  waterColor: 0x0a1a3a,
+  skyColor: 0xF6B26B,
+  waterColor: 0x1b1a16,
   waterSurfaceOpacity: 0.8,
 
   /** Fog (enabled when camera is UNDER the surfaceLevel) */
@@ -243,6 +243,18 @@ const DEFAULT_PARAMS = {
     fishUpdate: true,  // per-frame fish simulation
     deck: true,        // create deck UI
     deckRender: true   // per-frame deck mini-canvas renders
+  },
+
+  /** Intro sequence (camera & overlay text) */
+  intro: {
+    enabled: true,
+    text: "Hay muchas especies en los ríos del Delta del Paraná...\n¿Podrás encontrarlas todas?",
+    /** seconds */
+    preHold: 3.0,         // wait before starting the downward move
+    moveDuration: 6.0,     // time to go from highest Y to start.y
+    postHold: 2.0,        // wait after arriving before intro ends
+    fadeIn: 3.0,           // overlay text fade-in time
+    fadeOut: 1.5           // overlay text fade-out time
   },
 };
 
@@ -650,6 +662,17 @@ export class RioScene extends BaseScene {
     this.tilesGroup.visible    = this.params.debug.tiles;
     this.instancedGroup.visible= this.params.debug.fish;
     this.fishGroup.visible     = this.params.debug.fish;
+
+    // --- Intro state & control gating ---
+    this.controlsEnabled = true; // will be disabled if intro.enabled
+    this.introState = {
+      active: false,
+      phase: 'idle', // 'idle' | 'pre' | 'move' | 'post' | 'done'
+      t0: 0,         // phase start time (seconds, perf.now based)
+      startY: 0,     // camera top Y
+      targetY: 0,    // camera start.y
+      overlayEl: null
+    };
   }
 
   /* --------------------------------- Lifecycle --------------------------------- */
@@ -657,8 +680,11 @@ export class RioScene extends BaseScene {
   async mount() {
     // Background + lights
     this.scene.background = new THREE.Color(this.params.skyColor);
-    const hemi = new THREE.HemisphereLight(0xffffff, 0x3a4a5a, 1.0);
-    const dir  = new THREE.DirectionalLight(0xffffff, 1.2);
+    const hemi = new THREE.HemisphereLight(0xFFD1A6, 0x4A2F1B, 1.0);
+    const dir = new THREE.DirectionalLight(0xFF9E5E, 1.2);
+    //dir.position.set(-30, 6, -12);   // bajo en el horizonte
+    //const hemi = new THREE.HemisphereLight(0xffffff, 0x3a4a5a, 1.0);
+    //const dir  = new THREE.DirectionalLight(0xffffff, 1.2);
     dir.position.set(8, 12, 6);
     dir.castShadow = false;
     this.scene.add(hemi, dir);
@@ -689,6 +715,32 @@ export class RioScene extends BaseScene {
     this.params.swimBoxMaxX = this.params.start.x;
     this.camera.lookAt(this.camera.position.clone().add(this.forward));
 
+    // --- Intro initialization ---
+    if (this.params.intro?.enabled) {
+      // Lock controls during intro
+      this.controlsEnabled = false;
+
+      // Highest allowed Y = surfaceLevel + cameraSurfaceMargin
+      const yMax = this.params.surfaceLevel + this.params.cameraSurfaceMargin;
+
+      // Remember the target Y (your configured start.y) but place camera at top now
+      this.introState.targetY = this.params.start.y;
+      this.introState.startY  = yMax;
+
+      // Put camera at same x,z as start, but at highest Y
+      this.camera.position.set(this.params.start.x, yMax, this.params.start.z);
+      this.camera.lookAt(this.camera.position.clone().add(this.forward));
+
+      // Create overlay element
+      this._createIntroOverlay();
+
+      // Kick off intro in 'pre' phase
+      this.introState.active = true;
+      this.introState.phase = 'pre';
+      this.introState.t0 = performance.now() * 0.001; // seconds
+    }
+
+
     this.camera.near = 0.1;
     this.camera.far  = 70;   // try 80–150; lower = faster
     this.camera.updateProjectionMatrix();
@@ -708,10 +760,13 @@ export class RioScene extends BaseScene {
       new FishSpecies(def, this.scene, this.params.fish, this.params.fishPositionBias)
     );
     
-    // Build the Deck UI
+    // Build the Deck UI (hidden until intro ends)
     if (this.params.debug.deck) {
       this.deck = new Deck(SPECIES, this.speciesObjs);
       await this.deck.build();
+      // hide the deck during intro
+      this.deck.container.style.opacity = 0;
+      this.deck.container.style.pointerEvents = 'none';
     }
     // Spawn fish by abundance
     if (this.params.debug.fish) {
@@ -748,6 +803,7 @@ export class RioScene extends BaseScene {
     window.removeEventListener('keydown', this._onKeyDown);
     this.app.canvas.removeEventListener('wheel', this._onWheel);
     if (this.deck) this.deck.destroy();
+    this._destroyIntroOverlay();
   }
 
   /* ------------------------------- Model helpers ------------------------------- */
@@ -840,7 +896,7 @@ export class RioScene extends BaseScene {
       this.waterSurface.rotation.x = -Math.PI / 2;
       this.scene.add(this.waterSurface);
     }
-    this.waterSurface.position.set(0, y, 0);
+    this.waterSurface.position.set(100, y, 0);
     this.waterSurface.scale.set(sx, sz, 1);
   }
 
@@ -859,6 +915,65 @@ export class RioScene extends BaseScene {
       this.scene.fog = null;
     }
   }
+
+  _createIntroOverlay() {
+    const P = this.params.intro;
+    const el = document.createElement('div');
+    el.id = 'intro-overlay';
+    Object.assign(el.style, {
+      position: 'fixed',
+      left: 0, top: 0, right: 0, bottom: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      pointerEvents: 'none',
+      zIndex: 9999,
+      fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
+      fontWeight: '600',
+      fontSize: '28px',
+      lineHeight: '1.35',
+      color: 'white',
+      textShadow: '0 2px 16px rgba(0,0,0,0.6)',
+      background: 'linear-gradient(to bottom, rgba(0,0,0,0.35), rgba(0,0,0,0.1))',
+      opacity: '0',
+      // importante: declarar explícitamente las partes de transition
+      transitionProperty: 'opacity',
+      transitionTimingFunction: 'ease',
+      transitionDuration: `${P.fadeIn}s`,
+      willChange: 'opacity'
+    });
+    el.textContent = P.text || '';
+    document.body.appendChild(el);
+    this.introState.overlayEl = el;
+
+    // ---- Disparo de fade-in a prueba de WebKit/Chrome ----
+    // 1) Forzar reflow para que el estado "opacity:0" se fije realmente
+    // eslint-disable-next-line no-unused-expressions
+    el.getBoundingClientRect();
+
+    // 2) Usar doble rAF para garantizar que el transition esté armado
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        el.style.opacity = '1';
+      });
+    });
+  }
+
+
+  _fadeOutIntroOverlay() {
+    const el = this.introState.overlayEl;
+    if (!el) return;
+    const P = this.params.intro;
+    el.style.transition = `opacity ${P.fadeOut}s ease`;
+    el.style.opacity = '0';
+  }
+
+  _destroyIntroOverlay() {
+    const el = this.introState.overlayEl;
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+    this.introState.overlayEl = null;
+  }
+
 
   /* ----------------------------------- SwimBox ----------------------------------- */
 
@@ -965,6 +1080,7 @@ export class RioScene extends BaseScene {
 
   /* --------------------------------- Input & UX --------------------------------- */
   onKeyDown(e) {
+    if (!this.controlsEnabled) return;
       if (e.key === 'ArrowRight') {
           this.deck.cycle(1);
       } else if (e.key === 'ArrowLeft') {
@@ -973,6 +1089,7 @@ export class RioScene extends BaseScene {
   }
 
     onWheel(e) {
+      if (!this.controlsEnabled) { e.preventDefault(); return; }
       // Scroll up (deltaY < 0) => decrease X; scroll down => increase X.
       // Limits: min = swimBox.min.x (shore), max = starting camera X.
       e.preventDefault();
@@ -996,6 +1113,7 @@ export class RioScene extends BaseScene {
 
 
   onMouseDown(e) {
+    if (!this.controlsEnabled) return;
     const rect = this.app.canvas.getBoundingClientRect();
     this.clickMouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     this.clickMouse.y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
@@ -1102,6 +1220,7 @@ export class RioScene extends BaseScene {
 
 
   onMouseMove(e) {
+    if (!this.controlsEnabled) return;
     const rect = this.app.canvas.getBoundingClientRect();
     this.mouseNDC.x = ((e.clientX - rect.left) / rect.width)  * 2 - 1;
     this.mouseNDC.y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
@@ -1125,48 +1244,100 @@ export class RioScene extends BaseScene {
   update(dt) {
     const { deadzone, damping, speeds, responseCurve } = this.params;
 
-    // Mouse-driven camera velocity in local right/up axes
-    const ax = this.axis(this.mouseNDC.x, deadzone, responseCurve.x);
-    const ay = this.axis(this.mouseNDC.y, deadzone, responseCurve.y);
-    const targetVx = ax * speeds.x;
-    const targetVy = ay * speeds.y;
-    this.vel.x += (targetVx - this.vel.x) * damping;
-    this.vel.y += (targetVy - this.vel.y) * damping;
+        // --- Intro phases (pre -> move -> post -> done) ---
+    let didIntroCameraStep = false;
+    if (this.introState.active) {
+      const now = performance.now() * 0.001;
+      const t   = now - this.introState.t0;
+      const P   = this.params.intro;
 
-    // Move camera along right (x) and up (y)
-    this.tmpRight.copy(this.forward).cross(this.tmpUp).normalize();
-    const deltaX = this.tmpDelta.copy(this.tmpRight).multiplyScalar(this.vel.x * dt);
-    const deltaY = this.tmpUp.clone().multiplyScalar(this.vel.y * dt);
+      if (this.introState.phase === 'pre') {
+        if (t >= P.preHold) {
+          this.introState.phase = 'move';
+          this.introState.t0 = now;
+        }
+      } else if (this.introState.phase === 'move') {
+        const u = Math.min(1, t / Math.max(0.0001, P.moveDuration));
+        const s = u * u * (3 - 2 * u); // smoothstep
+        const y = THREE.MathUtils.lerp(this.introState.startY, this.introState.targetY, s);
 
-    const p = this.camera.position.clone().add(deltaX);
-    const xMinSoft = this.params.cameraXBounds[0];
-    const xMaxSoft = this.params.cameraXBounds[1];
+        // Maintain x,z from start; glide y
+        this.camera.position.set(this.params.start.x, y, this.params.start.z);
+        this.camera.lookAt(this.camera.position.clone().add(this.forward));
+        didIntroCameraStep = true;
 
-    // Hard alignment to shoreLevel for min X (shore can never be crossed)
-    const xMinHard = this.params.shoreLevel;
+        if (u >= 1) {
+          this.introState.phase = 'post';
+          this.introState.t0 = now;
+          this._fadeOutIntroOverlay();
+        }
+      } else if (this.introState.phase === 'post') {
+        if (t >= P.postHold) {
+          this.introState.phase = 'done';
+          this.introState.active = false;
 
-    // Apply X clamps: first soft bounds, then ensure ≥ shoreLevel
-    p.x = clamp(p.x, xMinSoft, xMaxSoft);
-    p.x = Math.max(p.x, xMinHard);
+          // Finalize camera & enable controls
+          this.camera.position.set(this.params.start.x, this.params.start.y, this.params.start.z);
+          this.camera.lookAt(this.camera.position.clone().add(this.forward));
 
-    // Z clamp with camera margins (does NOT affect swimBox limits)
-    {
-      const zMin = this.params.leftLimit  + this.params.cameraLeftMargin;
-      const zMax = this.params.rightLimit - this.params.cameraRightMargin;
-      // protect against inverted margins
-      const safeMin = Math.min(zMin, zMax - 0.001);
-      const safeMax = Math.max(zMax, zMin + 0.001);
-      p.z = clamp(p.z, safeMin, safeMax);
+          if (this.deck) {
+            this.deck.container.style.opacity = 1;
+            this.deck.container.style.pointerEvents = 'auto';
+          }
+          this.controlsEnabled = true;
+          this._destroyIntroOverlay();
+        }
+      }
+
+      // Keep deck mini-canvases spinning during intro (optional)
+      if (this.deck && this.params.debug.deckRender) this.deck.update(dt);
     }
 
-    // Y limits: (floorLevel + cameraFloorMargin) ≤ Y ≤ (surfaceLevel + cameraSurfaceMargin)
-    const yMin = this.params.floorLevel + this.params.cameraFloorMargin;
-    const yMax = this.params.surfaceLevel + this.params.cameraSurfaceMargin;
-    const newY = clamp(this.camera.position.y + deltaY.y, yMin, yMax);
 
-    // Apply camera transform
-    this.camera.position.set(p.x, newY, p.z);
-    this.camera.lookAt(this.camera.position.clone().add(this.forward));
+    if (this.controlsEnabled && !didIntroCameraStep) {
+      // Mouse-driven camera velocity in local right/up axes
+      const ax = this.axis(this.mouseNDC.x, deadzone, responseCurve.x);
+      const ay = this.axis(this.mouseNDC.y, deadzone, responseCurve.y);
+      const targetVx = ax * speeds.x;
+      const targetVy = ay * speeds.y;
+      this.vel.x += (targetVx - this.vel.x) * damping;
+      this.vel.y += (targetVy - this.vel.y) * damping;
+
+      // Move camera along right (x) and up (y)
+      this.tmpRight.copy(this.forward).cross(this.tmpUp).normalize();
+      const deltaX = this.tmpDelta.copy(this.tmpRight).multiplyScalar(this.vel.x * dt);
+      const deltaY = this.tmpUp.clone().multiplyScalar(this.vel.y * dt);
+
+      const p = this.camera.position.clone().add(deltaX);
+      const xMinSoft = this.params.cameraXBounds[0];
+      const xMaxSoft = this.params.cameraXBounds[1];
+
+      // Hard alignment to shoreLevel for min X (shore can never be crossed)
+      const xMinHard = this.params.shoreLevel;
+
+      // Apply X clamps: first soft bounds, then ensure ≥ shoreLevel
+      p.x = clamp(p.x, xMinSoft, xMaxSoft);
+      p.x = Math.max(p.x, xMinHard);
+
+      // Z clamp with camera margins (does NOT affect swimBox limits)
+      {
+        const zMin = this.params.leftLimit  + this.params.cameraLeftMargin;
+        const zMax = this.params.rightLimit - this.params.cameraRightMargin;
+        const safeMin = Math.min(zMin, zMax - 0.001);
+        const safeMax = Math.max(zMax, zMin + 0.001);
+        p.z = clamp(p.z, safeMin, safeMax);
+      }
+
+      // Y limits: (floorLevel + cameraFloorMargin) ≤ Y ≤ (surfaceLevel + cameraSurfaceMargin)
+      const yMin = this.params.floorLevel + this.params.cameraFloorMargin;
+      const yMax = this.params.surfaceLevel + this.params.cameraSurfaceMargin;
+      const newY = clamp(this.camera.position.y + deltaY.y, yMin, yMax);
+
+      // Apply camera transform
+      this.camera.position.set(p.x, newY, p.z);
+      this.camera.lookAt(this.camera.position.clone().add(this.forward));
+    }
+
 
     // Update swimBox to follow the cameraLevel in X
     this.updateSwimBoxDynamic();
