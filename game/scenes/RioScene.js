@@ -1,6 +1,14 @@
 import * as THREE from 'three';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { BaseScene } from '../core/BaseScene.js';
 import { AssetLoader } from '../core/AssetLoader.js';
+import {
+  autoRigTwoBoneFishMesh,
+  findTailBoneFromSkeleton,
+  findTailBoneDirectional,
+  findHeadBoneDirectional
+} from '../utils/autoRigFish.js';
+
 
 /**
  * =============================================================
@@ -96,6 +104,15 @@ const AbundanceCount  = { scarce: 5,   usual: 20,    veryCommon: 50 };
  * `flips` may invert local axes so the auto-detected long axis
  * points “forward” correctly per model.
  */
+
+const default_wiggle = {
+  mode: 'lr',                   // 'lr' (left/right) or 'ud' (up/down)
+  moving: 'tail',               // 'tail' (default) or 'head'
+  periodSec: 0.7,               // wiggle period
+  amplitudeDeg: 18,             // rotation amplitude
+  softness: 0.12                // head–tail blend width (0..0.5)
+}
+
 const SPECIES = [
   {
     key: 'dorado',
@@ -103,6 +120,14 @@ const SPECIES = [
     glb: '/game-assets/sub/fish/dorado.glb',
     fallbackColor: 0xF3C623,
     flips: { x: false, y: false, z: false },
+    wiggle: {
+      enabled: true,
+      mode: default_wiggle.mode,
+      moving: default_wiggle.moving,
+      periodSec: default_wiggle.periodSec,
+      amplitudeDeg: 9,
+      softness: 0
+    },
     size: 'large', abundance: 'usual', speed: 'fast', water: 'midwater', shore: 'mid'
   },
   {
@@ -111,6 +136,14 @@ const SPECIES = [
     glb: '/game-assets/sub/fish/sabalo.glb',
     fallbackColor: 0x9FB2BF,
     flips: { x: false, y: false, z: true },
+    wiggle: {
+      enabled: true,
+      mode: default_wiggle.mode,
+      moving: default_wiggle.moving,
+      periodSec: default_wiggle.periodSec,
+      amplitudeDeg: default_wiggle.amplitudeDeg,
+      softness: default_wiggle.softness
+    },
     size: 'medium', abundance: 'veryCommon', speed: 'medium', water: 'bottom', shore: 'near'
   },
   {
@@ -119,6 +152,14 @@ const SPECIES = [
     glb: '/game-assets/sub/fish/pacu.glb',
     fallbackColor: 0xA14A2E,
     flips: { x: false, y: false, z: true },
+    wiggle: {
+      enabled: true,
+      mode: default_wiggle.mode,
+      moving: default_wiggle.moving,
+      periodSec: default_wiggle.periodSec,
+      amplitudeDeg: default_wiggle.amplitudeDeg,
+      softness: default_wiggle.softness
+    },
     size: 'medium', abundance: 'usual', speed: 'medium', water: 'surface', shore: 'mid'
   },
   {
@@ -127,6 +168,14 @@ const SPECIES = [
     glb: '/game-assets/sub/fish/armado_chancho.glb',
     fallbackColor: 0x6D5D4B,
     flips: { x: false, y: false, z: false },
+    wiggle: {
+      enabled: true,
+      mode: default_wiggle.mode,
+      moving: default_wiggle.moving,
+      periodSec: default_wiggle.periodSec,
+      amplitudeDeg: 9,
+      softness: default_wiggle.softness
+    },
     size: 'medium', abundance: 'usual', speed: 'slow', water: 'bottom', shore: 'deep'
   },
   {
@@ -135,6 +184,14 @@ const SPECIES = [
     glb: '/game-assets/sub/fish/palometa_brava.glb',
     fallbackColor: 0xD04F4F,
     flips: { x: false, y: false, z: false },
+    wiggle: {
+      enabled: true,
+      mode: default_wiggle.mode,
+      moving: default_wiggle.moving,
+      periodSec: default_wiggle.periodSec,
+      amplitudeDeg: default_wiggle.amplitudeDeg,
+      softness: default_wiggle.softness
+    },
     size: 'small', abundance: 'veryCommon', speed: 'fast', water: 'surface', shore: 'near'
   },
   {
@@ -143,6 +200,14 @@ const SPECIES = [
     glb: '/game-assets/sub/fish/vieja_del_agua.glb',
     fallbackColor: 0x556B2F,
     flips: { x: false, y: false, z: false },
+    wiggle: {
+      enabled: false,
+      mode: 'ud',
+      moving: default_wiggle.moving,
+      periodSec: default_wiggle.periodSec,
+      amplitudeDeg: default_wiggle.amplitudeDeg,
+      softness: default_wiggle.softness
+    },
     size: 'medium', abundance: 'veryCommon', speed: 'slow', water: 'bottom', shore: 'mid'
   },
   {
@@ -151,6 +216,14 @@ const SPECIES = [
     glb: '/game-assets/sub/fish/surubi_pintado.glb',
     fallbackColor: 0xC0C0C0,
     flips: { x: false, y: false, z: true },
+    wiggle: {
+      enabled: true,
+      mode: default_wiggle.mode,
+      moving: default_wiggle.moving,
+      periodSec: default_wiggle.periodSec,
+      amplitudeDeg: default_wiggle.amplitudeDeg,
+      softness: default_wiggle.softness
+    },
     size: 'large', abundance: 'scarce', speed: 'medium', water: 'midwater', shore: 'deep'
   },
   {
@@ -158,7 +231,15 @@ const SPECIES = [
     displayName: 'Raya negra (Potamotrygon spp.)',
     glb: '/game-assets/sub/fish/raya_negra.glb',
     fallbackColor: 0x222222,
-    flips: { x: false, y: true, z: false }, // many ray models are flat with Y up
+    flips: { x: false, y: true, z: false },
+    wiggle: {
+      enabled: false,
+      mode: 'ud',
+      moving: default_wiggle.moving,
+      periodSec: default_wiggle.periodSec,
+      amplitudeDeg: default_wiggle.amplitudeDeg,
+      softness: default_wiggle.softness
+    },
     size: 'medium', abundance: 'usual', speed: 'slow', water: 'bottom', shore: 'near'
   }
 ];
@@ -279,21 +360,34 @@ class FishSpecies {
 
     this.template = null;
     this.usesFallback = false;
+
+    this.wiggle = Object.assign({
+      enabled: true,
+      mode: 'lr',        // 'lr' (left/right, default) or 'ud' (up/down)
+      moving: 'tail',     // NEW: 'tail' (default) or 'head'
+      periodSec: 0.8,    // seconds
+      amplitudeDeg: 16,  // degrees
+      softness: 0.12     // blend width head↔tail (0..0.5)
+    }, def.wiggle || {});
   }
 
   async ensureTemplate() {
     if (this.template) return this.template;
     try {
       const gltf = await AssetLoader.gltf(this.def.glb);
-      const root = (gltf.scene || gltf.scenes?.[0])?.clone(true);
+      // Keep a reference to animations for agent mixers
+      this.animations = Array.isArray(gltf.animations) ? gltf.animations : [];
+      const root = (gltf.scene || gltf.scenes?.[0]);
       if (root) {
+        // IMPORTANT: do NOT auto-rig here — keep the template pristine for the deck.
         this.template = root;
         this.usesFallback = false;
         return this.template;
       }
-    } catch(_) { /* fallthrough to fallback */ }
+    } catch (_) { /* fall through to fallback */ }
 
-    // Fallback: colored prism
+    // Fallback: colored prism (no animations)
+    this.animations = [];
     const dims = this.base.fallbackDims;
     const geo = new THREE.BoxGeometry(dims.x, dims.y, dims.z);
     const mat = new THREE.MeshStandardMaterial({
@@ -306,19 +400,66 @@ class FishSpecies {
     return this.template;
   }
 
+
+
   /** Create a fully initialized agent for this species */
   async createAgent(swimBox) {
     await this.ensureTemplate();
-    const mesh = this.template.clone(true);
-    
-    // Assign a unique name for raycasting
+
+    // Deep-clone the template to preserve skinning/rig
+    const mesh = this.usesFallback
+      ? this.template.clone(true)
+      : SkeletonUtils.clone(this.template);
+
+    // Ensure a unique name for raycasting + tag species key
     mesh.name = `fish_${this.def.key}_${Math.random().toString(36).substr(2, 9)}`;
     mesh.userData.speciesKey = this.def.key;
-
 
     // Scale by species size
     mesh.scale.multiplyScalar(this.sizeScale);
 
+    // --- Auto-rig only this agent clone if the template had no skin and wiggle is enabled ---
+    let hasSkinAlready = false;
+    mesh.traverse(o => { if (o.isSkinnedMesh) hasSkinAlready = true; });
+
+    if (!hasSkinAlready && this.wiggle.enabled) {
+      // Find the biggest mesh on the CLONE
+      let biggestMesh = null; let biggest = -1;
+      mesh.traverse(o => {
+        if (o.isMesh && o.geometry) {
+          const tri = o.geometry.index ? o.geometry.index.count / 3
+                                      : (o.geometry.attributes.position?.count || 0) / 3;
+          if (tri > biggest) { biggest = tri; biggestMesh = o; }
+        }
+      });
+      if (biggestMesh) {
+        // Approximate forward from bbox (on the clone)
+        const box = new THREE.Box3().setFromObject(biggestMesh);
+        const size = new THREE.Vector3(); box.getSize(size);
+        const axes = [
+          { v: new THREE.Vector3(1,0,0), len: size.x },
+          { v: new THREE.Vector3(0,1,0), len: size.y },
+          { v: new THREE.Vector3(0,0,1), len: size.z },
+        ].sort((a,b)=>b.len-a.len);
+        const forwardLocal = axes[0].v.clone().normalize();
+
+        const { skinned, bones } = autoRigTwoBoneFishMesh(biggestMesh, {
+          forwardLocal,
+          softness: this.wiggle.softness
+        });
+        if (skinned) {
+          const parent = biggestMesh.parent;
+          const idx = parent.children.indexOf(biggestMesh);
+          if (idx >= 0) { parent.children[idx] = skinned; skinned.parent = parent; }
+          else { parent.add(skinned); }
+          biggestMesh.removeFromParent();
+          skinned.userData._autoTailBone = bones.tail;
+        }
+      }
+    }
+
+
+    // Initial kinematics
     const pos = this.randBiasedPoint(swimBox);
     const speedMin = this.base.speedMin * this.speedScale;
     const speedMax = this.base.speedMax * this.speedScale;
@@ -330,14 +471,64 @@ class FishSpecies {
     const ret = this.base.retargetTime;
     const nextRetargetAt = now + lerp(ret[0], ret[1], Math.random());
 
+    // Agent
     const agent = new FishAgent({
       mesh, pos, vel, target, nextRetargetAt,
       speedMin, speedMax, species: this
     });
+
+    // --- Pick which end moves ('tail' default, or 'head'), directionally robust ---
+    let firstSkinned = null;
+    mesh.traverse(o => { if (!firstSkinned && o.isSkinnedMesh) firstSkinned = o; });
+
+    let chosenBone = null;
+    if (firstSkinned) {
+      // Derive local forward (toward head) from bbox, then apply species flips
+      const box = new THREE.Box3().setFromObject(mesh);
+      const size = new THREE.Vector3(); box.getSize(size);
+      const axes = [
+        { v: new THREE.Vector3(1,0,0), len: size.x },
+        { v: new THREE.Vector3(0,1,0), len: size.y },
+        { v: new THREE.Vector3(0,0,1), len: size.z },
+      ].sort((a,b)=>b.len-a.len);
+      let forwardLocal = axes[0].v.clone().normalize();
+
+      const { x: fx, y: fy, z: fz } = (this.def.flips || {x:false,y:false,z:false});
+      if (fx) forwardLocal.x *= -1;
+      if (fy) forwardLocal.y *= -1;
+      if (fz) forwardLocal.z *= -1;
+
+      // Choose which end we want to animate
+      if ((this.wiggle.moving || 'tail') === 'head') {
+        chosenBone = findHeadBoneDirectional(firstSkinned, { ownerMesh: mesh, forwardLocal });
+      } else {
+        chosenBone = findTailBoneDirectional(firstSkinned, { ownerMesh: mesh, forwardLocal });
+      }
+
+      // Fallback if directional fails
+      if (!chosenBone) chosenBone = findTailBoneFromSkeleton(firstSkinned);
+    }
+
+    // Stash wiggle settings on the agent
+    agent.wiggleBone  = chosenBone || null;   // <-- renamed from tailBone to generic wiggleBone
+    agent.wiggle      = Object.assign({}, this.wiggle);
+    agent.wigglePhase = Math.random() * Math.PI * 2;
+
+
+    // Animation mixer (if the species has clips)
+    agent.mixer = null;
+    if (!this.usesFallback && this.animations && this.animations.length) {
+      agent.mixer = new THREE.AnimationMixer(mesh);
+      const clip = this.animations[0];
+      const action = agent.mixer.clipAction(clip);
+      action.play();
+    }
+
     agent.applyOrientation();
     mesh.position.copy(pos);
     return agent;
   }
+
 
   /**
    * Generate a biased random point within the swimBox.
@@ -465,6 +656,14 @@ class Deck {
     document.body.appendChild(this.container);
 
     this.silhouetteMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    this.silhouetteSkinned  = new THREE.MeshBasicMaterial({ color: 0x000000, skinning: true });
+
+    // Discovery HUD (global)
+    this.discoveredCount = 0; // number of species with at least 1 found
+    this.discoveryEl = document.createElement('div');
+    this.discoveryEl.id = 'species-discovery';
+    this.discoveryEl.textContent = `0/${this.speciesList.length} especies descubiertas`;
+    document.body.appendChild(this.discoveryEl);
   }
 
   async build() {
@@ -486,10 +685,17 @@ class Deck {
 
       const counterEl = document.createElement('div');
       counterEl.className = 'catch-counter';
-      counterEl.textContent = 'Encontrados: 0';
+      const totalForThisSpecies = speciesObj.count ?? 0;
+      counterEl.textContent = `Encontrados: 0/${totalForThisSpecies}`;
       cardEl.appendChild(counterEl);
 
       this.container.appendChild(cardEl);
+
+      // Click a card to make it the current selection
+      cardEl.addEventListener('click', () => {
+        this.currentIndex = i;
+        this.updateCarousel();
+      });
 
       const renderer = new THREE.WebGLRenderer({ canvas: canvasEl, alpha: true });
       renderer.setPixelRatio(window.devicePixelRatio);
@@ -506,8 +712,13 @@ class Deck {
       scene.add(dirLight);
 
       await speciesObj.ensureTemplate();
-      const model = speciesObj.template.clone(true);
-      
+      // Deep clone with skeleton so deck preview is self-contained
+      const model = SkeletonUtils.clone(speciesObj.template);
+
+      // Ensure world matrices are current before computing bounds
+      scene.add(model);
+      scene.updateMatrixWorld(true);
+
       const box = new THREE.Box3().setFromObject(model);
       const size = box.getSize(new THREE.Vector3());
       const maxDim = Math.max(size.x, size.y, size.z);
@@ -530,7 +741,9 @@ class Deck {
         counterEl,
         nameEl,
         revealed: false,
+        completed: false,
         count: 0,
+        totalCount: totalForThisSpecies,
         originalMaterials: this.cloneMaterials(model)
       });
       
@@ -541,32 +754,56 @@ class Deck {
   }
 
   cloneMaterials(model) {
-      const map = new Map();
-      model.traverse(o => {
-          if (o.isMesh) {
-              map.set(o, o.material);
-          }
-      });
-      return map;
+    const map = new Map();
+    model.traverse(o => {
+      if (!o.isMesh) return;
+      // Clone material(s) so deck never mutates shared materials
+      if (Array.isArray(o.material)) {
+        const arr = o.material.map(m => {
+          const c = m.clone();
+          // keep skinning flag if skinned
+          if (o.isSkinnedMesh && 'skinning' in c) c.skinning = true;
+          return c;
+        });
+        map.set(o, arr);
+      } else if (o.material) {
+        const c = o.material.clone();
+        if (o.isSkinnedMesh && 'skinning' in c) c.skinning = true;
+        map.set(o, c);
+      }
+    });
+    return map;
   }
+
 
   setSilhouette(cardIndex) {
-      const card = this.cards[cardIndex];
-      card.model.traverse(o => {
-          if (o.isMesh) {
-              o.material = this.silhouetteMaterial;
-          }
-      });
+    const card = this.cards[cardIndex];
+    card.model.traverse(o => {
+      if (!o.isMesh) return;
+      o.material = o.isSkinnedMesh ? this.silhouetteSkinned : this.silhouetteMaterial;
+    });
   }
 
+
   setRevealed(cardIndex) {
-      const card = this.cards[cardIndex];
-      card.revealed = true;
-      card.model.traverse(o => {
-          if (o.isMesh) {
-              o.material = card.originalMaterials.get(o);
-          }
-      });
+    const card = this.cards[cardIndex];
+
+    // If this is the first time we reveal this species, bump discovered counter
+    if (!card.revealed) {
+      this.discoveredCount = Math.min(this.speciesList.length, this.discoveredCount + 1);
+      if (this.discoveryEl) {
+        this.discoveryEl.textContent = `${this.discoveredCount}/${this.speciesList.length} especies descubiertas`;
+      }
+    }
+
+    card.revealed = true;
+
+    // Restore original materials (remove silhouette)
+    card.model.traverse(o => {
+      if (o.isMesh) {
+        o.material = card.originalMaterials.get(o);
+      }
+    });
   }
 
   cycle(direction) {
@@ -594,8 +831,18 @@ class Deck {
       if (!currentCard.revealed) {
         this.setRevealed(this.currentIndex);
       }
-      currentCard.count++;
-      currentCard.counterEl.textContent = `Encontrados: ${currentCard.count}`;
+
+      // Clamp to total and update UI
+      const newCount = Math.min(currentCard.totalCount, currentCard.count + 1);
+      currentCard.count = newCount;
+      currentCard.counterEl.textContent = `Encontrados: ${currentCard.count}/${currentCard.totalCount}`;
+
+      // Completed?
+      if (currentCard.count >= currentCard.totalCount && !currentCard.completed) {
+        currentCard.completed = true;
+        currentCard.element.classList.add('completed'); // permanent green style
+      }
+
       this.flashBorder(currentCard.element, 'green');
       return true; // Match!
     } else {
@@ -617,7 +864,12 @@ class Deck {
   }
   
   destroy() {
-      document.body.removeChild(this.container);
+    if (this.container && this.container.parentNode) {
+      this.container.parentNode.removeChild(this.container);
+    }
+    if (this.discoveryEl && this.discoveryEl.parentNode) {
+      this.discoveryEl.parentNode.removeChild(this.discoveryEl);
+    }
   }
 }
 
@@ -671,14 +923,6 @@ export class RioScene extends BaseScene {
     this._sepAccum = 0;
     this._sepHz = 30;
 
-    // ------ Instancing support (all species) ------
-    this.instancedGroup = new THREE.Group();
-    this.instancedGroup.name = 'instanced-fish';
-    this.scene.add(this.instancedGroup);
-
-    // Map: speciesKey -> { inst, activeCount, agents, agentIndexByInstanceId }
-    this.instanced = new Map();
-
     // (Optional) keep a non-instanced group; may stay empty now
     this.fishGroup = new THREE.Group();
     this.fishGroup.name = 'fish-group';
@@ -686,7 +930,6 @@ export class RioScene extends BaseScene {
 
     // respect debug visibility
     this.tilesGroup.visible    = this.params.debug.tiles;
-    this.instancedGroup.visible= this.params.debug.fish;
     this.fishGroup.visible     = this.params.debug.fish;
 
     // --- Intro state & control gating ---
@@ -950,6 +1193,9 @@ export class RioScene extends BaseScene {
       position: 'fixed',
       left: 0, top: 0, right: 0, bottom: 0,
       display: 'flex',
+      userSelect: 'none',
+      WebkitUserSelect: 'none',
+      msUserSelect: 'none',
       alignItems: 'center',
       justifyContent: 'center',
       pointerEvents: 'none',
@@ -1057,47 +1303,11 @@ export class RioScene extends BaseScene {
     for (const sp of this.speciesObjs) {
       await sp.ensureTemplate();
 
-      // Create InstancedMesh for this species (we instance ALL species)
-      const bag = this._createInstancedForSpecies(sp, sp.count);
-
-      if (!bag) {
-        // Fallback: non-instanced if no mesh found in template
-        for (let i = 0; i < sp.count; i++) {
-          const agent = await sp.createAgent(this.swimBox);
-          this.fish.push(agent);
-          this.fishGroup.add(agent.mesh);
-        }
-        continue;
-      }
-
-      // Spawn agents; don't add their meshes to scene; we write instance matrices
       for (let i = 0; i < sp.count; i++) {
         const agent = await sp.createAgent(this.swimBox);
-
-        // mark as instanced
-        agent.instanceId = bag.activeCount;
-        // hide standalone mesh (we keep it only for scale/orientation queries)
-        agent.mesh.visible = false;
-
-        // push to global agents list
         this.fish.push(agent);
-
-        // track in per-species bag
-        bag.agents.push(agent);
-        bag.instances[agent.instanceId] = agent; 
-
-        // compose initial matrix so fish appear immediately
-        const q = agent._quatNoRollTowardVelocity();
-        const m = new THREE.Matrix4();
-        const scl = agent.mesh?.scale || new THREE.Vector3(1, 1, 1);
-        m.compose(agent.pos, q, scl);
-        bag.inst.setMatrixAt(agent.instanceId, m);
-
-        bag.activeCount++;
+        this.fishGroup.add(agent.mesh);
       }
-
-      bag.inst.count = bag.activeCount;
-      bag.inst.instanceMatrix.needsUpdate = true;
     }
   }
 
@@ -1140,35 +1350,19 @@ export class RioScene extends BaseScene {
     const rect = this.app.canvas.getBoundingClientRect();
     this.clickMouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     this.clickMouse.y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
-    
+
     this.raycaster.setFromCamera(this.clickMouse, this.camera);
-    //const intersects = this.raycaster.intersectObjects(this.scene.children, true);
+
     const raycastTargets = [
-      ...this.fishGroup.children,     // non-instanced (may be empty)
-      ...this.instancedGroup.children // InstancedMesh per species
+      ...this.fishGroup.children // Only non-instanced meshes
     ];
     const intersects = this.raycaster.intersectObjects(raycastTargets, true);
 
     for (const intersect of intersects) {
       let obj = intersect.object;
-
-      // InstancedMesh path
-      if (obj.isInstancedMesh && obj.userData.speciesKey && Number.isInteger(intersect.instanceId)) {
-        const speciesKey = obj.userData.speciesKey;
-        const bag = this.instanced.get(speciesKey);
-        if (bag) {
-          const agent = bag.instances[intersect.instanceId];
-          if (agent) {
-            const isMatch = this.deck.checkMatch(speciesKey);
-            if (isMatch) this.catchFish(agent); // pass the Agent
-            return;
-          }
-        }
-      }
-
-      // Non-instanced path (walk up parents to find a mesh with a speciesKey)
+      // Walk up to find a mesh tagged with speciesKey
       while (obj) {
-        if (obj.userData.speciesKey) {
+        if (obj.userData && obj.userData.speciesKey) {
           const isMatch = this.deck.checkMatch(obj.userData.speciesKey);
           if (isMatch) this.catchFish(obj); // pass the Mesh
           return;
@@ -1178,67 +1372,57 @@ export class RioScene extends BaseScene {
     }
   }
 
-  catchFish(target) {
-    // NON-INSTANCED: Mesh
-    if (target && target.isMesh) {
-      const agentIndex = this.fish.findIndex(a => a.mesh === target);
-      if (agentIndex !== -1) {
-        const agent = this.fish[agentIndex];
-        this.fish.splice(agentIndex, 1);
-        this.fishGroup.remove(target);
 
-        if (target.geometry) target.geometry.dispose();
-        if (target.material) {
-          if (Array.isArray(target.material)) target.material.forEach(m => m.dispose());
-          else target.material.dispose();
+  catchFish(target) {
+    if (!target) return;
+
+    // Helper: is `obj` a descendant of `root`?
+    const isDescendant = (root, obj) => {
+      let p = obj;
+      while (p) {
+        if (p === root) return true;
+        p = p.parent;
+      }
+      return false;
+    };
+
+    // Find the agent whose root mesh either IS the target or CONTAINS the target
+    const agentIndex = this.fish.findIndex(a => (a.mesh === target) || isDescendant(a.mesh, target));
+    if (agentIndex === -1) return;
+
+    const agent = this.fish[agentIndex];
+    const root = agent.mesh; // always remove the agent's root
+
+    // Remove from arrays/groups
+    this.fish.splice(agentIndex, 1);
+    if (root.parent === this.fishGroup) {
+      this.fishGroup.remove(root);
+    } else if (root.parent) {
+      root.parent.remove(root);
+    }
+
+    // Dispose geometries/materials in the subtree
+    root.traverse(node => {
+      if (node.isMesh) {
+        if (node.geometry) node.geometry.dispose?.();
+        const mat = node.material;
+        if (Array.isArray(mat)) {
+          mat.forEach(m => m && m.dispose?.());
+        } else if (mat) {
+          mat.dispose?.();
         }
       }
-      return;
+    });
+
+    // Clean up mixer reference
+    if (agent.mixer) {
+      agent.mixer.stopAllAction();
+      agent.mixer.uncacheRoot(agent.mesh);
+      agent.mixer = null;
     }
-
-    // INSTANCED: Agent
-    const agent = target;
-    if (!agent || agent.instanceId === undefined) return;
-
-    const key = agent.species.def.key;
-    const bag = this.instanced.get(key);
-    if (!bag) return;
-
-    const lastActiveId = bag.activeCount - 1;
-    const id = agent.instanceId;
-
-    if (id !== lastActiveId) {
-      // 1) swap matrices (visual)
-      const mA = new THREE.Matrix4();
-      const mB = new THREE.Matrix4();
-      bag.inst.getMatrixAt(id, mA);
-      bag.inst.getMatrixAt(lastActiveId, mB);
-      bag.inst.setMatrixAt(id, mB);
-      bag.inst.setMatrixAt(lastActiveId, mA);
-
-      // 2) swap agents (logic)
-      const other = bag.instances[lastActiveId];
-      if (other) {
-        bag.instances[id] = other;
-        other.instanceId = id;
-      }
-      // put the caught agent at the tail (about to be trimmed)
-      bag.instances[lastActiveId] = agent;
-      agent.instanceId = lastActiveId;
-    }
-
-    // 3) shrink the active draw range
-    bag.activeCount = Math.max(0, bag.activeCount - 1);
-    bag.inst.count = bag.activeCount;
-    bag.inst.instanceMatrix.needsUpdate = true;
-
-    // 4) clear the now-inactive slot so raycasts won't find a stale agent
-    bag.instances[lastActiveId] = undefined;
-
-    // 5) drop from the global list (by reference, not by index)
-    const idx = this.fish.indexOf(agent);
-    if (idx !== -1) this.fish.splice(idx, 1);
   }
+
+
 
 
 
@@ -1388,8 +1572,6 @@ export class RioScene extends BaseScene {
     }
 
     const renderDistSq = pf.renderDistance * pf.renderDistance;
-    const reusableMatrix = new THREE.Matrix4();
-    const zeroScale = new THREE.Vector3(0, 0, 0);
 
     for (const a of this.fish) {
       // Retarget if reached, timed out, or target left the box (due to camera X change)
@@ -1403,12 +1585,12 @@ export class RioScene extends BaseScene {
       const fSeek = this.steerSeek(a, a.target, 1.0);
       if (!a._sepForce) a._sepForce = new THREE.Vector3();
       if (doSeparationTick) {
-        const local = this._hash.neighbors(a.pos); // << only nearby fish, not all
+        const local = this._hash.neighbors(a.pos); // nearby fish only
         const fSepNow = this.steerSeparation(a, local, pf.separationRadius, pf.separationStrength);
         a._sepForce.copy(fSepNow);
       }
       const fSep = a._sepForce;
-      const fBox  = this.steerContain(a).multiplyScalar(6.0); // push back inside
+      const fBox = this.steerContain(a).multiplyScalar(6.0); // push back inside
 
       // Sum and clamp by max accel
       const force = new THREE.Vector3().add(fSeek).add(fSep).add(fBox);
@@ -1425,73 +1607,78 @@ export class RioScene extends BaseScene {
       a.pos.addScaledVector(a.vel, dt);
       this.projectInsideSwimBox(a.pos);
 
+      // Visibility + transform
       const distSq = this.camera.position.distanceToSquared(a.pos);
       const isVisible = distSq <= renderDistSq;
 
-      // Apply to renderable (instanced or non-instanced)
-      if (a.instanceId !== undefined) {
-        // Instanced: write transform into the instance matrix
-        const q = a._quatNoRollTowardVelocity();
-        const scl = isVisible ? (a.mesh?.scale || new THREE.Vector3(1, 1, 1)) : zeroScale;
-        reusableMatrix.compose(a.pos, q, scl);
+      a.mesh.visible = isVisible;
+      if (isVisible) {
+        // Advance animation
+        if (a.mixer) a.mixer.update(dt);
 
-        const bag = this.instanced.get(a.species.def.key);
-        if (bag) bag.inst.setMatrixAt(a.instanceId, reusableMatrix);
-      } else {
-        // Non-instanced fallback (if any species fell back)
-        a.mesh.visible = isVisible;
-        if (isVisible) {
-          a.applyOrientation();
-          a.mesh.position.copy(a.pos);
+        // --- Procedural wiggle (robust + self-healing), supports head or tail ---
+        if (a.wiggle?.enabled) {
+          const needsRecover =
+            !a.wiggleBone ||
+            !a.wiggleBone.rotation ||
+            typeof a.wiggleBone.rotation.set !== 'function';
+
+          if (needsRecover) {
+            // Try to reacquire from the clone's skeleton, honoring 'moving'
+            let sk = null;
+            a.mesh.traverse(o => { if (!sk && o.isSkinnedMesh) sk = o; });
+
+            if (sk) {
+              // Recompute local forward from current mesh bbox + flips
+              const box = new THREE.Box3().setFromObject(a.mesh);
+              const size = new THREE.Vector3(); box.getSize(size);
+              const axes = [
+                { v: new THREE.Vector3(1,0,0), len: size.x },
+                { v: new THREE.Vector3(0,1,0), len: size.y },
+                { v: new THREE.Vector3(0,0,1), len: size.z },
+              ].sort((aa,bb)=>bb.len-aa.len);
+              let forwardLocal = axes[0].v.clone().normalize();
+
+              const flips = (a.species?.def?.flips) || {x:false,y:false,z:false};
+              if (flips.x) forwardLocal.x *= -1;
+              if (flips.y) forwardLocal.y *= -1;
+              if (flips.z) forwardLocal.z *= -1;
+
+              if ((a.wiggle.moving || 'tail') === 'head') {
+                a.wiggleBone = findHeadBoneDirectional(sk, { ownerMesh: a.mesh, forwardLocal }) ||
+                                findTailBoneFromSkeleton(sk);
+              } else {
+                a.wiggleBone = findTailBoneDirectional(sk, { ownerMesh: a.mesh, forwardLocal }) ||
+                                findTailBoneFromSkeleton(sk);
+              }
+            }
+          }
+
+          if (a.wiggleBone && a.wiggleBone.rotation && typeof a.wiggleBone.rotation.set === 'function') {
+            const T   = a.wiggle.periodSec || 0.8;
+            const Amp = THREE.MathUtils.degToRad(a.wiggle.amplitudeDeg || 16);
+            const speedFactor = THREE.MathUtils.clamp(a.vel.length() / Math.max(1e-4, a.speedMax), 0.4, 1.2);
+            a.wigglePhase += (dt / Math.max(0.05, T)) * 2 * Math.PI * speedFactor;
+
+            const ang = Amp * Math.sin(a.wigglePhase);
+            a.wiggleBone.rotation.set(0, 0, 0);
+            if ((a.wiggle.mode || 'lr') === 'ud') {
+              a.wiggleBone.rotation.x = ang;
+            } else {
+              a.wiggleBone.rotation.y = ang; // default left/right
+            }
+          }
         }
+
+
+        // Orient and place
+        a.applyOrientation();
+        a.mesh.position.copy(a.pos);
+
+
       }
     }
-    // Flush instance matrices once per species
-    for (const bag of this.instanced.values()) {
-      bag.inst.instanceMatrix.needsUpdate = true;
-    }
   }
-
-  /**
-   * Create (or reuse) an InstancedMesh for a species. Uses the first Mesh found
-   * in the species' template as the source geometry/material.
-   */
-  _createInstancedForSpecies(speciesObj, count) {
-    const key = speciesObj.def.key;
-    if (this.instanced.has(key)) return this.instanced.get(key);
-
-    let baseMesh = null;
-    speciesObj.template.updateMatrixWorld(true);
-    speciesObj.template.traverse(o => {
-      if (o.isMesh && !baseMesh) baseMesh = o;
-    });
-    if (!baseMesh) {
-      console.warn(`Species ${key}: no mesh in template; falling back to per-mesh.`);
-      return null;
-    }
-
-    const inst = new THREE.InstancedMesh(
-      baseMesh.geometry,
-      baseMesh.material, // shared across instances
-      count
-    );
-    
-    inst.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-    inst.frustumCulled = false;
-    inst.userData.speciesKey = key;
-
-    const bag = {
-      inst,
-      activeCount: 0,
-      agents: [],          // optional list if you want it
-      instances: []        // instanceId -> agent  (authoritative mapping)
-    };
-
-    this.instancedGroup.add(inst);
-    this.instanced.set(key, bag);
-    return bag;
-  }
-
 
   /* ------------------------------- Steering helpers ------------------------------ */
 
