@@ -195,11 +195,11 @@ const DEFAULT_PARAMS = {
   /** Visuals */
   skyColor: 0xF6B26B,
   waterColor: 0x1b1a16,
-  waterSurfaceOpacity: 0.8,
+  waterSurfaceOpacity: 1.0,
 
   /** Fog (enabled when camera is UNDER the surfaceLevel) */
   fogNear: 1.0,   // distance where fog starts (no hidden derivation)
-  fogFar:  40.0,  // distance where fog fully obscures
+  fogFar:  30.0,  // distance where fog fully obscures
 
   /** Base model scale and tiling (floor/walls GLB) */
   overrideScale: 129.36780721031408, // explicit scale; if null, scale to modelLongestTarget
