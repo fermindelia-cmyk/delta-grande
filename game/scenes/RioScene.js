@@ -187,7 +187,7 @@ const DEFAULT_PARAMS = {
 
   /** Mouse-driven camera motion (x = shore↔deep, y = up↔down) */
   speeds: { x: 8.0, y: 10.0 },
-  wheelStepX: 2.0,
+  wheelStepX: 1.0,
   responseCurve: { x: 1.0, y: 1.35 },
   deadzone: 0.08,
   damping: 0.15,
@@ -199,7 +199,7 @@ const DEFAULT_PARAMS = {
 
   /** Fog (enabled when camera is UNDER the surfaceLevel) */
   fogNear: 1.0,   // distance where fog starts (no hidden derivation)
-  fogFar:  30.0,  // distance where fog fully obscures
+  fogFar:  40.0,  // distance where fog fully obscures
 
   /** Base model scale and tiling (floor/walls GLB) */
   overrideScale: 129.36780721031408, // explicit scale; if null, scale to modelLongestTarget
@@ -680,7 +680,7 @@ export class RioScene extends BaseScene {
   async mount() {
     // Background + lights
     this.scene.background = new THREE.Color(this.params.skyColor);
-    const hemi = new THREE.HemisphereLight(0xFFD1A6, 0x4A2F1B, 1.0);
+    const hemi = new THREE.HemisphereLight(0xFFD1A6, 0x4A2F1B, 1.5);
     const dir = new THREE.DirectionalLight(0xFF9E5E, 1.2);
     //dir.position.set(-30, 6, -12);   // bajo en el horizonte
     //const hemi = new THREE.HemisphereLight(0xffffff, 0x3a4a5a, 1.0);
