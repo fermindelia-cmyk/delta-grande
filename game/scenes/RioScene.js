@@ -199,7 +199,7 @@ const DEFAULT_PARAMS = {
 
   /** Fog (enabled when camera is UNDER the surfaceLevel) */
   fogNear: 1.0,   // distance where fog starts (no hidden derivation)
-  fogFar:  30.0,  // distance where fog fully obscures
+  fogFar:  50.0,  // distance where fog fully obscures
 
   /** Base model scale and tiling (floor/walls GLB) */
   overrideScale: 129.36780721031408, // explicit scale; if null, scale to modelLongestTarget
@@ -409,14 +409,40 @@ class FishAgent {
     return this._localForward.clone();
   }
 
-  applyOrientation() {
+    /** Orient to face velocity but with NO ROLL: left/right stays horizontal. */
+  _quatNoRollTowardVelocity() {
     const v = this.vel.clone();
-    if (v.lengthSq() < 1e-10) return;
+    if (v.lengthSq() < 1e-10) return this.mesh.quaternion.clone();
     v.normalize();
 
+    // 1) Align local forward to velocity (might include roll)
     const localFwd = this._detectLocalForward();
-    const q = new THREE.Quaternion().setFromUnitVectors(localFwd, v);
-    this.mesh.quaternion.copy(q);
+    const qAlign = new THREE.Quaternion().setFromUnitVectors(localFwd, v);
+
+    // 2) Build a *local-space* up that’s orthogonal to localFwd (robust even if Y≈fwd)
+    const seed = Math.abs(localFwd.y) < 0.99 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
+    const localRight = new THREE.Vector3().crossVectors(localFwd, seed).normalize();
+    const localUp    = new THREE.Vector3().crossVectors(localRight, localFwd).normalize();
+
+    // 3) Where does that up land in world after qAlign?
+    const worldUpNow = localUp.clone().applyQuaternion(qAlign).normalize();
+    const worldUp    = new THREE.Vector3(0, 1, 0);
+
+    // 4) Twist around the forward axis so that up -> +worldUp (upright, no roll)
+    // Signed angle between current-up and worldUp, around v (the forward dir)
+    const dot = THREE.MathUtils.clamp(worldUpNow.dot(worldUp), -1, 1);
+    let angle = Math.acos(dot);
+    const cross = new THREE.Vector3().crossVectors(worldUpNow, worldUp);
+    if (cross.dot(v) < 0) angle = -angle;
+
+    const qFix = new THREE.Quaternion().setFromAxisAngle(v, angle);
+    return qFix.multiply(qAlign);
+  }
+
+
+  applyOrientation() {
+    if (this.vel.lengthSq() < 1e-10) return;
+    this.mesh.quaternion.copy(this._quatNoRollTowardVelocity());
   }
 }
 
@@ -1061,10 +1087,7 @@ export class RioScene extends BaseScene {
         bag.instances[agent.instanceId] = agent; 
 
         // compose initial matrix so fish appear immediately
-        const v = agent.vel.clone();
-        if (v.lengthSq() > 1e-10) v.normalize();
-        const localFwd = agent._detectLocalForward ? agent._detectLocalForward() : new THREE.Vector3(1, 0, 0);
-        const q = new THREE.Quaternion().setFromUnitVectors(localFwd, v);
+        const q = agent._quatNoRollTowardVelocity();
         const m = new THREE.Matrix4();
         const scl = agent.mesh?.scale || new THREE.Vector3(1, 1, 1);
         m.compose(agent.pos, q, scl);
@@ -1408,13 +1431,8 @@ export class RioScene extends BaseScene {
       // Apply to renderable (instanced or non-instanced)
       if (a.instanceId !== undefined) {
         // Instanced: write transform into the instance matrix
-        const v = a.vel.clone();
-        if (v.lengthSq() > 1e-10) v.normalize();
-        const localFwd = a._detectLocalForward ? a._detectLocalForward() : new THREE.Vector3(1, 0, 0);
-        const q = new THREE.Quaternion().setFromUnitVectors(localFwd, v);
-        //const m = new THREE.Matrix4();
+        const q = a._quatNoRollTowardVelocity();
         const scl = isVisible ? (a.mesh?.scale || new THREE.Vector3(1, 1, 1)) : zeroScale;
-        //m.compose(a.pos, q, scl);
         reusableMatrix.compose(a.pos, q, scl);
 
         const bag = this.instanced.get(a.species.def.key);
