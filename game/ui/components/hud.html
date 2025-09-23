@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>HUD FullHD Responsive</title>
+  <style>
+    body {
+      background: #111;
+      margin: 0;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .screen-frame {
+      width: 1920px;
+      height: 1080px;
+      border: 3px solid red;
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    .hud-wrapper {
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      transform-origin: top left;
+      position: relative;
+    }
+
+    .hud {
+      position: absolute;
+      bottom: 26px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 60px;
+      flex-direction: row;
+      justify-content: center;
+      align-items: flex-end;
+      width: 100%;
+    }
+
+    .hud-logo {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 215.41px;
+      height: 167.17px;
+      pointer-events: none;
+    }
+
+    .hud-logo-blue {
+      z-index: 5;
+    }
+
+    .hud-logo-orange {
+      z-index: 10;
+    }
+
+    .strip {
+      display: flex;
+      position: relative;
+      bottom: 10px;
+      z-index: 1;
+    }
+
+    .panel {
+      position: relative;
+      width: 327.53px;
+      height: 151.6px;
+      overflow: hidden;
+    }
+
+    /* Fondo del panel */
+    .hud-shape {
+      fill: #0e26af;
+      fill-opacity: 0.9;
+      stroke: #dddc42;
+      stroke-width: 2;
+    }
+
+    .panel-number {
+      fill: #0e26af;
+      font-size: 24px;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+    }
+
+    .panel-square {
+      fill: #dddc42;
+    }
+
+
+
+
+
+    
+
+
+    .panel .criatura-wrap {
+  position: absolute;
+  inset: 0;
+}
+
+/* Imagen placeholder (invisible) */
+.panel .criatura {
+  display: none; /* la usamos solo para saber cuál es la criatura */
+}
+
+/* Capa relleno amarillo */
+.panel .criatura-fill {
+  position: absolute;
+  inset: 0;
+  background: #E6EC53;
+  -webkit-mask-image: url("\\game-assets\\recorrido\\criaturas\\culebra.png");
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  mask-image: url("\\game-assets\\recorrido\\criaturas\\culebra.png");
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  z-index: 2;
+}
+
+/* Glow difuso */
+.panel .criatura-glow {
+  position: absolute;
+  inset: 0;
+  background: #E6EC53;
+  -webkit-mask-image: url("\\game-assets\\recorrido\\criaturas\\culebra.png");
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  mask-image: url("\\game-assets\\recorrido\\criaturas\\culebra.png");
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+
+  /* instead of blur */
+  filter: drop-shadow(0 0 20px #E6EC53)
+          drop-shadow(0 0 40px #E6EC53);
+
+  opacity: 0.9;
+  z-index: 1;
+}
+
+/* Venetian blinds sobre el relleno */
+.panel .criatura-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(0, 0, 0, 0.5) 50%, transparent 50%),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 50%, transparent 50%);
+  background-size: 2px 2px;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  z-index: 3;
+}
+
+
+
+
+
+
+
+
+
+    .strip.right .panel {
+      position: relative;
+    }
+
+    .strip.right .panel:nth-child(1) {
+      z-index: 3;
+    }
+
+    .strip.right .panel:nth-child(2) {
+      z-index: 2;
+    }
+
+    .strip.right .panel:nth-child(3) {
+      z-index: 1;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="screen-frame">
+    <div class="hud-wrapper">
+      <div class="hud">
+        <div class="strip left"></div>
+        <div class="strip right"></div>
+      </div>
+
+      <!-- Logos -->
+      <svg class="hud-logo hud-logo-blue" viewBox="0 0 215.41 167.17">
+        <path fill="#29279A"
+          d="M153.95,55.84h.01L120.83,6.96c-6.29-9.28-19.96-9.28-26.25,0L2.76,142.42c-7.14,10.53.4,24.75,13.12,24.75h183.65c12.72,0,20.26-14.22,13.13-24.75l-41.42-61.09" />
+      </svg>
+
+      <svg class="hud-logo hud-logo-orange" viewBox="0 0 215.41 167.17">
+        <path fill="#e98d50"
+          d="M212.66,142.42l-41.42-61.09h-5.95v14.06h-11.34v-14.06h-14.15v-11.34h14.15v-14.15h.01L120.83,6.96c-6.29-9.28-19.96-9.28-26.25,0L2.76,142.42c-7.14,10.53.4,24.75,13.12,24.75h183.65c12.72,0,20.26-14.22,13.13-24.75ZM105.13,138.13h-27.12V54.72h27.12c27.02,0,32.27,9.22,32.27,41.71s-5.25,41.7-32.27,41.7Z" />
+      </svg>
+    </div>
+  </div>
+  <script>
+    const WIDTH = 327.53;
+    const HEIGHT = 151.6;
+    const PATH_D = "M323.51,1.5H101.2c-6.06,0-11.73,3.01-15.12,8.03L3.86,131.26c-6.11,9.05.37,21.24,11.29,21.24h222.36L323.51,1.5Z";
+
+    function panelSVG(number, side) {
+      const sq = 48;
+      const pad = 0;
+      const squareX = side === "left" ? pad : WIDTH - pad - sq;
+      const squareY = HEIGHT - pad - sq;
+      const textX = squareX + sq / 2;
+      const textY = squareY + sq - 7;
+
+      const flippedGroup = side === "right"
+        ? `transform="translate(${WIDTH},0) scale(-1,1)"` : "";
+
+      return `
+         <div class="panel">
+        <svg viewBox="0 0 ${WIDTH} ${HEIGHT}" preserveAspectRatio="xMidYMid meet">
+          <g ${flippedGroup}>
+            <path class="hud-shape" d="${PATH_D}"/>
+          </g>
+          <rect class="panel-square" x="${squareX}" y="${squareY}" width="${sq}" height="${sq}"></rect>
+          <text class="panel-number" x="${textX}" y="${textY}" text-anchor="middle">${number}</text>
+        </svg>
+<div class="criatura-wrap">
+  <img class="criatura" src="\\game-assets\\recorrido\\criaturas\\culebra.png" alt="Criatura"/>
+  <div class="criatura-glow"></div>
+  <div class="criatura-fill"></div>
+</div>
+
+      </div>`;
+    }
+
+    function createPanels(container, count, start, side) {
+      for (let i = 0; i < count; i++) {
+        container.insertAdjacentHTML("beforeend", panelSVG(start + i, side));
+      }
+    }
+
+    createPanels(document.querySelector('.strip.left'), 3, 1, "left");
+    createPanels(document.querySelector('.strip.right'), 3, 4, "right");
+  </script>
+</body>
+
+</html>
