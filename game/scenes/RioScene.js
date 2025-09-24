@@ -928,6 +928,12 @@ export class RioScene extends BaseScene {
     this.fishGroup.name = 'fish-group';
     this.scene.add(this.fishGroup);
 
+    // --- Audio ---
+    this.audioListener = null;
+    this.sounds = {};
+    this.lowpassFilter = null;
+    this.wasUnderwater = undefined;
+
     // respect debug visibility
     this.tilesGroup.visible    = this.params.debug.tiles;
     this.fishGroup.visible     = this.params.debug.fish;
@@ -1063,9 +1069,57 @@ export class RioScene extends BaseScene {
 
     this._onWheel = (e) => this.onWheel(e);
     this.app.canvas.addEventListener('wheel', this._onWheel, { passive: false });
+
+    this.audioListener = new THREE.AudioListener();
+    this.camera.add(this.audioListener);
+
+    const soundPaths = {
+        surface: '/game-assets/sub/sonido/Salida a tomar aire juego delta.mp3',
+        underwater: '/game-assets/sub/sonido/Juego delta - Bajo el agua.mp3',
+        music: '/game-assets/sub/sonido/Músicos Entrerios full a la distancia.mp3'
+    };
+
+    const audioBuffers = {
+        surface: await AssetLoader.audioBuffer(soundPaths.surface),
+        underwater: await AssetLoader.audioBuffer(soundPaths.underwater),
+        music: await AssetLoader.audioBuffer(soundPaths.music)
+    };
+
+    this.sounds.surface = new THREE.Audio(this.audioListener);
+    this.sounds.surface.setBuffer(audioBuffers.surface);
+    this.sounds.surface.setLoop(true);
+    this.sounds.surface.setVolume(0.7);
+
+    this.sounds.underwater = new THREE.Audio(this.audioListener);
+    this.sounds.underwater.setBuffer(audioBuffers.underwater);
+    this.sounds.underwater.setLoop(true);
+    this.sounds.underwater.setVolume(0.7);
+
+    this.sounds.music = new THREE.Audio(this.audioListener);
+    this.sounds.music.setBuffer(audioBuffers.music);
+    this.sounds.music.setLoop(true);
+    this.sounds.music.setVolume(0.8);
+
+    const audioContext = this.audioListener.context;
+    this.lowpassFilter = audioContext.createBiquadFilter();
+    this.lowpassFilter.type = 'lowpass';
+    this.lowpassFilter.frequency.setValueAtTime(20000, audioContext.currentTime);
+
+    this.sounds.music.setFilter(this.lowpassFilter);
+
+    this.sounds.music.play();
+
+    this._updateAudio(0);
   }
 
   async unmount() {
+
+    for (const key in this.sounds) {
+      if (this.sounds[key] && this.sounds[key].isPlaying) {
+        this.sounds[key].stop();
+      }
+    }
+
     this.app.canvas.removeEventListener('mousemove', this._onMouseMove);
     this.app.canvas.removeEventListener('mouseleave', this._onMouseLeave);
     this.app.canvas.removeEventListener('mousedown', this._onMouseDown);
@@ -1498,6 +1552,7 @@ export class RioScene extends BaseScene {
 
       // Keep deck mini-canvases spinning during intro (optional)
       if (this.deck && this.params.debug.deckRender) this.deck.update(dt);
+      this._updateAudio(dt);
     }
 
 
@@ -1735,6 +1790,50 @@ export class RioScene extends BaseScene {
       if (this.params.debug.water) this.buildOrUpdateWaterSurface();
       // Keep swimBox aligned to explicit params and current cameraLevel
       this.updateSwimBoxDynamic();
+    }
+  }
+
+  _updateAudio(dt) {
+    if (!this.lowpassFilter || !this.sounds.surface) return;
+
+    const camY = this.camera.position.y;
+    const { surfaceLevel, floorLevel } = this.params;
+    const isUnderwater = camY < surfaceLevel;
+
+    if (isUnderwater !== this.wasUnderwater) {
+      if (isUnderwater) {
+        if (this.sounds.surface.isPlaying) this.sounds.surface.stop();
+        if (!this.sounds.underwater.isPlaying) this.sounds.underwater.play();
+      } else {
+        if (this.sounds.underwater.isPlaying) this.sounds.underwater.stop();
+        if (!this.sounds.surface.isPlaying) this.sounds.surface.play();
+      }
+      this.wasUnderwater = isUnderwater;
+    }
+
+    const musicSound = this.sounds.music;
+    if (musicSound) {
+      const depth = surfaceLevel - camY;
+      const totalDepth = surfaceLevel - floorLevel;
+      const depthT = Math.max(0, Math.min(1, depth / totalDepth));
+
+      const minFreq = 300;
+      const maxFreq = 12000;
+      const freq = maxFreq * Math.pow(minFreq / maxFreq, depthT);
+      
+      const audioContext = this.audioListener.context;
+      this.lowpassFilter.frequency.linearRampToValueAtTime(freq, audioContext.currentTime + 0.1);
+
+      const maxVol = 0.8;
+      const minVol = 0.05;
+      let volume = maxVol - (maxVol - minVol) * depthT;
+      
+      if (!isUnderwater) {
+        volume = maxVol;
+        this.lowpassFilter.frequency.linearRampToValueAtTime(20000, audioContext.currentTime + 0.1);
+      }
+      
+      musicSound.setVolume(volume);
     }
   }
 }

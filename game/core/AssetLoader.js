@@ -14,6 +14,13 @@ const a = new Audio(url);
 a.preload = 'auto';
 return a;
 },
+audioBuffer(url){
+  return new Promise(async (resolve, reject) => {
+    const { AudioLoader } = await import('three');
+    const loader = new AudioLoader();
+    loader.load(url, resolve, undefined, reject);
+  });
+},
 async gltf(url){
 const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
 const loader = new GLTFLoader();
