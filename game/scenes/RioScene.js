@@ -358,6 +358,72 @@ const DEFAULT_PARAMS = {
     deckRender: true   // per-frame deck mini-canvas renders
   },
 
+    /** Deck UI (column on the right) */
+  deckUI: {
+    // placement & sizing
+    visibleCount: 5,            // how many cards visible at once
+    rightMarginVw: 0.02,   // 2% of viewport width
+    topMarginVh:   0.06,   // 6% of viewport height
+    bottomMarginVh:0.10,   // 10% of viewport height
+    verticalOverlapPct: 0.10,   // 10% of a card covered by the next one
+    centerOpacity: 1.0,
+    edgeOpacity: 0.1,           // opacity at farthest visible cards
+    opacityFalloffExp: 1.35,    // how fast opacity falls with distance
+    scrollDamping: 0.25,        // 0..1, higher = snappier
+    snapAfterWheelMs: 160,      // debounce before snapping to nearest
+
+    // card background images
+    assets: {
+      base:  '/game-assets/sub/interfaz/deck-card.png',
+      selected: '/game-assets/sub/interfaz/deck-card-selected.png',
+      completed: '/game-assets/sub/interfaz/deck-card-completed.png',
+      logo: '/game-assets/sub/interfaz/logo.png'
+    },
+
+    // --- NEW: absolute boxes in card space ---
+    boxes: {
+      // percentages of card width/height
+      species: { xPct: 0.08, yPct: 0.02, wPct: 0.55, hPct: 0.22 },
+      numbers: { xPct: 0.72, yPct: 0.02, wPct: 0.22, hPct: 0.22 },
+      model:   { xPct: 0.04, yPct: 0.27, wPct: 0.95, hPct: 0.60 }
+    },
+    lineHeight: 1.02,   // used for 2-line height fit
+    debugBoxes: false,
+
+    // logo behavior
+    logoOverlapStartPct: 0.7,  // logo starts overlapping the bottom-most card at 0% height
+    logoWidthFactor: 0.95,       // logo width relative to card width
+
+    // selected glow (CSS, for the canvas of the selected card)
+    selectedGlowFilter: 'drop-shadow(0 0 8px #FFD400) drop-shadow(0 0 18px #FFD400) drop-shadow(0 0 28px #FFD400)',
+    successGlowFilter: 'drop-shadow(0 0 8px #00FF6A) drop-shadow(0 0 18px #00FF6A) drop-shadow(0 0 28px #00FF6A)',
+    errorGlowFilter:   'drop-shadow(0 0 8px #FF4D4D) drop-shadow(0 0 18px #FF4D4D) drop-shadow(0 0 28px #FF4D4D)',
+    
+    // Glow timings (ms)
+    glowTransitionInMs: 400,
+    glowHoldMs: 700,
+    glowTransitionOutMs: 400,
+
+    // logo placement: push it a bit LOWER than before so it overlaps less
+    logoExtraPushVh: 0.00,     // extra downward push in vh AFTER overlap is computed
+
+    // Adobe Fonts
+    fontKitHref: 'https://use.typekit.net/vmy8ypx.css',
+    fonts: {
+      family: `"new-science-mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace`,
+      speciesMaxPx: 20,
+      numbersMaxPx: 22
+    },
+    colors: {
+      speciesText: '#FFC96A',        // filled
+      numbersTotalFill: '#FFC96A',   // filled
+      numbersFoundStroke: '#FFC96A', // stroke-only (completed -> filled)
+      silhouetteDefault: '#2B6CB0',  // blue (non-selected)
+      silhouetteSelected: '#FFD400'  // yellow (selected)
+    }
+  },
+
+
   /** Audio */
   audio: {
     volumes: {
@@ -720,63 +786,137 @@ class FishAgent {
 /* Deck UI for fish catching gameplay                                         */
 /* ========================================================================== */
 class Deck {
-  constructor(speciesList, speciesObjs) {
-    this.cardSeparation = 220;
-    this.modelScaleMultiplier = 2.5;
-    this.startIndex = 3;
+  constructor(speciesList, speciesObjs, deckParams = {}) {
+    this.cfg = deckParams;
+    this._ensureAdobeFontLink(this.cfg.fontKitHref);
+    this.cardSeparation = 220; // not used now; kept for compatibility
     this.speciesList = speciesList;
     this.speciesObjs = speciesObjs;
+
     this.cards = [];
-    this.currentIndex = Math.max(0, Math.min(this.startIndex, this.speciesList.length - 1));
+    this.currentIndex = 0;
     this.isAnimating = false;
 
+    // scrolling
+    this.isPointerInside = false;
+    this._scrollTarget = 0; // float "index" target
+    this._scrollCurrent = 0;
+    this._lastWheelTs = 0;
+    this._snapTimer = null;
+
+    // DOM
     this.container = document.createElement('div');
     this.container.id = 'deck-container';
     document.body.appendChild(this.container);
 
-    this.silhouetteMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
-    this.silhouetteSkinned  = new THREE.MeshBasicMaterial({ color: 0x000000, skinning: true });
+    // fixed logo holder
+    this.logoEl = document.createElement('img');
+    this.logoEl.id = 'deck-logo';
+    this.logoEl.src = this.cfg.assets.logo;
+    document.body.appendChild(this.logoEl);
 
-    // Discovery HUD (global)
-    this.discoveredCount = 0; // number of species with at least 1 found
+    // inject CSS once
+    this._injectCSS();
+
+    // silhouette materials (colors from params)
+    const colDefault = new THREE.Color(this.cfg.colors.silhouetteDefault);
+    const colSelected = new THREE.Color(this.cfg.colors.silhouetteSelected);
+    this.silhouetteMaterial = new THREE.MeshBasicMaterial({ color: colDefault, transparent: true, opacity: 1.0 });
+    this.silhouetteSkinned  = new THREE.MeshBasicMaterial({ color: colDefault, skinning: true, transparent: true, opacity: 1.0 });
+    this.silhouetteMaterialSelected = new THREE.MeshBasicMaterial({ color: colSelected, transparent: true, opacity: 1.0 });
+    this.silhouetteSkinnedSelected  = new THREE.MeshBasicMaterial({ color: colSelected, skinning: true, transparent: true, opacity: 1.0 });
+
+    // discovery HUD (unchanged text)
+    this.discoveredCount = 0;
     this.discoveryEl = document.createElement('div');
     this.discoveryEl.id = 'species-discovery';
     this.discoveryEl.textContent = `0/${this.speciesList.length} especies descubiertas`;
     document.body.appendChild(this.discoveryEl);
+
+    // preload base card image so we can compute aspect
+    this._cardImg = new Image();
+    this._cardImg.onload = () => this.updateLayout();
+    this._cardImg.src = this.cfg.assets.base;
+
+    // pointer capture
+    this.container.addEventListener('mouseenter', () => { this.isPointerInside = true; });
+    this.container.addEventListener('mouseleave', () => { this.isPointerInside = false; });
+
+    window.addEventListener('resize', () => this.updateLayout(), { passive: true });
   }
 
   async build() {
+    // Clear existing
+    this.container.innerHTML = '';
+
     for (let i = 0; i < this.speciesList.length; i++) {
       const speciesDef = this.speciesList[i];
       const speciesObj = this.speciesObjs.find(s => s.def.key === speciesDef.key);
 
+      // card root
       const cardEl = document.createElement('div');
-      cardEl.className = 'deck-card';
+      cardEl.className = 'deck-card-vert';
       cardEl.dataset.speciesKey = speciesDef.key;
 
+      // three layered backgrounds for smooth state transitions
+      const imgBase = document.createElement('img');
+      imgBase.className = 'deck-bg deck-bg-base';
+      imgBase.src = this.cfg.assets.base;
+
+      const imgSelected = document.createElement('img');
+      imgSelected.className = 'deck-bg deck-bg-selected';
+      imgSelected.src = this.cfg.assets.selected;
+
+      const imgCompleted = document.createElement('img');
+      imgCompleted.className = 'deck-bg deck-bg-completed';
+      imgCompleted.src = this.cfg.assets.completed;
+
+      // canvas for 3D silhouette (WRAPPED to clip glow)
+      const modelWrap = document.createElement('div');
+      modelWrap.className = 'deck-model-wrap';
+
       const canvasEl = document.createElement('canvas');
-      cardEl.appendChild(canvasEl);
+      canvasEl.className = 'deck-canvas';
+
+      modelWrap.appendChild(canvasEl);
+
+      // text overlays
+      const textWrap = document.createElement('div');
+      textWrap.className = 'deck-text-wrap';
 
       const nameEl = document.createElement('div');
       nameEl.className = 'species-name';
-      nameEl.textContent = speciesDef.displayName;
-      cardEl.appendChild(nameEl);
+      const rawName = speciesDef.displayName || '';
+      const plain = rawName.split('(')[0].trim().toUpperCase();
+      nameEl.textContent = plain;
 
-      const counterEl = document.createElement('div');
-      counterEl.className = 'catch-counter';
+      // NEW: single numbers element (two lines: found \n total)
+      const numbersEl = document.createElement('div');
+      numbersEl.className = 'numbers-mono';
+      // Fill after we know totals
       const totalForThisSpecies = speciesObj.count ?? 0;
-      counterEl.textContent = `Encontrados: 0/${totalForThisSpecies}`;
-      cardEl.appendChild(counterEl);
+      numbersEl.textContent = `0\n${totalForThisSpecies}`;
 
+      textWrap.appendChild(nameEl);
+      textWrap.appendChild(numbersEl);
+
+      cardEl.appendChild(imgBase);
+      cardEl.appendChild(imgSelected);
+      cardEl.appendChild(imgCompleted);
+      cardEl.appendChild(modelWrap);
+      cardEl.appendChild(textWrap);
       this.container.appendChild(cardEl);
 
-      // Click a card to make it the current selection
+      // click to center
       cardEl.addEventListener('click', () => {
         this.currentIndex = i;
-        this.updateCarousel();
+        this._scrollTarget = i;
+        this._scrollCurrent = i; // jump, then animate opacity/z-order smoothly
+        this._updateColumn(true);
       });
 
-      const renderer = new THREE.WebGLRenderer({ canvas: canvasEl, alpha: true });
+      // small WebGL scene per card
+      const renderer = new THREE.WebGLRenderer({ canvas: canvasEl, alpha: true, antialias: true, preserveDrawingBuffer: false });
       renderer.setPixelRatio(window.devicePixelRatio);
       renderer.setSize(150, 100, false);
 
@@ -791,165 +931,714 @@ class Deck {
       scene.add(dirLight);
 
       await speciesObj.ensureTemplate();
-      // Deep clone with skeleton so deck preview is self-contained
-      const model = SkeletonUtils.clone(speciesObj.template);
 
-      // Ensure world matrices are current before computing bounds
-      scene.add(model);
+      // Build TWO models: textured + silhouette. Share the same transform.
+      const modelTex = SkeletonUtils.clone(speciesObj.template);
+      const modelSil = SkeletonUtils.clone(speciesObj.template);
+
+      // Fit & center using the textured model, then apply same to silhouette
+      scene.add(modelTex);
       scene.updateMatrixWorld(true);
 
-      const box = new THREE.Box3().setFromObject(model);
-      const size = box.getSize(new THREE.Vector3());
+      let box = new THREE.Box3().setFromObject(modelTex);
+      let size = box.getSize(new THREE.Vector3());
       const maxDim = Math.max(size.x, size.y, size.z);
+      const fitScale = 2.5 / maxDim;
 
-      model.scale.multiplyScalar(this.modelScaleMultiplier / maxDim);
-
-      box.setFromObject(model);
+      modelTex.scale.multiplyScalar(fitScale);
+      box.setFromObject(modelTex);
       const center = box.getCenter(new THREE.Vector3());
-      model.position.sub(center);
+      modelTex.position.sub(center);
 
-      scene.add(model);
+      // Apply same transform to silhouette clone
+      modelSil.scale.copy(modelTex.scale);
+      modelSil.position.copy(modelTex.position);
 
+      // Put silhouette into scene after transform
+      scene.add(modelSil);
+
+      // Save original materials from the TEXTURED model
+      const originalMaterials = this.cloneMaterials(modelTex);
+
+      // Apply silhouette materials on the silhouette model
+      modelSil.traverse(o => {
+        if (!o.isMesh) return;
+        o.material = o.isSkinnedMesh ? this.silhouetteSkinned : this.silhouetteMaterial;
+        o.material.opacity = 1.0;
+      });
+
+      // Start undiscovered → show silhouette only
+      modelTex.visible = false;
+      modelSil.visible = true;
+
+      const baseName = plain;
+
+      // store card
       this.cards.push({
         key: speciesDef.key,
         element: cardEl,
         renderer,
         scene,
         camera,
-        model,
-        counterEl,
+        modelTex,
+        modelSil,
         nameEl,
+        numbersEl,
+        modelWrap,
+        baseName,
         revealed: false,
         completed: false,
         count: 0,
         totalCount: totalForThisSpecies,
-        originalMaterials: this.cloneMaterials(model)
+        originalMaterials,
+        bgBase: imgBase,
+        bgSel: imgSelected,
+        bgDone: imgCompleted
       });
-      
-      this.setSilhouette(i);
     }
-    this.updateCarousel();
-    this.container.style.opacity = 1;
+
+    // Initial selection
+    this.currentIndex = Math.max(0, Math.min(this.cards.length - 1, this.cfg.startIndex ?? 0));
+    this._scrollTarget = this.currentIndex;
+    this._scrollCurrent = this.currentIndex;
+
+    // start rendering loop for mini canvases (piggyback on update())
+    this.updateLayout();
+    this._updateColumn(true);
   }
 
-  cloneMaterials(model) {
-    const map = new Map();
-    model.traverse(o => {
-      if (!o.isMesh) return;
-      // Clone material(s) so deck never mutates shared materials
-      if (Array.isArray(o.material)) {
-        const arr = o.material.map(m => {
-          const c = m.clone();
-          // keep skinning flag if skinned
-          if (o.isSkinnedMesh && 'skinning' in c) c.skinning = true;
-          return c;
-        });
-        map.set(o, arr);
-      } else if (o.material) {
-        const c = o.material.clone();
-        if (o.isSkinnedMesh && 'skinning' in c) c.skinning = true;
-        map.set(o, c);
-      }
-    });
-    return map;
+  // === public API ===
+  cycle(direction) {
+    if (this.isAnimating) return;
+    const n = this.cards.length;
+    this.currentIndex = (this.currentIndex + direction + n) % n;
+    this._scrollTo(this.currentIndex);
   }
 
+  onWheel(deltaY) {
+    const n = this.cards.length;
+    const dir = Math.sign(deltaY);
+    // continuous scrolling: add small increments toward direction
+    this._scrollTarget = this._wrapIndexFloat(this._scrollTarget + 0.25 * dir, n);
+    this._lastWheelTs = performance.now();
+    if (this._snapTimer) clearTimeout(this._snapTimer);
+    this._snapTimer = setTimeout(() => {
+      // snap to nearest integer index
+      const nearest = Math.round(this._scrollTarget);
+      this.currentIndex = (nearest % n + n) % n;
+      this._scrollTo(this.currentIndex, true);
+    }, this.cfg.snapAfterWheelMs);
+  }
 
+  update(dt) {
+    // animate fish in each card
+    for (let i = 0; i < this.cards.length; i++) {
+      const c = this.cards[i];
+      if (c.modelSil) c.modelSil.rotation.y += 0.5 * dt;
+      if (c.modelTex) c.modelTex.rotation.y += 0.5 * dt;
+      c.renderer.render(c.scene, c.camera);
+    }
+
+    // smooth scroll toward target
+    const n = this.cards.length;
+    if (n > 0) {
+      const diff = this._shortestDelta(this._scrollCurrent, this._scrollTarget, n);
+      this._scrollCurrent = this._wrapIndexFloat(this._scrollCurrent + diff * this.cfg.scrollDamping, n);
+      this._updateColumn(false);
+    }
+  }
+
+  destroy() {
+    if (this.container && this.container.parentNode) this.container.parentNode.removeChild(this.container);
+    if (this.logoEl && this.logoEl.parentNode) this.logoEl.parentNode.removeChild(this.logoEl);
+    if (this.discoveryEl && this.discoveryEl.parentNode) this.discoveryEl.parentNode.removeChild(this.discoveryEl);
+  }
+
+  // === interactions with gameplay ===
   setSilhouette(cardIndex) {
-    const card = this.cards[cardIndex];
-    card.model.traverse(o => {
-      if (!o.isMesh) return;
-      o.material = o.isSkinnedMesh ? this.silhouetteSkinned : this.silhouetteMaterial;
-    });
+    // handled in build; kept for compatibility
   }
-
 
   setRevealed(cardIndex) {
     const card = this.cards[cardIndex];
+    if (!card) return;
 
-    // If this is the first time we reveal this species, bump discovered counter
     if (!card.revealed) {
       this.discoveredCount = Math.min(this.speciesList.length, this.discoveredCount + 1);
       if (this.discoveryEl) {
         this.discoveryEl.textContent = `${this.discoveredCount}/${this.speciesList.length} especies descubiertas`;
       }
     }
-
     card.revealed = true;
-
-    // Restore original materials (remove silhouette)
-    card.model.traverse(o => {
-      if (o.isMesh) {
-        o.material = card.originalMaterials.get(o);
-      }
-    });
   }
 
-  cycle(direction) {
-    if (this.isAnimating) return;
-    this.currentIndex = (this.currentIndex + direction + this.cards.length) % this.cards.length;
-    this.updateCarousel();
-  }
-
-  updateCarousel() {
-    this.isAnimating = true;
-    this.cards.forEach((card, i) => {
-      const offset = i - this.currentIndex;
-      const isCenter = (offset === 0);
-
-      card.element.style.transform = `translateX(${offset * this.cardSeparation}px) scale(${isCenter ? 1.2 : 0.8})`;
-      card.element.style.opacity = isCenter ? '1' : '0.6';
-      card.element.style.zIndex = this.cards.length - Math.abs(offset);
-    });
-    setTimeout(() => { this.isAnimating = false }, 300); // Animation duration
-  }
-  
   checkMatch(speciesKey) {
-    const currentCard = this.cards[this.currentIndex];
-    if (currentCard.key === speciesKey) {
-      if (!currentCard.revealed) {
-        this.setRevealed(this.currentIndex);
+    const cur = this.cards[this.currentIndex];
+    if (cur && cur.key === speciesKey) {
+      if (!cur.revealed) this.setRevealed(this.currentIndex);
+
+      // increment and clamp
+      const newCount = Math.min(cur.totalCount, cur.count + 1);
+      cur.count = newCount;
+      cur.numbersEl.textContent = `${cur.count}\n${cur.totalCount}`;
+
+      // completed -> swap background overlay and numbers style
+      if (cur.count >= cur.totalCount && !cur.completed) {
+        cur.completed = true;
+        cur.element.classList.add('completed');
       }
 
-      // Clamp to total and update UI
-      const newCount = Math.min(currentCard.totalCount, currentCard.count + 1);
-      currentCard.count = newCount;
-      currentCard.counterEl.textContent = `Encontrados: ${currentCard.count}/${currentCard.totalCount}`;
-
-      // Completed?
-      if (currentCard.count >= currentCard.totalCount && !currentCard.completed) {
-        currentCard.completed = true;
-        currentCard.element.classList.add('completed'); // permanent green style
-      }
-
-      this.flashBorder(currentCard.element, 'green');
-      return true; // Match!
+      // small success flash (border glow)
+      this._flashCanvasGlow(cur, 'success');
+      return true;
     } else {
-      this.flashBorder(currentCard.element, 'red');
-      return false; // No match
+      const wrong = this.cards[this.currentIndex];
+      this._flashCanvasGlow(wrong, 'error');
+      return false;
     }
   }
 
-  flashBorder(element, color) {
-      element.classList.add(`flash-${color}`);
-      setTimeout(() => element.classList.remove(`flash-${color}`), 1000);
-  }
+  // === layout & visuals ===
+  updateLayout() {
+    // Compute card size from window and params
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
 
-  update(dt) {
-    this.cards.forEach(card => {
-      card.model.rotation.y += 0.5 * dt;
-      card.renderer.render(card.scene, card.camera);
+    const right  = Math.round((this.cfg.rightMarginVw ?? 0.02) * vw);
+    const top    = Math.round((this.cfg.topMarginVh   ?? 0.06) * vh);
+    const bottom = Math.round((this.cfg.bottomMarginVh?? 0.10) * vh);
+
+    // available column height for cards (logo sits below, with overlap)
+    const availH = Math.max(100, vh - top - bottom);
+
+    // card aspect from image (fallback to 3:2)
+    const aspect = (this._cardImg && this._cardImg.naturalWidth > 0)
+      ? (this._cardImg.naturalWidth / this._cardImg.naturalHeight)
+      : (3 / 2);
+
+    // slot height considering vertical overlap
+    const overlap = THREE.MathUtils.clamp(this.cfg.verticalOverlapPct, 0, 0.45);
+    const slots = Math.max(1, this.cfg.visibleCount|0);
+    const slotH = availH / (slots - overlap * (slots - 1));
+    const cardH = slotH / (1 - overlap);
+    const cardW = cardH * aspect;
+
+    // position the column container (fixed on right)
+    Object.assign(this.container.style, {
+      position: 'fixed',
+      top: `${top}px`,
+      right: `${right}px`,
+      width: `${cardW}px`,
+      height: `${availH}px`,
+      pointerEvents: 'auto',
+      overflow: 'hidden',
+      zIndex: 9997
     });
-  }
-  
-  destroy() {
-    if (this.container && this.container.parentNode) {
-      this.container.parentNode.removeChild(this.container);
+
+    // logo sizing and position
+    const logoW = cardW * (this.cfg.logoWidthFactor ?? 1);
+    // keep natural aspect ratio; height will follow the image intrinsic ratio
+    Object.assign(this.logoEl.style, {
+      position: 'fixed',
+      right: `${right}px`,
+      width: `${logoW}px`,
+      height: 'auto',
+      zIndex: 9996
+    });
+
+    // compute vertical position:
+    // place the logo just below the column, then pull it up by a fraction of the logo height (overlap),
+    // then push it further DOWN by an extra vh to reduce overlap overall.
+    const logoRect = this.logoEl.getBoundingClientRect(); // may be 0 on first call
+    const tmpLogoH = logoRect.height || (cardH * 0.6); // fallback guess before first paint
+    const overlapY = Math.round((this.cfg.logoOverlapStartPct ?? 0.18) * tmpLogoH);
+    const extraPush = Math.round((this.cfg.logoExtraPushVh ?? 0.05) * vh);
+
+    const logoTop = top + availH - overlapY + extraPush;
+    this.logoEl.style.top = `${logoTop}px`;
+
+
+    // set each card's absolute size (position handled in _updateColumn)
+    for (const c of this.cards) {
+      Object.assign(c.element.style, {
+        position: 'absolute',
+        width: `${cardW}px`,
+        height: `${cardH}px`,
+        left: '0px' // anchored to container left
+      });
+      
+      // --- NEW ABSOLUTE-BOX LAYOUT --- //
+      const speciesBox = this.cfg.boxes.species;
+      const numbersBox = this.cfg.boxes.numbers;
+      const modelBox   = this.cfg.boxes.model;
+      const lhMul      = this.cfg.lineHeight ?? 1.05;
+
+      // Convert % boxes to pixels
+      const sX = Math.round(speciesBox.xPct * cardW);
+      const sY = Math.round(speciesBox.yPct * cardH);
+      const sW = Math.round(speciesBox.wPct * cardW);
+      const sH = Math.round(speciesBox.hPct * cardH);
+
+      const nX = Math.round(numbersBox.xPct * cardW);
+      const nY = Math.round(numbersBox.yPct * cardH);
+      const nW = Math.round(numbersBox.wPct * cardW);
+      const nH = Math.round(numbersBox.hPct * cardH);
+
+      const mX = Math.round(modelBox.xPct * cardW);
+      const mY = Math.round(modelBox.yPct * cardH);
+      const mW = Math.round(modelBox.wPct * cardW);
+      const mH = Math.round(modelBox.hPct * cardH);
+
+      // --- NUDGE ÓPTICO (compensación de métrica del font) ---
+      // pequeño corrimiento hacia la derecha/abajo para centrar "a ojo"
+      const OPTICAL_NUDGE = { dxPct: 5, dyPct: 3 }; // % del ancho/alto de cada caja
+
+
+      // --- DEBUG BOXES (optional) ---
+      if (this.cfg.debugBoxes) {
+        if (!c._dbg) c._dbg = {};
+        const ensure = (k, color) => {
+          if (!c._dbg[k]) {
+            const d = document.createElement('div');
+            d.className = 'deck-debug-box';
+            d.style.position = 'absolute';
+            d.style.border = `2px dashed ${color}`;
+            d.style.pointerEvents = 'none';
+            d.style.zIndex = 9999;
+            c.element.appendChild(d);
+            c._dbg[k] = d;
+          }
+          return c._dbg[k];
+        };
+        const ds = ensure('species', '#00FF99');
+        const dn = ensure('numbers', '#FFD400');
+        const dm = ensure('model',   '#4DA3FF');
+
+        Object.assign(ds.style, { left: `${sX}px`, top: `${sY}px`, width: `${sW}px`, height: `${sH}px` });
+        Object.assign(dn.style, { left: `${nX}px`, top: `${nY}px`, width: `${nW}px`, height: `${nH}px` });
+        Object.assign(dm.style, { left: `${mX}px`, top: `${mY}px`, width: `${mW}px`, height: `${mH}px` });
+      } else if (c._dbg) {
+        // remove overlays if they exist and debug switched off
+        for (const k of Object.keys(c._dbg)) {
+          const el = c._dbg[k];
+          if (el && el.parentNode) el.parentNode.removeChild(el);
+        }
+        c._dbg = null;
+      }
+
+      // Position species name box
+      Object.assign(c.nameEl.style, {
+        position: 'absolute',
+        left: `${sX}px`,
+        top: `${sY}px`,
+        width: `${sW}px`,
+        height: `${sH}px`,
+        display: 'grid',           // grid en vez de flex
+        placeItems: 'center',      // centra vertical y horizontalmente
+        textAlign: 'center',
+        fontFamily: this.cfg.fonts.family,
+        color: this.cfg.colors.speciesText,
+        fontWeight: '700',
+        lineHeight: `${lhMul}`,
+        whiteSpace: 'pre',         // respetar \n; no wrap automático
+        wordBreak: 'normal',       // no cortar palabras
+        overflow: 'hidden',
+        margin: '0',
+        padding: '0',
+        textIndent: '0',
+        letterSpacing: '0'
+      });
+
+      // Compensación óptica: leve corrimiento derecha/abajo
+      const sDx = (OPTICAL_NUDGE.dxPct / 100) * sW;
+      const sDy = (OPTICAL_NUDGE.dyPct / 100) * sH;
+      c.nameEl.style.transform = `translate(${sDx}px, ${sDy}px)`;
+
+      // Compute species font-size from height (2 lines fill the box height)
+      const speciesPx = Math.max(8, Math.floor((sH) / (2 * lhMul)));
+
+      // Decide if we need 2 lines or 1
+      const rawName = (c.baseName || '').replace(/\s+/g, ' ').trim();
+      const oneLineFits = this._textWidthFits(c.nameEl, rawName, sW, speciesPx);
+      let finalSpeciesText = rawName;
+      if (!oneLineFits) {
+        finalSpeciesText = this._splitIntoTwoBalancedLines(rawName); // garantiza solo 1 '\n'
+      }
+      // Apply text & font
+      c.nameEl.style.fontSize = `${speciesPx}px`;
+      c.nameEl.textContent = finalSpeciesText.replace(/[ \t]+\n/g, '\n').replace(/[ \t]+$/g, '');
+
+      // Position numbers box
+      Object.assign(c.numbersEl.style, {
+        position: 'absolute',
+        left: `${nX}px`,
+        top: `${nY}px`,
+        width: `${nW}px`,
+        height: `${nH}px`,
+        display: 'grid',          // grid centrado
+        placeItems: 'center',
+        textAlign: 'center',
+        fontFamily: this.cfg.fonts.family,
+        color: this.cfg.colors.numbersTotalFill,
+        fontWeight: '800',
+        lineHeight: `${lhMul}`,
+        whiteSpace: 'pre',        // 2 líneas con \n
+        wordBreak: 'normal',
+        overflow: 'hidden',
+        margin: '0',
+        padding: '0',
+        textIndent: '0',
+        letterSpacing: '0'
+      });
+
+      // Cifras tabulares y lining para que todos los dígitos ocupen lo mismo
+      c.numbersEl.style.fontVariantNumeric = 'tabular-nums lining-nums';
+      c.numbersEl.style.fontFeatureSettings = '"tnum" 1, "lnum" 1';
+
+      // Compensación óptica: leve corrimiento derecha/abajo
+      const nDx = (OPTICAL_NUDGE.dxPct / 100) * nW;
+      const nDy = (OPTICAL_NUDGE.dyPct / 100) * nH;
+      c.numbersEl.style.transform = `translate(${nDx}px, ${nDy}px)`;
+
+
+      // Numbers font from height (2 lines)
+      const numbersPx = Math.max(8, Math.floor((nH) / (2 * lhMul)));
+      c.numbersEl.style.fontSize = `${numbersPx}px`;
+
+      // Saneamos para evitar espacios residuales
+      c.numbersEl.textContent = String(c.numbersEl.textContent || '')
+        .replace(/[ \t]+\n/g, '\n')
+        .replace(/[ \t]+$/g, '');
+
+      // Position model WRAP box (clips glow)
+      Object.assign(c.modelWrap.style, {
+        position: 'absolute',
+        left: `${mX}px`,
+        top: `${mY}px`,
+        width: `${mW}px`,
+        height: `${mH}px`,
+        overflow: 'hidden',   // key to clip glow
+        pointerEvents: 'none'
+      });
+
+      // Make canvas fill the wrap; renderer matches box size
+      const canvasEl = c.modelWrap.querySelector('canvas.deck-canvas');
+      Object.assign(canvasEl.style, {
+        position: 'absolute',
+        left: `0px`,
+        top: `0px`,
+        width: `100%`,
+        height: `100%`
+      });
+
+      c.renderer.setSize(Math.max(1, mW), Math.max(1, mH), false);
+      c.camera.aspect = mW / Math.max(1, mH);
+      c.camera.updateProjectionMatrix();
+
+
     }
-    if (this.discoveryEl && this.discoveryEl.parentNode) {
-      this.discoveryEl.parentNode.removeChild(this.discoveryEl);
+
+
+
+    // after any size change, recompute positions/opacities
+    this._updateColumn(true);
+  }
+
+  // === helpers ===
+  cloneMaterials(model) {
+    const map = new Map();
+    model.traverse(o => {
+      if (!o.isMesh) return;
+      if (Array.isArray(o.material)) {
+        map.set(o, o.material.map(m => m.clone()));
+      } else if (o.material) {
+        map.set(o, o.material.clone());
+      }
+    });
+    return map;
+  }
+
+  _wrapIndexFloat(v, n) {
+    // Wrap float index into [0, n)
+    return ((v % n) + n) % n;
+    }
+  _shortestDelta(a, b, n) {
+    // minimal signed distance in circular index space
+    let d = b - a;
+    if (d >  n/2) d -= n;
+    if (d < -n/2) d += n;
+    return d;
+  }
+
+  _scrollTo(indexInt, snapNow=false) {
+    const n = this.cards.length;
+    this._scrollTarget = (indexInt % n + n) % n;
+    if (snapNow) this._scrollCurrent = this._scrollTarget;
+    this._updateColumn(true);
+  }
+
+  _opacityForOffset(off, maxVisibleHalf) {
+    // off = 0 at center; |off| increases upward/downward
+    const t = Math.min(1, Math.abs(off) / maxVisibleHalf);
+    const { centerOpacity, edgeOpacity, opacityFalloffExp } = this.cfg;
+    const k = Math.pow(t, opacityFalloffExp);
+    return centerOpacity * (1 - k) + edgeOpacity * k;
+  }
+
+  _updateColumn(force=false) {
+    if (!this.cards || this.cards.length === 0) return;
+
+    const rect = this.container.getBoundingClientRect();
+    const cardH = parseFloat(this.cards[0].element.style.height) || 200;
+    const overlap = this.cfg.verticalOverlapPct;
+    const step = cardH * (1 - overlap);
+
+    const n = this.cards.length;
+    const centerIndex = this._scrollCurrent; // float
+    const half = Math.floor((this.cfg.visibleCount - 1) / 2);
+
+    for (let i = 0; i < n; i++) {
+      const offRaw = this._shortestDelta(centerIndex, i, n); // signed float offset
+      // clamp visual range to avoid extreme translations (still render all for infinite loop feel)
+      const visOff = offRaw;
+
+      const y = rect.height/2 - cardH/2 + visOff * step;
+
+      const opacity = this._opacityForOffset(visOff, Math.max(1, half));
+      const zIndex = 1000 - Math.abs(Math.round(visOff)) * 10 + (visOff === 0 ? 10 : 0);
+
+      const card = this.cards[i];
+      card.element.style.transform = `translate3d(0, ${y}px, 0)`;
+      card.element.style.opacity = `${opacity}`;
+      card.element.style.zIndex = `${zIndex}`;
+
+      const isSelected = (Math.round(this._wrapIndexFloat(centerIndex, n)) === i);
+      card.element.classList.toggle('selected', !!isSelected);
+
+      // Selected canvas glow
+      const canv = card.element.querySelector('canvas.deck-canvas');
+      if (canv) {
+        const tmp = card._tmpGlowFilter;
+        const base = this._baseCanvasFilter(card, isSelected);
+        canv.style.filter = tmp != null ? tmp : base;
+
+        // Aseguramos que el canvas tenga transición de filter por defecto
+        if (!canv.style.transition) {
+          const tIn = Math.max(0, this.cfg.glowTransitionInMs ?? 180);
+          canv.style.transition = `filter ${tIn}ms ease`;
+        }
+      }
+
+      // Discovery state: show textured once we’ve found ≥1 or revealed
+      const discovered = card.revealed || card.count > 0;
+
+      // Toggle visibility
+      if (card.modelTex && card.modelSil) {
+        card.modelTex.visible = discovered;
+        card.modelSil.visible = !discovered;
+
+        // Opacity: apply to whichever is visible
+        const applyOpacity = (root) => {
+          root.traverse(o => {
+            if (!o.isMesh) return;
+            if (o.material && 'opacity' in o.material) {
+              o.material.transparent = true;
+              o.material.opacity = opacity;
+            }
+          });
+        };
+        if (discovered) applyOpacity(card.modelTex);
+        else applyOpacity(card.modelSil);
+
+        // When silhouette is visible, recolor selected/non-selected
+        if (!discovered) {
+          card.modelSil.traverse(o => {
+            if (!o.isMesh) return;
+            const useSel = isSelected;
+            const mat = (o.isSkinnedMesh
+              ? (useSel ? this.silhouetteSkinnedSelected : this.silhouetteSkinned)
+              : (useSel ? this.silhouetteMaterialSelected : this.silhouetteMaterial));
+            o.material = mat;
+            o.material.opacity = opacity;
+          });
+        }
+      }
+
+
+      // background state fading
+      card.bgSel.style.opacity = (Math.round(this._wrapIndexFloat(centerIndex, n)) === i) ? '1' : '0';
+      card.bgDone.style.opacity = card.completed ? '1' : '0';
     }
   }
+
+  _flash(el, color) {
+    if (!el) return;
+    el.classList.add(`flash-${color}`);
+    setTimeout(() => el.classList.remove(`flash-${color}`), 700);
+  }
+
+  _flashCanvasGlow(card, kind) {
+    if (!card) return;
+    const canv = card.element.querySelector('canvas.deck-canvas');
+    if (!canv) return;
+
+    const ok = String(kind).toLowerCase() === 'green' || kind === 'success';
+    const target = ok
+      ? (this.cfg.successGlowFilter || 'drop-shadow(0 0 8px #00FF6A) drop-shadow(0 0 18px #00FF6A) drop-shadow(0 0 28px #00FF6A)')
+      : (this.cfg.errorGlowFilter   || 'drop-shadow(0 0 8px #FF4D4D) drop-shadow(0 0 18px #FF4D4D) drop-shadow(0 0 28px #FF4D4D)');
+
+    const tIn  = Math.max(0, this.cfg.glowTransitionInMs  ?? 180);
+    const hold = Math.max(0, this.cfg.glowHoldMs          ?? 650);
+    const tOut = Math.max(0, this.cfg.glowTransitionOutMs ?? 220);
+
+    // Estado base (amarillo si seleccionado, sino none)
+    const isSelected = card.element.classList.contains('selected');
+    const base = this._baseCanvasFilter(card, isSelected);
+
+    // Cancelar animaciones previas
+    clearTimeout(card._tmpGlowTimerIn);
+    clearTimeout(card._tmpGlowTimerHold);
+    clearTimeout(card._tmpGlowTimerOut);
+    card._tmpGlowFilter = null; // dejemos que este valor sea el "modo temporal" activo
+
+    // 1) Transition IN: del base -> target
+    canv.style.transition = `filter ${tIn}ms ease`;
+    // Forzamos base antes de cambiar para asegurar la transición
+    canv.style.filter = base;
+    // siguiente frame para que el navegador registre el estado inicial
+    requestAnimationFrame(() => {
+      card._tmpGlowFilter = target;
+      canv.style.filter = target;
+    });
+
+    // 2) HOLD: mantener el target un tiempo
+    card._tmpGlowTimerHold = setTimeout(() => {
+      // 3) Transition OUT: del target -> base
+      canv.style.transition = `filter ${tOut}ms ease`;
+      card._tmpGlowFilter = null; // volvemos al base (decidido por _updateColumn)
+      // Relee si sigue seleccionado (pudo cambiar)
+      const isSelNow = card.element.classList.contains('selected');
+      const baseNow = this._baseCanvasFilter(card, isSelNow);
+      canv.style.filter = baseNow;
+    }, tIn + hold);
+  }
+
+
+
+  _ensureAdobeFontLink(href) {
+    if (!href) return;
+    if (document.querySelector(`link[href="${href}"]`)) return;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = href;
+    document.head.appendChild(link);
+  }
+
+
+  _injectCSS() {
+    if (document.getElementById('__deck_css')) return;
+    const css = document.createElement('style');
+    css.id = '__deck_css';
+    css.textContent = `
+      #deck-container {
+        pointer-events: auto;
+      }
+      #species-discovery {
+        position: fixed;
+        left: 16px; bottom: 16px;
+        z-index: 9998;
+        font-weight: 700;
+        color: #fff;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      }
+
+      .deck-card-vert {
+        opacity: 1;
+        will-change: transform, opacity;
+        transition: opacity 200ms ease, transform 280ms cubic-bezier(.22,.61,.36,1), filter 200ms ease;
+      }
+      .deck-card-vert .deck-bg {
+        position: absolute; left:0; top:0; width:100%; height:100%; object-fit: cover; pointer-events: none;
+      }
+      .deck-card-vert .deck-bg-selected,
+      .deck-card-vert .deck-bg-completed { opacity: 0; transition: opacity 220ms ease; }
+
+      .deck-card-vert.completed .deck-bg-completed { opacity: 1 !important; }
+
+      .deck-canvas { pointer-events: none; }
+
+      .deck-text-wrap { pointer-events: none; }
+
+      .deck-card-vert.selected .deck-canvas {
+        will-change: filter;
+      }
+      `;
+    document.head.appendChild(css);
+  }
+
+  _baseCanvasFilter(card, isSelected) {
+    return isSelected ? (this.cfg.selectedGlowFilter || '') : 'none';
+  }
+
+  _textWidthFits(el, text, maxW, fontPx) {
+    // Temporarily set measurement styles
+    const prev = {
+      fs: el.style.fontSize,
+      ws: el.style.whiteSpace,
+      wb: el.style.wordBreak,
+      ow: el.style.overflow,
+      ta: el.style.textAlign,
+      ff: el.style.fontFamily,
+      fw: el.style.fontWeight,
+      lh: el.style.lineHeight
+    };
+
+    el.style.fontSize = `${fontPx}px`;
+    el.style.whiteSpace = 'pre';     // single line (respect \n only)
+    el.style.wordBreak = 'normal';
+    el.style.overflow = 'visible';
+    el.style.textAlign = 'left';     // avoid centering affecting scroll widths
+
+    const prevContent = el.textContent;
+    el.textContent = String(text).replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+
+    // Force layout read
+    const width = el.scrollWidth;
+
+    // Restore
+    el.textContent = prevContent;
+    el.style.fontSize = prev.fs;
+    el.style.whiteSpace = prev.ws;
+    el.style.wordBreak = prev.wb;
+    el.style.overflow = prev.ow;
+    el.style.textAlign = prev.ta;
+    el.style.fontFamily = prev.ff;
+    el.style.fontWeight = prev.fw;
+    el.style.lineHeight = prev.lh;
+
+    return width <= maxW;
+  }
+
+  _splitIntoTwoBalancedLines(name) {
+    // Normalizá espacios y quitá cualquier \n previo
+    const clean = String(name).replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+    const parts = clean.split(' ').filter(Boolean);
+    if (parts.length <= 1) return clean; // sin espacio para partir → 1 línea
+
+    // Elegí el split que mejor balancea caracteres entre 2 líneas
+    let best = { diff: Infinity, left: clean, right: '' };
+    for (let i = 1; i < parts.length; i++) {
+      const left = parts.slice(0, i).join(' ');
+      const right = parts.slice(i).join(' ');
+      const diff = Math.abs(left.length - right.length);
+      if (diff < best.diff) best = { diff, left, right };
+    }
+    return `${best.left}\n${best.right}`; // SIEMPRE un único '\n'
+  }
+
+
+
 }
 
 
@@ -1060,7 +1749,7 @@ export class RioScene extends BaseScene {
     
     // Load environment model (floor/walls)
     try {
-      const gltf = await AssetLoader.gltf('/game-assets/sub/environment.glb');
+      const gltf = await AssetLoader.gltf('/game-assets/sub/sub_floor.glb');
       this.model = gltf.scene || gltf.scenes?.[0];
       if (this.model) {
         // Optional: set mesh flags
@@ -1175,7 +1864,7 @@ export class RioScene extends BaseScene {
     
     // Build the Deck UI (hidden until intro ends)
     if (this.params.debug.deck) {
-      this.deck = new Deck(SPECIES, this.speciesObjs);
+      this.deck = new Deck(SPECIES, this.speciesObjs, this.params.deckUI);
       await this.deck.build();
       // hide the deck during intro
       this.deck.container.style.opacity = 0;
@@ -1771,35 +2460,47 @@ export class RioScene extends BaseScene {
   /* --------------------------------- Input & UX --------------------------------- */
   onKeyDown(e) {
     if (!this.controlsEnabled) return;
-      if (e.key === 'ArrowRight') {
-          this.deck.cycle(1);
-      } else if (e.key === 'ArrowLeft') {
-          this.deck.cycle(-1);
-      }
+    if (!this.deck) return;
+    if (e.key === 'ArrowDown') {
+      this.deck.cycle(1);
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      this.deck.cycle(-1);
+      e.preventDefault();
+    } else if (e.key === 'ArrowRight') {
+      this.deck.cycle(1);
+      e.preventDefault();
+    } else if (e.key === 'ArrowLeft') {
+      this.deck.cycle(-1);
+      e.preventDefault();
+    }
   }
 
-    onWheel(e) {
-      if (!this.controlsEnabled) { e.preventDefault(); return; }
-      // Scroll up (deltaY < 0) => decrease X; scroll down => increase X.
-      // Limits: min = swimBox.min.x (shore), max = starting camera X.
+
+  onWheel(e) {
+    // If deck is hovered, scroll the deck column instead of camera X
+    if (this.deck && this.deck.isPointerInside) {
       e.preventDefault();
-
-      const step = this.params.wheelStepX ?? 2.0;
-      const dir = Math.sign(e.deltaY); // +1 when scrolling down, -1 up
-
-      // compute new X
-      const minX = (this.swimBox?.min?.x ?? this.params.shoreLevel);
-      const maxX = this.params.start.x;
-      let newX = this.camera.position.x + (dir > 0 ? +step : -step);
-
-      // clamp and apply
-      newX = clamp(newX, minX, maxX);
-      this.camera.position.x = newX;
-
-      // keep systems in sync
-      this.updateSwimBoxDynamic();
-      this.camera.lookAt(this.camera.position.clone().add(this.forward));
+      this.deck.onWheel(e.deltaY);
+      return;
     }
+    if (!this.controlsEnabled) { e.preventDefault(); return; }
+    e.preventDefault();
+
+    const step = this.params.wheelStepX ?? 2.0;
+    const dir = Math.sign(e.deltaY); // +1 when scrolling down, -1 up
+
+    const minX = (this.swimBox?.min?.x ?? this.params.shoreLevel);
+    const maxX = this.params.start.x;
+    let newX = this.camera.position.x + (dir > 0 ? +step : -step);
+
+    newX = clamp(newX, minX, maxX);
+    this.camera.position.x = newX;
+
+    this.updateSwimBoxDynamic();
+    this.camera.lookAt(this.camera.position.clone().add(this.forward));
+  }
+
 
 
   onMouseDown(e) {
@@ -2302,6 +3003,7 @@ export class RioScene extends BaseScene {
       // Keep swimBox aligned to explicit params and current cameraLevel
       this.updateSwimBoxDynamic();
     }
+    if (this.deck) this.deck.updateLayout(); // keep card sizes/aspect on resize
   }
 
   _updateAudio(dt) {
