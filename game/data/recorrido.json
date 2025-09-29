@@ -17,7 +17,7 @@
         "yaw": -15,
         "pitch": 0
       },
-      "audio": "/game-assets/recorrido/monte.mp3",
+      "audio": "/game-assets/recorrido/sonido/Monte la paloma parte 1.mp3",
       "reward": {
         "id": "obj_semilla",
         "name": "Semilla de Timbó"
@@ -107,7 +107,7 @@
     "yaw": 180,
     "pitch": 0
   },
-  "audio": "/game-assets/recorrido/monte.mp3",
+  "audio": "/game-assets/recorrido/sonido/Monte la paloma parte 2.mp3",
   "reward": {
     "id": "obj_corteza",
     "name": "Corteza de Sauce"
@@ -144,7 +144,7 @@
     "yaw": 160,
     "pitch": 0
   },
-  "audio": "/game-assets/recorrido/monte.mp3",
+  "audio": "/game-assets/recorrido/sonido/Monte la paloma parte 3.mp3",
   "reward": {
     "id": "obj_hoja",
     "name": "Hoja de Laurel"
@@ -181,7 +181,7 @@
     "yaw": -130,
     "pitch": 0
   },
-  "audio": "/game-assets/recorrido/monte.mp3",
+  "audio": "/game-assets/recorrido/sonido/Monte la paloma parte 4.mp3",
   "reward": {
     "id": "obj_flor",
     "name": "Flor de Ceibo"
@@ -218,7 +218,7 @@
     "yaw": 95,
     "pitch": 0
   },
-  "audio": "/game-assets/recorrido/monte.mp3",
+  "audio": "/game-assets/recorrido/sonido/Monte la paloma parte 5.mp3",
   "reward": {
     "id": "obj_cristal",
     "name": "Cristal de Cuarzo"
@@ -255,7 +255,7 @@
     "yaw": -175,
     "pitch": 0
   },
-  "audio": "/game-assets/recorrido/monte.mp3",
+  "audio": "/game-assets/recorrido/sonido/Monte la paloma parte 6.mp3",
   "reward": {
     "id": "obj_totem",
     "name": "Tótem Sagrado"

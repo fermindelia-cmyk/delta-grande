@@ -1106,8 +1106,8 @@ export class RioScene extends BaseScene {
     this.camera.add(this.audioListener);
 
     const soundPaths = {
-      surface: '/game-assets/sub/sonido/Salida a tomar aire juego delta.mp3',
-      underwater: '/game-assets/sub/sonido/Juego delta - Bajo el agua.mp3',
+      surface: '/game-assets/sub/sonido/Salida a tomar aire juego delta v2.mp3',
+      underwater: '/game-assets/sub/sonido/Juego delta - Bajo el agua v3.mp3',
       music: '/game-assets/sub/sonido/Músicos Entrerios full a la distancia.mp3',
       sfxCatch: '/game-assets/sub/sonido/Pez agarrado.mp3',
       sfxWrong: '/game-assets/sub/sonido/Pez equivocado.mp3'
