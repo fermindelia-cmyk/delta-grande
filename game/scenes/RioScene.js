@@ -278,6 +278,47 @@ const DEFAULT_PARAMS = {
   waterColor: 0x1b1a16,
   waterSurfaceOpacity: 1.0,
 
+    /** Vegetation (floor, surface, shore) */
+  vegetation: {
+    enabled: true,
+
+    // Global defaults (used if a species doesn't override)
+    defaults: {
+      yawRandom: true,            // randomize Y rotation
+      scaleJitter: [0.9, 1.15],   // uniform random scale per instance
+      floorYOffset: 0,         // base lift above floorLevel (floor plants)
+      surfaceDrift: {             // default drift for surface plants
+        radius: 0.8,              // meters
+        speed: 0.12               // cycles/sec (2π * speed = rad/sec)
+      }
+    },
+
+    // Floor:
+    floor: {
+      // tronco:  { glb: '/game-assets/sub/vegetation/tronco.glb',  count: 12, yOffset: -4.0, fitLongest: 12.0 },
+      // egeria:  { glb: '/game-assets/sub/vegetation/egeria.glb',  count: 100, yOffset: -4.0, fitHeight: 2.0 }
+    },
+
+    // Surface:
+    surface: {
+      irupe:    { glb: '/game-assets/sub/vegetation/irupe.glb',    count: 18, yOffset: 0.06, fitLongest: 1.1, drift: { radius: 1.1, speed: 0.04 } },
+      camalote: { glb: '/game-assets/sub/vegetation/camalote.glb', count: 14, yOffset: 0.03, scale: 0.9,      drift: { radius: 1.6, speed: 0.04 } }
+    },
+
+    // Shore:
+    shore: {
+      // aliso:      { glb: '/game-assets/sub/vegetation/aliso.glb',      count: 5,  xOffsetMin: 10, xOffsetMax: 30,  yOffset: 12,  fitHeight: 2.6 },
+      // ceibo:      { glb: '/game-assets/sub/vegetation/ceibo.glb',      count: 4,  xOffsetMin: 10, xOffsetMax: 30,  yOffset: 12,  scale: 1.1 },
+      // cortadera:  { glb: '/game-assets/sub/vegetation/cortadera.glb',  count: 10, xOffsetMin: 10, xOffsetMax: 30,  yOffset: 12,  fitLongest: 1.8 },
+      // espinillo:  { glb: '/game-assets/sub/vegetation/espinillo.glb',  count: 6,  xOffsetMin: 10, xOffsetMax: 30,  yOffset: 12,  scale: 1.0 },
+      // paja:       { glb: '/game-assets/sub/vegetation/paja.glb',       count: 12, xOffsetMin: 10, xOffsetMax: 30,  yOffset: 12, scale: 1.2 },
+      // sauce:      { glb: '/game-assets/sub/vegetation/sauce.glb',      count: 5,  xOffsetMin: 10, xOffsetMax: 30,  yOffset: 12,  fitHeight: 3.5 },
+      // sauce_2:    { glb: '/game-assets/sub/vegetation/sauce_2.glb',    count: 5,  xOffsetMin: 10, xOffsetMax: 30,  yOffset: 12, scale: 0.95 }
+    }
+
+  },
+
+
   /** Fog (enabled when camera is UNDER the surfaceLevel) */
   fogNear: 1.0,   // distance where fog starts (no hidden derivation)
   fogFar:  50.0,  // distance where fog fully obscures
@@ -303,8 +344,8 @@ const DEFAULT_PARAMS = {
   fishPositionBias: {
     meansX: { near: 0.15,  mid: 0.50, deep: 0.85 },
     sigmaX: { near: 0.20,  mid: 0.20, deep: 0.20 }, // set >0 later (e.g., 0.10)
-    meansY: { surface: 0.92, midwater: 0.50, bottom: 0.05 },
-    sigmaY: { surface: 0.20, midwater: 0.20, bottom: 0.20 }, // set >0 later (e.g., 0.12)
+    meansY: { surface: 0.90, midwater: 0.50, bottom: 0.05 },
+    sigmaY: { surface: 0.10, midwater: 0.20, bottom: 0.05 }, // set >0 later (e.g., 0.12)
   },
 
   debug: {
@@ -329,7 +370,7 @@ const DEFAULT_PARAMS = {
     eq: {
       // Frecuencias objetivo (ajustables)
       aboveHz: 12000,       // al estar SOBRE la superficie (10–12 kHz)
-      surfaceUnderHz: 300,  // justo DEBAJO de la superficie
+      surfaceUnderHz: 450,  // justo DEBAJO de la superficie
       bottomHz: 20,         // en el fondo
 
       // Tiempos de rampa (segundos)
@@ -966,6 +1007,19 @@ export class RioScene extends BaseScene {
     this.fishGroup.name = 'fish-group';
     this.scene.add(this.fishGroup);
 
+    // Vegetation
+    this.vegGroup = new THREE.Group();
+    this.vegGroup.name = 'vegetation-group';
+    this.scene.add(this.vegGroup);
+
+    // Keep instances by category for updates/cleanup
+    this.vegetation = {
+      floor: [],   // { mesh }
+      surface: [], // { mesh, center: THREE.Vector3, driftR, driftW, phase, speciesKey, yOffset }
+      shore: []    // { mesh }
+    };
+
+
     // --- Audio ---
     this.audioListener = null;
     this.sounds = {};
@@ -1006,22 +1060,69 @@ export class RioScene extends BaseScene {
     
     // Load environment model (floor/walls)
     try {
-      const gltf = await AssetLoader.gltf('/game-assets/sub/sub_floor.glb');
+      const gltf = await AssetLoader.gltf('/game-assets/sub/environment.glb');
       this.model = gltf.scene || gltf.scenes?.[0];
       if (this.model) {
+        // Optional: set mesh flags
         this.model.traverse(o => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; } });
-        this.scene.add(this.model);
-        this.recenterToFloor(this.model);
 
+        // Add to scene FIRST so world matrices/materials are valid
+        this.scene.add(this.model);
+        this.scene.updateMatrixWorld(true);
+
+        // === Gather baked vegetation by explicit group OR name prefix 'veg_' ===
+        let vegBaked = this.model.getObjectByName('VEG_BAKED');
+        const detachList = [];
+        if (vegBaked) {
+          detachList.push(vegBaked);
+        } else {
+          this.model.traverse((n) => {
+            if (!n || !n.name) return;
+            const nm = n.name.toLowerCase();
+            if (nm.startsWith('veg_')) detachList.push(n);
+          });
+        }
+        console.log(`[env] veg nodes to detach: ${detachList.length}`);
+
+        // Temporary holder so vegetation doesn't affect recenter bbox or tiling
+        const tempVegHolder = new THREE.Group();
+        tempVegHolder.name = 'VEG_BAKED_RUNTIME';
+        this.model.add(tempVegHolder);
+
+        // Move veg nodes under the holder, preserving world transform
+        const _reparentKeepWorld = (parent, child) => {
+          // Save child's world transform
+          const mWorld = child.matrixWorld.clone();
+
+          // Reparent
+          parent.add(child);
+
+          // Compute child's local matrix = parent^-1 * child_world
+          const parentInv = new THREE.Matrix4().copy(parent.matrixWorld).invert();
+          const mLocal = new THREE.Matrix4().multiplyMatrices(parentInv, mWorld);
+
+          // Apply local matrix
+          child.matrix.copy(mLocal);
+          child.matrix.decompose(child.position, child.quaternion, child.scale);
+          child.updateMatrixWorld(true);
+        };
+        for (const node of detachList) _reparentKeepWorld(tempVegHolder, node);
+
+        // Recenter & scale the environment (veg is detached, so it won't skew bbox)
+        this.recenterToFloor(this.model);
         if (Number.isFinite(this.params.overrideScale)) {
           this.model.scale.setScalar(this.params.overrideScale);
         } else {
           this.scaleModelToLongest(this.model, this.params.modelLongestTarget);
         }
+        this.scene.updateMatrixWorld(true);
+      } else {
+        console.error('environment.glb loaded but had no scene.');
       }
     } catch (err) {
-      console.error('Error loading sub_floor.glb', err);
+      console.error('Error loading environment.glb', err);
     }
+
 
     // Camera pose & yaw
     const { x, y, z, yawDeg } = this.params.start;
@@ -1061,6 +1162,11 @@ export class RioScene extends BaseScene {
 
     // Initialize explicit swimBox using the world parameters directly
     this.initSwimBoxFromParams();
+
+    // Vegetation
+    if (this.params.vegetation?.enabled) {
+      await this.initVegetation();    // loads GLBs & spawns instances
+    }
 
     // Prepare species objects (use explicit bias block)
     this.speciesObjs = SPECIES.map(def =>
@@ -1196,6 +1302,7 @@ export class RioScene extends BaseScene {
     window.removeEventListener('keydown', this._onKeyDown);
     this.app.canvas.removeEventListener('wheel', this._onWheel);
     if (this.deck) this.deck.destroy();
+    this.disposeVegetation();
     this._destroyIntroOverlay();
     this._destroyAudioGateOverlay();
   }
@@ -1376,6 +1483,225 @@ export class RioScene extends BaseScene {
     this.introState.overlayEl = null;
   }
 
+  /* -------------------------------- Vegetation -------------------------------- */
+
+  async initVegetation() {
+    const V = this.params.vegetation;
+    const defsFloor   = V?.floor   || {};
+    const defsSurface = V?.surface || {};
+    const defsShore   = V?.shore   || {};
+    const yawRand     = !!V?.defaults?.yawRandom;
+    const [sj0, sj1]  = V?.defaults?.scaleJitter || [1, 1];
+
+    // -------- Floor plants (inside swimBox XZ, y = floorLevel + offset) --------
+    for (const key of Object.keys(defsFloor)) {
+      const def = defsFloor[key];
+      const template = await this._loadTemplate(def.glb);
+      const count = def.count|0;
+      for (let i = 0; i < count; i++) {
+        const pos = this._randomXZInBox(this.swimBox);
+        const yOffset = Number.isFinite(def.yOffset) ? def.yOffset : (V.defaults.floorYOffset || 0);
+        const mesh = template.clone(true);
+        mesh.position.set(pos.x, this.params.floorLevel + yOffset, pos.z);
+        if (yawRand) mesh.rotation.y = Math.random() * Math.PI * 2;
+        this._applyVegetationScale(mesh, def, [sj0, sj1]);
+        mesh.userData.vegType = 'floor';
+        mesh.userData.speciesKey = key;
+
+        this.vegGroup.add(mesh);
+        this.vegetation.floor.push({ mesh });
+      }
+    }
+
+    // -------- Surface plants (inside swimBox XZ, y = surfaceLevel + offset, DRIFT) --------
+    for (const key of Object.keys(defsSurface)) {
+      const def = defsSurface[key];
+      const template = await this._loadTemplate(def.glb);
+      const count = def.count|0;
+      for (let i = 0; i < count; i++) {
+        const center = this._randomXZInBox(this.swimBox);
+        const yOffset = Number.isFinite(def.yOffset) ? def.yOffset : 0.0;
+
+        const mesh = template.clone(true);
+        // initial placement (center + tiny random angle)
+        mesh.position.set(center.x, this.params.surfaceLevel + yOffset, center.z);
+        if (yawRand) mesh.rotation.y = Math.random() * Math.PI * 2;
+        this._applyVegetationScale(mesh, def, [sj0, sj1]);
+        mesh.userData.vegType = 'surface';
+        mesh.userData.speciesKey = key;
+
+        // drift params
+        const drift = def.drift || V.defaults.surfaceDrift || { radius: 0.8, speed: 0.12 };
+        const radius = Math.max(0, drift.radius || 0);
+        const speed  = Math.max(0, drift.speed  || 0.1);
+        const phase  = Math.random() * Math.PI * 2;
+        // angular speed in rad/sec = 2π * cycles/sec
+        const w = speed * Math.PI * 2;
+
+        this.vegGroup.add(mesh);
+        this.vegetation.surface.push({
+          mesh,
+          center: new THREE.Vector3(center.x, 0, center.z), // center.y not needed; we recompute Y each frame
+          driftR: radius,
+          driftW: w,
+          phase,
+          yOffset
+        });
+      }
+    }
+
+    // -------- Shore plants (Z within swimBox; X near shoreLevel using +/- offsets, or absolute X if provided) --------
+    for (const key of Object.keys(defsShore)) {
+      const def = defsShore[key];
+      const template = await this._loadTemplate(def.glb);
+      const count = def.count|0;
+
+      const minZ = this.params.leftLimit;
+      const maxZ = this.params.rightLimit;
+      const zSpan = maxZ - minZ;
+
+      // Offsets can be negative; also allow swapped min/max
+      let xMinOff = Number(def.xOffsetMin ?? 0);
+      let xMaxOff = Number(def.xOffsetMax ?? xMinOff);
+      if (xMaxOff < xMinOff) [xMinOff, xMaxOff] = [xMaxOff, xMinOff];
+
+      const yOffset = Number.isFinite(def.yOffset) ? def.yOffset : 0;
+
+      // Direction relative to shoreLevel
+      const shoreSide = (this.params.vegetation?.shoreSide === 'positive') ? +1 : -1;
+
+      // Optional absolute X range per species (overrides offsets if both present)
+      const hasAbsRange = Number.isFinite(def.xAbsoluteMin) && Number.isFinite(def.xAbsoluteMax);
+      let xAbsMin, xAbsMax;
+      if (hasAbsRange) {
+        xAbsMin = Math.min(def.xAbsoluteMin, def.xAbsoluteMax);
+        xAbsMax = Math.max(def.xAbsoluteMin, def.xAbsoluteMax);
+      }
+
+      for (let i = 0; i < count; i++) {
+        const z = minZ + Math.random() * zSpan;
+
+        let x;
+        if (hasAbsRange) {
+          x = THREE.MathUtils.lerp(xAbsMin, xAbsMax, Math.random());
+        } else {
+          const off = THREE.MathUtils.lerp(xMinOff, xMaxOff, Math.random());
+          x = this.params.shoreLevel + shoreSide * off;
+        }
+
+        const mesh = template.clone(true);
+        mesh.position.set(x, this.params.surfaceLevel + yOffset, z);
+        if (yawRand) mesh.rotation.y = Math.random() * Math.PI * 2;
+        this._applyVegetationScale(mesh, def, [sj0, sj1]);
+        mesh.userData.vegType = 'shore';
+        mesh.userData.speciesKey = key;
+
+        this.vegGroup.add(mesh);
+        this.vegetation.shore.push({ mesh });
+      }
+    }
+
+  }
+
+  updateVegetation(dt) {
+    // Surface plants drift around their centers and stay right above the current surface
+    const surfY = this.params.surfaceLevel;
+    const minX = this.swimBox.min.x, maxX = this.swimBox.max.x;
+    const minZ = this.swimBox.min.z, maxZ = this.swimBox.max.z;
+
+    for (const v of this.vegetation.surface) {
+      v.phase += v.driftW * dt;
+      const dx = Math.cos(v.phase) * v.driftR;
+      const dz = Math.sin(v.phase * 0.85) * (v.driftR * 0.75); // slight ellipse for variety
+
+      let x = v.center.x + dx;
+      let z = v.center.z + dz;
+      // clamp inside swimBox XZ
+      x = clamp(x, minX, maxX);
+      z = clamp(z, minZ, maxZ);
+
+      v.mesh.position.set(x, surfY + v.yOffset, z);
+    }
+  }
+
+  disposeVegetation() {
+    if (!this.vegGroup) return;
+
+    const all = [
+      ...this.vegetation.floor,
+      ...this.vegetation.surface,
+      ...this.vegetation.shore
+    ];
+    for (const inst of all) {
+      const root = inst.mesh;
+      if (root?.parent) root.parent.remove(root);
+      root?.traverse?.(node => {
+        if (node.isMesh) {
+          node.geometry?.dispose?.();
+          const m = node.material;
+          if (Array.isArray(m)) m.forEach(mm => mm?.dispose?.());
+          else m?.dispose?.();
+        }
+      });
+    }
+
+    this.vegetation.floor.length = 0;
+    this.vegetation.surface.length = 0;
+    this.vegetation.shore.length = 0;
+  }
+
+  async _loadTemplate(glbPath) {
+    try {
+      const gltf = await AssetLoader.gltf(glbPath);
+      return (gltf.scene || gltf.scenes?.[0] || new THREE.Group());
+    } catch (e) {
+      console.warn('Vegetation GLB failed to load:', glbPath, e);
+      // simple fallback
+      const mat = new THREE.MeshStandardMaterial({ color: 0x2a7b2a, roughness: 0.8, metalness: 0.05 });
+      const geo = new THREE.ConeGeometry(0.25, 0.5, 6);
+      return new THREE.Mesh(geo, mat);
+    }
+  }
+
+  _applyVegetationScale(root, def, jitterRange) {
+    const [j0, j1] = jitterRange || [1, 1];
+    const jitter = THREE.MathUtils.lerp(j0, j1, Math.random());
+
+    // If we have fitLongest/fitHeight, compute bbox-based uniform scale.
+    const wantsFitLongest = Number.isFinite(def?.fitLongest);
+    const wantsFitHeight  = Number.isFinite(def?.fitHeight);
+
+    if (wantsFitLongest || wantsFitHeight) {
+      try {
+        root.updateMatrixWorld(true);
+        const box = new THREE.Box3().setFromObject(root);
+        const size = box.getSize(new THREE.Vector3());
+
+        let base = 1;
+        if (wantsFitLongest) {
+          const longest = Math.max(size.x, size.y, size.z);
+          if (longest > 1e-6) base = def.fitLongest / longest;
+        } else if (wantsFitHeight) {
+          if (size.y > 1e-6) base = def.fitHeight / size.y;
+        }
+        root.scale.multiplyScalar(base * jitter);
+        return;
+      } catch (e) {
+        // fall through to simple scale if bbox fails for any reason
+      }
+    }
+
+    // Fallback/simple: uniform base scale * jitter
+    const baseScale = Number.isFinite(def?.scale) ? def.scale : 1;
+    root.scale.multiplyScalar(baseScale * jitter);
+  }
+
+
+  _randomXZInBox(box) {
+    const x = THREE.MathUtils.lerp(box.min.x, box.max.x, Math.random());
+    const z = THREE.MathUtils.lerp(box.min.z, box.max.z, Math.random());
+    return new THREE.Vector3(x, 0, z);
+  }
 
 
   /* ----------------------------------- SwimBox ----------------------------------- */
@@ -1687,6 +2013,9 @@ export class RioScene extends BaseScene {
 
     // Update fish
     if (this.params.debug.fishUpdate && this.fish.length) this.updateFish(dt);
+
+    // Update vegetation (surface drift follows surface level)
+    if (this.params.vegetation?.enabled) this.updateVegetation(dt);
 
     // Update fog with explicit rules
     if (this.params.debug.fog) this.updateFog(); else this.scene.fog = null;
