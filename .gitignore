@@ -1,5 +1,6 @@
-game-assets/sub/environment.glb
-game-assets/sub/environment.blend
-game-assets/sub/environment.blend1
+game-assets/sub/environments/environment.glb
+game-assets/sub/environments/environment_original.glb
+game-assets/sub/environments/environment.blend
+game-assets/sub/environments/environment.blend1
 *.blend
 *.blend1
