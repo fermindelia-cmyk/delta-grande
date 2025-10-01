@@ -1819,7 +1819,7 @@ export class RioScene extends BaseScene {
     
     // Load environment model (floor/walls)
     try {
-      const gltf = await AssetLoader.gltf('/game-assets/sub/environment_decimated.glb');
+      const gltf = await AssetLoader.gltf('/game-assets/sub/environment.glb');
       this.model = gltf.scene || gltf.scenes?.[0];
       if (this.model) {
         // Optional: set mesh flags
