@@ -93,7 +93,7 @@ class SpatialHash {
  * ------------------------------------------------------------- */
 const SizeScale       = { small: 1.0,  medium: 1.5,  large: 2.0 };
 const SpeedScale      = { slow: 0.3,   medium: 0.8,  fast: 1.5 };
-const AbundanceCount  = { scarce: 5,   usual: 20,    veryCommon: 50 };
+const AbundanceCount  = { scarce: 5,   usual: 15,    veryCommon: 30 };
 
 /**
  * Species water-column / shore mapping keys:
@@ -255,15 +255,15 @@ const DEFAULT_PARAMS = {
   /** World hard limits (explicit, non-derived) */
   surfaceLevel: 5.722,   // y of the water surface plane
   floorLevel:  -15.05,   // y of riverbed (camera min Y and swimbox min Y)
-  shoreLevel:  40.0,     // x of shoreline (swimbox min X)
+  shoreLevel:  50.0,     // x of shoreline (swimbox min X)
   leftLimit:   -60.0,    // z min for both camera and swimbox
   rightLimit:   60.0,    // z max for both camera and swimbox
 
   /** Camera constraints aligned to world limits */
   cameraSurfaceMargin: 0.5,   // how much camera may go above surfaceLevel
   cameraFloorMargin:  4.0,    // how much camera must stay above floorLevel
-  cameraLeftMargin:   40.0,    // how far from leftLimit (Z min) the camera is kept
-  cameraRightMargin:  40.0,    // how far from rightLimit (Z max) the camera is kept
+  cameraLeftMargin:   55.0,    // how far from leftLimit (Z min) the camera is kept
+  cameraRightMargin:  45.0,    // how far from rightLimit (Z max) the camera is kept
   cameraXBounds: [-300, 300], // x soft bounds; shoreLevel still acts as hard min
 
   /** Mouse-driven camera motion (x = shore↔deep, y = up↔down) */
@@ -326,7 +326,7 @@ const DEFAULT_PARAMS = {
   /** Base model scale and tiling (floor/walls GLB) */
   overrideScale: 129.36780721031408, // explicit scale; if null, scale to modelLongestTarget
   modelLongestTarget: 129.368,
-  tiling: { countEachSide: 5, gap: -20.0 },
+  tiling: { countEachSide: 1, gap: -20.0 },
 
   /** Fish baseline behavior (species modify around these) */
   fish: {
@@ -344,7 +344,7 @@ const DEFAULT_PARAMS = {
   fishPositionBias: {
     meansX: { near: 0.15,  mid: 0.50, deep: 0.85 },
     sigmaX: { near: 0.20,  mid: 0.20, deep: 0.20 }, // set >0 later (e.g., 0.10)
-    meansY: { surface: 0.90, midwater: 0.50, bottom: 0.05 },
+    meansY: { surface: 0.80, midwater: 0.50, bottom: 0.08 },
     sigmaY: { surface: 0.10, midwater: 0.20, bottom: 0.05 }, // set >0 later (e.g., 0.12)
   },
 
@@ -385,7 +385,7 @@ const DEFAULT_PARAMS = {
       // percentages of card width/height
       species: { xPct: 0.08, yPct: 0.02, wPct: 0.55, hPct: 0.22 },
       numbers: { xPct: 0.72, yPct: 0.02, wPct: 0.22, hPct: 0.22 },
-      model:   { xPct: 0.04, yPct: 0.27, wPct: 0.95, hPct: 0.60 }
+      model:   { xPct: 0.04, yPct: 0.27, wPct: 0.95, hPct: 0.64 }
     },
     lineHeight: 1.02,   // used for 2-line height fit
     debugBoxes: false,
@@ -808,11 +808,13 @@ class Deck {
     this.container = document.createElement('div');
     this.container.id = 'deck-container';
     document.body.appendChild(this.container);
+    this.container.style.visibility = 'hidden';
 
     // fixed logo holder
     this.logoEl = document.createElement('img');
     this.logoEl.id = 'deck-logo';
     this.logoEl.src = this.cfg.assets.logo;
+    this.logoEl.style.visibility = 'hidden';
     document.body.appendChild(this.logoEl);
 
     // inject CSS once
@@ -1002,9 +1004,16 @@ class Deck {
     this._scrollTarget = this.currentIndex;
     this._scrollCurrent = this.currentIndex;
 
-    // start rendering loop for mini canvases (piggyback on update())
+    // Wait for fonts + base card image to be ready before showing anything
+    await this._waitForAssets();
+
+    // One more layout pass now that fonts/images are ready
     this.updateLayout();
-    this._updateColumn(true);
+
+    // Finally, reveal the UI; intro logic still controls opacity afterwards
+    this.container.style.visibility = 'visible';
+    this.logoEl.style.visibility = 'visible';
+    this.discoveryEl.style.visibility = 'visible';
   }
 
   // === public API ===
@@ -1577,6 +1586,16 @@ class Deck {
     document.head.appendChild(css);
   }
 
+  async _waitForAssets() {
+    const fontReady = (document.fonts && document.fonts.ready) ? document.fonts.ready.catch(()=>{}) : Promise.resolve();
+    // Base card image decode (more reliable than onload once already set)
+    const baseReady = (this._cardImg && this._cardImg.decode)
+      ? this._cardImg.decode().catch(()=>{})
+      : new Promise((res) => { if (this._cardImg?.complete) res(); else this._cardImg.onload = () => res(); });
+    await Promise.all([fontReady, baseReady]);
+  }
+
+
   _baseCanvasFilter(card, isSelected) {
     return isSelected ? (this.cfg.selectedGlowFilter || '') : 'none';
   }
@@ -1749,7 +1768,7 @@ export class RioScene extends BaseScene {
     
     // Load environment model (floor/walls)
     try {
-      const gltf = await AssetLoader.gltf('/game-assets/sub/sub_floor.glb');
+      const gltf = await AssetLoader.gltf('/game-assets/sub/environment_decimated.glb');
       this.model = gltf.scene || gltf.scenes?.[0];
       if (this.model) {
         // Optional: set mesh flags
@@ -1839,7 +1858,7 @@ export class RioScene extends BaseScene {
 
 
     this.camera.near = 0.1;
-    this.camera.far  = 70;   // try 80–150; lower = faster
+    this.camera.far  = 90;   // try 80–150; lower = faster
     this.camera.updateProjectionMatrix();
 
     // Build tiling & water after model is in the scene
@@ -1866,6 +1885,13 @@ export class RioScene extends BaseScene {
     if (this.params.debug.deck) {
       this.deck = new Deck(SPECIES, this.speciesObjs, this.params.deckUI);
       await this.deck.build();
+
+      this._onDeckWheel = (e) => {
+        e.preventDefault();                // stop page scroll
+        if (this.deck) this.deck.onWheel(e.deltaY);
+      };
+      this.deck.container.addEventListener('wheel', this._onDeckWheel, { passive: false });
+
       // hide the deck during intro
       this.deck.container.style.opacity = 0;
       this.deck.container.style.pointerEvents = 'none';
@@ -1983,6 +2009,10 @@ export class RioScene extends BaseScene {
       if (this.sounds[key] && this.sounds[key].isPlaying) {
         this.sounds[key].stop();
       }
+    }
+
+    if (this.deck && this._onDeckWheel) {
+      this.deck.container.removeEventListener('wheel', this._onDeckWheel);
     }
 
     this.app.canvas.removeEventListener('mousemove', this._onMouseMove);
