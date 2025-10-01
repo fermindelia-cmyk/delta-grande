@@ -323,6 +323,32 @@ const DEFAULT_PARAMS = {
   fogNear: 1.0,   // distance where fog starts (no hidden derivation)
   fogFar:  50.0,  // distance where fog fully obscures
 
+  /** Above-water fog */
+  aboveFog: {
+    enabled: true,
+    color: 0xB7BEC6,       // soft gray/blue
+    useExp2: false,        // true => FogExp2(density), false => Fog(near,far)
+    near: 20.0,
+    far: 140.0,
+    density: 0.015,        // only used if useExp2=true
+    surfaceHysteresis: 0.03 // reduce flicker at the surface (meters)
+  },
+
+  /** Lightweight “steam” / mist patches just above the water */
+  mist: {
+    enabled: true,
+    color: 0xC9CED6,
+    opacity: 0.55,         // 0..1
+    height: 0.25,          // meters above surface
+    count: 60,             // number of patches
+    sizeRange: [8, 18],    // meters (min, max) per patch
+    windDirDeg: 15,        // world wind heading (deg, 0 = +X)
+    windSpeed: 0.35,       // meters/sec
+    jitterAmp: 0.5,        // small local bobbing in meters
+    jitterFreqRange: [0.05, 0.12]  // Hz per patch (min,max)
+  },
+
+
   /** Base model scale and tiling (floor/walls GLB) */
   overrideScale: 129.36780721031408, // explicit scale; if null, scale to modelLongestTarget
   modelLongestTarget: 129.368,
@@ -1740,6 +1766,11 @@ export class RioScene extends BaseScene {
     this.vegGroup.name = 'vegetation-group';
     this.scene.add(this.vegGroup);
 
+    // Fog & mist state
+    this._fogUnderPrev = undefined; // for hysteresis at the surface
+    this.mistGroup = null;
+    this._mist = null;
+
     // Keep instances by category for updates/cleanup
     this.vegetation = {
       floor: [],   // { mesh }
@@ -1886,6 +1917,11 @@ export class RioScene extends BaseScene {
       this.scene.updateMatrixWorld(true);
       if (this.params.debug.tiles) this.rebuildTiles();
       if (this.params.debug.water) this.buildOrUpdateWaterSurface();
+    }
+
+    // --- Mist layer (cheap steam above water) ---
+    if (this.params.mist?.enabled) {
+      this.buildMistLayer();
     }
 
     // Initialize explicit swimBox using the world parameters directly
@@ -2084,6 +2120,7 @@ export class RioScene extends BaseScene {
     this.app.canvas.removeEventListener('wheel', this._onWheel);
     if (this.deck) this.deck.destroy();
     this.disposeVegetation();
+    this.disposeMistLayer();
     this._destroyRuler();
     this._destroyIntroOverlay();
     this._destroyAudioGateOverlay();
@@ -2184,20 +2221,51 @@ export class RioScene extends BaseScene {
   }
 
   updateFog() {
-    // Fog is enabled only when camera is below the explicit surfaceLevel.
-    const isUnder = (this.camera.position.y < this.params.surfaceLevel);
+    const { surfaceLevel, waterColor, fogNear, fogFar, aboveFog } = this.params;
+    const y = this.camera.position.y;
+
+    // Hysteresis to avoid flicker at the crossing:
+    const eps = aboveFog?.surfaceHysteresis ?? 0.0;
+    let isUnder;
+    if (this._fogUnderPrev === true)  isUnder = (y < surfaceLevel + eps);
+    else if (this._fogUnderPrev === false) isUnder = (y < surfaceLevel - eps);
+    else isUnder = (y < surfaceLevel);
+
+    // UNDERWATER: use your existing water-colored fog
     if (isUnder) {
-      if (!this.scene.fog) {
-        this.scene.fog = new THREE.Fog(this.params.waterColor, this.params.fogNear, this.params.fogFar);
-      } else {
-        this.scene.fog.color.set(this.params.waterColor);
-        this.scene.fog.near = this.params.fogNear;
-        this.scene.fog.far  = this.params.fogFar;
+      if (!this.scene.fog) this.scene.fog = new THREE.Fog(waterColor, fogNear, fogFar);
+      else {
+        this.scene.fog.color.set(waterColor);
+        this.scene.fog.near = fogNear;
+        this.scene.fog.far  = fogFar;
       }
     } else {
-      this.scene.fog = null;
+      // ABOVE WATER: gray-ish fog with independent params
+      if (aboveFog?.enabled) {
+        if (aboveFog.useExp2) {
+          if (!(this.scene.fog instanceof THREE.FogExp2)) {
+            this.scene.fog = new THREE.FogExp2(aboveFog.color, aboveFog.density ?? 0.01);
+          } else {
+            this.scene.fog.color.set(aboveFog.color);
+            this.scene.fog.density = aboveFog.density ?? 0.01;
+          }
+        } else {
+          if (!(this.scene.fog instanceof THREE.Fog)) {
+            this.scene.fog = new THREE.Fog(aboveFog.color, aboveFog.near ?? 10, aboveFog.far ?? 120);
+          } else {
+            this.scene.fog.color.set(aboveFog.color);
+            this.scene.fog.near = aboveFog.near ?? 10;
+            this.scene.fog.far  = aboveFog.far ?? 120;
+          }
+        }
+      } else {
+        this.scene.fog = null;
+      }
     }
+
+    this._fogUnderPrev = isUnder;
   }
+
 
   _createIntroOverlay() {
     const P = this.params.intro;
@@ -2554,6 +2622,168 @@ export class RioScene extends BaseScene {
   }
 
 
+  buildMistLayer() {
+    const M = this.params.mist;
+    const group = new THREE.Group();
+    group.name = 'mist-group';
+    this.scene.add(group);
+    this.mistGroup = group;
+
+    // Simple soft-circle alpha texture (procedural)
+    const tex = this._makeSoftCircleTexture(256);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+
+    // Shared material
+    const mat = new THREE.MeshBasicMaterial({
+      map: tex,
+      color: new THREE.Color(M.color ?? 0xC9CED6),
+      transparent: true,
+      opacity: M.opacity ?? 0.55,
+      depthWrite: false,
+      depthTest: true,
+      blending: THREE.NormalBlending
+    });
+
+    // Geometry: flat, horizontal quads (face upward)
+    const geo = new THREE.PlaneGeometry(1, 1);
+
+    // Make patches
+    const puffs = [];
+    const [minS, maxS] = M.sizeRange ?? [8, 18];
+
+    // Align to current swim area
+    const minX = this.swimBox.min.x, maxX = this.swimBox.max.x;
+    const minZ = this.swimBox.min.z, maxZ = this.swimBox.max.z;
+
+    for (let i = 0; i < (M.count ?? 60); i++) {
+      const s = THREE.MathUtils.lerp(minS, maxS, Math.random());
+      const m = new THREE.Mesh(geo, mat);
+      m.rotation.x = -Math.PI / 2; // horizontal “sheet”
+      m.scale.set(s, s, 1);
+
+      // random position in current swim box
+      const x = THREE.MathUtils.lerp(minX, maxX, Math.random());
+      const z = THREE.MathUtils.lerp(minZ, maxZ, Math.random());
+      const y = this.params.surfaceLevel + (M.height ?? 0.25);
+      m.position.set(x, y, z);
+
+      // per-puff jitter phase/frequency
+      const f0 = (M.jitterFreqRange?.[0] ?? 0.05);
+      const f1 = (M.jitterFreqRange?.[1] ?? 0.12);
+      puffs.push({
+        mesh: m,
+        phase: Math.random() * Math.PI * 2,
+        freq: THREE.MathUtils.lerp(f0, f1, Math.random()),
+        baseY: y
+      });
+
+      group.add(m);
+    }
+
+    // Cache anim data
+    const dirRad = THREE.MathUtils.degToRad(M.windDirDeg ?? 0);
+    this._mist = {
+      mat, geo, tex,
+      puffs,
+      dir: new THREE.Vector3(Math.cos(dirRad), 0, Math.sin(dirRad)),
+      speed: M.windSpeed ?? 0.35
+    };
+
+    // Initial visibility: only when camera is above the surface
+    group.visible = (this.camera.position.y >= this.params.surfaceLevel);
+  }
+
+  updateMistLayer(dt) {
+    if (!this._mist) return;
+
+    // Toggle visibility with the same hysteresis used for fog to avoid flicker
+    const eps = this.params.aboveFog?.surfaceHysteresis ?? 0.0;
+    const y = this.camera.position.y;
+    const isAbove = (this._fogUnderPrev === true) ? (y >= this.params.surfaceLevel + eps)
+                   : (this._fogUnderPrev === false) ? (y >= this.params.surfaceLevel - eps)
+                   : (y >= this.params.surfaceLevel);
+
+    this.mistGroup.visible = isAbove;
+    if (!isAbove) return;
+
+    // Keep height glued to current surface, drift with “wind”, bob with jitter,
+    // and wrap inside the current swim box so it’s stable as camera X clamps.
+    const minX = this.swimBox.min.x, maxX = this.swimBox.max.x;
+    const minZ = this.swimBox.min.z, maxZ = this.swimBox.max.z;
+
+    const M = this.params.mist;
+    const speed = this._mist.speed;
+    const dir = this._mist.dir;
+    for (const p of this._mist.puffs) {
+      // drift
+      p.mesh.position.addScaledVector(dir, speed * dt);
+
+      // wrap X
+      if (p.mesh.position.x < minX) p.mesh.position.x = maxX;
+      if (p.mesh.position.x > maxX) p.mesh.position.x = minX;
+      // wrap Z
+      if (p.mesh.position.z < minZ) p.mesh.position.z = maxZ;
+      if (p.mesh.position.z > maxZ) p.mesh.position.z = minZ;
+
+      // keep hovering just above the (possibly changing) surface
+      const base = this.params.surfaceLevel + (M.height ?? 0.25);
+      p.phase += p.freq * dt * Math.PI * 2;
+      const bob = (M.jitterAmp ?? 0.5) * Math.sin(p.phase);
+      p.mesh.position.y = base + bob;
+    }
+
+    // Allow live color/opacity tweaks from params:
+    const mat = this._mist.mat;
+    mat.color.set(M.color ?? 0xC9CED6);
+    mat.opacity = M.opacity ?? 0.55;
+  }
+
+  resizeMistLayer() {
+    // nothing special is required; we keep wrapping inside swimBox each frame.
+    // this hook is here in case you later want to rebuild counts on resize.
+  }
+
+  disposeMistLayer() {
+    if (!this.mistGroup) return;
+    this.scene.remove(this.mistGroup);
+    this.mistGroup.traverse(n => {
+      if (n.isMesh) {
+        n.geometry?.dispose?.();
+        if (Array.isArray(n.material)) n.material.forEach(m => m?.map?.dispose?.(), m?.dispose?.());
+        else {
+          n.material?.map?.dispose?.();
+          n.material?.dispose?.();
+        }
+      }
+    });
+    this.mistGroup = null;
+    this._mist = null;
+  }
+
+  // Simple procedural soft-disc texture (alpha falloff)
+  _makeSoftCircleTexture(size = 256) {
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    const g = c.getContext('2d');
+
+    // radial gradient from center -> edges
+    const grad = g.createRadialGradient(size/2, size/2, size*0.1, size/2, size/2, size*0.5);
+    grad.addColorStop(0.0, 'rgba(255,255,255,0.9)');
+    grad.addColorStop(0.5, 'rgba(255,255,255,0.35)');
+    grad.addColorStop(1.0, 'rgba(255,255,255,0.0)');
+
+    g.fillStyle = grad;
+    g.fillRect(0, 0, size, size);
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.minFilter = THREE.LinearMipMapLinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    tex.anisotropy = 4;
+    return tex;
+  }
+
+
+
   /* ----------------------------------- SwimBox ----------------------------------- */
 
   /**
@@ -2881,6 +3111,10 @@ export class RioScene extends BaseScene {
 
     // Update fog with explicit rules
     if (this.params.debug.fog) this.updateFog(); else this.scene.fog = null;
+
+    if (this.mistGroup && this.params.mist?.enabled) {
+      this.updateMistLayer(dt);
+    }
     
     // Update the deck UI
     if (this.deck && this.params.debug.deckRender) this.deck.update(dt);
@@ -3167,6 +3401,10 @@ export class RioScene extends BaseScene {
       this.updateSwimBoxDynamic();
     }
     if (this.deck) this.deck.updateLayout(); // keep card sizes/aspect on resize
+
+    if (this.mistGroup && this.params.mist?.enabled) {
+      this.resizeMistLayer();
+    }
 
     if (this.params.rulerUI?.enabled) {
       this._updateRulerLayout();
