@@ -328,8 +328,8 @@ const DEFAULT_PARAMS = {
     enabled: true,
     color: 0xB7BEC6,       // soft gray/blue
     useExp2: false,        // true => FogExp2(density), false => Fog(near,far)
-    near: 20.0,
-    far: 140.0,
+    near: 10.0,
+    far: 80.0,
     density: 0.015,        // only used if useExp2=true
     surfaceHysteresis: 0.03 // reduce flicker at the surface (meters)
   },
@@ -339,12 +339,14 @@ const DEFAULT_PARAMS = {
     enabled: true,
     color: 0xC9CED6,
     opacity: 0.55,         // 0..1
-    height: 0.25,          // meters above surface
+    height: 0.15,          // meters above surface
     count: 60,             // number of patches
     sizeRange: [8, 18],    // meters (min, max) per patch
     windDirDeg: 15,        // world wind heading (deg, 0 = +X)
-    windSpeed: 0.35,       // meters/sec
+    windSpeed: 0.05,       // meters/sec
     jitterAmp: 0.5,        // small local bobbing in meters
+    underwaterOpacity: 0.0,
+    fadeSec: 0.25,
     jitterFreqRange: [0.05, 0.12]  // Hz per patch (min,max)
   },
 
@@ -393,7 +395,7 @@ const DEFAULT_PARAMS = {
     bottomMarginVh:0.10,   // 10% of viewport height
     verticalOverlapPct: 0.10,   // 10% of a card covered by the next one
     centerOpacity: 1.0,
-    edgeOpacity: 0.1,           // opacity at farthest visible cards
+    edgeOpacity: 0.3,           // opacity at farthest visible cards
     opacityFalloffExp: 1.35,    // how fast opacity falls with distance
     scrollDamping: 0.25,        // 0..1, higher = snappier
     snapAfterWheelMs: 160,      // debounce before snapping to nearest
@@ -466,6 +468,28 @@ const DEFAULT_PARAMS = {
     // z-order: should be behind deck (deck is ~9997)
     zIndex: 9995,
     opacity: 0.5
+  },
+
+  /* === ADD: timer UI and cursor UI params (after rulerUI) === */
+  /** Timer overlay (bottom-right by right/bottom margins) */
+  timerUI: {
+    src: '/game-assets/sub/interfaz/timer.png',
+    xMarginVw: 0.10,   // right margin as fraction of viewport width
+    yMarginVh: 0.055,   // bottom margin as fraction of viewport height
+    widthVw:   0.12,   // timer image width as fraction of viewport width
+    zIndex:    9996,
+    textColor: '#FFD400', // bright yellow (matches glow)
+    // font: reuse deckUI font so we keep New Science Mono Bold everywhere
+    fontFamily: `"new-science-mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace`,
+    textScale: 0.95
+  },
+
+  /** Cursor overlay */
+  cursorUI: {
+    src: '/game-assets/sub/interfaz/cursor.png',
+    scale: 0.15,     // overall scale around the pointer
+    zIndex: 100000, // above everything
+    enabled: true
   },
 
 
@@ -1198,7 +1222,7 @@ class Deck {
       right: `${right}px`,
       width: `${logoW}px`,
       height: 'auto',
-      zIndex: 9996
+      zIndex: String(this.cfg.logoZIndex ?? 10000),
     });
 
     // compute vertical position:
@@ -1751,6 +1775,20 @@ export class RioScene extends BaseScene {
     // Deck UI
     this.deck = null;
 
+        /* === ADD: timer & cursor state === */
+    this.timer = {
+      el: null,        // wrapper
+      imgEl: null,     // <img> background
+      textEl: null,    // <div> numbers
+      natW: 0,         // natural image width
+      natH: 0,         // natural image height
+      running: false,
+      t0: 0            // start time (seconds, perf.now based)
+    };
+
+    this.cursorEl = null;
+
+
     // Spatial hash + throttled steering
     this._hash = new SpatialHash(3.0); // will be reset to separationRadius later
     this._sepAccum = 0;
@@ -1808,10 +1846,32 @@ export class RioScene extends BaseScene {
   /* --------------------------------- Lifecycle --------------------------------- */
 
   async mount() {
+    this._createLoadingOverlay();
+    if (this.app?.canvas) this.app.canvas.style.visibility = 'hidden';
+
     // Background + lights
-    this.scene.background = new THREE.Color(this.params.skyColor);
     const hemi = new THREE.HemisphereLight(0xFFD1A6, 0x4A2F1B, 1.5);
     const dir = new THREE.DirectionalLight(0xFF9E5E, 1.2);
+
+    // Let the dome be the background
+    this.scene.background = null;
+
+    // --- Sky Dome that fogs ---
+    const skyRadius = Math.max(10, this.camera.far * 0.9); // inside frustum
+    const skyGeo = new THREE.SphereGeometry(skyRadius, 32, 16);
+    const skyMat = new THREE.MeshBasicMaterial({
+      color: this.params.skyColor,   // reuse your param (e.g. 0xF6B26B)
+      side: THREE.BackSide,
+      fog: true,                     // <- MUST be true to receive scene.fog
+      depthWrite: false              // don't pollute depth
+    });
+    this.skyDome = new THREE.Mesh(skyGeo, skyMat);
+    // Keep it always considered (we’ll move it with the camera anyway)
+    this.skyDome.frustumCulled = false;
+    this.scene.add(this.skyDome);
+
+
+
     dir.position.set(8, 12, 6);
     dir.castShadow = false;
     this.scene.add(hemi, dir);
@@ -1983,6 +2043,17 @@ export class RioScene extends BaseScene {
         window.addEventListener('resize', this._onRulerResize, { passive: true });
       }
 
+      /* === ADD: Timer Overlay (DOM) === */
+      if (this.params.timerUI) {
+        this._createTimerOverlay();   // builds DOM and preloads image
+      }
+
+      /* === ADD: Cursor Overlay (DOM) === */
+      if (this.params.cursorUI?.enabled) {
+        this._createCursorOverlay();
+      }
+
+
 
       this._onDeckWheel = (e) => {
         e.preventDefault();                // stop page scroll
@@ -2080,6 +2151,10 @@ export class RioScene extends BaseScene {
     this.audioState.eqUnderPrev  = undefined;
 
     // === Todo cargado: cambiar overlay a texto real y arrancar intro + audio ===
+    if (this.app?.canvas) this.app.canvas.style.visibility = 'visible';
+    this._hideLoadingOverlay();
+
+
     if (this.params.intro?.enabled) {
       // Texto final de intro
       const P = this.params.intro;
@@ -2098,6 +2173,10 @@ export class RioScene extends BaseScene {
     // Poner el filtro/vol acorde a la posición actual
     this._updateAmbient(true); // arranca el loop correcto (arriba/abajo) con offsets adecuados
     this._updateAudio(0);      // fija EQ/vol iniciales
+
+    if (!this.params.intro?.enabled) {
+      this._startTimer();
+    }
 
   }
 
@@ -2124,6 +2203,8 @@ export class RioScene extends BaseScene {
     this._destroyRuler();
     this._destroyIntroOverlay();
     this._destroyAudioGateOverlay();
+    this._destroyTimerOverlay();
+    this._destroyCursorOverlay();
   }
 
   /* ------------------------------- Model helpers ------------------------------- */
@@ -2400,6 +2481,220 @@ export class RioScene extends BaseScene {
     this.ruler = null;
   }
 
+    /* ========================= Timer Overlay (DOM) ========================= */
+
+  _createTimerOverlay() {
+    if (this.timer?.el) return;
+    const T = this.params.timerUI;
+
+    // Wrapper
+    const wrap = document.createElement('div');
+    wrap.id = 'rio-timer-wrap';
+    Object.assign(wrap.style, {
+      position: 'fixed',
+      right: '0px',
+      bottom: '0px',
+      width: '0px',
+      height: 'auto',
+      pointerEvents: 'none',
+      zIndex: String(T.zIndex ?? 9996),
+      visibility: 'hidden'
+    });
+
+    // Background image
+    const img = document.createElement('img');
+    img.id = 'rio-timer-img';
+    img.src = T.src;
+    Object.assign(img.style, {
+      display: 'block',
+      width: '100%',
+      height: 'auto',
+      pointerEvents: 'none'
+    });
+    wrap.appendChild(img);
+
+    // Numbers overlay
+    const txt = document.createElement('div');
+    txt.id = 'rio-timer-text';
+    Object.assign(txt.style, {
+      position: 'absolute',
+      left: '0', top: '0', right: '0', bottom: '0',
+      display: 'grid',
+      placeItems: 'center',
+      color: T.textColor || '#FFD400',
+      fontFamily: T.fontFamily || this.params.deckUI?.fonts?.family || 'monospace',
+      fontWeight: '800',
+      lineHeight: '1',
+      letterSpacing: '0',
+      whiteSpace: 'nowrap',
+      userSelect: 'none',
+      WebkitUserSelect: 'none',
+      msUserSelect: 'none',
+      pointerEvents: 'none',
+      textShadow: '0 2px 8px rgba(0,0,0,0.55)'
+    });
+    txt.textContent = '00:00:00:00';
+    wrap.appendChild(txt);
+
+    document.body.appendChild(wrap);
+    this.timer.el = wrap;
+    this.timer.imgEl = img;
+    this.timer.textEl = txt;
+
+    // Preload natural size then layout
+    const probe = new Image();
+    probe.onload = () => {
+      this.timer.natW = probe.naturalWidth || 1;
+      this.timer.natH = probe.naturalHeight || 1;
+      this._updateTimerLayout();
+      wrap.style.visibility = 'visible';
+    };
+    probe.src = T.src;
+
+    // Resize binding
+    this._onTimerResize = () => this._updateTimerLayout();
+    window.addEventListener('resize', this._onTimerResize, { passive: true });
+  }
+
+  _destroyTimerOverlay() {
+    if (this._onTimerResize) {
+      window.removeEventListener('resize', this._onTimerResize);
+      this._onTimerResize = null;
+    }
+    if (this.timer?.el && this.timer.el.parentNode) {
+      this.timer.el.parentNode.removeChild(this.timer.el);
+    }
+    this.timer.el = this.timer.imgEl = this.timer.textEl = null;
+  }
+
+  _updateTimerLayout() {
+    if (!this.timer?.el || !this.params.timerUI) return;
+    const T = this.params.timerUI;
+
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    // Dimensiones del timer.png con AR preservado
+    const dispW = Math.max(1, Math.round((T.widthVw ?? 0.18) * vw));
+    const aspect = (this.timer.natW > 0 && this.timer.natH > 0)
+      ? (this.timer.natW / this.timer.natH)
+      : (3 / 2);
+    const dispH = Math.max(1, Math.round(dispW / aspect));
+
+    // Colocación por márgenes (abajo-derecha)
+    const rightPx  = Math.round((T.xMarginVw ?? 0.02) * vw);
+    const bottomPx = Math.round((T.yMarginVh ?? 0.04) * vh);
+    Object.assign(this.timer.el.style, {
+      right: `${rightPx}px`,
+      bottom: `${bottomPx}px`,
+      width: `${dispW}px`,
+      height: `${dispH}px`,
+      boxSizing: 'border-box'
+    });
+
+    // Texto: ocupar TODO el ancho/alto y luego aplicar escala multiplicativa
+    const targetW = dispW;
+    const targetH = dispH;
+    const el = this.timer.textEl;
+
+    el.style.whiteSpace = 'nowrap';
+    el.style.lineHeight = '1';
+    el.style.transform = 'none';
+    el.style.width = 'auto';
+    el.style.height = 'auto';
+
+    const sample = '00:00:00:00';
+    el.textContent = sample;
+
+    // Búsqueda binaria del font-size máximo que entra en targetW x targetH
+    let lo = 4;
+    let hi = targetH; // no puede exceder el alto de la caja
+    let best = lo;
+
+    while (lo <= hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      el.style.fontSize = `${mid}px`;
+
+      // Medición del contenido real
+      const w = el.scrollWidth;
+      const h = el.scrollHeight;
+
+      if (w <= targetW && h <= targetH) {
+        best = mid;
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
+      }
+    }
+
+    // Aplicar escala multiplicativa sobre el máximo encontrado
+    const scale = Number.isFinite(T.textScale) ? T.textScale : 1.0;
+    // Si scale > 1 podría pasarse; clamp al máximo que entra
+    const finalSize = Math.floor(Math.min(best, best * Math.max(0.01, scale)));
+    el.style.fontSize = `${finalSize}px`;
+    // Centrado ya lo hace el grid del contenedor; no necesitamos transforms extra
+  }
+
+
+
+  _startTimer() {
+    this.timer.t0 = performance.now() * 0.001;
+    this.timer.running = true;
+    this._updateTimerText(); // immediate paint
+  }
+
+  _stopTimer() {
+    this.timer.running = false;
+  }
+
+  _updateTimerText() {
+    if (!this.timer?.running || !this.timer?.textEl) return;
+    const t = Math.max(0, performance.now() * 0.001 - (this.timer.t0 || 0));
+
+    const hours = Math.floor(t / 3600);
+    const mins  = Math.floor((t % 3600) / 60);
+    const secs  = Math.floor(t % 60);
+    const cs    = Math.floor((t * 100) % 100); // centiseconds
+
+    const pad2 = (n) => String(n).padStart(2, '0');
+
+    // Format HH:MM:SS:CC
+    const text = `${pad2(hours)}:${pad2(mins)}:${pad2(secs)}:${pad2(cs)}`;
+    this.timer.textEl.textContent = text;
+  }
+
+  /* ========================= Cursor Overlay (DOM) ========================= */
+
+  _createCursorOverlay() {
+    if (this.cursorEl) return;
+    const C = this.params.cursorUI;
+
+    const img = document.createElement('img');
+    img.id = 'rio-cursor';
+    img.src = C.src;
+    Object.assign(img.style, {
+      position: 'fixed',
+      left: '0px',
+      top: '0px',
+      transform: `translate(-50%, -50%) scale(${C.scale ?? 1.0})`,
+      transformOrigin: '50% 50%',
+      pointerEvents: 'none',
+      zIndex: String(C.zIndex ?? 100000),
+      userSelect: 'none',
+      WebkitUserSelect: 'none',
+      msUserSelect: 'none'
+    });
+    document.body.appendChild(img);
+    this.cursorEl = img;
+  }
+
+  _destroyCursorOverlay() {
+    if (this.cursorEl && this.cursorEl.parentNode) {
+      this.cursorEl.parentNode.removeChild(this.cursorEl);
+    }
+    this.cursorEl = null;
+  }
+
 
   /* -------------------------------- Vegetation -------------------------------- */
 
@@ -2621,6 +2916,89 @@ export class RioScene extends BaseScene {
     return new THREE.Vector3(x, 0, z);
   }
 
+  // --- Loading overlay (black screen with spinning logo) ---
+  _createLoadingOverlay() {
+    // Already created?
+    if (this._loadingEl) return;
+
+    const styleId = '__rio_loading_css';
+    if (!document.getElementById(styleId)) {
+      const css = document.createElement('style');
+      css.id = styleId;
+      css.textContent = `
+        /* full-screen blackout */
+        #rio-loading-overlay {
+          position: fixed; inset: 0;
+          background: #000;
+          display: flex; flex-direction: column;
+          align-items: center; justify-content: center;
+          z-index: 100000; /* above everything */
+          color: #fff;
+          font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+          user-select: none; -webkit-user-select: none; -ms-user-select: none;
+        }
+        #rio-loading-logo {
+          width: min(42vmin, 320px);
+          height: auto;
+          transform-style: preserve-3d;
+          /* give some depth so Y-rotation reads as 3D */
+          perspective: 800px;
+          /* slow -> fast -> slow, returns to same orientation each loop */
+          animation: rio-spin-y 2.4s ease-in-out infinite;
+          margin-bottom: 18px;
+          filter: drop-shadow(0 10px 30px rgba(255,212,0,0.18));
+        }
+        #rio-loading-text {
+          font-weight: 700;
+          font-size: clamp(18px, 3.2vmin, 28px);
+          letter-spacing: .02em;
+        }
+        @keyframes rio-spin-y {
+          from { transform: rotateY(0deg); }
+          to   { transform: rotateY(360deg); }
+        }
+        /* optional: fade-out when done */
+        .rio-loading-fade {
+          transition: opacity .35s ease;
+        }
+      `;
+      document.head.appendChild(css);
+    }
+
+    const wrap = document.createElement('div');
+    wrap.id = 'rio-loading-overlay';
+    wrap.className = 'rio-loading-fade';
+
+    const img = document.createElement('img');
+    img.id = 'rio-loading-logo';
+    // reuse the same logo you already load for the deck
+    img.src = (this.params?.deckUI?.assets?.logo) || '/game-assets/sub/interfaz/logo.png';
+    img.alt = 'Logo';
+
+    const txt = document.createElement('div');
+    txt.id = 'rio-loading-text';
+    txt.textContent = 'Cargando';
+
+    wrap.appendChild(img);
+    wrap.appendChild(txt);
+    document.body.appendChild(wrap);
+
+    this._loadingEl = wrap;
+  }
+
+  _hideLoadingOverlay() {
+    if (!this._loadingEl) return;
+    // nice fade-out, then remove node
+    requestAnimationFrame(() => {
+      this._loadingEl.style.opacity = '0';
+      setTimeout(() => {
+        this._loadingEl?.parentNode?.removeChild(this._loadingEl);
+        this._loadingEl = null;
+      }, 380);
+    });
+  }
+
+
 
   buildMistLayer() {
     const M = this.params.mist;
@@ -2641,7 +3019,8 @@ export class RioScene extends BaseScene {
       opacity: M.opacity ?? 0.55,
       depthWrite: false,
       depthTest: true,
-      blending: THREE.NormalBlending
+      blending: THREE.NormalBlending,
+      side: THREE.DoubleSide        // <— see from above *and* below
     });
 
     // Geometry: flat, horizontal quads (face upward)
@@ -2658,6 +3037,7 @@ export class RioScene extends BaseScene {
     for (let i = 0; i < (M.count ?? 60); i++) {
       const s = THREE.MathUtils.lerp(minS, maxS, Math.random());
       const m = new THREE.Mesh(geo, mat);
+      m.frustumCulled = false;
       m.rotation.x = -Math.PI / 2; // horizontal “sheet”
       m.scale.set(s, s, 1);
 
@@ -2696,47 +3076,60 @@ export class RioScene extends BaseScene {
   updateMistLayer(dt) {
     if (!this._mist) return;
 
-    // Toggle visibility with the same hysteresis used for fog to avoid flicker
-    const eps = this.params.aboveFog?.surfaceHysteresis ?? 0.0;
-    const y = this.camera.position.y;
-    const isAbove = (this._fogUnderPrev === true) ? (y >= this.params.surfaceLevel + eps)
-                   : (this._fogUnderPrev === false) ? (y >= this.params.surfaceLevel - eps)
-                   : (y >= this.params.surfaceLevel);
+    const mist = this.params.mist; // <-- single binding, no redeclare
+    const eps  = this.params.aboveFog?.surfaceHysteresis ?? 0.0;
+    const y    = this.camera.position.y;
 
-    this.mistGroup.visible = isAbove;
-    if (!isAbove) return;
+    // Determine above/below with hysteresis consistent with fog
+    const isAbove = (this._fogUnderPrev === true)
+      ? (y >= this.params.surfaceLevel + eps)
+      : (this._fogUnderPrev === false)
+        ? (y >= this.params.surfaceLevel - eps)
+        : (y >= this.params.surfaceLevel);
 
-    // Keep height glued to current surface, drift with “wind”, bob with jitter,
-    // and wrap inside the current swim box so it’s stable as camera X clamps.
-    const minX = this.swimBox.min.x, maxX = this.swimBox.max.x;
-    const minZ = this.swimBox.min.z, maxZ = this.swimBox.max.z;
+    // Target opacity depending on side of surface
+    const targetOpacity = isAbove ? (mist.opacity ?? 0.55)
+                                  : (mist.underwaterOpacity ?? 0.0);
 
-    const M = this.params.mist;
-    const speed = this._mist.speed;
-    const dir = this._mist.dir;
+    // Smoothly approach target (exponential ease)
+    const fade = Math.max(0.001, mist.fadeSec ?? 0.25);
+    const k    = 1 - Math.exp(-dt / fade);
+    this._mist.mat.opacity = THREE.MathUtils.lerp(this._mist.mat.opacity, targetOpacity, k);
+
+    // Keep color live-updatable
+    this._mist.mat.color.set(mist.color ?? 0xC9CED6);
+
+    // Drift / bob
+    const speed = (mist.windSpeed ?? this._mist.speed); // live-updatable
+    const dir   = this._mist.dir;
+
+    // Camera-relative torus wrap to avoid visible edge pops
+    const cam   = this.camera.position;
+    const spanX = Math.max(0.001, this.swimBox.max.x - this.swimBox.min.x);
+    const spanZ = Math.max(0.001, this.swimBox.max.z - this.swimBox.min.z);
+
     for (const p of this._mist.puffs) {
-      // drift
+      // Drift with wind
       p.mesh.position.addScaledVector(dir, speed * dt);
 
-      // wrap X
-      if (p.mesh.position.x < minX) p.mesh.position.x = maxX;
-      if (p.mesh.position.x > maxX) p.mesh.position.x = minX;
-      // wrap Z
-      if (p.mesh.position.z < minZ) p.mesh.position.z = maxZ;
-      if (p.mesh.position.z > maxZ) p.mesh.position.z = minZ;
+      // Wrap X around camera
+      let dx = p.mesh.position.x - cam.x;
+      while (dx >  spanX * 0.5) { p.mesh.position.x -= spanX; dx -= spanX; }
+      while (dx < -spanX * 0.5) { p.mesh.position.x += spanX; dx += spanX; }
 
-      // keep hovering just above the (possibly changing) surface
-      const base = this.params.surfaceLevel + (M.height ?? 0.25);
+      // Wrap Z around camera
+      let dz = p.mesh.position.z - cam.z;
+      while (dz >  spanZ * 0.5) { p.mesh.position.z -= spanZ; dz -= spanZ; }
+      while (dz < -spanZ * 0.5) { p.mesh.position.z += spanZ; dz += spanZ; }
+
+      // Hover near the (possibly changing) surface with gentle bobbing
       p.phase += p.freq * dt * Math.PI * 2;
-      const bob = (M.jitterAmp ?? 0.5) * Math.sin(p.phase);
-      p.mesh.position.y = base + bob;
+      const baseY = this.params.surfaceLevel + (mist.height ?? 0.25);
+      const bob   = (mist.jitterAmp ?? 0.5) * Math.sin(p.phase);
+      p.mesh.position.y = baseY + bob;
     }
-
-    // Allow live color/opacity tweaks from params:
-    const mat = this._mist.mat;
-    mat.color.set(M.color ?? 0xC9CED6);
-    mat.opacity = M.opacity ?? 0.55;
   }
+
 
   resizeMistLayer() {
     // nothing special is required; we keep wrapping inside swimBox each frame.
@@ -2985,6 +3378,12 @@ export class RioScene extends BaseScene {
     const rect = this.app.canvas.getBoundingClientRect();
     this.mouseNDC.x = ((e.clientX - rect.left) / rect.width)  * 2 - 1;
     this.mouseNDC.y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+
+    if (this.cursorEl) {
+      // clientX/Y are viewport-based; we fix-position the image, so it's 1:1
+      this.cursorEl.style.left = `${e.clientX}px`;
+      this.cursorEl.style.top  = `${e.clientY}px`;
+    }
   }
 
   axis(a, deadzone, expo = 1) {
@@ -3047,6 +3446,7 @@ export class RioScene extends BaseScene {
           }
           this.controlsEnabled = true;
           this._destroyIntroOverlay();
+          this._startTimer();
         }
       }
 
@@ -3115,9 +3515,13 @@ export class RioScene extends BaseScene {
     if (this.mistGroup && this.params.mist?.enabled) {
       this.updateMistLayer(dt);
     }
+
+    if (this.skyDome) this.skyDome.position.copy(this.camera.position);
     
     // Update the deck UI
     if (this.deck && this.params.debug.deckRender) this.deck.update(dt);
+
+    this._updateTimerText();
 
     this._updateAudio(dt);
 
@@ -3410,6 +3814,17 @@ export class RioScene extends BaseScene {
       this._updateRulerLayout();
       this._updateRulerPosition();
     }
+
+    this._updateTimerLayout?.();
+
+    if (this.skyDome) {
+      const newR = Math.max(10, this.camera.far * 0.9);
+      // Rebuild geometry to match new radius
+      const old = this.skyDome.geometry;
+      this.skyDome.geometry = new THREE.SphereGeometry(newR, 32, 16);
+      old?.dispose?.();
+    }
+
   }
 
   _updateAudio(dt) {
