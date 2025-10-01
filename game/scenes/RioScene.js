@@ -260,7 +260,7 @@ const DEFAULT_PARAMS = {
   rightLimit:   60.0,    // z max for both camera and swimbox
 
   /** Camera constraints aligned to world limits */
-  cameraSurfaceMargin: 0.5,   // how much camera may go above surfaceLevel
+  cameraSurfaceMargin: 0.1,   // how much camera may go above surfaceLevel
   cameraFloorMargin:  4.0,    // how much camera must stay above floorLevel
   cameraLeftMargin:   55.0,    // how far from leftLimit (Z min) the camera is kept
   cameraRightMargin:  45.0,    // how far from rightLimit (Z max) the camera is kept
@@ -488,8 +488,33 @@ const DEFAULT_PARAMS = {
   cursorUI: {
     src: '/game-assets/sub/interfaz/cursor.png',
     scale: 0.15,     // overall scale around the pointer
-    zIndex: 100000, // above everything
-    enabled: true
+    zIndex: 100000,  // above everything
+    enabled: true,
+
+    // NEW: click animation sequence (filenames like: "D+pre CURSOR_click_00163.png", ...)
+    anim: {
+      dir: '/game-assets/sub/interfaz/cursor_animation',
+      prefix: 'D+pre CURSOR_click_',
+      pad: 5,              // zero-padding width in filenames (e.g., 00163)
+      startIndex: 163,     // <-- ajustá si tu primera imagen NO es 00163
+      maxFramesProbe: 1200 // tope de prueba por si hay huecos; param seguro
+    }
+  },
+
+  /** Radar overlay (plays on correct-catch) */
+  radarUI: {
+    enabled: true,
+    zIndex: 100001,
+    // scaling factor separate from cursor
+    scale: 0.22,
+    // sequence: "D+_subacuatico_pre RADAR_V1_00001.png", ...
+    anim: {
+      dir: '/game-assets/sub/interfaz/radar_animation',
+      prefix: 'D+_subacuatico_pre RADAR_V1_',
+      pad: 5,
+      startIndex: 1,
+      maxFramesProbe: 1200
+    }
   },
 
 
@@ -1747,6 +1772,10 @@ export class RioScene extends BaseScene {
     this.mouseNDC = new THREE.Vector2(0, 0);
     this.vel = new THREE.Vector2(0, 0);
     this.forward = new THREE.Vector3(0, 0, -1);
+
+    // --- Water-crossing memory ---
+    this._wasUnderwater = undefined;              // last frame's underwater state
+    this._lastUnderwaterX = this.params.start.x; // last X while underwater
     
     // Raycasting for fish clicks
     this.raycaster = new THREE.Raycaster();
@@ -1787,6 +1816,18 @@ export class RioScene extends BaseScene {
     };
 
     this.cursorEl = null;
+
+    this._cursorAnim = {
+      frames: [],      // Image[]
+      playing: false,
+      idx: 0,
+      x: 0,
+      y: 0
+    };
+
+
+    this._radars = []; // each: { frames, idx, x, y, el }
+
 
 
     // Spatial hash + throttled steering
@@ -2053,6 +2094,15 @@ export class RioScene extends BaseScene {
         this._createCursorOverlay();
       }
 
+      const C = this.params.cursorUI?.anim;
+      const R = this.params.radarUI?.anim;
+
+      if (C) {
+        this._cursorAnim.frames = await this._preloadFrameSequence(C.dir, C.prefix, C.pad, C.startIndex, C.maxFramesProbe);
+      }
+      if (this.params.radarUI?.enabled && R) {
+        this._radarFrames = await this._preloadFrameSequence(R.dir, R.prefix, R.pad, R.startIndex, R.maxFramesProbe);
+      }
 
 
       this._onDeckWheel = (e) => {
@@ -2671,7 +2721,7 @@ export class RioScene extends BaseScene {
 
     const img = document.createElement('img');
     img.id = 'rio-cursor';
-    img.src = C.src;
+    img.src = C.src; // static cursor when idle
     Object.assign(img.style, {
       position: 'fixed',
       left: '0px',
@@ -2688,12 +2738,142 @@ export class RioScene extends BaseScene {
     this.cursorEl = img;
   }
 
+    // --- NEW: Generic frame-sequence preloader ---
+  // Tries sequential filenames prefix + zeroPad(i, pad) until first failure AFTER at least one success.
+  // Stops early if exceeds maxProbe to avoid infinite loops.
+  async _preloadFrameSequence(dir, prefix, pad, startIndex, maxProbe = 1200) {
+    const frames = [];
+    const zeroPad = (n, w) => String(n).padStart(w, '0');
+
+    // We keep loading from startIndex upward until the first failure AFTER at least one success.
+    // To be robust with leading gaps, start from startIndex provided by config.
+    let i = Math.max(1, startIndex|0);
+    for (; i < startIndex + maxProbe; i++) {
+      const src = `${dir}/${prefix}${zeroPad(i, pad)}.png`;
+      // eslint-disable-next-line no-await-in-loop
+      const ok = await new Promise(res => {
+        const im = new Image();
+        im.onload = () => res(im);
+        im.onerror = () => res(null);
+        im.src = src;
+      });
+      if (ok) frames.push(ok);
+      else {
+        // stop if we've already collected at least one frame
+        if (frames.length > 0) break;
+        // if we failed immediately at the starting index, bail (misconfig)
+        break;
+      }
+    }
+    return frames;
+  }
+
+  // --- NEW: start cursor click anim at a given screen position (clientX, clientY) ---
+  _startCursorClick(clientX, clientY) {
+    if (!this.cursorEl || !this._cursorAnim.frames?.length) return;
+
+    // “snap” inicial al punto de click (después seguirá al mouse en onMouseMove)
+    this.cursorEl.style.left = `${clientX}px`;
+    this.cursorEl.style.top  = `${clientY}px`;
+
+    this._cursorAnim.playing = true;
+    this._cursorAnim.idx = 0;
+
+    // primer frame inmediato
+    const frame0 = this._cursorAnim.frames[0];
+    this.cursorEl.src = frame0.src;
+  }
+
+
+  // --- NEW: advance one frame per update; when finished, restore static cursor ---
+  _updateCursorAnim() {
+    const C = this.params.cursorUI;
+    if (!this.cursorEl || !this._cursorAnim.playing) return;
+
+    const frames = this._cursorAnim.frames;
+    if (!frames?.length) { this._cursorAnim.playing = false; return; }
+
+    // avanzar un frame por update
+    this._cursorAnim.idx += 1;
+
+    if (this._cursorAnim.idx >= frames.length) {
+      // terminó: volvemos al cursor estático
+      this._cursorAnim.playing = false;
+      this.cursorEl.src = C.src;
+      return;
+    }
+
+    const im = frames[this._cursorAnim.idx];
+    if (im) {
+      this.cursorEl.src = im.src;
+    }
+  }
+
+
+
   _destroyCursorOverlay() {
     if (this.cursorEl && this.cursorEl.parentNode) {
       this.cursorEl.parentNode.removeChild(this.cursorEl);
     }
     this.cursorEl = null;
   }
+
+
+  // --- NEW: create a DOM <img> for one radar animation instance ---
+  _createRadarElement(x, y) {
+    const R = this.params.radarUI;
+    const el = document.createElement('img');
+    // start with first frame; will be replaced on update
+    el.src = (this._radarFrames && this._radarFrames[0]) ? this._radarFrames[0].src : '';
+    Object.assign(el.style, {
+      position: 'fixed',
+      left: `${x}px`,
+      top: `${y}px`,
+      transform: `translate(-50%, -50%) scale(${R.scale ?? 1.0})`,
+      transformOrigin: '50% 50%',
+      pointerEvents: 'none',
+      zIndex: String(R.zIndex ?? 100001),
+      userSelect: 'none'
+    });
+    document.body.appendChild(el);
+    return el;
+  }
+
+  // --- NEW: public trigger ---
+  _playRadarAtScreen(clientX, clientY) {
+    if (!this.params.radarUI?.enabled) return;
+    if (!this._radarFrames?.length) return;
+
+    const el = this._createRadarElement(clientX, clientY);
+    this._radars.push({
+      frames: this._radarFrames,
+      idx: 0,
+      x: clientX,
+      y: clientY,
+      el
+    });
+
+    // ensure first frame painted now
+    el.src = this._radarFrames[0].src;
+  }
+
+  // --- NEW: step all active radars one frame per update; remove when done ---
+  _updateRadars() {
+    if (!this._radars?.length) return;
+    for (let i = this._radars.length - 1; i >= 0; i--) {
+      const r = this._radars[i];
+      r.idx += 1;
+      if (r.idx >= r.frames.length) {
+        // done: remove DOM node
+        r.el?.parentNode?.removeChild(r.el);
+        this._radars.splice(i, 1);
+        continue;
+      }
+      const im = r.frames[r.idx];
+      if (im) r.el.src = im.src;
+    }
+  }
+
 
 
   /* -------------------------------- Vegetation -------------------------------- */
@@ -3268,9 +3448,22 @@ export class RioScene extends BaseScene {
       this.deck.onWheel(e.deltaY);
       return;
     }
-    if (!this.controlsEnabled) { e.preventDefault(); return; }
-    e.preventDefault();
 
+    if (!this.controlsEnabled) { e.preventDefault(); return; }
+
+    // NEW: Block camera zoom when ABOVE water
+    const isUnder = this.isUnderwaterStable
+      ? this.isUnderwaterStable()
+      : (this.camera.position.y < this.params.surfaceLevel);
+
+    if (!isUnder) {
+      // Above water → allow nothing but deck scrolling (already handled above)
+      e.preventDefault();
+      return;
+    }
+
+    // BELOW water → keep existing zoom (X-move) behavior
+    e.preventDefault();
     const step = this.params.wheelStepX ?? 2.0;
     const dir = Math.sign(e.deltaY); // +1 when scrolling down, -1 up
 
@@ -3287,8 +3480,14 @@ export class RioScene extends BaseScene {
 
 
 
+
   onMouseDown(e) {
     if (!this.controlsEnabled) return;
+
+    // 1) Always play cursor click animation at mouse position (outside deck constraint is implicit: canvas receives the event)
+    this._startCursorClick(e.clientX, e.clientY);
+
+    // 2) Raycast for fish logic (unchanged) + fire radar if it's a correct catch
     const rect = this.app.canvas.getBoundingClientRect();
     this.clickMouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     this.clickMouse.y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
@@ -3306,9 +3505,18 @@ export class RioScene extends BaseScene {
       while (obj) {
         if (obj.userData && obj.userData.speciesKey) {
           const isMatch = this.deck.checkMatch(obj.userData.speciesKey);
+
           if (isMatch) {
             this.playSfx('catch');
-            this.catchFish(obj); // pass the Mesh
+            // compute screen position of the fish/root and play radar there
+            const worldPos = new THREE.Vector3().setFromMatrixPosition(obj.matrixWorld);
+            const ndc = worldPos.clone().project(this.camera); // -1..+1
+            const cx = rect.left + (ndc.x * 0.5 + 0.5) * rect.width;
+            const cy = rect.top  + (-ndc.y * 0.5 + 0.5) * rect.height;
+
+            this._playRadarAtScreen(cx, cy);
+
+            this.catchFish(obj); // remove fish
           } else {
             this.playSfx('wrong');
           }
@@ -3318,6 +3526,7 @@ export class RioScene extends BaseScene {
       }
     }
   }
+
 
 
   catchFish(target) {
@@ -3499,6 +3708,56 @@ export class RioScene extends BaseScene {
       this.camera.lookAt(this.camera.position.clone().add(this.forward));
     }
 
+    // --- Snap X on surface crossing; restore when diving back ---
+    {
+      // Decide current underwater/above (use the same rule you prefer elsewhere)
+      const isUnder = this.isUnderwaterStable
+        ? this.isUnderwaterStable()
+        : (this.camera.position.y < this.params.surfaceLevel);
+
+      if (this._wasUnderwater === undefined) {
+        this._wasUnderwater = isUnder; // initialize on first frame
+      }
+
+      // Crossing: UNDER -> ABOVE  (surfacing)
+      if (this._wasUnderwater === true && isUnder === false) {
+        // remember where we were underwater
+        this._lastUnderwaterX = this.camera.position.x;
+        // snap X to starting X, keep Y/Z untouched
+        this.camera.position.x = this.params.start.x;
+
+        // keep X inside hard/soft limits
+        const xMinSoft = this.params.cameraXBounds[0];
+        const xMaxSoft = this.params.cameraXBounds[1];
+        const xMinHard = this.params.shoreLevel;
+        this.camera.position.x = Math.max(xMinHard, clamp(this.camera.position.x, xMinSoft, xMaxSoft));
+
+        // reflect in swim box and camera look
+        this.updateSwimBoxDynamic?.();
+        this.camera.lookAt(this.camera.position.clone().add(this.forward));
+      }
+
+      // Crossing: ABOVE -> UNDER  (diving)
+      if (this._wasUnderwater === false && isUnder === true) {
+        // restore last underwater X (if we have one)
+        if (Number.isFinite(this._lastUnderwaterX)) {
+          this.camera.position.x = this._lastUnderwaterX;
+
+          // keep X inside limits
+          const xMinSoft = this.params.cameraXBounds[0];
+          const xMaxSoft = this.params.cameraXBounds[1];
+          const xMinHard = this.params.shoreLevel;
+          this.camera.position.x = Math.max(xMinHard, clamp(this.camera.position.x, xMinSoft, xMaxSoft));
+
+          this.updateSwimBoxDynamic?.();
+          this.camera.lookAt(this.camera.position.clone().add(this.forward));
+        }
+      }
+
+      this._wasUnderwater = isUnder; // update state for next frame
+    }
+
+
 
     // Update swimBox to follow the cameraLevel in X
     this.updateSwimBoxDynamic();
@@ -3526,6 +3785,9 @@ export class RioScene extends BaseScene {
     this._updateAudio(dt);
 
     if (this.params.rulerUI?.enabled) this._updateRulerPosition();
+
+    this._updateCursorAnim();
+    this._updateRadars();
   }
 
   updateFish(dt) {
