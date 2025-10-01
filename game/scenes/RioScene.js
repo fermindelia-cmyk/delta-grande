@@ -423,6 +423,26 @@ const DEFAULT_PARAMS = {
     }
   },
 
+  /** Depth ruler overlay */
+  rulerUI: {
+    enabled: true,
+    src: '/game-assets/sub/interfaz/ruler.png',
+
+    // horizontal margins (fraction of viewport width, like deck)
+    leftMarginVw: 0.02,
+    rightMarginVw: 0.02,
+
+    // vertical mapping:
+    // when camera is at yMax (surfaceLevel + cameraSurfaceMargin),
+    // ruler's UPPER edge sits at: (vh/2 + midYOffsetPx)
+    midYOffsetPx: -90,    // tweak if you want that midpoint “anchor” nudged
+
+    // z-order: should be behind deck (deck is ~9997)
+    zIndex: 9995,
+    opacity: 0.5
+  },
+
+
 
   /** Audio */
   audio: {
@@ -1886,6 +1906,48 @@ export class RioScene extends BaseScene {
       this.deck = new Deck(SPECIES, this.speciesObjs, this.params.deckUI);
       await this.deck.build();
 
+      // ---- Depth Ruler Overlay (DOM) ----
+      this.ruler = { el: null, naturalW: 0, naturalH: 0, img: null };
+      if (this.params.rulerUI?.enabled) {
+        const R = this.params.rulerUI;
+
+        // preload natural size
+        const img = new Image();
+        img.onload = () => {
+          this.ruler.naturalW = img.naturalWidth || 1;
+          this.ruler.naturalH = img.naturalHeight || 1;
+          this._updateRulerLayout();   // compute size/pos once we know aspect
+          this._updateRulerPosition(); // place vertically based on current camera Y
+          this.ruler.el.style.visibility = 'visible';
+        };
+        img.src = R.src;
+        this.ruler.img = img;
+
+        // dom element we actually display (so we can style freely)
+        const el = document.createElement('img');
+        el.id = 'depth-ruler';
+        el.style.opacity = String(R.opacity ?? 1);
+        el.src = R.src;
+        Object.assign(el.style, {
+          position: 'fixed',
+          left: '0px', top: '0px',
+          width: '0px', height: 'auto',
+          pointerEvents: 'none',
+          zIndex: String(R.zIndex ?? 9995),
+          visibility: 'hidden'
+        });
+        document.body.appendChild(el);
+        this.ruler.el = el;
+
+        // keep layout in sync on resize
+        this._onRulerResize = () => {
+          this._updateRulerLayout();
+          this._updateRulerPosition();
+        };
+        window.addEventListener('resize', this._onRulerResize, { passive: true });
+      }
+
+
       this._onDeckWheel = (e) => {
         e.preventDefault();                // stop page scroll
         if (this.deck) this.deck.onWheel(e.deltaY);
@@ -2022,6 +2084,7 @@ export class RioScene extends BaseScene {
     this.app.canvas.removeEventListener('wheel', this._onWheel);
     if (this.deck) this.deck.destroy();
     this.disposeVegetation();
+    this._destroyRuler();
     this._destroyIntroOverlay();
     this._destroyAudioGateOverlay();
   }
@@ -2110,7 +2173,7 @@ export class RioScene extends BaseScene {
         roughness: 0.9,
         metalness: 0.0,
         side: THREE.DoubleSide,
-        depthWrite: false
+        depthWrite: true
       });
       this.waterSurface = new THREE.Mesh(geo, mat);
       this.waterSurface.rotation.x = -Math.PI / 2;
@@ -2201,6 +2264,74 @@ export class RioScene extends BaseScene {
     if (el && el.parentNode) el.parentNode.removeChild(el);
     this.introState.overlayEl = null;
   }
+
+  /** Compute ruler width from vw margins and set horizontal placement. */
+  _updateRulerLayout() {
+    if (!this.ruler?.el || !this.params.rulerUI?.enabled) return;
+    const R = this.params.rulerUI;
+
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    const leftPx  = Math.round((R.leftMarginVw  ?? 0.02) * vw);
+    const rightPx = Math.round((R.rightMarginVw ?? 0.02) * vw);
+    const availW  = Math.max(1, vw - leftPx - rightPx);
+
+    // size by width (keep aspect)
+    const natW = Math.max(1, this.ruler.naturalW || 1);
+    const natH = Math.max(1, this.ruler.naturalH || 1);
+    const aspect = natW / natH;
+    const displayH = Math.round(availW / aspect);
+
+    // pin horizontally
+    Object.assign(this.ruler.el.style, {
+      left: `${leftPx}px`,
+      width: `${availW}px`,
+      height: `${displayH}px` // explicit height for easy math later
+    });
+
+    // cache current computed height for vertical mapping
+    this.ruler.displayH = displayH;
+    this.ruler.el.style.opacity = String(this.params.rulerUI.opacity ?? 1);
+  }
+
+  /** Map camera Y to the vertical 'top' of the ruler element. */
+  _updateRulerPosition() {
+    if (!this.ruler?.el || !this.params.rulerUI?.enabled) return;
+
+    const vh = window.innerHeight;
+    const imgH = Math.max(1, this.ruler.displayH || this.ruler.el.getBoundingClientRect().height || 1);
+
+    // camera Y normalization (0 = highest, 1 = lowest)
+    const yMax = this.params.surfaceLevel + this.params.cameraSurfaceMargin;
+    const yMin = this.params.floorLevel   + this.params.cameraFloorMargin;
+    const cy   = this.camera.position.y;
+    const t = THREE.MathUtils.clamp((yMax - cy) / Math.max(1e-6, (yMax - yMin)), 0, 1);
+
+    // constraints:
+    // at top (t=0): upper edge at mid + offset
+    // at bottom (t=1): lower edge at bottom -> top = vh - imgH
+    const midOffset = this.params.rulerUI.midYOffsetPx ?? 0;
+    const topAtTop    = Math.round(vh * 0.5 + midOffset);
+    const topAtBottom = Math.round(vh - imgH);
+
+    const topPx = Math.round(THREE.MathUtils.lerp(topAtTop, topAtBottom, t));
+
+    this.ruler.el.style.top = `${topPx}px`;
+  }
+
+  /** Remove the ruler element safely. */
+  _destroyRuler() {
+    if (this._onRulerResize) {
+      window.removeEventListener('resize', this._onRulerResize);
+      this._onRulerResize = null;
+    }
+    if (this.ruler?.el && this.ruler.el.parentNode) {
+      this.ruler.el.parentNode.removeChild(this.ruler.el);
+    }
+    this.ruler = null;
+  }
+
 
   /* -------------------------------- Vegetation -------------------------------- */
 
@@ -2755,6 +2886,8 @@ export class RioScene extends BaseScene {
     if (this.deck && this.params.debug.deckRender) this.deck.update(dt);
 
     this._updateAudio(dt);
+
+    if (this.params.rulerUI?.enabled) this._updateRulerPosition();
   }
 
   updateFish(dt) {
@@ -3034,6 +3167,11 @@ export class RioScene extends BaseScene {
       this.updateSwimBoxDynamic();
     }
     if (this.deck) this.deck.updateLayout(); // keep card sizes/aspect on resize
+
+    if (this.params.rulerUI?.enabled) {
+      this._updateRulerLayout();
+      this._updateRulerPosition();
+    }
   }
 
   _updateAudio(dt) {
