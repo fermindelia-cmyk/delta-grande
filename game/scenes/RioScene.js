@@ -53,6 +53,19 @@ const randn = () => {
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
 };
 
+// Asegura que cada clon tenga materiales propios (sin compartir referencias)
+function makeMaterialsUnique(root) {
+  root.traverse(o => {
+    if (!o.isMesh) return;
+    if (Array.isArray(o.material)) {
+      o.material = o.material.map(m => (m && m.clone) ? m.clone() : m);
+    } else if (o.material && o.material.clone) {
+      o.material = o.material.clone();
+    }
+  });
+}
+
+
 /* -------------------------------------------------------------
  * Spatial hash (O(n) neighborhood queries)
  * ------------------------------------------------------------- */
@@ -277,6 +290,7 @@ const DEFAULT_PARAMS = {
   skyColor: 0xF6B26B,
   waterColor: 0x1b1a16,
   waterSurfaceOpacity: 1.0,
+  waterSurfaceThicknessMeters: 0.2,
 
     /** Vegetation (floor, surface, shore) */
   vegetation: {
@@ -650,6 +664,8 @@ class FishSpecies {
     const mesh = this.usesFallback
       ? this.template.clone(true)
       : SkeletonUtils.clone(this.template);
+
+    makeMaterialsUnique(mesh); // <- asegura materiales no compartidos con el deck
 
     // Ensure a unique name for raycasting + tag species key
     mesh.name = `fish_${this.def.key}_${Math.random().toString(36).substr(2, 9)}`;
@@ -1033,6 +1049,7 @@ class Deck {
       const modelTex = SkeletonUtils.clone(speciesObj.template);
       const modelSil = SkeletonUtils.clone(speciesObj.template);
 
+      makeMaterialsUnique(modelTex);
       // Fit & center using the textured model, then apply same to silhouette
       scene.add(modelTex);
       scene.updateMatrixWorld(true);
@@ -1815,6 +1832,37 @@ export class RioScene extends BaseScene {
       t0: 0            // start time (seconds, perf.now based)
     };
 
+    /* === Inside-solid DOM overlay (relleno de volumen) === */
+    this._insideOverlay = null;
+
+    // CSS (una sola vez)
+    if (!document.getElementById('__rio_inside_overlay_css')) {
+      const css = document.createElement('style');
+      css.id = '__rio_inside_overlay_css';
+      css.textContent = `
+        #rio-inside-overlay {
+          position: fixed;
+          inset: 0;
+          background: #021b2b;          /* color de “sólido”; cambiá si querés */
+          opacity: 0;                   /* oculto por defecto */
+          transition: opacity 120ms ease;
+          pointer-events: none;
+          z-index: 100002;              /* por encima de todo lo in-escena */
+          user-select: none; -webkit-user-select: none; -ms-user-select: none;
+        }
+      `;
+      document.head.appendChild(css);
+    }
+
+    // Nodo del overlay
+    const inside = document.createElement('div');
+    inside.id = 'rio-inside-overlay';
+    document.body.appendChild(inside);
+    this._insideOverlay = inside;
+    const c = new THREE.Color(this.params.waterColor);
+    this._insideOverlay.style.backgroundColor = `#${c.getHexString()}`;
+
+
     this.cursorEl = null;
 
     this._cursorAnim = {
@@ -2255,6 +2303,12 @@ export class RioScene extends BaseScene {
     this._destroyAudioGateOverlay();
     this._destroyTimerOverlay();
     this._destroyCursorOverlay();
+
+    // Inside-solid overlay cleanup
+    if (this._insideOverlay && this._insideOverlay.parentNode) {
+      this._insideOverlay.parentNode.removeChild(this._insideOverlay);
+    }
+    this._insideOverlay = null;
   }
 
   /* ------------------------------- Model helpers ------------------------------- */
@@ -2329,26 +2383,47 @@ export class RioScene extends BaseScene {
     const fwd = this.forward.clone().normalize();
     const baseWidthForward = Math.max(0.01, this.widthAlongDirectionWorld(this.model || new THREE.Object3D(), fwd));
 
+    const t = Math.max(0.02, this.params.waterSurfaceThicknessMeters ?? 0.5);
+
+    // Oclusor volumétrico
+    if (!this.waterOccluder) {
+      const occGeo = new THREE.BoxGeometry(1, 1, 1);
+      const occMat = new THREE.MeshBasicMaterial({
+        colorWrite: false,    // <- NO escribe color (no verás caras internas)
+        depthWrite: true,     // <- SÍ escribe z
+        depthTest: true,
+        side: THREE.DoubleSide
+      });
+      this.waterOccluder = new THREE.Mesh(occGeo, occMat);
+      this.waterOccluder.frustumCulled = false;
+      this.waterOccluder.renderOrder = -10; // que se dibuje antes que todo
+      this.scene.add(this.waterOccluder);
+    }
+
     const sx = totalRightSpan * 1.1;
     const sz = baseWidthForward * 2.0;
+    const yTop = this.params.surfaceLevel;
 
+    this.waterOccluder.position.set(100, yTop - t*0.5, 0);
+    this.waterOccluder.scale.set(sx, t, sz);
+
+    // Superficie visible (opcional, solo cara superior, sin “segunda tapa”)
     if (!this.waterSurface) {
-      const geo = new THREE.PlaneGeometry(1, 1, 1, 1);
-      const mat = new THREE.MeshPhysicalMaterial({
+      const surfGeo = new THREE.PlaneGeometry(1, 1); surfGeo.rotateX(-Math.PI/2);
+      const surfMat = new THREE.MeshPhysicalMaterial({
         color: this.params.waterColor,
-        transparent: true,
-        opacity: this.params.waterSurfaceOpacity,
-        roughness: 0.9,
-        metalness: 0.0,
-        side: THREE.DoubleSide,
-        depthWrite: true
+        transparent: false,
+        roughness: 0.9, metalness: 0.0,
+        side: THREE.FrontSide, // solo desde arriba
+        depthWrite: true, depthTest: true
       });
-      this.waterSurface = new THREE.Mesh(geo, mat);
-      this.waterSurface.rotation.x = -Math.PI / 2;
+      this.waterSurface = new THREE.Mesh(surfGeo, surfMat);
+      this.waterSurface.frustumCulled = false;
       this.scene.add(this.waterSurface);
     }
-    this.waterSurface.position.set(100, y, 0);
-    this.waterSurface.scale.set(sx, sz, 1);
+    this.waterSurface.position.set(100, yTop, 0);
+    this.waterSurface.scale.set(sx, 1, sz);
+
   }
 
   updateFog() {
@@ -3608,6 +3683,23 @@ export class RioScene extends BaseScene {
     this.forward.set(Math.sin(yaw), 0, -Math.cos(yaw)).normalize();
   }
 
+
+  /** Devuelve true si la cámara está dentro del volumen “sólido” del agua. */
+  isCameraInsideSolid() {
+    // 1) Si existe el oclusor volumétrico (recomendado), usamos su AABB:
+    if (this.waterOccluder) {
+      const box = new THREE.Box3().setFromObject(this.waterOccluder);
+      return box.containsPoint(this.camera.position);
+    }
+
+    // 2) Fallback geométrico: entre superficie y su “grosor” hacia abajo
+    const t = Math.max(0.02, this.params.waterSurfaceThicknessMeters ?? 0.5);
+    const yTop = this.params.surfaceLevel;
+    const yBottom = yTop - t;
+    const y = this.camera.position.y;
+    return (y >= Math.min(yTop, yBottom) && y <= Math.max(yTop, yBottom));
+  }
+
   /* ----------------------------------- Update ----------------------------------- */
 
   update(dt) {
@@ -3773,6 +3865,14 @@ export class RioScene extends BaseScene {
 
     if (this.mistGroup && this.params.mist?.enabled) {
       this.updateMistLayer(dt);
+    }
+
+    // === Inside-solid overlay toggle ===
+    if (this._insideOverlay) {
+      const inside = this.isCameraInsideSolid();
+      // Nota: si estás usando “mist” arriba del agua, conviene apagarlo al entrar
+      if (inside && this.mistGroup) this.mistGroup.visible = false;
+      this._insideOverlay.style.opacity = inside ? '1' : '0';
     }
 
     if (this.skyDome) this.skyDome.position.copy(this.camera.position);
