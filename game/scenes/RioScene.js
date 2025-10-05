@@ -339,11 +339,11 @@ const DEFAULT_PARAMS = {
 
   /** Above-water fog */
   aboveFog: {
-    enabled: true,
+    enabled: false,
     color: 0xB7BEC6,       // soft gray/blue
     useExp2: false,        // true => FogExp2(density), false => Fog(near,far)
     near: 10.0,
-    far: 80.0,
+    far: 200.0,
     density: 0.015,        // only used if useExp2=true
     surfaceHysteresis: 0.03 // reduce flicker at the surface (meters)
   },
@@ -353,16 +353,40 @@ const DEFAULT_PARAMS = {
     enabled: true,
     color: 0xC9CED6,
     opacity: 0.55,         // 0..1
-    height: 0.15,          // meters above surface
-    count: 60,             // number of patches
-    sizeRange: [8, 18],    // meters (min, max) per patch
+    height: 0.3,          // meters above surface
+    count: 400,             // number of patches
+    sizeRange: [2, 5],    // meters (min, max) per patch
     windDirDeg: 15,        // world wind heading (deg, 0 = +X)
-    windSpeed: 0.05,       // meters/sec
-    jitterAmp: 0.5,        // small local bobbing in meters
+    windSpeed: 0.01,       // meters/sec
+    jitterAmp: 0.2,        // small local bobbing in meters
     underwaterOpacity: 0.0,
-    fadeSec: 0.25,
-    jitterFreqRange: [0.05, 0.12]  // Hz per patch (min,max)
+    fadeSec: 2,
+    jitterFreqRange: [0.01, 0.03]  // Hz per patch (min,max)
   },
+
+    /** Shoreline haze — a single vertical card at x=shoreLevel */
+  shoreHaze: {
+    enabled: true,
+    /** PNG with baked alpha (the one I gave you): */
+    src: '/game-assets/sub/interfaz/shore_haze_bottom1_quadratic_1024x2048.png',
+    /** How tall above the water surface (meters) */
+    height: 50.0,
+    /** Extra Z padding beyond [leftLimit, rightLimit] to avoid edge pops */
+    zPad: 2.0,
+    /** Opacity multiplier on top of the PNG’s alpha (0..1) */
+    opacity: 1.0,
+    /** Use the same color as mist (material color tints the white PNG) */
+    color: 0xC9CED6,
+
+    /** Rendering & filtering */
+    doubleSide: false,         // face water only; set true if you need both sides
+    depthWrite: false,         // avoid stacking artifacts
+    depthTest: true,
+    anisotropy: 4,
+    minFilter: 'LinearMipMapLinearFilter', // name strings resolved at build
+    magFilter: 'LinearFilter'
+  },
+
 
 
   /** Base model scale and tiling (floor/walls GLB) */
@@ -1898,6 +1922,10 @@ export class RioScene extends BaseScene {
     this.mistGroup = null;
     this._mist = null;
 
+    // Shoreline haze
+    this.shoreHazeMesh = null;
+    this._shoreHazeTex = null;
+
     // Keep instances by category for updates/cleanup
     this.vegetation = {
       floor: [],   // { mesh }
@@ -2071,6 +2099,11 @@ export class RioScene extends BaseScene {
     // --- Mist layer (cheap steam above water) ---
     if (this.params.mist?.enabled) {
       this.buildMistLayer();
+    }
+
+    // Shoreline haze (simple PNG card)
+    if (this.params.shoreHaze?.enabled) {
+      await this.buildOrUpdateShoreHaze();
     }
 
     // Initialize explicit swimBox using the world parameters directly
@@ -2303,6 +2336,8 @@ export class RioScene extends BaseScene {
     this._destroyAudioGateOverlay();
     this._destroyTimerOverlay();
     this._destroyCursorOverlay();
+
+    this.disposeShoreHaze();
 
     // Inside-solid overlay cleanup
     if (this._insideOverlay && this._insideOverlay.parentNode) {
@@ -3171,6 +3206,117 @@ export class RioScene extends BaseScene {
     return new THREE.Vector3(x, 0, z);
   }
 
+  async buildOrUpdateShoreHaze() {
+    const H = this.params.shoreHaze;
+    if (!H?.enabled) { this.disposeShoreHaze(); return; }
+
+    // Load / reuse texture
+    if (!this._shoreHazeTex) {
+      const tex = await AssetLoader.texture(H.src);
+      const THREERef = THREE; // resolve string filters to actual constants
+      tex.wrapS = THREE.ClampToEdgeWrapping; // clamp horizontally (Z)
+      tex.wrapT = THREE.ClampToEdgeWrapping; // clamp vertically (Y)
+      tex.anisotropy = H.anisotropy ?? 4;
+      tex.minFilter = THREERef[H.minFilter] ?? THREE.LinearMipMapLinearFilter;
+      tex.magFilter = THREERef[H.magFilter] ?? THREE.LinearFilter;
+      this._shoreHazeTex = tex;
+    }
+
+    // Create material
+    const mat = new THREE.MeshBasicMaterial({
+      map: this._shoreHazeTex,
+      color: new THREE.Color(H.color ?? 0xffffff),
+      opacity: THREE.MathUtils.clamp(H.opacity ?? 1.0, 0, 1),
+      transparent: true,
+      depthWrite: !!H.depthWrite,
+      depthTest: !!H.depthTest,
+      side: (H.doubleSide ? THREE.DoubleSide : THREE.FrontSide),
+      blending: THREE.NormalBlending
+    });
+
+    // Geometry: Plane spanning Z (width) by Y (height)
+    const zSpan = (this.params.rightLimit - this.params.leftLimit) + 2 * (H.zPad ?? 0);
+    const height = Math.max(0.05, H.height ?? 8.0);
+    const geo = new THREE.PlaneGeometry(zSpan, height, 1, 1);
+    // PlaneGeometry is XY facing +Z; rotate so width -> Z, normal -> +X (toward water)
+    geo.rotateY(Math.PI / 2);
+
+    // Mesh (replace if already exists)
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.name = 'shore-haze';
+    mesh.renderOrder = 10; // draw after occluder/water; tweak if needed
+    mesh.frustumCulled = true;
+
+    // Store & add
+    this.disposeShoreHaze();             // remove previous one if any
+    this.shoreHazeMesh = mesh;
+    this.scene.add(mesh);
+
+    // Initial placement
+    this.updateShoreHazeLayout();
+  }
+
+  updateShoreHazeLayout() {
+    if (!this.shoreHazeMesh) return;
+    const H = this.params.shoreHaze;
+
+    // Span Z across swim corridor with padding
+    const zMin = this.params.leftLimit  - (H.zPad ?? 0);
+    const zMax = this.params.rightLimit + (H.zPad ?? 0);
+    const zMid = 0.5 * (zMin + zMax);
+    const zSpan = Math.max(0.001, zMax - zMin);
+
+    // Span Y from surfaceLevel to surfaceLevel + height
+    const yBottom = this.params.surfaceLevel;
+    const yTop    = yBottom + Math.max(0.05, H.height ?? 8.0);
+    const yMid    = 0.5 * (yBottom + yTop);
+    const ySpan   = Math.max(0.05, yTop - yBottom);
+
+    // Place at x = shoreLevel, facing +X (towards water)
+    const tinyEps = 0.001;  // avoid z-fighting with shoreline geometry if any
+    const x = this.params.shoreLevel + tinyEps;
+
+    // Update transform
+    this.shoreHazeMesh.position.set(x, yMid, zMid);
+
+    // Update geometry size if params changed live
+    const g = this.shoreHazeMesh.geometry;
+    const wantW = zSpan;
+    const wantH = ySpan;
+    // If size differs, rebuild (geometry is cheap)
+    const curW = g.parameters.width;
+    const curH = g.parameters.height;
+    if (Math.abs(curW - wantW) > 1e-4 || Math.abs(curH - wantH) > 1e-4) {
+      const geo = new THREE.PlaneGeometry(wantW, wantH, 1, 1);
+      geo.rotateY(Math.PI / 2); // keep it facing +X
+      this.shoreHazeMesh.geometry.dispose();
+      this.shoreHazeMesh.geometry = geo;
+    }
+
+    // Live color/opacity tweaks
+    const m = this.shoreHazeMesh.material;
+    m.color.set(H.color ?? 0xffffff);
+    m.opacity = THREE.MathUtils.clamp(H.opacity ?? 1.0, 0, 1);
+    m.side = (H.doubleSide ? THREE.DoubleSide : THREE.FrontSide);
+    m.needsUpdate = true;
+  }
+
+  disposeShoreHaze() {
+    if (!this.shoreHazeMesh) return;
+    const mesh = this.shoreHazeMesh;
+    mesh.parent?.remove(mesh);
+    mesh.geometry?.dispose?.();
+    if (mesh.material) {
+      const mat = mesh.material;
+      if (Array.isArray(mat)) mat.forEach(m => m?.dispose?.());
+      else mat.dispose?.();
+    }
+    this.shoreHazeMesh = null;
+    // Keep texture cached so re-build is instant; if you prefer, also dispose:
+    // this._shoreHazeTex?.dispose?.(); this._shoreHazeTex = null;
+  }
+
+
   // --- Loading overlay (black screen with spinning logo) ---
   _createLoadingOverlay() {
     // Already created?
@@ -3286,7 +3432,8 @@ export class RioScene extends BaseScene {
     const [minS, maxS] = M.sizeRange ?? [8, 18];
 
     // Align to current swim area
-    const minX = this.swimBox.min.x, maxX = this.swimBox.max.x;
+    const maxX = this.swimBox.max.x;
+    const minX = (this.params.shoreLevel + maxX) * 0.5; // <-- halfway from shore to max X
     const minZ = this.swimBox.min.z, maxZ = this.swimBox.max.z;
 
     for (let i = 0; i < (M.count ?? 60); i++) {
@@ -3325,7 +3472,7 @@ export class RioScene extends BaseScene {
     };
 
     // Initial visibility: only when camera is above the surface
-    group.visible = (this.camera.position.y >= this.params.surfaceLevel);
+    group.visible = true;
   }
 
   updateMistLayer(dt) {
@@ -3360,7 +3507,9 @@ export class RioScene extends BaseScene {
 
     // Camera-relative torus wrap to avoid visible edge pops
     const cam   = this.camera.position;
-    const spanX = Math.max(0.001, this.swimBox.max.x - this.swimBox.min.x);
+    const xMax = this.swimBox.max.x;
+    const xMin = (this.params.shoreLevel + xMax) * 0.5;
+    const spanX = Math.max(0.001, xMax - xMin);
     const spanZ = Math.max(0.001, this.swimBox.max.z - this.swimBox.min.z);
 
     for (const p of this._mist.puffs) {
@@ -3368,9 +3517,8 @@ export class RioScene extends BaseScene {
       p.mesh.position.addScaledVector(dir, speed * dt);
 
       // Wrap X around camera
-      let dx = p.mesh.position.x - cam.x;
-      while (dx >  spanX * 0.5) { p.mesh.position.x -= spanX; dx -= spanX; }
-      while (dx < -spanX * 0.5) { p.mesh.position.x += spanX; dx += spanX; }
+      if (p.mesh.position.x > xMax) p.mesh.position.x -= spanX;
+      else if (p.mesh.position.x < xMin) p.mesh.position.x += spanX;
 
       // Wrap Z around camera
       let dz = p.mesh.position.z - cam.z;
@@ -3870,8 +4018,7 @@ export class RioScene extends BaseScene {
     // === Inside-solid overlay toggle ===
     if (this._insideOverlay) {
       const inside = this.isCameraInsideSolid();
-      // Nota: si estás usando “mist” arriba del agua, conviene apagarlo al entrar
-      if (inside && this.mistGroup) this.mistGroup.visible = false;
+      if (this.mistGroup) this.mistGroup.visible = !inside;  // <-- re-enable when not inside
       this._insideOverlay.style.opacity = inside ? '1' : '0';
     }
 
@@ -3888,6 +4035,11 @@ export class RioScene extends BaseScene {
 
     this._updateCursorAnim();
     this._updateRadars();
+
+    // Keep haze aligned if params change, or if surfaceLevel moves
+    if (this.shoreHazeMesh && this.params.shoreHaze?.enabled) {
+      this.updateShoreHazeLayout();
+    }
   }
 
   updateFish(dt) {
@@ -4175,6 +4327,10 @@ export class RioScene extends BaseScene {
     if (this.params.rulerUI?.enabled) {
       this._updateRulerLayout();
       this._updateRulerPosition();
+    }
+
+    if (this.shoreHazeMesh && this.params.shoreHaze?.enabled) {
+      this.updateShoreHazeLayout();
     }
 
     this._updateTimerLayout?.();
