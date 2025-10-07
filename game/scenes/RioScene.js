@@ -407,6 +407,12 @@ const DEFAULT_PARAMS = {
     fallbackDims: { x: 1.6, y: 0.4, z: 0.5 },
   },
 
+  fishTracker: {
+    strokeColor: '#ffffff',
+    strokeWeightRatio: 0.01,
+    hideAboveWater: true
+  },
+
   fishPositionBias: {
     meansX: { near: 0.15,  mid: 0.50, deep: 0.85 },
     sigmaX: { near: 0.20,  mid: 0.20, deep: 0.20 }, // set >0 later (e.g., 0.10)
@@ -856,6 +862,9 @@ class FishAgent {
     this.species = species;
 
     this._localForward = null; // cached local-space forward axis
+    this.tracked = false;
+    this.tracker = null;
+
   }
 
   /** Detect the longest local axis of the mesh as "forward", honoring species flips. */
@@ -1217,23 +1226,24 @@ class Deck {
     card.revealed = true;
   }
 
-  checkMatch(speciesKey) {
+  checkMatch(speciesKey, opts = {}) {
+    const { skipIncrement = false } = opts;
     const cur = this.cards[this.currentIndex];
     if (cur && cur.key === speciesKey) {
-      if (!cur.revealed) this.setRevealed(this.currentIndex);
-
-      // increment and clamp
-      const newCount = Math.min(cur.totalCount, cur.count + 1);
-      cur.count = newCount;
-      cur.numbersEl.textContent = `${cur.count}\n${cur.totalCount}`;
-
-      // completed -> swap background overlay and numbers style
-      if (cur.count >= cur.totalCount && !cur.completed) {
-        cur.completed = true;
-        cur.element.classList.add('completed');
+      if (!skipIncrement) {
+        if (!cur.revealed) this.setRevealed(this.currentIndex);
+        const newCount = Math.min(cur.totalCount, cur.count + 1);
+        if (newCount !== cur.count) {
+          cur.count = newCount;
+          cur.numbersEl.textContent = `${cur.count}\n${cur.totalCount}`;
+        }
+        if (cur.count >= cur.totalCount && !cur.completed) {
+          cur.completed = true;
+          cur.element.classList.add('completed');
+        }
+      } else if (!cur.revealed) {
+        this.setRevealed(this.currentIndex);
       }
-
-      // small success flash (border glow)
       this._flashCanvasGlow(cur, 'success');
       return true;
     } else {
@@ -1242,6 +1252,7 @@ class Deck {
       return false;
     }
   }
+
 
   // === layout & visuals ===
   updateLayout() {
@@ -1888,6 +1899,9 @@ export class RioScene extends BaseScene {
 
 
     this.cursorEl = null;
+    this._trackerTexture = null;
+    this._trackerTextureConfig = null;
+    this._isCurrentlyUnderwater = false;
 
     this._cursorAnim = {
       frames: [],      // Image[]
@@ -2338,6 +2352,20 @@ export class RioScene extends BaseScene {
     this._destroyCursorOverlay();
 
     this.disposeShoreHaze();
+
+    for (const agent of this.fish) {
+      if (agent.tracker) {
+        agent.tracker.material?.dispose?.();
+        agent.mesh.remove(agent.tracker);
+        agent.tracker = null;
+      }
+    }
+    if (this._trackerTexture) {
+      this._trackerTexture.dispose();
+      this._trackerTexture = null;
+      this._trackerTextureConfig = null;
+    }
+
 
     // Inside-solid overlay cleanup
     if (this._insideOverlay && this._insideOverlay.parentNode) {
@@ -3727,23 +3755,25 @@ export class RioScene extends BaseScene {
       // Walk up to find a mesh tagged with speciesKey
       while (obj) {
         if (obj.userData && obj.userData.speciesKey) {
-          const isMatch = this.deck.checkMatch(obj.userData.speciesKey);
+          const agent = this._findAgentByObject(obj);
+          const skipIncrement = !!agent?.tracked;
+          const isMatch = this.deck.checkMatch(obj.userData.speciesKey, { skipIncrement });
 
           if (isMatch) {
-            this.playSfx('catch');
-            // compute screen position of the fish/root and play radar there
-            const worldPos = new THREE.Vector3().setFromMatrixPosition(obj.matrixWorld);
-            const ndc = worldPos.clone().project(this.camera); // -1..+1
-            const cx = rect.left + (ndc.x * 0.5 + 0.5) * rect.width;
-            const cy = rect.top  + (-ndc.y * 0.5 + 0.5) * rect.height;
-
-            this._playRadarAtScreen(cx, cy);
-
-            this.catchFish(obj); // remove fish
+            if (!skipIncrement) {
+              this.playSfx('catch');
+              const worldPos = new THREE.Vector3().setFromMatrixPosition(obj.matrixWorld);
+              const ndc = worldPos.clone().project(this.camera);
+              const cx = rect.left + (ndc.x * 0.5 + 0.5) * rect.width;
+              const cy = rect.top  + (-ndc.y * 0.5 + 0.5) * rect.height;
+              this._playRadarAtScreen(cx, cy);
+            }
+            this.catchFish(obj);
           } else {
             this.playSfx('wrong');
           }
           return;
+
         }
         obj = obj.parent;
       }
@@ -3752,54 +3782,141 @@ export class RioScene extends BaseScene {
 
 
 
-  catchFish(target) {
-    if (!target) return;
+  _areTrackersVisible() {
+    if (!this.params.fishTracker?.hideAboveWater) return true;
+    return this._isCurrentlyUnderwater;
+  }
 
-    // Helper: is `obj` a descendant of `root`?
-    const isDescendant = (root, obj) => {
-      let p = obj;
-      while (p) {
-        if (p === root) return true;
-        p = p.parent;
+  _updateTrackersVisibility() {
+    const visible = this._areTrackersVisible();
+    const targetColor = new THREE.Color(this.params.fishTracker?.strokeColor ?? '#ffffff');
+    const texture = this._getTrackerTexture();
+    
+    // Fixed screen-space size configuration
+    const fixedSize = 0.08; // 8% of screen height
+
+    for (const agent of this.fish) {
+      if (!agent.tracker) continue;
+      agent.tracker.visible = visible;
+
+      const mat = agent.tracker.material;
+      if (mat) {
+        if (!mat.color.equals(targetColor)) mat.color.copy(targetColor);
+        if (mat.map !== texture) {
+          mat.map = texture;
+          mat.needsUpdate = true;
+        }
+        
+        // Ensure sizeAttenuation is disabled
+        if (mat.sizeAttenuation !== false) {
+          mat.sizeAttenuation = false;
+          mat.needsUpdate = true;
+        }
+      }
+      
+      // Update scale to maintain fixed screen size
+      agent.tracker.scale.set(fixedSize, fixedSize, 1);
+    }
+  }
+
+
+  _findAgentByObject(target) {
+    if (!target) return null;
+    const isDescendant = (root, node) => {
+      let cur = node;
+      while (cur) {
+        if (cur === root) return true;
+        cur = cur.parent;
       }
       return false;
     };
+    for (const agent of this.fish) {
+      if (agent.mesh === target || isDescendant(agent.mesh, target)) return agent;
+    }
+    return null;
+  }
 
-    // Find the agent whose root mesh either IS the target or CONTAINS the target
-    const agentIndex = this.fish.findIndex(a => (a.mesh === target) || isDescendant(a.mesh, target));
-    if (agentIndex === -1) return;
+  _getTrackerTexture() {
+    const cfg = this.params.fishTracker || {};
+    const ratio = THREE.MathUtils.clamp(cfg.strokeWeightRatio ?? 0.04, 0.002, 0.25);
 
-    const agent = this.fish[agentIndex];
-    const root = agent.mesh; // always remove the agent's root
+    if (!this._trackerTexture || !this._trackerTextureConfig || this._trackerTextureConfig.ratio !== ratio) {
+      this._trackerTexture?.dispose?.();
 
-    // Remove from arrays/groups
-    this.fish.splice(agentIndex, 1);
-    if (root.parent === this.fishGroup) {
-      this.fishGroup.remove(root);
-    } else if (root.parent) {
-      root.parent.remove(root);
+      const size = 256;
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      ctx.clearRect(0, 0, size, size);
+      const line = Math.max(1, Math.floor(size * ratio));
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = line;
+      const inset = line / 2;
+      ctx.strokeRect(inset, inset, size - line, size - line);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+      texture.anisotropy = 4;
+      texture.needsUpdate = true;
+
+      this._trackerTexture = texture;
+      this._trackerTextureConfig = { ratio };
     }
 
-    // Dispose geometries/materials in the subtree
-    root.traverse(node => {
-      if (node.isMesh) {
-        if (node.geometry) node.geometry.dispose?.();
-        const mat = node.material;
-        if (Array.isArray(mat)) {
-          mat.forEach(m => m && m.dispose?.());
-        } else if (mat) {
-          mat.dispose?.();
-        }
-      }
+    return this._trackerTexture;
+  }
+
+
+  _ensureAgentTracker(agent) {
+    if (!agent) return;
+    if (agent.tracker && agent.tracker.parent === agent.mesh) {
+      agent.tracked = true;
+      return;
+    }
+
+    agent.mesh.updateWorldMatrix(true, true);
+
+    const texture = this._getTrackerTexture();
+    const material = new THREE.SpriteMaterial({
+      map: texture,
+      color: new THREE.Color(this.params.fishTracker?.strokeColor ?? '#ffffff'),
+      transparent: true,
+      depthTest: false,
+      depthWrite: false,
+      sizeAttenuation: false  // KEY: disable distance scaling
     });
 
-    // Clean up mixer reference
-    if (agent.mixer) {
-      agent.mixer.stopAllAction();
-      agent.mixer.uncacheRoot(agent.mesh);
-      agent.mixer = null;
-    }
+    const sprite = new THREE.Sprite(material);
+    
+    // Fixed screen-space size (will be updated each frame in update loop)
+    const fixedSize = 0.08; // normalized screen space size (0.08 = 8% of screen height)
+    sprite.scale.set(fixedSize, fixedSize, 1);
+
+    const box = new THREE.Box3().setFromObject(agent.mesh);
+    const center = box.getCenter(new THREE.Vector3());
+    agent.mesh.worldToLocal(center);
+    sprite.position.copy(center);
+    sprite.renderOrder = 999;
+
+    sprite.visible = this._areTrackersVisible();
+
+    agent.mesh.add(sprite);
+    agent.tracker = sprite;
+    agent.tracked = true;
   }
+
+
+
+  catchFish(target) {
+    const agent = this._findAgentByObject(target);
+    if (!agent) return;
+
+    if (agent.tracked && agent.tracker) return;
+    this._ensureAgentTracker(agent);
+  }
+
 
 
 
@@ -4014,6 +4131,12 @@ export class RioScene extends BaseScene {
     if (this.mistGroup && this.params.mist?.enabled) {
       this.updateMistLayer(dt);
     }
+
+    const isUnderInitial = this.isUnderwaterStable ? this.isUnderwaterStable() : (this.camera.position.y < this.params.surfaceLevel);
+    this._isCurrentlyUnderwater = isUnderInitial;
+    // … existing crossing logic uses `isUnder`
+    this._updateTrackersVisibility();
+
 
     // === Inside-solid overlay toggle ===
     if (this._insideOverlay) {
