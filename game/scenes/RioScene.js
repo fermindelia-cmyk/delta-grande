@@ -569,6 +569,7 @@ const DEFAULT_PARAMS = {
       surface: 0.7,         // volumen del loop “Salida a tomar aire…”
       underwater: 0.7,      // volumen del loop “Juego delta - Bajo el agua…”
       music: 0.0,           // volumen base del tema “Músicos Entrerios…”
+      lanchas: 0.0,         // volumen base del loop “lanchas.mp3” (mismo comportamiento que música)
       sfxCatch: 0.9,        // volumen SFX “Pez agarrado.mp3”
       sfxWrong: 0.9         // volumen SFX “Pez equivocado.mp3”
     },
@@ -587,8 +588,9 @@ const DEFAULT_PARAMS = {
       depthCurve: 'exp'
     },
     musicDepth: {
-      maxVol: 0.2,          // arriba/superficie
-      minVolBottom: 0.05    // “prácticamente apagado” en el fondo
+      maxVolAbove: 0.4,     // volumen arriba de la superficie
+      maxVolUnder: 0.4,     // volumen PICO justo al entrar al agua (luego baja con la profundidad)
+      minVolBottom: 0.05    // volumen mínimo en el fondo
     },
     surfaceHysteresis: 0.03, // margen en metros para evitar “flapping” del cruce
     start: {
@@ -1952,10 +1954,13 @@ export class RioScene extends BaseScene {
     this.audioListener = null;
     this.sounds = {};
     this.lowpassFilter = null;
+    this.lowpassFilterLanchas = null;
     this.audioState = {
       ambientUnder: undefined,   // estado previo para cambiar loops (arriba/abajo)
       eqUnderPrev: undefined,    // estado previo para detectar toggles del EQ (rampas rápidas)
-      started: false             // si ya hicimos bootstrap de audio
+      started: false,            // si ya hicimos bootstrap de audio
+      musicGainNode: null,
+      lanchasGainNode: null
     };
 
     // respect debug visibility
@@ -2239,19 +2244,22 @@ export class RioScene extends BaseScene {
 
     this.audioListener = new THREE.AudioListener();
     this.camera.add(this.audioListener);
+    this.audioListener.setMasterVolume(1.0);
 
     const soundPaths = {
-      surface: '/game-assets/sub/sonido/Salida a tomar aire juego delta v2.mp3',
-      underwater: '/game-assets/sub/sonido/Juego delta - Bajo el agua v3.mp3',
-      music: '/game-assets/sub/sonido/Músicos Entrerios full a la distancia.mp3',
-      sfxCatch: '/game-assets/sub/sonido/Pez agarrado.mp3',
-      sfxWrong: '/game-assets/sub/sonido/Pez equivocado.mp3'
+      surface: '/game-assets/sub/sonido/exterior.mp3',
+      underwater: '/game-assets/sub/sonido/inmersion.mp3',
+      music: '/game-assets/sub/sonido/musica.mp3',
+      sfxCatch: '/game-assets/sub/sonido/exito.mp3',
+      sfxWrong: '/game-assets/sub/sonido/fracaso.mp3',
+      lanchas: '/game-assets/sub/sonido/lanchas.mp3'
     };
 
     const audioBuffers = {
       surface: await AssetLoader.audioBuffer(soundPaths.surface),
       underwater: await AssetLoader.audioBuffer(soundPaths.underwater),
       music: await AssetLoader.audioBuffer(soundPaths.music),
+      lanchas: await AssetLoader.audioBuffer(soundPaths.lanchas),
       sfxCatch: await AssetLoader.audioBuffer(soundPaths.sfxCatch),
       sfxWrong: await AssetLoader.audioBuffer(soundPaths.sfxWrong)
     };
@@ -2273,6 +2281,11 @@ export class RioScene extends BaseScene {
     this.sounds.music.setLoop(true);
     this.sounds.music.setVolume(this.params.audio.volumes.music);
 
+  this.sounds.lanchas = new THREE.Audio(this.audioListener);
+  this.sounds.lanchas.setBuffer(audioBuffers.lanchas);
+  this.sounds.lanchas.setLoop(true);
+  this.sounds.lanchas.setVolume(this.params.audio.volumes.lanchas);
+
     // Filtro lowpass para el tema continuo
     const audioContext = this.audioListener.context;
     this.lowpassFilter = audioContext.createBiquadFilter();
@@ -2280,6 +2293,11 @@ export class RioScene extends BaseScene {
     // arranca totalmente abierto (fuera del agua)
     this.lowpassFilter.frequency.setValueAtTime(this.params.audio.eq.aboveHz, audioContext.currentTime);
     this.sounds.music.setFilter(this.lowpassFilter);
+
+  this.lowpassFilterLanchas = audioContext.createBiquadFilter();
+  this.lowpassFilterLanchas.type = 'lowpass';
+  this.lowpassFilterLanchas.frequency.setValueAtTime(this.params.audio.eq.aboveHz, audioContext.currentTime);
+  this.sounds.lanchas.setFilter(this.lowpassFilterLanchas);
 
     // SFX (no loop)
     this.sounds.sfxCatch = new THREE.Audio(this.audioListener);
@@ -2314,6 +2332,7 @@ export class RioScene extends BaseScene {
     // Iniciar audio de forma automática (sin exigir click)
     // Música siempre en loop
     if (!this.sounds.music.isPlaying) this.sounds.music.play();
+  if (!this.sounds.lanchas.isPlaying) this.sounds.lanchas.play();
 
     // Poner el filtro/vol acorde a la posición actual
     this._updateAmbient(true); // arranca el loop correcto (arriba/abajo) con offsets adecuados
@@ -4469,11 +4488,32 @@ export class RioScene extends BaseScene {
   }
 
   _updateAudio(dt) {
-    if (!this.lowpassFilter || !this.sounds.music) return;
+    let hasMusic = !!(this.lowpassFilter && this.sounds.music);
+    let hasLanchas = !!(this.lowpassFilterLanchas && this.sounds.lanchas);
+    if (!hasMusic && !hasLanchas) return;
+
+    if (hasMusic && !this.audioState.musicGainNode) {
+      const gain = this.sounds.music.getOutput();
+      if (gain && gain.gain) {
+        this.audioState.musicGainNode = gain.gain;
+      } else {
+        hasMusic = false;
+      }
+    }
+
+    if (hasLanchas && !this.audioState.lanchasGainNode) {
+      const gain = this.sounds.lanchas.getOutput();
+      if (gain && gain.gain) {
+        this.audioState.lanchasGainNode = gain.gain;
+      } else {
+        hasLanchas = false;
+      }
+    }
+
+    if (!hasMusic && !hasLanchas) return;
 
     const { surfaceLevel, floorLevel, audio } = this.params;
     const { aboveHz, surfaceUnderHz, bottomHz, rampEnterSec, rampExitSec, rampWhileSec, depthCurve } = audio.eq;
-    const { maxVol, minVolBottom } = audio.musicDepth;
 
     const camY = this.camera.position.y;
     const isUnderwater = this.isUnderwaterStable();
@@ -4513,18 +4553,48 @@ export class RioScene extends BaseScene {
       ? (isUnderwater ? rampEnterSec : rampExitSec)
       : rampWhileSec;
 
-    try {
-      this.lowpassFilter.frequency.cancelScheduledValues(now);
-    } catch (_) {}
-    this.lowpassFilter.frequency.setValueAtTime(this.lowpassFilter.frequency.value, now);
-    this.lowpassFilter.frequency.linearRampToValueAtTime(targetHz, now + Math.max(0.01, rampSec));
+    const rampTargetTime = now + Math.max(0.01, rampSec);
 
-    // Volumen del tema continuo vs. profundidad
-    let vol = isUnderwater
-      ? (maxVol - (maxVol - minVolBottom) * depthT)
-      : maxVol;
+    if (hasMusic) {
+      try {
+        this.lowpassFilter.frequency.cancelScheduledValues(now);
+      } catch (_) {}
+      this.lowpassFilter.frequency.setValueAtTime(this.lowpassFilter.frequency.value, now);
+      this.lowpassFilter.frequency.linearRampToValueAtTime(targetHz, rampTargetTime);
+    }
 
-    this.sounds.music.setVolume(vol);
+    if (hasLanchas) {
+      try {
+        this.lowpassFilterLanchas.frequency.cancelScheduledValues(now);
+      } catch (_) {}
+      this.lowpassFilterLanchas.frequency.setValueAtTime(this.lowpassFilterLanchas.frequency.value, now);
+      this.lowpassFilterLanchas.frequency.linearRampToValueAtTime(targetHz, rampTargetTime);
+    }
+
+    // --- Volumen del tema continuo vs. profundidad (con rampas) ---
+    const { maxVolAbove, maxVolUnder, minVolBottom } = audio.musicDepth;
+
+    // 1. Determinar el volumen objetivo
+    let targetVol;
+    if (isUnderwater) {
+      // Interpolar entre el nuevo volumen máximo submarino y el mínimo del fondo
+      targetVol = maxVolUnder - (maxVolUnder - minVolBottom) * depthT;
+    } else {
+      // Usar el volumen estándar de la superficie
+      targetVol = maxVolAbove;
+    }
+
+    const gainNodes = [];
+    if (hasMusic && this.audioState.musicGainNode) gainNodes.push(this.audioState.musicGainNode);
+    if (hasLanchas && this.audioState.lanchasGainNode) gainNodes.push(this.audioState.lanchasGainNode);
+
+    for (const node of gainNodes) {
+      try {
+        node.cancelScheduledValues(now);
+      } catch (_) {}
+      node.setValueAtTime(node.value, now);
+      node.linearRampToValueAtTime(targetVol, rampTargetTime);
+    }
 
     // 4) Guardar estado del EQ para el próximo frame
     this.audioState.eqUnderPrev = isUnderwater;
