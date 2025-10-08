@@ -106,7 +106,8 @@ class SpatialHash {
  * ------------------------------------------------------------- */
 const SizeScale       = { small: 1.0,  medium: 1.5,  large: 2.0 };
 const SpeedScale      = { slow: 0.3,   medium: 0.8,  fast: 1.5 };
-const AbundanceCount  = { scarce: 5,   usual: 15,    veryCommon: 30 };
+//const AbundanceCount  = { scarce: 5,   usual: 15,    veryCommon: 30 };
+const AbundanceCount  = { scarce: 1,   usual: 1,    veryCommon: 1 };
 
 /**
  * Species water-column / shore mapping keys:
@@ -558,6 +559,63 @@ const DEFAULT_PARAMS = {
       pad: 5,
       startIndex: 1,
       maxFramesProbe: 1200
+    }
+  },
+
+  /** Completed-species celebration overlay */
+  completedOverlay: {
+    enabled: true,
+    delayAfterSelectSec: 1.0,
+    fps: 30,
+    fontFamily: `"new-science-mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace`,
+
+    speciesName: {
+      dir: '/game-assets/sub/interfaz/completed-species-name',
+      prefix: 'BASE especie nombre_',
+      pad: 5,
+      startIndex: 0,
+      maxFramesProbe: 900,
+      loopTailFrames: 30,
+      position: { xPct: 0.15, yPct: 0.18 },
+      widthPct: 0.2,
+      textBox: { xPct: 0.12, yPct: 0.2, wPct: 0.8, hPct: 0.3 },
+      textColor: '#FFD400',
+      textShadow: '0 2px 10px rgba(0,0,0,0.75)',
+      lineHeight: 1.05
+    },
+
+    speciesImage: {
+      dir: '/game-assets/sub/interfaz/completed-species-image',
+      prefix: 'VNT pre_01_',
+      pad: 5,
+      startIndex: 0,
+      maxFramesProbe: 900,
+      loopTailFrames: 30,
+      delayAfterNameSec: 0.5,
+      offsetPct: { x: 0.08, y: 0.015 },
+      widthPct: 0.26,
+      imageBox: { xPct: 0.10, yPct: 0.12, wPct: 0.80, hPct: 0.76 },
+      imageScale: 0.8,
+      backgroundColor: 'rgba(0,0,0,0)',
+      borderRadiusPx: 8
+    },
+
+    speciesInfo: {
+      dir: '/game-assets/sub/interfaz/completed-species-info',
+      prefix: 'BASE data especie_',
+      pad: 5,
+      startIndex: 0,
+      maxFramesProbe: 900,
+      loopTailFrames: 30,
+      delayAfterNameSec: 0.8,
+      offsetPct: { x: 0.28, y: 0.25 },
+      widthPct: 0.2,
+      textBox: { xPct: 0.16, yPct: 0.12, wPct: 0.80, hPct: 0.72 },
+      textColor: '#FFD400',
+      fontSizePx: 18,
+      lineHeight: 1.35,
+      scrollThumbColor: 'rgba(255, 212, 0, 0.7)',
+      scrollTrackColor: 'rgba(0,0,0,0.35)'
     }
   },
 
@@ -1135,6 +1193,7 @@ class Deck {
         numbersEl,
         modelWrap,
         baseName,
+        fullDisplayName: speciesDef.displayName,
         revealed: false,
         completed: false,
         count: 0,
@@ -1811,6 +1870,632 @@ class Deck {
 
 
 /* ========================================================================== */
+/* Completed species celebration overlay                                      */
+/* ========================================================================== */
+
+class CompletedOverlay {
+  constructor(params, { preloadSequence, fontFallback }) {
+    this.params = params || {};
+    this.preloadSequence = preloadSequence;
+    this.fontFamily = params.fontFamily || fontFallback;
+
+    this.root = null;
+    this.components = {
+      name: this._makeComponentConfig('speciesName'),
+      image: this._makeComponentConfig('speciesImage'),
+      info: this._makeComponentConfig('speciesInfo')
+    };
+
+    this._initialized = false;
+    this._loadingPromise = null;
+    this._activeKey = null;
+    this._startTimes = { name: 0, image: 0, info: 0 };
+    this._frameDuration = (params.fps && params.fps > 0) ? (1 / params.fps) : (1 / 30);
+
+    this._speciesCache = new Map(); // key -> { imageSrc, infoText, displayName }
+
+    this._onResize = () => this.updateLayout();
+  }
+
+  prepare() {
+    return this._ensureInitialized();
+  }
+
+  _makeComponentConfig(key) {
+    const cfg = (this.params && this.params[key]) ? Object.assign({}, this.params[key]) : {};
+    return {
+      key,
+      cfg,
+      frames: [],
+      aspect: 1,
+      wrap: null,
+      imgEl: null,
+      contentEl: null,
+      lastFrameIndex: -1,
+      frameIndex: 0,
+      frameTime: 0,
+      state: 'hidden', // hidden | pending | playing
+      startDelay: 0
+    };
+  }
+
+  async _ensureInitialized() {
+    if (this._initialized) return;
+    if (this._loadingPromise) {
+      await this._loadingPromise;
+      return;
+    }
+
+    this._loadingPromise = this._init();
+    await this._loadingPromise;
+    this._initialized = true;
+    this._loadingPromise = null;
+  }
+
+  async _init() {
+    await this._loadSequences();
+    this._createDom();
+    this.updateLayout();
+    window.addEventListener('resize', this._onResize, { passive: true });
+  }
+
+  async _loadSequences() {
+    const loadComponent = async (comp) => {
+      const cfg = comp.cfg || {};
+      if (!cfg.dir) return;
+      const frames = await this.preloadSequence(cfg.dir, cfg.prefix, cfg.pad, cfg.startIndex, cfg.maxFramesProbe);
+      if (frames && frames.length) {
+        comp.frames = frames;
+        const first = frames[0];
+        comp.aspect = (first.naturalWidth && first.naturalHeight)
+          ? (first.naturalWidth / first.naturalHeight)
+          : 1;
+      } else {
+        comp.frames = [];
+        comp.aspect = 1;
+      }
+
+      if (comp.key === 'speciesImage') {
+        comp.startDelay = cfg.delayAfterNameSec ?? 0.5;
+      } else if (comp.key === 'speciesInfo') {
+        comp.startDelay = cfg.delayAfterNameSec ?? 0.8;
+      } else {
+        comp.startDelay = 0;
+      }
+    };
+
+    await Promise.all([
+      loadComponent(this.components.name),
+      loadComponent(this.components.image),
+      loadComponent(this.components.info)
+    ]);
+  }
+
+  _createDom() {
+    if (this.root) return;
+
+    if (!document.getElementById('__completed_overlay_css')) {
+      const style = document.createElement('style');
+      style.id = '__completed_overlay_css';
+      style.textContent = `
+        #completed-overlay-root {
+          position: fixed;
+          inset: 0;
+          pointer-events: none;
+          z-index: 100010;
+          visibility: hidden;
+        }
+        .completed-overlay-wrap {
+          position: fixed;
+          pointer-events: none;
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity 200ms ease;
+        }
+        .completed-overlay-wrap.active {
+          opacity: 1;
+          visibility: visible;
+        }
+        .completed-overlay-bg,
+        .completed-overlay-content {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 100%;
+        }
+        .completed-overlay-text {
+          color: #FFD400;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          white-space: normal;
+          gap: 4px;
+        }
+        .completed-overlay-info-scroll {
+          overflow-y: auto;
+          padding-right: 8px;
+        }
+        #completed-overlay-root::-webkit-scrollbar,
+        .completed-overlay-info-scroll::-webkit-scrollbar {
+          width: 8px;
+        }
+        .completed-overlay-info-scroll::-webkit-scrollbar-thumb {
+          border-radius: 8px;
+        }
+        .completed-overlay-info-scroll::-webkit-scrollbar-track {
+          border-radius: 8px;
+        }
+        .completed-name-primary {
+          font-weight: 700;
+          letter-spacing: 0.04em;
+        }
+        .completed-name-secondary {
+          font-weight: 500;
+          opacity: 0.85;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    const root = document.createElement('div');
+    root.id = 'completed-overlay-root';
+    document.body.appendChild(root);
+    this.root = root;
+
+    // Species Name component
+    const nameComp = this.components.name;
+    nameComp.wrap = this._makeWrapDiv('species-name');
+    nameComp.imgEl = this._makeBgImg();
+    nameComp.wrap.appendChild(nameComp.imgEl);
+  nameComp.wrap.style.zIndex = '30';
+
+    const nameText = document.createElement('div');
+    nameText.className = 'completed-overlay-content completed-overlay-text';
+  nameText.style.pointerEvents = 'none';
+    nameComp.wrap.appendChild(nameText);
+    nameComp.contentEl = nameText;
+    root.appendChild(nameComp.wrap);
+
+    // Species Image component
+    const imageComp = this.components.image;
+    imageComp.wrap = this._makeWrapDiv('species-image');
+    imageComp.imgEl = this._makeBgImg();
+    imageComp.wrap.appendChild(imageComp.imgEl);
+  imageComp.wrap.style.zIndex = '10';
+
+    const imageInner = document.createElement('div');
+    imageInner.className = 'completed-overlay-content';
+    imageInner.style.display = 'flex';
+    imageInner.style.alignItems = 'center';
+    imageInner.style.justifyContent = 'center';
+    imageInner.style.pointerEvents = 'none';
+
+    const speciesImg = document.createElement('img');
+    speciesImg.style.maxWidth = '100%';
+    speciesImg.style.maxHeight = '100%';
+    speciesImg.style.objectFit = 'contain';
+    imageInner.appendChild(speciesImg);
+    imageComp.wrap.appendChild(imageInner);
+    imageComp.contentEl = speciesImg;
+    root.appendChild(imageComp.wrap);
+
+    // Species Info component
+    const infoComp = this.components.info;
+    infoComp.wrap = this._makeWrapDiv('species-info');
+    infoComp.imgEl = this._makeBgImg();
+    infoComp.wrap.appendChild(infoComp.imgEl);
+  infoComp.wrap.style.zIndex = '40';
+  infoComp.wrap.style.pointerEvents = 'auto';
+
+    const infoInner = document.createElement('div');
+    infoInner.className = 'completed-overlay-content completed-overlay-info-scroll';
+    infoInner.style.whiteSpace = 'pre-wrap';
+    infoInner.style.display = 'block';
+    infoInner.style.pointerEvents = 'auto';
+    infoInner.style.overflowY = 'auto';
+    infoInner.style.boxSizing = 'border-box';
+    infoInner.style.padding = '0 12px 0 0';
+    infoComp.wrap.appendChild(infoInner);
+    infoComp.contentEl = infoInner;
+    root.appendChild(infoComp.wrap);
+
+    this._applyScrollStyles();
+  }
+
+  _makeWrapDiv(suffix) {
+    const div = document.createElement('div');
+    div.className = 'completed-overlay-wrap';
+    div.dataset.component = suffix;
+    return div;
+  }
+
+  _makeBgImg() {
+    const img = document.createElement('img');
+    img.className = 'completed-overlay-bg';
+    img.style.objectFit = 'cover';
+    img.style.pointerEvents = 'none';
+    return img;
+  }
+
+  _applyScrollStyles() {
+    const infoCfg = this.components.info.cfg || {};
+    const thumb = infoCfg.scrollThumbColor || 'rgba(255, 212, 0, 0.7)';
+    const track = infoCfg.scrollTrackColor || 'rgba(0,0,0,0.35)';
+
+    if (!document.getElementById('__completed_overlay_scroll_css')) {
+      const css = document.createElement('style');
+      css.id = '__completed_overlay_scroll_css';
+      css.textContent = `
+        .completed-overlay-info-scroll::-webkit-scrollbar-thumb {
+          background: ${thumb};
+        }
+        .completed-overlay-info-scroll::-webkit-scrollbar-track {
+          background: ${track};
+        }
+      `;
+      document.head.appendChild(css);
+    }
+  }
+
+  destroy() {
+    window.removeEventListener('resize', this._onResize);
+    if (this.root && this.root.parentNode) {
+      this.root.parentNode.removeChild(this.root);
+    }
+    this.root = null;
+    this._initialized = false;
+  }
+
+  hide() {
+    if (!this.root) return;
+    this.root.style.visibility = 'hidden';
+
+    Object.values(this.components).forEach(comp => {
+      comp.state = 'hidden';
+      comp.lastFrameIndex = -1;
+      if (comp.wrap) comp.wrap.classList.remove('active');
+    });
+
+    this._activeKey = null;
+  }
+
+  _setComponentFrame(comp, index) {
+    if (!comp.imgEl || !comp.frames.length) return;
+    const clamped = Math.max(0, Math.min(index, comp.frames.length - 1));
+    if (clamped === comp.lastFrameIndex) return;
+    comp.lastFrameIndex = clamped;
+    comp.imgEl.src = comp.frames[clamped].src;
+  }
+
+  _loopFrameIndex(comp) {
+    const total = comp.frames.length;
+    if (!total) return 0;
+    let idx = comp.frameIndex;
+    if (idx < total) return idx;
+    const loopTail = Math.max(1, Math.min(comp.cfg.loopTailFrames || 1, total));
+    const startLoop = Math.max(0, total - loopTail);
+    idx = startLoop + ((idx - startLoop) % loopTail);
+    return idx;
+  }
+
+  async activate({ speciesKey, displayName, imageSrc, infoText }) {
+    await this._ensureInitialized();
+
+    this._activeKey = speciesKey;
+    if (this.root) {
+      this.root.style.visibility = 'visible';
+    }
+
+    const now = performance.now() * 0.001;
+    this._startTimes.name = now + (this.components.name.startDelay || 0);
+    this._startTimes.image = now + (this.components.image.startDelay || 0);
+    this._startTimes.info = now + (this.components.info.startDelay || 0);
+
+    Object.values(this.components).forEach(comp => {
+      comp.state = 'pending';
+      comp.frameIndex = 0;
+      comp.frameTime = 0;
+      comp.lastFrameIndex = -1;
+      if (comp.wrap) comp.wrap.classList.remove('active');
+    });
+
+    this._applyNameContent(displayName);
+    this._applyImageContent(imageSrc);
+    this._applyInfoContent(infoText);
+  }
+
+  _applyNameContent(displayName) {
+    const comp = this.components.name;
+    if (!comp.contentEl) return;
+    const full = (displayName || '').trim();
+    const match = full.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+    const primaryText = (match ? match[1] : full).trim();
+    const secondaryText = match ? match[2].trim() : '';
+
+    if (!comp.primaryEl) {
+      comp.contentEl.textContent = '';
+      const primary = document.createElement('div');
+      primary.className = 'completed-name-primary';
+      const secondary = document.createElement('div');
+      secondary.className = 'completed-name-secondary';
+      comp.contentEl.appendChild(primary);
+      comp.contentEl.appendChild(secondary);
+      comp.primaryEl = primary;
+      comp.secondaryEl = secondary;
+    }
+
+    const primary = comp.primaryEl;
+    const secondary = comp.secondaryEl;
+
+    primary.textContent = primaryText ? primaryText.toLocaleUpperCase('es-AR') : '';
+    secondary.textContent = secondaryText;
+    secondary.style.display = secondaryText ? 'block' : 'none';
+
+    comp.contentEl.style.fontFamily = this.fontFamily;
+    comp.contentEl.style.color = comp.cfg.textColor || '#FFD400';
+    comp.contentEl.style.textShadow = comp.cfg.textShadow || '0 2px 10px rgba(0,0,0,0.75)';
+    comp.contentEl.style.lineHeight = `${comp.cfg.lineHeight ?? 1.05}`;
+  }
+
+  _applyImageContent(imageSrc) {
+    const comp = this.components.image;
+    if (!comp.contentEl) return;
+    if (imageSrc) {
+      comp.contentEl.src = imageSrc;
+    } else {
+      comp.contentEl.removeAttribute('src');
+    }
+  }
+
+  _applyInfoContent(infoText) {
+    const comp = this.components.info;
+    if (!comp.contentEl) return;
+    comp.contentEl.textContent = infoText || '';
+    comp.contentEl.style.fontFamily = this.fontFamily;
+    comp.contentEl.style.color = comp.cfg.textColor || '#FFD400';
+    comp.contentEl.style.lineHeight = `${comp.cfg.lineHeight ?? 1.3}`;
+    const fontSize = comp.cfg.fontSizePx || 18;
+    comp.contentEl.style.fontSize = `${fontSize}px`;
+    comp.contentEl.scrollTop = 0;
+  }
+
+  update(dt, nowSec) {
+    if (!this._activeKey || !this.root) return;
+
+    const cmpEntries = Object.entries(this.components);
+    for (const [key, comp] of cmpEntries) {
+      const startAt = this._startTimes[key === 'name' ? 'name' : key];
+      if (comp.state === 'pending') {
+        if (nowSec >= startAt) {
+          comp.state = 'playing';
+          if (comp.wrap) comp.wrap.classList.add('active');
+          this._setComponentFrame(comp, 0);
+          if (comp.contentEl && key === 'name') {
+            this._fitNameText();
+          }
+        }
+      }
+
+      if (comp.state === 'playing') {
+        comp.frameTime += dt;
+        if (comp.frameTime >= this._frameDuration) {
+          const advance = Math.floor(comp.frameTime / this._frameDuration);
+          comp.frameTime -= advance * this._frameDuration;
+          comp.frameIndex += advance;
+          const idx = this._loopFrameIndex(comp);
+          comp.frameIndex = idx;
+          this._setComponentFrame(comp, idx);
+        }
+      }
+    }
+  }
+
+  updateLayout() {
+    if (!this.root) return;
+
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    // Base component (species name)
+    const nameComp = this.components.name;
+    if (nameComp.wrap) {
+      const cfg = nameComp.cfg || {};
+      const width = Math.max(1, Math.round((cfg.widthPct ?? 0.3) * vw));
+      const height = Math.round(width / (nameComp.aspect || 1));
+      const left = Math.round((cfg.position?.xPct ?? 0.1) * vw);
+      const top = Math.round((cfg.position?.yPct ?? 0.12) * vh);
+
+      this._applyComponentLayout(nameComp, left, top, width, height);
+      this._layoutNameText(width, height);
+    }
+
+    // Species image positions relative to name
+    const imageComp = this.components.image;
+    if (imageComp.wrap && nameComp.wrap) {
+      const cfg = imageComp.cfg || {};
+      const nameRect = nameComp.wrap.getBoundingClientRect();
+      const baseLeft = nameRect.left;
+      const baseTop = nameRect.top;
+
+      const left = Math.round(baseLeft + (cfg.offsetPct?.x ?? 0) * vw);
+      const top = Math.round(baseTop + (cfg.offsetPct?.y ?? 0) * vh);
+      const width = Math.max(1, Math.round((cfg.widthPct ?? 0.24) * vw));
+      const height = Math.round(width / (imageComp.aspect || 1));
+
+      this._applyComponentLayout(imageComp, left, top, width, height);
+      if (cfg.backgroundColor) {
+        imageComp.wrap.style.background = cfg.backgroundColor;
+      }
+      if (cfg.borderRadiusPx) {
+        imageComp.wrap.style.borderRadius = `${cfg.borderRadiusPx}px`;
+      }
+      this._layoutImageContent(width, height);
+    }
+
+    const infoComp = this.components.info;
+    if (infoComp.wrap && nameComp.wrap) {
+      const cfg = infoComp.cfg || {};
+      const nameRect = nameComp.wrap.getBoundingClientRect();
+      const baseLeft = nameRect.left;
+      const baseTop = nameRect.top;
+
+      const left = Math.round(baseLeft + (cfg.offsetPct?.x ?? 0) * vw);
+      const top = Math.round(baseTop + (cfg.offsetPct?.y ?? 0) * vh);
+      const width = Math.max(1, Math.round((cfg.widthPct ?? 0.3) * vw));
+      const height = Math.round(width / (infoComp.aspect || 1));
+
+      this._applyComponentLayout(infoComp, left, top, width, height);
+      this._layoutInfoContent(width, height);
+    }
+  }
+
+  _applyComponentLayout(comp, left, top, width, height) {
+    const wrap = comp.wrap;
+    if (!wrap) return;
+
+    wrap.style.left = `${left}px`;
+    wrap.style.top = `${top}px`;
+    wrap.style.width = `${width}px`;
+    wrap.style.height = `${height}px`;
+  }
+
+  _layoutNameText(width, height) {
+    const comp = this.components.name;
+    const cfg = comp.cfg || {};
+    if (!comp.contentEl) return;
+    const box = cfg.textBox || { xPct: 0.1, yPct: 0.2, wPct: 0.8, hPct: 0.6 };
+    const left = Math.round(box.xPct * width);
+    const top = Math.round(box.yPct * height);
+    const w = Math.max(1, Math.round(box.wPct * width));
+    const h = Math.max(1, Math.round(box.hPct * height));
+
+    Object.assign(comp.contentEl.style, {
+      left: `${left}px`,
+      top: `${top}px`,
+      width: `${w}px`,
+      height: `${h}px`
+    });
+
+    this._fitNameText();
+  }
+
+  _layoutImageContent(width, height) {
+    const comp = this.components.image;
+    const cfg = comp.cfg || {};
+    const box = cfg.imageBox || { xPct: 0.1, yPct: 0.1, wPct: 0.8, hPct: 0.8 };
+    const inner = comp.wrap ? comp.wrap.querySelector('.completed-overlay-content') : null;
+    if (!inner) return;
+    const left = Math.round(box.xPct * width);
+    const top = Math.round(box.yPct * height);
+    const w = Math.max(1, Math.round(box.wPct * width));
+    const h = Math.max(1, Math.round(box.hPct * height));
+    Object.assign(inner.style, {
+      left: `${left}px`,
+      top: `${top}px`,
+      width: `${w}px`,
+      height: `${h}px`
+    });
+    if (comp.contentEl) {
+      const scale = Number.isFinite(cfg.imageScale) ? cfg.imageScale : 1;
+      comp.contentEl.style.transform = `scale(${scale})`;
+      comp.contentEl.style.transformOrigin = '50% 50%';
+    }
+  }
+
+  _layoutInfoContent(width, height) {
+    const comp = this.components.info;
+    const cfg = comp.cfg || {};
+    if (!comp.contentEl) return;
+    const box = cfg.textBox || { xPct: 0.1, yPct: 0.2, wPct: 0.8, hPct: 0.7 };
+    const left = Math.round(box.xPct * width);
+    const top = Math.round(box.yPct * height);
+    const w = Math.max(1, Math.round(box.wPct * width));
+    const h = Math.max(1, Math.round(box.hPct * height));
+    Object.assign(comp.contentEl.style, {
+      position: 'absolute',
+      left: `${left}px`,
+      top: `${top}px`,
+      width: `${w}px`,
+      height: `${h}px`
+    });
+  }
+
+  _fitNameText() {
+    const comp = this.components.name;
+    if (!comp || !comp.contentEl) return;
+    const el = comp.contentEl;
+    const rect = el.getBoundingClientRect();
+    const maxW = rect.width;
+    const maxH = rect.height;
+    if (maxW <= 0 || maxH <= 0) return;
+
+    el.style.fontFamily = this.fontFamily;
+    const minSize = 12;
+    let lo = minSize;
+    let hi = Math.max(minSize, Math.floor(maxH));
+    let best = lo;
+
+    const primary = comp.primaryEl || el;
+    const secondary = comp.secondaryEl;
+    const secondaryScale = comp.cfg.secondaryScale ?? 0.55;
+
+    while (lo <= hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      primary.style.fontSize = `${mid}px`;
+      if (secondary) {
+        const secondarySize = Math.max(1, Math.round(mid * secondaryScale));
+        secondary.style.fontSize = `${secondarySize}px`;
+      }
+      el.style.whiteSpace = 'pre-wrap';
+      el.style.lineHeight = `${comp.cfg.lineHeight ?? 1.05}`;
+
+      const fits = el.scrollWidth <= maxW + 1 && el.scrollHeight <= maxH + 1;
+      if (fits) {
+        best = mid;
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
+      }
+    }
+
+    primary.style.fontSize = `${best}px`;
+    if (secondary) {
+      const secondarySize = Math.max(1, Math.round(best * secondaryScale));
+      secondary.style.fontSize = `${secondarySize}px`;
+    }
+    el.style.whiteSpace = 'pre-wrap';
+  }
+
+  async loadSpeciesAssets(speciesKey, { imagePath, infoPath, displayName }) {
+    if (this._speciesCache.has(speciesKey)) {
+      return this._speciesCache.get(speciesKey);
+    }
+
+    const result = { imageSrc: imagePath, infoText: '', displayName };
+
+    if (infoPath) {
+      try {
+        const response = await fetch(infoPath);
+        if (response.ok) {
+          result.infoText = await response.text();
+        } else {
+          result.infoText = `No se pudo cargar la información (${response.status}).`;
+        }
+      } catch (err) {
+        console.error('[completedOverlay] info fetch failed', err);
+        result.infoText = 'Información no disponible.';
+      }
+    }
+
+    this._speciesCache.set(speciesKey, result);
+    return result;
+  }
+}
+
+/* ========================================================================== */
 /* RioScene                                                                   */
 /* ========================================================================== */
 
@@ -1857,6 +2542,12 @@ export class RioScene extends BaseScene {
     
     // Deck UI
     this.deck = null;
+
+  // Completed overlay state
+  this.completedOverlay = null;
+  this._completedOverlayState = { activeKey: null, loading: false };
+  this._deckSelectionTime = 0;
+  this._lastDeckIndex = null;
 
         /* === ADD: timer & cursor state === */
     this.timer = {
@@ -2215,6 +2906,8 @@ export class RioScene extends BaseScene {
       this.deck.container.style.opacity = 0;
       this.deck.container.style.pointerEvents = 'none';
     }
+    this._initCompletedOverlay();
+    this._deckSelectionTime = performance.now() * 0.001;
     // Spawn fish by abundance
     if (this.params.debug.fish) {
       await this.spawnFishBySpecies();
@@ -2362,6 +3055,11 @@ export class RioScene extends BaseScene {
     window.removeEventListener('keydown', this._onKeyDown);
     this.app.canvas.removeEventListener('wheel', this._onWheel);
     if (this.deck) this.deck.destroy();
+    if (this.completedOverlay) {
+      this.completedOverlay.destroy();
+      this.completedOverlay = null;
+    }
+    this._completedOverlayState = { activeKey: null, loading: false };
     this.disposeVegetation();
     this.disposeMistLayer();
     this._destroyRuler();
@@ -2900,28 +3598,48 @@ export class RioScene extends BaseScene {
   // Stops early if exceeds maxProbe to avoid infinite loops.
   async _preloadFrameSequence(dir, prefix, pad, startIndex, maxProbe = 1200) {
     const frames = [];
-    const zeroPad = (n, w) => String(n).padStart(w, '0');
+    const zeroPad = (n, w = 0) => String(n).padStart(Math.max(0, w), '0');
+    const batchSize = 8;
+    const firstIndex = Number.isFinite(startIndex) ? startIndex : 0;
+    const maxAttempts = Math.max(0, maxProbe | 0);
 
-    // We keep loading from startIndex upward until the first failure AFTER at least one success.
-    // To be robust with leading gaps, start from startIndex provided by config.
-    let i = Math.max(1, startIndex|0);
-    for (; i < startIndex + maxProbe; i++) {
-      const src = `${dir}/${prefix}${zeroPad(i, pad)}.png`;
-      // eslint-disable-next-line no-await-in-loop
-      const ok = await new Promise(res => {
-        const im = new Image();
-        im.onload = () => res(im);
-        im.onerror = () => res(null);
-        im.src = src;
-      });
-      if (ok) frames.push(ok);
-      else {
-        // stop if we've already collected at least one frame
-        if (frames.length > 0) break;
-        // if we failed immediately at the starting index, bail (misconfig)
-        break;
+    let nextIndex = firstIndex;
+    let attempts = 0;
+    let keepLoading = true;
+
+    const loadSingle = (idx) => new Promise((resolve) => {
+      const im = new Image();
+      im.decoding = 'async';
+      im.onload = () => resolve({ ok: true, img: im, index: idx });
+      im.onerror = () => resolve({ ok: false, index: idx });
+      im.src = `${dir}/${prefix}${zeroPad(idx, pad)}.png`;
+    });
+
+    while (keepLoading && attempts < maxAttempts) {
+      const batch = [];
+      for (let b = 0; b < batchSize && attempts < maxAttempts; b++, attempts++) {
+        batch.push(nextIndex++);
       }
+      if (!batch.length) break;
+
+      const results = await Promise.all(batch.map(loadSingle));
+      for (const res of results) {
+        if (res.ok) {
+          frames.push(res.img);
+        } else {
+          keepLoading = false;
+          if (frames.length === 0) {
+            // Ensure we return [] if we never loaded a frame successfully
+            frames.length = 0;
+          }
+          break;
+        }
+      }
+
+      // Stop early if the last batch had a failure
+      if (!keepLoading) break;
     }
+
     return frames;
   }
 
@@ -3034,6 +3752,93 @@ export class RioScene extends BaseScene {
 
 
   /* -------------------------------- Vegetation -------------------------------- */
+
+  _initCompletedOverlay() {
+    if (!this.params.completedOverlay?.enabled) return;
+    if (this.completedOverlay) return;
+
+    const overlayParams = this.params.completedOverlay;
+    this.completedOverlay = new CompletedOverlay(overlayParams, {
+      preloadSequence: (dir, prefix, pad, startIndex, maxProbe) =>
+        this._preloadFrameSequence(dir, prefix, pad, startIndex, maxProbe),
+      fontFallback: this.params.deckUI?.fonts?.family || 'system-ui, sans-serif'
+    });
+    const prep = this.completedOverlay.prepare();
+    if (prep && typeof prep.then === 'function') {
+      prep
+        .then(() => {
+          if (this.completedOverlay) this.completedOverlay.updateLayout();
+        })
+        .catch(err => console.error('[RioScene] completed overlay preload failed', err));
+    }
+    this.completedOverlay.updateLayout();
+  }
+
+  _cancelCompletedOverlay() {
+    if (this.completedOverlay) {
+      this.completedOverlay.hide();
+    }
+    this._completedOverlayState.activeKey = null;
+    this._completedOverlayState.loading = false;
+  }
+
+  _maybeTriggerCompletedOverlay(nowSec) {
+    if (!this.params.completedOverlay?.enabled) return;
+    if (!this.deck || !this.completedOverlay) return;
+
+    const cards = this.deck.cards || [];
+    const idx = this.deck.currentIndex ?? 0;
+    const card = cards[idx];
+
+    if (!card || !card.completed) {
+      if (this._completedOverlayState.activeKey) this._cancelCompletedOverlay();
+      return;
+    }
+
+    const delay = this.params.completedOverlay.delayAfterSelectSec ?? 1.0;
+    if ((nowSec - this._deckSelectionTime) < delay) {
+      if (this._completedOverlayState.activeKey) {
+        // keep showing current overlay but do not trigger new one
+        if (this._completedOverlayState.activeKey !== card.key) {
+          this._cancelCompletedOverlay();
+        }
+      }
+      return;
+    }
+
+    if (this._completedOverlayState.activeKey === card.key) return;
+    if (this._completedOverlayState.loading) return;
+
+  const speciesDef = SPECIES.find(s => s.key === card.key) || null;
+  const displayName = card.fullDisplayName || speciesDef?.displayName || card.baseName || card.key;
+    const imagePath = `/game-assets/sub/full_q_fish/${card.key}.png`;
+    const infoPath = `/game-assets/sub/full_q_fish/${card.key}.txt`;
+
+    this._completedOverlayState.loading = true;
+    this.completedOverlay
+      .loadSpeciesAssets(card.key, { imagePath, infoPath, displayName })
+      .then(async (assets) => {
+        if (this.deck?.cards[this.deck.currentIndex]?.key !== card.key) {
+          return; // selection changed while loading
+        }
+        await this.completedOverlay.activate({
+          speciesKey: card.key,
+          displayName: assets.displayName,
+          imageSrc: assets.imageSrc,
+          infoText: assets.infoText
+        });
+        this._completedOverlayState.activeKey = card.key;
+      })
+      .catch(err => {
+        console.error('[RioScene] completed overlay activation failed', err);
+      })
+      .finally(() => {
+        if (this._completedOverlayState.activeKey !== card.key) {
+          this._completedOverlayState.activeKey = null;
+        }
+        this._completedOverlayState.loading = false;
+      });
+  }
 
   async initVegetation() {
     const V = this.params.vegetation;
@@ -3988,11 +4793,12 @@ export class RioScene extends BaseScene {
 
   update(dt) {
     const { deadzone, damping, speeds, responseCurve } = this.params;
+    const nowSec = performance.now() * 0.001;
 
         // --- Intro phases (pre -> move -> post -> done) ---
     let didIntroCameraStep = false;
     if (this.introState.active) {
-      const now = performance.now() * 0.001;
+      const now = nowSec;
       const t   = now - this.introState.t0;
       const P   = this.params.intro;
 
@@ -4168,6 +4974,24 @@ export class RioScene extends BaseScene {
     
     // Update the deck UI
     if (this.deck && this.params.debug.deckRender) this.deck.update(dt);
+
+    if (this.deck) {
+      const idx = this.deck.currentIndex ?? 0;
+      if (this._lastDeckIndex === null) {
+        this._lastDeckIndex = idx;
+      } else if (idx !== this._lastDeckIndex) {
+        this._lastDeckIndex = idx;
+        this._deckSelectionTime = nowSec;
+        this._cancelCompletedOverlay();
+      }
+      this._maybeTriggerCompletedOverlay(nowSec);
+    } else {
+      if (this._completedOverlayState.activeKey) this._cancelCompletedOverlay();
+    }
+
+    if (this.completedOverlay) {
+      this.completedOverlay.update(dt, nowSec);
+    }
 
     this._updateTimerText();
 
@@ -4476,6 +5300,10 @@ export class RioScene extends BaseScene {
     }
 
     this._updateTimerLayout?.();
+
+    if (this.completedOverlay) {
+      this.completedOverlay.updateLayout();
+    }
 
     if (this.skyDome) {
       const newR = Math.max(10, this.camera.far * 0.9);
