@@ -389,6 +389,18 @@ const DEFAULT_PARAMS = {
   },
 
 
+  /** Surface transition FX (video overlay while crossing the membrane) */
+  surfaceFX: {
+    enabled: true,
+    src: '/game-assets/sub/others/surface.webm',
+    crossfadeMs: 700,
+    blendMode: 'plus-lighter',
+    fallbackBlendMode: 'screen',
+    filter: 'brightness(1.35) contrast(2.1) saturate(0.35)',
+    playbackRate: 1.0
+  },
+
+
 
   /** Base model scale and tiling (floor/walls GLB) */
   overrideScale: 129.36780721031408, // explicit scale; if null, scale to modelLongestTarget
@@ -2646,6 +2658,21 @@ export class RioScene extends BaseScene {
           z-index: 100002;              /* por encima de todo lo in-escena */
           user-select: none; -webkit-user-select: none; -ms-user-select: none;
         }
+        #rio-inside-overlay .surface-video-wrap {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+        }
+        #rio-inside-overlay .surface-video-wrap video {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          opacity: 0;
+          transition: opacity 0.7s linear;
+          filter: none;
+        }
       `;
       document.head.appendChild(css);
     }
@@ -2657,6 +2684,10 @@ export class RioScene extends BaseScene {
     this._insideOverlay = inside;
     const c = new THREE.Color(this.params.waterColor);
     this._insideOverlay.style.backgroundColor = `#${c.getHexString()}`;
+
+  this.surfaceFX = null;
+  this._insideOverlayPrevInside = false;
+  this._setupSurfaceVideoFX();
 
 
     this.cursorEl = null;
@@ -3135,6 +3166,7 @@ export class RioScene extends BaseScene {
     this._destroyAudioGateOverlay();
     this._destroyTimerOverlay();
     this._destroyCursorOverlay();
+  this._destroySurfaceVideoFX();
 
     this.disposeShoreHaze();
 
@@ -4499,6 +4531,251 @@ export class RioScene extends BaseScene {
   }
 
 
+  /* ========================================================================== */
+  /* Surface transition video FX                                                */
+  /* ========================================================================== */
+
+  _setupSurfaceVideoFX() {
+    const cfg = this.params.surfaceFX || {};
+    const supportsBlend = (mode) => typeof CSS !== 'undefined' && CSS.supports && CSS.supports('mix-blend-mode', mode);
+    const desiredBlend = cfg.blendMode || 'screen';
+    const fallbackBlend = cfg.fallbackBlendMode || 'screen';
+    const resolvedBlend = supportsBlend(desiredBlend) ? desiredBlend
+                          : (supportsBlend(fallbackBlend) ? fallbackBlend : 'screen');
+
+    this.surfaceFX = {
+      enabled: !!cfg.enabled,
+      ready: false,
+      readyCount: 0,
+      videos: [],
+      listeners: [],
+      timers: [],
+      active: 0,
+      duration: 0,
+      crossfadeSec: Math.max(0, (cfg.crossfadeMs ?? 0) / 1000),
+      playbackRate: cfg.playbackRate ?? 1,
+      blendMode: resolvedBlend,
+      filter: cfg.filter || '',
+      pendingCrossfade: false,
+      playing: false,
+      pendingStart: false,
+      wrap: null
+    };
+
+    if (!this.surfaceFX.enabled || !this._insideOverlay || !cfg.src) return;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'surface-video-wrap';
+    wrap.style.opacity = '1';
+    wrap.style.pointerEvents = 'none';
+    this._insideOverlay.appendChild(wrap);
+    this.surfaceFX.wrap = wrap;
+
+    const mkTransition = (sec) => `${Math.max(0, sec)}s linear`;
+    const videoCount = (this.surfaceFX.crossfadeSec > 0) ? 2 : 1;
+    for (let i = 0; i < videoCount; i++) {
+      const vid = document.createElement('video');
+      vid.src = cfg.src;
+      vid.preload = 'auto';
+      vid.playsInline = true;
+      vid.muted = true;
+      vid.loop = (this.surfaceFX.crossfadeSec <= 0);
+      vid.crossOrigin = 'anonymous';
+      vid.controls = false;
+  vid.playbackRate = this.surfaceFX.playbackRate;
+      vid.setAttribute('playsinline', '');
+      vid.style.position = 'absolute';
+      vid.style.inset = '0';
+      vid.style.width = '100%';
+      vid.style.height = '100%';
+      vid.style.objectFit = 'cover';
+      vid.style.opacity = '0';
+  vid.style.mixBlendMode = this.surfaceFX.blendMode;
+  if (this.surfaceFX.filter) vid.style.filter = this.surfaceFX.filter;
+      vid.style.transition = `opacity ${mkTransition(this.surfaceFX.crossfadeSec)}`;
+      vid.style.pointerEvents = 'none';
+
+      const onLoaded = () => this._onSurfaceVideoLoaded(vid);
+      const onTimeUpdate = () => this._onSurfaceVideoTimeUpdate(vid);
+      const onEnded = () => this._onSurfaceVideoEnded(vid);
+      vid.addEventListener('loadedmetadata', onLoaded, { passive: true });
+      vid.addEventListener('timeupdate', onTimeUpdate, { passive: true });
+      vid.addEventListener('ended', onEnded, { passive: true });
+
+      this.surfaceFX.listeners.push({ video: vid, type: 'loadedmetadata', handler: onLoaded });
+      this.surfaceFX.listeners.push({ video: vid, type: 'timeupdate', handler: onTimeUpdate });
+      this.surfaceFX.listeners.push({ video: vid, type: 'ended', handler: onEnded });
+
+      wrap.appendChild(vid);
+      this.surfaceFX.videos.push(vid);
+
+      // Kick preload immediately (loading time requirement)
+      try { vid.load(); } catch (_) { /* ignore */ }
+    }
+  }
+
+  _onSurfaceVideoLoaded(video) {
+    const fx = this.surfaceFX;
+    if (!fx || !fx.enabled) return;
+    if (!Number.isFinite(video.duration) || video.duration <= 0) return;
+
+    fx.duration = Math.max(fx.duration, video.duration);
+    fx.readyCount += 1;
+
+    if (fx.crossfadeSec > 0 && fx.duration > 0 && fx.crossfadeSec >= fx.duration) {
+      fx.crossfadeSec = Math.max(0, fx.duration - 0.1);
+      const transition = `${Math.max(0, fx.crossfadeSec)}s linear`;
+      fx.videos.forEach(v => { v.style.transition = `opacity ${transition}`; });
+    }
+
+    if (fx.readyCount >= fx.videos.length) {
+      fx.ready = true;
+      if (fx.pendingStart) {
+        fx.pendingStart = false;
+        this._playSurfaceVideo();
+      }
+    }
+  }
+
+  _onSurfaceVideoTimeUpdate(video) {
+    const fx = this.surfaceFX;
+    if (!fx || !fx.enabled || !fx.playing) return;
+    if (fx.crossfadeSec <= 0) return;
+    if (video !== fx.videos[fx.active]) return;
+    if (fx.pendingCrossfade) return;
+
+    const duration = fx.duration || video.duration;
+    if (!Number.isFinite(duration) || duration <= 0) return;
+    const remaining = duration - video.currentTime;
+    if (remaining <= fx.crossfadeSec + 0.05) {
+      this._startSurfaceVideoCrossfade();
+    }
+  }
+
+  _onSurfaceVideoEnded(video) {
+    const fx = this.surfaceFX;
+    if (!fx || !fx.enabled || !fx.playing) return;
+    if (fx.crossfadeSec > 0) return; // handled via loop flag
+    if (video !== fx.videos[fx.active]) return;
+
+    try { video.currentTime = 0; } catch (_) { /* ignore */ }
+    const playPromise = video.play();
+    if (playPromise?.catch) playPromise.catch(()=>{});
+  }
+
+  _startSurfaceVideoCrossfade() {
+    const fx = this.surfaceFX;
+    if (!fx || !fx.enabled || !fx.playing) return;
+    if (fx.crossfadeSec <= 0 || fx.videos.length < 2) return;
+    if (fx.pendingCrossfade) return;
+
+    const fromIdx = fx.active;
+    const toIdx = (fromIdx + 1) % fx.videos.length;
+    const fromVideo = fx.videos[fromIdx];
+    const toVideo = fx.videos[toIdx];
+
+    fx.pendingCrossfade = true;
+
+    try { toVideo.pause(); toVideo.currentTime = 0; } catch (_) { /* ignore */ }
+    toVideo.playbackRate = fx.playbackRate;
+    const playPromise = toVideo.play();
+    if (playPromise?.catch) playPromise.catch(()=>{});
+
+    const transition = `${Math.max(0, fx.crossfadeSec)}s linear`;
+    toVideo.style.transition = `opacity ${transition}`;
+    fromVideo.style.transition = `opacity ${transition}`;
+
+    toVideo.style.opacity = '0';
+    requestAnimationFrame(() => {
+      toVideo.style.opacity = '1';
+      fromVideo.style.opacity = '0';
+    });
+
+    const timer = window.setTimeout(() => {
+      fromVideo.pause();
+      try { fromVideo.currentTime = 0; } catch (_) { /* ignore */ }
+      fromVideo.style.opacity = '0';
+      fx.active = toIdx;
+      fx.pendingCrossfade = false;
+      fx.timers = fx.timers.filter(id => id !== timer);
+    }, Math.max(10, fx.crossfadeSec * 1000 + 30));
+    fx.timers.push(timer);
+  }
+
+  _playSurfaceVideo() {
+    const fx = this.surfaceFX;
+    if (!fx || !fx.enabled) return;
+    if (!fx.ready) {
+      fx.pendingStart = true;
+      return;
+    }
+    if (fx.playing) return;
+
+    fx.timers.forEach(t => window.clearTimeout(t));
+    fx.timers.length = 0;
+
+    fx.videos.forEach((v, idx) => {
+      v.pause();
+      try { v.currentTime = 0; } catch (_) { /* ignore */ }
+      v.style.opacity = '0';
+      v.playbackRate = fx.playbackRate;
+      v.loop = (fx.crossfadeSec <= 0);
+    });
+
+    fx.active = 0;
+    fx.pendingCrossfade = false;
+    fx.playing = true;
+
+    const first = fx.videos[fx.active];
+    const playPromise = first.play();
+    const reveal = () => { first.style.opacity = '1'; };
+    if (playPromise?.then) {
+      playPromise.then(reveal).catch(()=>{});
+    } else {
+      reveal();
+    }
+  }
+
+  _stopSurfaceVideo() {
+    const fx = this.surfaceFX;
+    if (!fx) return;
+    fx.timers.forEach(t => window.clearTimeout(t));
+    fx.timers.length = 0;
+    fx.pendingCrossfade = false;
+    fx.playing = false;
+    fx.pendingStart = false;
+
+    fx.videos.forEach(v => {
+      v.pause();
+      try { v.currentTime = 0; } catch (_) { /* ignore */ }
+      v.style.opacity = '0';
+    });
+  }
+
+  _handleSurfaceVideoInsideToggle(isInside) {
+    const fx = this.surfaceFX;
+    if (!fx || !fx.enabled) return;
+    if (isInside) this._playSurfaceVideo();
+    else this._stopSurfaceVideo();
+  }
+
+  _destroySurfaceVideoFX() {
+    const fx = this.surfaceFX;
+    if (!fx) return;
+    this._stopSurfaceVideo();
+    fx.timers.forEach(t => window.clearTimeout(t));
+    fx.timers.length = 0;
+    fx.listeners.forEach(({ video, type, handler }) => {
+      if (video) video.removeEventListener(type, handler);
+    });
+    fx.listeners.length = 0;
+    if (fx.wrap && fx.wrap.parentNode) fx.wrap.parentNode.removeChild(fx.wrap);
+    fx.videos.length = 0;
+    fx.ready = false;
+    this.surfaceFX = null;
+  }
+
+
 
   /* ----------------------------------- SwimBox ----------------------------------- */
 
@@ -5034,6 +5311,10 @@ export class RioScene extends BaseScene {
     // === Inside-solid overlay toggle ===
     if (this._insideOverlay) {
       const inside = this.isCameraInsideSolid();
+      if (inside !== this._insideOverlayPrevInside) {
+        this._handleSurfaceVideoInsideToggle(inside);
+        this._insideOverlayPrevInside = inside;
+      }
       if (this.mistGroup) this.mistGroup.visible = !inside;  // <-- re-enable when not inside
       this._insideOverlay.style.opacity = inside ? '1' : '0';
     }
