@@ -578,10 +578,22 @@ const DEFAULT_PARAMS = {
       loopTailFrames: 30,
       position: { xPct: 0.15, yPct: 0.18 },
       widthPct: 0.2,
-      textBox: { xPct: 0.12, yPct: 0.2, wPct: 0.8, hPct: 0.3 },
       textColor: '#FFD400',
       textShadow: '0 2px 10px rgba(0,0,0,0.75)',
-      lineHeight: 1.05
+      primaryStyle: {
+        fontSizePx: 24,
+        topPct: 0.27,
+        heightPct: 0.24,
+        textAlign: 'center',
+        lineHeight: 1.0
+      },
+      secondaryStyle: {
+        fontSizePx: 14,
+        topPct: 0.5,
+        heightPct: 0.18,
+        textAlign: 'center',
+        lineHeight: 1.0
+      }
     },
 
     speciesImage: {
@@ -610,9 +622,9 @@ const DEFAULT_PARAMS = {
       delayAfterNameSec: 0.8,
       offsetPct: { x: 0.28, y: 0.25 },
       widthPct: 0.2,
-      textBox: { xPct: 0.16, yPct: 0.12, wPct: 0.80, hPct: 0.72 },
+      textBox: { xPct: 0.17, yPct: 0.14, wPct: 0.70, hPct: 0.72 },
       textColor: '#FFD400',
-      fontSizePx: 18,
+      fontSizePx: 12,
       lineHeight: 1.35,
       scrollThumbColor: 'rgba(255, 212, 0, 0.7)',
       scrollTrackColor: 'rgba(0,0,0,0.35)'
@@ -2232,12 +2244,26 @@ class CompletedOverlay {
 
     primary.textContent = primaryText ? primaryText.toLocaleUpperCase('es-AR') : '';
     secondary.textContent = secondaryText;
-    secondary.style.display = secondaryText ? 'block' : 'none';
+    secondary.style.display = secondaryText ? 'flex' : 'none';
 
     comp.contentEl.style.fontFamily = this.fontFamily;
     comp.contentEl.style.color = comp.cfg.textColor || '#FFD400';
     comp.contentEl.style.textShadow = comp.cfg.textShadow || '0 2px 10px rgba(0,0,0,0.75)';
-    comp.contentEl.style.lineHeight = `${comp.cfg.lineHeight ?? 1.05}`;
+    comp.contentEl.style.position = 'absolute';
+    comp.contentEl.style.left = '0px';
+    comp.contentEl.style.top = '0px';
+    comp.contentEl.style.width = '100%';
+    comp.contentEl.style.height = '100%';
+    comp.contentEl.style.display = 'block';
+    comp.contentEl.style.pointerEvents = 'none';
+    comp.contentEl.style.gap = '0';
+
+    primary.style.position = 'absolute';
+    primary.style.pointerEvents = 'none';
+    secondary.style.position = 'absolute';
+    secondary.style.pointerEvents = 'none';
+
+    this._applyFixedNameStylesFromCurrentBounds();
   }
 
   _applyImageContent(imageSrc) {
@@ -2274,7 +2300,7 @@ class CompletedOverlay {
           if (comp.wrap) comp.wrap.classList.add('active');
           this._setComponentFrame(comp, 0);
           if (comp.contentEl && key === 'name') {
-            this._fitNameText();
+            this._applyFixedNameStylesFromCurrentBounds();
           }
         }
       }
@@ -2364,22 +2390,15 @@ class CompletedOverlay {
 
   _layoutNameText(width, height) {
     const comp = this.components.name;
-    const cfg = comp.cfg || {};
     if (!comp.contentEl) return;
-    const box = cfg.textBox || { xPct: 0.1, yPct: 0.2, wPct: 0.8, hPct: 0.6 };
-    const left = Math.round(box.xPct * width);
-    const top = Math.round(box.yPct * height);
-    const w = Math.max(1, Math.round(box.wPct * width));
-    const h = Math.max(1, Math.round(box.hPct * height));
-
     Object.assign(comp.contentEl.style, {
-      left: `${left}px`,
-      top: `${top}px`,
-      width: `${w}px`,
-      height: `${h}px`
+      left: '0px',
+      top: '0px',
+      width: `${width}px`,
+      height: `${height}px`
     });
 
-    this._fitNameText();
+    this._applyFixedNameStyles(width, height);
   }
 
   _layoutImageContent(width, height) {
@@ -2423,50 +2442,94 @@ class CompletedOverlay {
     });
   }
 
-  _fitNameText() {
+  _applyFixedNameStyles(width, height) {
     const comp = this.components.name;
-    if (!comp || !comp.contentEl) return;
-    const el = comp.contentEl;
-    const rect = el.getBoundingClientRect();
-    const maxW = rect.width;
-    const maxH = rect.height;
-    if (maxW <= 0 || maxH <= 0) return;
+    if (!comp?.primaryEl || !comp.contentEl) return;
 
-    el.style.fontFamily = this.fontFamily;
-    const minSize = 12;
-    let lo = minSize;
-    let hi = Math.max(minSize, Math.floor(maxH));
-    let best = lo;
+    const primaryCfg = comp.cfg.primaryStyle || {};
+    const secondaryCfg = comp.cfg.secondaryStyle || {};
 
-    const primary = comp.primaryEl || el;
-    const secondary = comp.secondaryEl;
-    const secondaryScale = comp.cfg.secondaryScale ?? 0.55;
+    this._applySingleNameStyle(comp.primaryEl, primaryCfg, width, height, {
+      defaultAlign: 'center'
+    });
 
-    while (lo <= hi) {
-      const mid = Math.floor((lo + hi) / 2);
-      primary.style.fontSize = `${mid}px`;
-      if (secondary) {
-        const secondarySize = Math.max(1, Math.round(mid * secondaryScale));
-        secondary.style.fontSize = `${secondarySize}px`;
-      }
-      el.style.whiteSpace = 'pre-wrap';
-      el.style.lineHeight = `${comp.cfg.lineHeight ?? 1.05}`;
-
-      const fits = el.scrollWidth <= maxW + 1 && el.scrollHeight <= maxH + 1;
-      if (fits) {
-        best = mid;
-        lo = mid + 1;
+    if (comp.secondaryEl) {
+      if (comp.secondaryEl.textContent) {
+        comp.secondaryEl.style.display = 'flex';
+        this._applySingleNameStyle(comp.secondaryEl, secondaryCfg, width, height, {
+          defaultAlign: primaryCfg.textAlign || 'center'
+        });
       } else {
-        hi = mid - 1;
+        comp.secondaryEl.style.display = 'none';
       }
     }
+  }
 
-    primary.style.fontSize = `${best}px`;
-    if (secondary) {
-      const secondarySize = Math.max(1, Math.round(best * secondaryScale));
-      secondary.style.fontSize = `${secondarySize}px`;
+  _applyFixedNameStylesFromCurrentBounds() {
+    const comp = this.components.name;
+    if (!comp?.wrap) return;
+    const rect = comp.wrap.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    this._applyFixedNameStyles(rect.width, rect.height);
+  }
+
+  _applySingleNameStyle(el, cfg, width, height, { defaultAlign }) {
+    if (!el) return;
+
+    const leftPct = (typeof cfg.leftPct === 'number') ? cfg.leftPct : 0;
+    const widthPct = (typeof cfg.widthPct === 'number') ? cfg.widthPct : 1;
+    const topPct = (typeof cfg.topPct === 'number') ? cfg.topPct : 0;
+    const heightPct = (typeof cfg.heightPct === 'number') ? cfg.heightPct : null;
+
+    const left = Math.round(leftPct * width);
+    const w = Math.max(1, Math.round(widthPct * width));
+    const top = Math.round(topPct * height);
+    const h = heightPct !== null
+      ? Math.max(1, Math.round(heightPct * height))
+      : Math.max(1, Math.round((cfg.fontSizePx ?? 48) * (cfg.lineHeight ?? 1.0)));
+
+    const fontSize = cfg.fontSizePx ?? 48;
+    const lineHeight = cfg.lineHeight ?? 1.0;
+    const textAlign = cfg.textAlign || defaultAlign || 'center';
+    const verticalAlign = cfg.verticalAlign || 'center';
+
+    Object.assign(el.style, {
+      left: `${left}px`,
+      top: `${top}px`,
+      width: `${w}px`,
+      height: `${h}px`,
+      display: 'flex',
+      position: 'absolute',
+      justifyContent: this._mapTextAlignToFlex(textAlign),
+      alignItems: this._mapVerticalAlignToFlex(verticalAlign),
+      textAlign,
+      fontSize: `${fontSize}px`,
+      lineHeight: typeof lineHeight === 'number' ? lineHeight.toString() : String(lineHeight)
+    });
+  }
+
+  _mapTextAlignToFlex(alignment) {
+    switch (alignment) {
+      case 'left':
+        return 'flex-start';
+      case 'right':
+        return 'flex-end';
+      case 'center':
+      default:
+        return 'center';
     }
-    el.style.whiteSpace = 'pre-wrap';
+  }
+
+  _mapVerticalAlignToFlex(alignment) {
+    switch (alignment) {
+      case 'top':
+        return 'flex-start';
+      case 'bottom':
+        return 'flex-end';
+      case 'center':
+      default:
+        return 'center';
+    }
   }
 
   async loadSpeciesAssets(speciesKey, { imagePath, infoPath, displayName }) {
@@ -3811,8 +3874,8 @@ export class RioScene extends BaseScene {
 
   const speciesDef = SPECIES.find(s => s.key === card.key) || null;
   const displayName = card.fullDisplayName || speciesDef?.displayName || card.baseName || card.key;
-    const imagePath = `/game-assets/sub/full_q_fish/${card.key}.png`;
-    const infoPath = `/game-assets/sub/full_q_fish/${card.key}.txt`;
+    const imagePath = `/game-assets/sub/completed_fish_data/${card.key}.png`;
+    const infoPath = `/game-assets/sub/completed_fish_data/${card.key}.txt`;
 
     this._completedOverlayState.loading = true;
     this.completedOverlay
