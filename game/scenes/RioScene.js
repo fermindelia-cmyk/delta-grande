@@ -1624,6 +1624,11 @@ class Deck {
 
     const n = this.cards.length;
     const centerIndex = this._scrollCurrent; // float
+    const centerWrapped = this._wrapIndexFloat(centerIndex, n);
+    let selectedIndex = Math.round(centerWrapped);
+    if (n > 0) {
+      selectedIndex = ((selectedIndex % n) + n) % n;
+    }
     const half = Math.floor((this.cfg.visibleCount - 1) / 2);
 
     for (let i = 0; i < n; i++) {
@@ -1641,7 +1646,7 @@ class Deck {
       card.element.style.opacity = `${opacity}`;
       card.element.style.zIndex = `${zIndex}`;
 
-      const isSelected = (Math.round(this._wrapIndexFloat(centerIndex, n)) === i);
+  const isSelected = (selectedIndex === i);
       card.element.classList.toggle('selected', !!isSelected);
 
       // Selected canvas glow
@@ -1695,7 +1700,7 @@ class Deck {
 
 
       // background state fading
-      card.bgSel.style.opacity = (Math.round(this._wrapIndexFloat(centerIndex, n)) === i) ? '1' : '0';
+  card.bgSel.style.opacity = (selectedIndex === i) ? '1' : '0';
       card.bgDone.style.opacity = card.completed ? '1' : '0';
     }
   }
