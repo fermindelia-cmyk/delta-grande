@@ -5,6 +5,11 @@ import { BaseScene } from '../core/BaseScene.js';
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const lerp = (a, b, t) => a + (b - a) * t;
 const saturate = (v) => clamp(v, 0, 1);
+const smoothstep = (edge0, edge1, x) => {
+  const width = Math.max(1e-5, edge1 - edge0);
+  const t = saturate((x - edge0) / width);
+  return t * t * (3 - 2 * t);
+};
 
 export const DEFAULT_PARAMS = Object.freeze({
   world: Object.freeze({
@@ -37,7 +42,7 @@ export const DEFAULT_PARAMS = Object.freeze({
     levelDelta: 0.13,
     bottom: -0.36,
     smoothing: 2.2,
-    opacity: 0.87,
+    opacity: 0.77,
     wave: Object.freeze({
       primaryAmplitude: 0.036*0.5,
       secondaryAmplitude: 0.022*0.5,
@@ -57,30 +62,41 @@ export const DEFAULT_PARAMS = Object.freeze({
   riverbed: Object.freeze({
     segments: 200,
     baseHeight: -0.16,
+    highBaseline: 0.08,
     bottom: -0.38,
     maxHeight: 0.82,
-    moundCenter: 0.5,
-    moundWidth: 0.24,
-    moundHeight: 0.24,
+    plateauStart: 0.15,
+    plateauEnd: 0.85,
+    transitionWidth: 0.12,
+    noise: Object.freeze({
+      lowAmplitude: 0.008,
+      lowFrequency: 6.0,
+      highAmplitude: 0.02,
+      highFrequency: 11.0,
+      seed: 37.42
+    }),
     smoothing: 1.1
   }),
   sediment: Object.freeze({
     maxParticles: 55,
     emissionPerClick: 55,
-    spawnJitter: 0.02,
-    airSpeedMin: 0.22,
-    airSpeedMax: 0.45,
-    airLateralJitter: 0.06,
-    waterSpeedMin: 0.16,
-    waterSpeedMax: 0.32,
-    gravityAir: -1.05,
-    gravityWater: -0.32,
-    current: 5.0,
-    dragWater: 0.86,
+    spawnOffset: 0.08,
+    spawnJitterX: 0.04,
+    bandSurfaceOffset: 0.05,
+    bandDepth: 0.22,
+    bandBaseJitter: 0.4,
+    horizontalSpeed: 0.42,
+    horizontalSpeedJitter: 0.25,
+    verticalJitterAmplitude: 0.35,
+    verticalJitterFrequencyMin: 0.7,
+    verticalJitterFrequencyMax: 1.6,
+    approachWindow: 0.12,
+    approachLead: 0.22,
+    arrivalThreshold: 0.008,
     dissolveSpeed: 0.3,
     depositRadius: 0.12,
-    depositAmount: 0.0002,
-    particleSize: 0.012,
+    depositAmount: 0.001,
+    particleSize: 0.015,
     minAlpha: 0.35
   }),
   ui: Object.freeze({
@@ -518,10 +534,47 @@ export class SimuladorScene extends BaseScene {
   _initializeRiverbed() {
     const { riverbed } = this.params;
     const segments = riverbed.segments;
+    const plateauStartRaw = clamp(riverbed.plateauStart ?? 0.2, 0, 1);
+    const plateauEndRaw = clamp(riverbed.plateauEnd ?? 0.8, 0, 1);
+    const plateauStart = Math.min(plateauStartRaw, plateauEndRaw);
+    const plateauEnd = Math.max(plateauStartRaw, plateauEndRaw);
+    const transitionWidth = Math.max(0.0001, riverbed.transitionWidth ?? 0.1);
+    const halfTransition = transitionWidth * 0.5;
+    const riseStart = clamp(plateauStart - halfTransition, 0, 1);
+    const riseEnd = clamp(plateauStart + halfTransition, 0, 1);
+    const fallStart = clamp(plateauEnd - halfTransition, 0, 1);
+    const fallEnd = clamp(plateauEnd + halfTransition, 0, 1);
+
+    const lowBaseline = riverbed.baseHeight ?? 0;
+    const highBaseline = typeof riverbed.highBaseline === 'number'
+      ? riverbed.highBaseline
+      : lowBaseline + (riverbed.moundHeight ?? 0);
+    const noise = riverbed.noise ?? {};
+    const lowAmp = noise.lowAmplitude ?? 0;
+    const lowFreq = noise.lowFrequency ?? 1;
+    const highAmp = noise.highAmplitude ?? 0;
+    const highFreq = noise.highFrequency ?? 1;
+    const seed = noise.seed ?? 0;
+
     for (let i = 0; i <= segments; i++) {
       const t = i / segments;
-      const gaussian = Math.exp(-Math.pow((t - riverbed.moundCenter) / riverbed.moundWidth, 2));
-      const height = riverbed.baseHeight + gaussian * riverbed.moundHeight;
+      const lowNoise = this._noise2D(t * lowFreq, seed) * lowAmp;
+      const highNoise = this._noise2D(t * highFreq, seed + 100) * highAmp;
+
+      let blend = 0;
+      if (t <= riseStart) {
+        blend = 0;
+      } else if (t < riseEnd) {
+        blend = smoothstep(riseStart, riseEnd, t);
+      } else if (t <= fallStart) {
+        blend = 1;
+      } else if (t < fallEnd) {
+        blend = 1 - smoothstep(fallStart, fallEnd, t);
+      }
+
+      const targetHeight = lerp(lowBaseline, highBaseline, blend);
+      const noiseMix = lerp(lowNoise, highNoise, blend);
+      const height = clamp(targetHeight + noiseMix, riverbed.bottom, riverbed.maxHeight);
       this._riverbedHeights[i] = height;
       this._riverbedBase[i] = height;
     }
@@ -594,8 +647,9 @@ export class SimuladorScene extends BaseScene {
     });
 
     this._particlesGeometry = geometry;
-    this._particlesPoints = new THREE.Points(geometry, material);
-    this._particlesPoints.renderOrder = 3;
+  this._particlesPoints = new THREE.Points(geometry, material);
+  this._particlesPoints.position.z = -0.02;
+  this._particlesPoints.renderOrder = 0;
     this.scene.add(this._particlesPoints);
     this._updateParticleSize(this.app?.root?.clientWidth || 1, this.app?.root?.clientHeight || 1);
 
@@ -603,10 +657,16 @@ export class SimuladorScene extends BaseScene {
       active: false,
       x: 0,
       y: 0,
-      vx: 0,
-      vy: 0,
       age: 0,
-      medium: 'air'
+      bandBase: 0,
+      jitterPhase: 0,
+      jitterSpeed: 0,
+      jitterAmplitude: 0,
+      horizontalSpeed: 0,
+      targetX: 0,
+      targetY: 0,
+      approachStartX: 0,
+      approachSpan: 1
     }));
     this._activeParticles = 0;
   }
@@ -617,74 +677,76 @@ export class SimuladorScene extends BaseScene {
     const max = this._particles.length;
     const positions = this._particlePositions;
     const alphas = this._particleAlphas;
+    const waterSegments = this.params.water.surfaceSegments;
+    const arrivalThresholdWorld = Math.max(1e-4, sediment.arrivalThreshold) * this.worldWidth;
 
-    let dirty = false;
+    let positionsDirty = false;
+    let alphaDirty = false;
+
     for (let i = 0; i < max; i++) {
       const p = this._particles[i];
       const idx = i * 3;
+
       if (!p.active) {
         if (positions[idx] !== 0 || positions[idx + 1] !== 0 || positions[idx + 2] !== 0 || alphas[i] !== 0) {
           positions[idx] = positions[idx + 1] = positions[idx + 2] = 0;
           alphas[i] = 0;
-          dirty = true;
+          positionsDirty = true;
+          alphaDirty = true;
         }
         continue;
       }
 
-      p.age += dt;
+    p.age += dt;
 
-      if (p.medium === 'air') {
-        p.vy += sediment.gravityAir * dt;
-      } else {
-        p.vx = lerp(p.vx, sediment.current, 0.4 * dt);
-        p.vy += sediment.gravityWater * dt;
-        p.vx *= Math.pow(sediment.dragWater, dt * 3);
+    // Drift the particle left from the spawn edge at a fixed horizontal speed.
+    const nextX = Math.max(p.targetX, p.x - p.horizontalSpeed * dt);
+      p.x = nextX;
+
+      const waterHeight = this._heightAt(this._waterHeights, waterSegments, p.x);
+      const bandTop = waterHeight - sediment.bandSurfaceOffset * this.worldHeight;
+      const bandDepthWorld = Math.max(1e-5, sediment.bandDepth * this.worldHeight);
+      const bandBottom = bandTop - bandDepthWorld;
+      const bandRange = Math.max(1e-5, bandTop - bandBottom);
+
+    // Stay inside the vertical band that tracks the water surface, adding gentle jitter.
+    const jitter = Math.sin(this._elapsed * p.jitterSpeed + p.jitterPhase) * p.jitterAmplitude;
+      const base = saturate(p.bandBase + jitter);
+      let desiredY = bandBottom + base * bandRange;
+
+      if (p.x <= p.approachStartX) {
+        const span = Math.max(1e-5, p.approachSpan);
+        const progress = saturate((p.approachStartX - p.x) / span);
+        desiredY = lerp(desiredY, p.targetY, progress);
       }
 
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
+      p.y = desiredY;
 
-      const waterHeight = this._heightAt(this._waterHeights, this.params.water.surfaceSegments, p.x);
-      if (p.medium === 'air' && p.y <= waterHeight) {
-        this._deactivateParticle(p, i);
-        dirty = true;
-        continue;
-      }
-
-      const bedHeight = this._heightAt(this._riverbedHeights, this.params.riverbed.segments, p.x);
-      if (p.y <= bedHeight) {
+      if (p.x <= p.targetX + arrivalThresholdWorld) {
+        p.x = p.targetX;
+        p.y = p.targetY;
         if (this._isWithinCentralThird(p.x)) {
           this._raiseRiverbed(p.x, sediment.depositAmount);
         }
         this._deactivateParticle(p, i);
-        dirty = true;
+        positionsDirty = true;
+        alphaDirty = true;
         continue;
       }
 
-      if (p.x > this.worldWidth + 0.05 || p.x < -0.05) {
-        this._deactivateParticle(p, i);
-        dirty = true;
-        continue;
-      }
+  positions[idx + 0] = p.x;
+  positions[idx + 1] = p.y;
+  positions[idx + 2] = -0.02;
+      positionsDirty = true;
 
-      if (p.medium === 'water' && p.y > waterHeight + 0.05) {
-        p.medium = 'air';
-      }
-
-      positions[idx + 0] = p.x;
-      positions[idx + 1] = p.y;
-      positions[idx + 2] = 0.02;
-
-      const normalizedAge = saturate(p.age * sediment.dissolveSpeed);
-      alphas[i] = saturate(1 - normalizedAge);
-      dirty = true;
-      if (alphas[i] <= 0.02) {
-        this._deactivateParticle(p, i);
-      }
+      alphas[i] = 1;
+      alphaDirty = true;
     }
 
-    if (dirty && this._particlesGeometry) {
+    if (positionsDirty && this._particlesGeometry) {
       this._particlesGeometry.attributes.position.needsUpdate = true;
+    }
+    if (alphaDirty && this._particlesGeometry) {
       this._particlesGeometry.attributes.alpha.needsUpdate = true;
     }
   }
@@ -697,9 +759,16 @@ export class SimuladorScene extends BaseScene {
     this._particlePositions[base + 1] = 0;
     this._particlePositions[base + 2] = 0;
     this._particleAlphas[index] = 0;
-    p.vx = 0;
-    p.vy = 0;
     p.age = 0;
+    p.bandBase = 0;
+    p.jitterPhase = 0;
+    p.jitterSpeed = 0;
+    p.jitterAmplitude = 0;
+    p.horizontalSpeed = 0;
+    p.targetX = 0;
+    p.targetY = 0;
+    p.approachStartX = 0;
+    p.approachSpan = 1;
     this._activeParticles = Math.max(0, this._activeParticles - 1);
   }
 
@@ -804,40 +873,92 @@ export class SimuladorScene extends BaseScene {
   }
 
   _emitSediment(worldX, worldY) {
-    if (this._activeParticles > 0) return;
     const { sediment } = this.params;
+    const waterSegments = this.params.water.surfaceSegments;
+    const bedSegments = this.params.riverbed.segments;
+    if (!this._waterHeights.length) return;
+
+    const waterHeightAtClick = this._heightAt(this._waterHeights, waterSegments, worldX);
+    if (worldY >= waterHeightAtClick) return;
+
+    const spawnBase = this.worldWidth + sediment.spawnOffset * this.worldWidth;
+    const spawnJitterX = sediment.spawnJitterX * this.worldWidth;
+    const approachWindow = sediment.approachWindow * this.worldWidth;
+    const arrivalThreshold = Math.max(1e-4, sediment.arrivalThreshold) * this.worldWidth;
+    const approachLeadBase = Math.max(0, sediment.approachLead * this.worldWidth);
+
+    const bandDepthWorld = Math.max(1e-5, sediment.bandDepth * this.worldHeight);
+    const bandSurfaceOffset = sediment.bandSurfaceOffset * this.worldHeight;
+
     const count = sediment.emissionPerClick;
-    const segments = this.params.water.surfaceSegments;
-    const bedHeightAtClick = this._heightAt(this._riverbedHeights, this.params.riverbed.segments, worldX);
-    if (worldY <= bedHeightAtClick + 0.003) return;
+    let emitted = 0;
 
     for (let i = 0; i < count; i++) {
       const slot = this._acquireParticle();
       if (!slot) break;
-      const { particle } = slot;
+      const { particle, index } = slot;
 
-      const jitterX = (Math.random() - 0.5) * sediment.spawnJitter * this.worldWidth;
-      const jitterY = (Math.random() - 0.5) * sediment.spawnJitter * this.worldHeight;
-      particle.x = clamp(worldX + jitterX, 0, this.worldWidth);
-      particle.y = worldY + jitterY;
+      const targetX = clamp(
+        worldX + (Math.random() * 2 - 1) * approachWindow,
+        0,
+        this.worldWidth
+      );
+      const targetY = this._heightAt(this._riverbedHeights, bedSegments, targetX);
 
-      const waterHeight = this._heightAt(this._waterHeights, segments, particle.x);
-      const belowWater = particle.y <= waterHeight;
+      const leadFactor = 0.7 + Math.random() * 0.6;
+      const desiredApproachLead = approachLeadBase * leadFactor;
 
-      if (belowWater) {
-        const speed = lerp(sediment.waterSpeedMin, sediment.waterSpeedMax, Math.random());
-        const dir = 0.5 + Math.random() * 0.5;
-        particle.vx = speed * dir;
-        particle.vy = -speed * 0.9;
-        particle.medium = 'water';
-      } else {
-        const speed = lerp(sediment.airSpeedMin, sediment.airSpeedMax, Math.random());
-        particle.vx = (Math.random() - 0.5) * sediment.airLateralJitter;
-        particle.vy = -speed;
-        particle.medium = 'air';
+      let spawnX = spawnBase + (Math.random() - 0.5) * spawnJitterX;
+      const minSpawnX = this.worldWidth + 0.02 * this.worldWidth;
+      spawnX = Math.max(spawnX, minSpawnX, targetX + desiredApproachLead + arrivalThreshold);
+
+      let approachStartX = Math.min(spawnX - arrivalThreshold, targetX + desiredApproachLead);
+      if (approachStartX <= targetX + arrivalThreshold) {
+        approachStartX = targetX + arrivalThreshold;
       }
 
+      const waterHeightAtSpawn = this._heightAt(this._waterHeights, waterSegments, this.worldWidth);
+      const bandTop = waterHeightAtSpawn - bandSurfaceOffset;
+      const bandBottom = bandTop - bandDepthWorld;
+      const bandRange = Math.max(1e-5, bandTop - bandBottom);
+
+      const baseSample = Math.random();
+      const baseOffset = (Math.random() - 0.5) * sediment.bandBaseJitter;
+      const bandBase = clamp(baseSample + baseOffset, 0.05, 0.95);
+      const initialY = bandBottom + bandBase * bandRange;
+
+      const speedVariation = lerp(1 - sediment.horizontalSpeedJitter, 1 + sediment.horizontalSpeedJitter, Math.random());
+
+      particle.x = spawnX;
+      particle.y = initialY;
       particle.age = 0;
+      particle.bandBase = bandBase;
+      particle.jitterPhase = Math.random() * Math.PI * 2;
+      particle.jitterSpeed = lerp(
+        sediment.verticalJitterFrequencyMin,
+        sediment.verticalJitterFrequencyMax,
+        Math.random()
+      );
+      particle.jitterAmplitude = sediment.verticalJitterAmplitude * (0.5 + Math.random() * 0.5);
+      particle.horizontalSpeed = Math.max(1e-3, this.worldWidth * sediment.horizontalSpeed * speedVariation);
+      particle.targetX = targetX;
+      particle.targetY = targetY;
+      particle.approachStartX = approachStartX;
+      particle.approachSpan = Math.max(arrivalThreshold, particle.approachStartX - targetX);
+
+      const posIdx = index * 3;
+  this._particlePositions[posIdx + 0] = particle.x;
+  this._particlePositions[posIdx + 1] = particle.y;
+  this._particlePositions[posIdx + 2] = -0.02;
+
+      this._particleAlphas[index] = 1;
+
+      emitted += 1;
+    }
+
+    if (emitted > 0 && this._particlesGeometry) {
+      this._particlesGeometry.attributes.position.needsUpdate = true;
+      this._particlesGeometry.attributes.alpha.needsUpdate = true;
     }
   }
 
@@ -961,14 +1082,18 @@ export class SimuladorScene extends BaseScene {
 
   _syncSedimentButton() {
     if (!this._buttons.sediment) return;
-    const { colors } = this.params;
+    const { colors, ui } = this.params;
     const btn = this._buttons.sediment;
     if (this._sedimentMode) {
       btn.dataset.lockedColor = '1';
-      btn.style.background = colors.uiBackgroundActive;
+      btn.style.background = colors.uiAccent;
+      btn.style.color = '#0a223d';
+      btn.style.boxShadow = `0 0 ${(ui.gap * 200).toFixed(3)}vh rgba(255, 209, 102, 0.55)`;
     } else {
       delete btn.dataset.lockedColor;
       btn.style.background = colors.uiBackground;
+      btn.style.color = colors.uiText;
+      btn.style.boxShadow = `0 0 ${(ui.gap * 120).toFixed(3)}vh rgba(0,0,0,${ui.shadowOpacity * 0.6})`;
     }
     if (!this._sedimentMode) this._pointerDown = false;
     if (this.app?.canvas) {
