@@ -40,7 +40,7 @@ export const DEFAULT_PARAMS = Object.freeze({
     surfaceSegments: 200,
     baseLevel: 0.52,
     levelDelta: 0.13,
-    bottom: -0.36,
+    bottom: -0.4,
     smoothing: 2.2,
     opacity: 0.77,
     wave: Object.freeze({
@@ -110,7 +110,7 @@ export const DEFAULT_PARAMS = Object.freeze({
     shadowOpacity: 0.4
   }),
   progress: Object.freeze({
-    emergenceCoverage: 0.1,
+    emergenceCoverage: 0.5,
     emergenceMessage: 'La Isla emerge de las aguas del Delta...'
   })
 });
@@ -725,9 +725,7 @@ export class SimuladorScene extends BaseScene {
       if (p.x <= p.targetX + arrivalThresholdWorld) {
         p.x = p.targetX;
         p.y = p.targetY;
-        if (this._isWithinCentralThird(p.x)) {
-          this._raiseRiverbed(p.x, sediment.depositAmount);
-        }
+        this._raiseRiverbed(p.x, sediment.depositAmount);
         this._deactivateParticle(p, i);
         positionsDirty = true;
         alphaDirty = true;
