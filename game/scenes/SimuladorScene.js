@@ -95,7 +95,7 @@ export const DEFAULT_PARAMS = Object.freeze({
     arrivalThreshold: 0.008,
     dissolveSpeed: 0.3,
     depositRadius: 0.12,
-    depositAmount: 0.001,
+    depositAmount: 0.002,
     particleSize: 0.015,
     minAlpha: 0.35
   }),
@@ -221,6 +221,7 @@ export class SimuladorScene extends BaseScene {
 
     this._uiRoot = null;
     this._buttons = {};
+  this._seedPanelWidth = null;
     this._seedButtons = {};
     this._activeTool = null;
     this._pointerDown = false;
@@ -1446,11 +1447,13 @@ export class SimuladorScene extends BaseScene {
     panel.style.boxShadow = `0 0 ${ui.gap * 160}vh rgba(0,0,0,${ui.shadowOpacity})`;
     panel.style.pointerEvents = 'auto';
 
-    const seedPanel = document.createElement('div');
-    seedPanel.style.position = 'absolute';
-    seedPanel.style.left = `${(ui.panelLeft + ui.panelWidth + ui.gap * 3) * 100}vw`;
+  const seedPanel = document.createElement('div');
+  const seedPanelWidth = ui.panelWidth * 0.75;
+  seedPanel.style.position = 'absolute';
+  seedPanel.style.left = 'auto';
+  seedPanel.style.right = `${ui.panelLeft * 100}vw`;
     seedPanel.style.top = `${ui.panelTop * 100}vh`;
-    seedPanel.style.width = `${ui.panelWidth * 100}vw`;
+  seedPanel.style.width = `${seedPanelWidth * 100}vw`;
     seedPanel.style.display = 'flex';
     seedPanel.style.flexDirection = 'column';
     seedPanel.style.gap = `${ui.gap * 100}vh`;
@@ -1551,6 +1554,7 @@ export class SimuladorScene extends BaseScene {
 
     this.app.root.appendChild(root);
     this._uiRoot = root;
+    this._seedPanelWidth = seedPanelWidth;
     this._buttons = {
       panel,
       seedPanel,
@@ -1585,9 +1589,11 @@ export class SimuladorScene extends BaseScene {
     this._buttons.panel.style.top = `${ui.panelTop * 100}vh`;
     this._buttons.panel.style.width = `${ui.panelWidth * 100}vw`;
     if (this._buttons.seedPanel) {
-      this._buttons.seedPanel.style.left = `${(ui.panelLeft + ui.panelWidth + ui.gap * 3) * 100}vw`;
+      const seedPanelWidth = this._seedPanelWidth ?? ui.panelWidth;
+      this._buttons.seedPanel.style.left = 'auto';
+      this._buttons.seedPanel.style.right = `${ui.panelLeft * 100}vw`;
       this._buttons.seedPanel.style.top = `${ui.panelTop * 100}vh`;
-      this._buttons.seedPanel.style.width = `${ui.panelWidth * 100}vw`;
+      this._buttons.seedPanel.style.width = `${seedPanelWidth * 100}vw`;
     }
   }
 
@@ -1658,6 +1664,7 @@ export class SimuladorScene extends BaseScene {
     }
     this._uiRoot = null;
     this._buttons = {};
+    this._seedPanelWidth = null;
     this._seedButtons = {};
     this._activeTool = null;
     this._removeMessageEl();
