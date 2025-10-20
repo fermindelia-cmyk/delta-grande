@@ -34,12 +34,16 @@ export const DEFAULT_PARAMS = Object.freeze({
     uiBackground: 'rgba(10, 34, 61, 0.6)',
     uiBackgroundActive: 'rgba(20, 54, 90, 0.85)',
     uiAccent: '#ffd166',
-    uiText: '#f8fafc'
+    uiText: '#f8fafc',
+    cursorSediment: '#d6b17e',
+    cursorSeed: '#68c08b',
+    cursorRemove: '#e76f51',
+    cursorDisabled: '#8a96a8'
   }),
   water: Object.freeze({
     surfaceSegments: 200,
-    baseLevel: 0.52,
-    levelDelta: 0.13,
+    baseLevel: 0.45,
+    levelDelta: 0.25,
     bottom: -0.4,
     smoothing: 2.2,
     opacity: 0.77,
@@ -116,20 +120,44 @@ export const DEFAULT_PARAMS = Object.freeze({
       Object.freeze({ id: 'NCS2', label: 'NCS 2', color: '#a8733d', width: 0.048, height: 0.2, growthRate: 0.52 })
     ])
   }),
+  interactions: Object.freeze({
+    sedimentHeightEpsilon: 0.006,
+    plantHeightEpsilon: 0.02,
+    seedBurstHeightOffset: 0.06,
+    plantSubmergeOffset: 0.0008,
+    plantEmergenceOffset: 0.0008
+  }),
   ui: Object.freeze({
-    panelWidth: 0.24,
+    panelWidth: 0.18,
+    panelMinWidth: 0.12,
+    panelMaxWidth: 0.2,
+    seedPanelMinWidth: 0.14,
+    seedPanelMaxWidth: 0.22,
     panelTop: 0.05,
     panelLeft: 0.04,
     gap: 0.012,
     buttonHeight: 0.068,
     fontScale: 0.028,
     borderRadius: 0.035,
-    shadowOpacity: 0.4
+    shadowOpacity: 0.4,
+    goalMessage: Object.freeze({
+      bottomOffsetVW: 3.6,
+      fontSizeVW: 1.3,
+      paddingVW: 1.1,
+      maxWidthVW: 48,
+      borderRadiusVW: 2.0
+    }),
+    cursor: Object.freeze({
+      diameterVW: 1.8,
+      borderWidthVW: 0.14,
+      transitionSeconds: 0.12
+    })
   }),
   progress: Object.freeze({
     messageDuration: 5.5,
     messageFadeDuration: 0.6,
     messageGap: 1.2,
+    victoryMessage: '¡Lograste equilibrar el ecosistema! Has ganado.',
     stages: Object.freeze([
       Object.freeze({
         id: 'formation',
@@ -173,6 +201,25 @@ export const DEFAULT_PARAMS = Object.freeze({
         allowedSeedGroups: Object.freeze(['colonizers', 'nonColonizers'])
       })
     ])
+  }),
+  plantGrowth: Object.freeze({
+    transitionDuration: 2.0,
+    geometrySegments: 20,
+    stageScales: Object.freeze({
+      seedRadius: 0.45,
+      germWidth: 0.38,
+      germHeight: 0.35,
+      smallWidth: 0.55,
+      smallHeight: 0.55,
+      mediumWidth: 0.75,
+      mediumHeight: 0.78,
+      largeWidth: 1.0,
+      largeHeight: 1.0
+    })
+  }),
+  plantCompetition: Object.freeze({
+    neighborRadius: 0.02,
+    minNeighbors: 4
   })
 });
 
@@ -192,9 +239,9 @@ export class SimuladorScene extends BaseScene {
       medium: this.params.water.baseLevel,
       high: this.params.water.baseLevel + this.params.water.levelDelta
     };
-    this._currentWaterLevel = this._waterLevels.medium;
+    this._currentWaterLevel = this._waterLevels.low;
     this._targetWaterLevel = this._currentWaterLevel;
-    this._waterLevelIndex = 1; // 0 low, 1 medium, 2 high
+    this._waterLevelIndex = 0; // 0 low, 1 medium, 2 high
 
     this._elapsed = 0;
     this._noise = new SimplexNoise();
@@ -221,20 +268,29 @@ export class SimuladorScene extends BaseScene {
 
     this._uiRoot = null;
     this._buttons = {};
-  this._seedPanelWidth = null;
     this._seedButtons = {};
     this._activeTool = null;
     this._pointerDown = false;
+    this._cursorEl = null;
+    this._lastPointerInfo = null;
+    this._goalMessageEl = null;
+    this._originalCanvasCursor = null;
 
     this._availableSeedIds = new Set();
     this._seedCatalog = new Map();
-    this._seedGeometryCache = new Map();
+    this._plantGeometryCache = new Map();
     this._seedMaterialCache = new Map();
 
     this._seedBursts = [];
 
-    this._plants = [];
-    this._plantCounts = {};
+  this._plants = [];
+    this._plantStages = [
+      { id: 'seed', nextRequiresSubmerged: true },
+      { id: 'germinated', nextRequiresSubmerged: false },
+      { id: 'small', nextRequiresSubmerged: true },
+      { id: 'medium', nextRequiresSubmerged: false },
+      { id: 'large', nextRequiresSubmerged: null }
+    ];
 
     this._messageEl = null;
     this._messageTimer = null;
@@ -248,6 +304,7 @@ export class SimuladorScene extends BaseScene {
     this._boundOnPointerDown = (e) => this._handlePointerDown(e);
     this._boundOnPointerMove = (e) => this._handlePointerMove(e);
     this._boundOnPointerUp = () => { this._pointerDown = false; };
+    this._boundOnPointerLeave = () => this._handlePointerLeave();
   }
 
   async mount() {
@@ -300,6 +357,9 @@ export class SimuladorScene extends BaseScene {
     this._updateSediment(dt);
     this._updateSeedBursts(dt);
     this._updatePlants(dt);
+    if (this._lastPointerInfo) {
+      this._refreshCursor();
+    }
   }
 
   onResize(width, height) {
@@ -909,28 +969,33 @@ export class SimuladorScene extends BaseScene {
   }
 
   _handlePlantingAction(toolId, worldX, worldY) {
-    if (!this._availableSeedIds.has(toolId)) return;
+    if (!this._availableSeedIds.has(toolId)) return false;
     const seed = this._seedCatalog.get(toolId);
-    if (!seed) return;
+    if (!seed) return false;
 
-    const clampedX = clamp(worldX, 0, this.worldWidth);
-    const waterHeight = this._heightAt(this._waterHeights, this.params.water.surfaceSegments, clampedX);
-    if (worldY <= waterHeight) return;
+  const clampedX = clamp(worldX, 0, this.worldWidth);
+  const state = this._resolveInteractionState(clampedX, worldY);
+    if (!state?.canPlant) return false;
 
-    this._emitSeedBurst(clampedX, worldY);
+  const interactions = this.params.interactions || {};
+  const burstOffset = Math.max(0.005, interactions.seedBurstHeightOffset ?? 0.06);
+  const desiredBurstY = state.riverbedHeight + burstOffset;
+  const burstY = Math.min(this.worldTop, Math.max(worldY, desiredBurstY));
+    this._emitSeedBurst(clampedX, burstY);
 
-    const riverbedHeight = this._heightAt(this._riverbedHeights, this.params.riverbed.segments, clampedX);
-    if (riverbedHeight <= waterHeight) return;
-
-    this._spawnPlant(seed, clampedX, riverbedHeight);
+    this._spawnPlant(seed, clampedX, state.riverbedHeight);
+    this._refreshCursor();
+    return true;
   }
 
   _spawnPlant(seed, x, baseY) {
-    const geometry = this._getSeedGeometry(seed);
     const material = this._getSeedMaterial(seed);
+    const initialStageIndex = 0;
+    const stageId = this._plantStages[initialStageIndex]?.id || 'seed';
+    const stageInfo = this._getPlantStageInfo(seed, stageId);
+    const geometry = this._getPlantGeometry(seed, stageId, stageInfo);
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(x, baseY + seed.height * 0.5 * 0.1, 0.15);
-    mesh.scale.set(1, 0.1, 1);
+    mesh.position.set(x, baseY, 0.15);
     mesh.renderOrder = 3;
     this.scene.add(mesh);
 
@@ -938,20 +1003,98 @@ export class SimuladorScene extends BaseScene {
       id: `${seed.id}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
       seed,
       mesh,
+      x,
       baseY,
-      growth: 0
+      stageIndex: initialStageIndex,
+      stageTimer: 0,
+      currentStageHeight: stageInfo?.height || 0,
+      competitionBlocked: false
     };
+    this._applyPlantStageVisual(plant, stageInfo);
     this._plants.push(plant);
-    this._incrementPlantCount(seed.id);
     this._checkStageGoal();
   }
 
-  _getSeedGeometry(seed) {
-    if (this._seedGeometryCache.has(seed.id)) {
-      return this._seedGeometryCache.get(seed.id);
+  _applyPlantStageVisual(plant, providedInfo) {
+    const stageData = this._plantStages[plant.stageIndex];
+    if (!stageData) return;
+    const stageId = stageData.id;
+    const info = providedInfo || this._getPlantStageInfo(plant.seed, stageId);
+    const geometry = this._getPlantGeometry(plant.seed, stageId, info);
+    if (plant.mesh.geometry !== geometry) {
+      plant.mesh.geometry = geometry;
     }
-    const geometry = new THREE.PlaneGeometry(seed.width, seed.height);
-    this._seedGeometryCache.set(seed.id, geometry);
+    plant.mesh.scale.set(1, 1, 1);
+    plant.mesh.rotation.set(0, 0, 0);
+    plant.mesh.position.x = plant.x;
+    plant.mesh.position.z = 0.15;
+    const height = info.height || 0;
+    plant.mesh.position.y = plant.baseY + height * 0.5;
+    plant.currentStageHeight = height;
+    const width = info.width || (info.radius ? info.radius * 2 : 0);
+    plant.currentStageHalfWidth = Math.max(width * 0.5, info.radius || 0, 0.01);
+  }
+
+  _advancePlantStage(plant, nextIndex) {
+    if (!plant || nextIndex <= plant.stageIndex) return;
+    if (nextIndex >= this._plantStages.length) return;
+    plant.stageIndex = nextIndex;
+    plant.stageTimer = 0;
+    this._applyPlantStageVisual(plant);
+    if (this._lastPointerInfo) {
+      this._refreshCursor();
+    }
+  }
+
+  _getPlantStageInfo(seed, stageId) {
+    const scales = this.params.plantGrowth?.stageScales || {};
+    const baseWidth = seed.width || 0.04;
+    const baseHeight = seed.height || 0.12;
+    switch (stageId) {
+      case 'seed': {
+  const radiusSource = baseWidth || baseHeight || 0.02;
+        const radius = radiusSource * (scales.seedRadius ?? 0.45);
+        const diameter = radius * 2;
+        return { type: 'circle', radius, width: diameter, height: diameter };
+      }
+      case 'germinated': {
+        const width = Math.max(baseWidth * (scales.germWidth ?? 0.38), 0.01);
+        const height = Math.max(baseHeight * (scales.germHeight ?? 0.35), 0.02);
+        return { type: 'plane', width, height };
+      }
+      case 'small': {
+        const width = Math.max(baseWidth * (scales.smallWidth ?? 0.55), 0.012);
+        const height = Math.max(baseHeight * (scales.smallHeight ?? 0.55), 0.04);
+        return { type: 'plane', width, height };
+      }
+      case 'medium': {
+        const width = Math.max(baseWidth * (scales.mediumWidth ?? 0.75), 0.014);
+        const height = Math.max(baseHeight * (scales.mediumHeight ?? 0.78), 0.06);
+        return { type: 'plane', width, height };
+      }
+      case 'large':
+      default: {
+        const width = Math.max(baseWidth * (scales.largeWidth ?? 1.0), 0.016);
+        const height = Math.max(baseHeight * (scales.largeHeight ?? 1.0), 0.08);
+        return { type: 'plane', width, height };
+      }
+    }
+  }
+
+  _getPlantGeometry(seed, stageId, info) {
+    const key = `${seed.id}:${stageId}`;
+    if (this._plantGeometryCache.has(key)) {
+      return this._plantGeometryCache.get(key);
+    }
+    const metrics = info || this._getPlantStageInfo(seed, stageId);
+    let geometry;
+    if (metrics.type === 'circle') {
+      const segments = Math.max(3, Math.floor(this.params.plantGrowth?.geometrySegments ?? 20));
+      geometry = new THREE.CircleGeometry(metrics.radius, segments);
+    } else {
+      geometry = new THREE.PlaneGeometry(metrics.width, metrics.height);
+    }
+    this._plantGeometryCache.set(key, geometry);
     return geometry;
   }
 
@@ -969,20 +1112,114 @@ export class SimuladorScene extends BaseScene {
     return material;
   }
 
-  _incrementPlantCount(seedId) {
-    this._plantCounts[seedId] = (this._plantCounts[seedId] || 0) + 1;
-  }
-
   _updatePlants(dt) {
     if (!this._plants.length) return;
+    const transitionDuration = Math.max(0.05, this.params.plantGrowth?.transitionDuration ?? 2.0);
+    const interactions = this.params.interactions || {};
+    const subOffset = Math.max(0, interactions.plantSubmergeOffset ?? 0.004);
+    const emerOffset = Math.max(0, interactions.plantEmergenceOffset ?? subOffset);
+    const waterSegments = this.params.water.surfaceSegments;
+    this._evaluatePlantCompetition();
+
     for (let i = 0; i < this._plants.length; i++) {
       const plant = this._plants[i];
-      const rate = Math.max(0.05, plant.seed.growthRate || 0.4);
-      plant.growth = Math.min(1, plant.growth + dt * rate * 0.25);
-      const scaleY = Math.max(0.1, plant.growth);
-      plant.mesh.scale.y = scaleY;
-      plant.mesh.position.y = plant.baseY + (plant.seed.height * 0.5) * scaleY;
+      const waterHeight = this._heightAt(this._waterHeights, waterSegments, plant.x);
+      const plantHeight = Math.max(plant.currentStageHeight || 0, 0);
+      const plantTop = plant.baseY + plantHeight;
+      const isSubmerged = waterHeight >= plantTop + subOffset;
+      const isAboveWater = waterHeight <= plant.baseY - emerOffset;
+
+      const stageData = this._plantStages[plant.stageIndex];
+      if (!stageData) continue;
+      const requirement = stageData.nextRequiresSubmerged;
+      if (requirement === null || plant.stageIndex >= this._plantStages.length - 1) {
+        plant.stageTimer = 0;
+        continue;
+      }
+
+      if (plant.competitionBlocked) {
+        plant.stageTimer = 0;
+        continue;
+      }
+
+      let conditionMet = false;
+      if (requirement === true) {
+        conditionMet = isSubmerged;
+      } else if (requirement === false) {
+        conditionMet = isAboveWater;
+      }
+
+      if (conditionMet) {
+        plant.stageTimer += dt;
+        if (plant.stageTimer >= transitionDuration) {
+          this._advancePlantStage(plant, plant.stageIndex + 1);
+        }
+      } else {
+        plant.stageTimer = 0;
+      }
     }
+
+    this._checkStageGoal();
+  }
+
+  _evaluatePlantCompetition() {
+    const cfg = this.params.plantCompetition || {};
+    const radius = Math.max(0.0001, (cfg.neighborRadius ?? 0.08)) * this.worldWidth;
+    const radiusSq = radius * radius;
+    const minNeighbors = Math.max(0, cfg.minNeighbors ?? 4);
+    const plants = this._plants;
+    for (let i = 0; i < plants.length; i++) {
+      const plant = plants[i];
+      let neighborCount = 0;
+      let stageSum = 0;
+      for (let j = 0; j < plants.length; j++) {
+        if (i === j) continue;
+        const other = plants[j];
+        const dx = plant.x - other.x;
+        const dy = (plant.baseY + (plant.currentStageHeight || 0) * 0.5) - (other.baseY + (other.currentStageHeight || 0) * 0.5);
+        if (dx * dx + dy * dy > radiusSq) continue;
+        neighborCount += 1;
+        stageSum += other.stageIndex || 0;
+      }
+      if (neighborCount > minNeighbors && neighborCount > 0) {
+        const meanStage = stageSum / neighborCount;
+        plant.competitionBlocked = plant.stageIndex < meanStage;
+      } else {
+        plant.competitionBlocked = false;
+      }
+    }
+  }
+
+  _findPlantAt(x, y) {
+    let closest = null;
+    let closestDistSq = Infinity;
+    for (let i = 0; i < this._plants.length; i++) {
+      const plant = this._plants[i];
+      const height = Math.max(plant.currentStageHeight || 0, 0);
+      const centerY = plant.baseY + height * 0.5;
+      const dx = x - plant.x;
+      const dy = y - centerY;
+      const halfWidth = Math.max(plant.currentStageHalfWidth || 0.015, 0.015);
+      const radius = Math.max(halfWidth, height * 0.5, 0.02);
+      const distSq = dx * dx + dy * dy;
+      if (distSq <= radius * radius && distSq < closestDistSq) {
+        closest = plant;
+        closestDistSq = distSq;
+      }
+    }
+    return closest;
+  }
+
+  _removePlant(plant) {
+    if (!plant) return;
+    const index = this._plants.indexOf(plant);
+    if (index === -1) return;
+    if (plant.mesh) {
+      this.scene.remove(plant.mesh);
+    }
+    this._plants.splice(index, 1);
+    this._checkStageGoal();
+    this._refreshCursor();
   }
 
   _checkStageGoal() {
@@ -994,9 +1231,18 @@ export class SimuladorScene extends BaseScene {
       const species = goal.species || {};
       const ids = Object.keys(species);
       if (!ids.length) return;
+      const lastStageIndex = this._plantStages.length - 1;
+      const counts = {};
+      for (let i = 0; i < this._plants.length; i++) {
+        const plant = this._plants[i];
+        if (plant.stageIndex !== lastStageIndex) continue;
+        const id = plant.seed?.id;
+        if (!id) continue;
+        counts[id] = (counts[id] || 0) + 1;
+      }
       for (let i = 0; i < ids.length; i++) {
         const id = ids[i];
-        if ((this._plantCounts[id] || 0) < species[id]) {
+        if ((counts[id] || 0) < species[id]) {
           return;
         }
       }
@@ -1013,6 +1259,7 @@ export class SimuladorScene extends BaseScene {
     this._showMessage(stage.completionMessage || 'Etapa completada.', {
       onComplete: () => this._scheduleStageAdvance()
     });
+    this._updateGoalMessage();
   }
 
   _scheduleStageAdvance() {
@@ -1037,7 +1284,6 @@ export class SimuladorScene extends BaseScene {
   _initProgression() {
     this._clearStageAdvanceTimer();
     this._clearMessageTimer();
-    this._plantCounts = {};
     this._stageComplete = false;
     this._currentStageIndex = 0;
     this._configureStageTools();
@@ -1056,13 +1302,51 @@ export class SimuladorScene extends BaseScene {
         });
       });
     }
-    if (this._activeTool && this._activeTool !== 'sediment' && !this._availableSeedIds.has(this._activeTool)) {
+    if (this._activeTool && this._activeTool !== 'sediment' && this._activeTool !== 'remove' && !this._availableSeedIds.has(this._activeTool)) {
       this._activeTool = null;
     }
     if (!this._activeTool) {
       this._activeTool = 'sediment';
     }
     this._syncToolButtons();
+    this._updateGoalMessage();
+  }
+
+  _goalMessageForStage(stage) {
+    if (!stage) return '';
+    const conciseById = {
+      formation: 'Formá un banco de arena depositando sedimentos bajos.',
+      colonization: 'Estabilizá el banco con especies colonizadoras.',
+      expansion: 'Diversificá la isla con nuevas especies.'
+    };
+    if (stage.id && conciseById[stage.id]) {
+      return conciseById[stage.id];
+    }
+    if (stage.introMessage) return stage.introMessage;
+    if (stage.name) return stage.name;
+    return '';
+  }
+
+  _updateGoalMessage() {
+    if (!this._goalMessageEl) return;
+    const victoryMsg = this.params.progress?.victoryMessage;
+    if (this._stageComplete && this._currentStageIndex >= this._stages.length - 1) {
+      if (victoryMsg) {
+        this._goalMessageEl.textContent = victoryMsg;
+        this._goalMessageEl.style.display = 'block';
+        return;
+      }
+    }
+
+    const stage = this._stages[this._currentStageIndex];
+    const text = this._goalMessageForStage(stage);
+    if (text) {
+      this._goalMessageEl.textContent = text;
+      this._goalMessageEl.style.display = 'block';
+    } else {
+      this._goalMessageEl.textContent = '';
+      this._goalMessageEl.style.display = 'none';
+    }
   }
 
   _showStageIntro() {
@@ -1217,6 +1501,7 @@ export class SimuladorScene extends BaseScene {
         p.y = p.targetY;
         this._raiseRiverbed(p.x, sediment.depositAmount);
         this._deactivateParticle(p, i);
+        this._refreshCursor();
         positionsDirty = true;
         alphaDirty = true;
         continue;
@@ -1296,6 +1581,33 @@ export class SimuladorScene extends BaseScene {
     return lerp(h0, h1, frac);
   }
 
+  _sampleHeightsAt(x) {
+    return {
+      waterHeight: this._heightAt(this._waterHeights, this.params.water.surfaceSegments, x),
+      riverbedHeight: this._heightAt(this._riverbedHeights, this.params.riverbed.segments, x)
+    };
+  }
+
+  _resolveInteractionState(x, y) {
+    if (!Number.isFinite(x) || !Number.isFinite(y)) {
+      return null;
+    }
+    const { waterHeight, riverbedHeight } = this._sampleHeightsAt(x);
+    const interaction = this.params.interactions || {};
+    const sedimentGap = interaction.sedimentHeightEpsilon ?? 0.006;
+    const plantGap = interaction.plantHeightEpsilon ?? 0.02;
+
+    const canSediment = y < (waterHeight - sedimentGap)
+      && y > (riverbedHeight + sedimentGap)
+      && waterHeight - riverbedHeight > sedimentGap * 2;
+
+    const canPlant = riverbedHeight > waterHeight + sedimentGap
+      && y > waterHeight + sedimentGap
+      && y <= riverbedHeight + plantGap;
+
+    return { waterHeight, riverbedHeight, canSediment, canPlant };
+  }
+
   _checkEmergence() {
     const heights = this._riverbedHeights;
     if (!heights?.length) return;
@@ -1319,14 +1631,15 @@ export class SimuladorScene extends BaseScene {
     }
   }
 
-  _emitSediment(worldX, worldY) {
+  _emitSediment(worldX, worldY, stateOverride) {
     const { sediment } = this.params;
     const waterSegments = this.params.water.surfaceSegments;
     const bedSegments = this.params.riverbed.segments;
     if (!this._waterHeights.length) return;
 
-    const waterHeightAtClick = this._heightAt(this._waterHeights, waterSegments, worldX);
-    if (worldY >= waterHeightAtClick) return;
+    const state = stateOverride ?? this._resolveInteractionState(worldX, worldY);
+    if (!state?.canSediment) return;
+    const waterHeightAtClick = state.waterHeight;
 
     const spawnBase = this.worldWidth + sediment.spawnOffset * this.worldWidth;
     const spawnJitterX = sediment.spawnJitterX * this.worldWidth;
@@ -1407,6 +1720,10 @@ export class SimuladorScene extends BaseScene {
       this._particlesGeometry.attributes.position.needsUpdate = true;
       this._particlesGeometry.attributes.alpha.needsUpdate = true;
     }
+
+    if (emitted > 0) {
+      this._refreshCursor();
+    }
   }
 
   _acquireParticle() {
@@ -1436,9 +1753,12 @@ export class SimuladorScene extends BaseScene {
     panel.style.position = 'absolute';
     panel.style.left = `${ui.panelLeft * 100}vw`;
     panel.style.top = `${ui.panelTop * 100}vh`;
-    panel.style.width = `${ui.panelWidth * 100}vw`;
+  panel.style.width = 'auto';
+  panel.style.minWidth = `${(ui.panelMinWidth ?? ui.panelWidth * 0.6) * 100}vw`;
+  panel.style.maxWidth = `${(ui.panelMaxWidth ?? ui.panelWidth) * 100}vw`;
     panel.style.display = 'flex';
     panel.style.flexDirection = 'column';
+  panel.style.alignItems = 'stretch';
     panel.style.gap = `${ui.gap * 100}vh`;
     panel.style.padding = `${ui.gap * 75}vh`;
     panel.style.background = colors.uiBackground;
@@ -1447,15 +1767,17 @@ export class SimuladorScene extends BaseScene {
     panel.style.boxShadow = `0 0 ${ui.gap * 160}vh rgba(0,0,0,${ui.shadowOpacity})`;
     panel.style.pointerEvents = 'auto';
 
-  const seedPanel = document.createElement('div');
-  const seedPanelWidth = ui.panelWidth * 0.75;
-  seedPanel.style.position = 'absolute';
-  seedPanel.style.left = 'auto';
-  seedPanel.style.right = `${ui.panelLeft * 100}vw`;
+    const seedPanel = document.createElement('div');
+    seedPanel.style.position = 'absolute';
+    seedPanel.style.left = 'auto';
+    seedPanel.style.right = `${ui.panelLeft * 100}vw`;
     seedPanel.style.top = `${ui.panelTop * 100}vh`;
-  seedPanel.style.width = `${seedPanelWidth * 100}vw`;
+    seedPanel.style.width = 'auto';
+    seedPanel.style.minWidth = `${(ui.seedPanelMinWidth ?? ui.panelWidth * 0.7) * 100}vw`;
+    seedPanel.style.maxWidth = `${(ui.seedPanelMaxWidth ?? ui.panelWidth) * 100}vw`;
     seedPanel.style.display = 'flex';
     seedPanel.style.flexDirection = 'column';
+    seedPanel.style.alignItems = 'stretch';
     seedPanel.style.gap = `${ui.gap * 100}vh`;
     seedPanel.style.padding = `${ui.gap * 75}vh`;
     seedPanel.style.background = colors.uiBackground;
@@ -1517,9 +1839,10 @@ export class SimuladorScene extends BaseScene {
       return btn;
     };
 
-    const btnWaterUp = makeButton('Subir agua');
-    const btnWaterDown = makeButton('Bajar agua');
-    const btnSediment = makeButton('Sedimento');
+  const btnWaterUp = makeButton('Subir agua');
+  const btnWaterDown = makeButton('Bajar agua');
+  const btnSediment = makeButton('Sedimento');
+  const btnRemovePlant = makeButton('Quitar planta');
 
     const registerToolButton = (type, id, button) => {
       this._seedButtons[id] = { button, type, id };
@@ -1541,8 +1864,12 @@ export class SimuladorScene extends BaseScene {
       e.preventDefault();
       this._toggleTool('sediment');
     });
+    btnRemovePlant.addEventListener('click', (e) => {
+      e.preventDefault();
+      this._toggleTool('remove');
+    });
 
-    panel.append(btnWaterUp, btnWaterDown, btnSediment);
+    panel.append(btnWaterUp, btnWaterDown, btnSediment, btnRemovePlant);
     seedPanel.appendChild(seedTitle);
     seedPanel.appendChild(colonizerLabel);
     seedPanel.appendChild(colonizerGroup);
@@ -1552,16 +1879,61 @@ export class SimuladorScene extends BaseScene {
     root.appendChild(panel);
     root.appendChild(seedPanel);
 
+    const goalMessage = document.createElement('div');
+    const goalUi = ui.goalMessage || {};
+    goalMessage.style.position = 'absolute';
+    goalMessage.style.left = '50%';
+    goalMessage.style.bottom = `${(goalUi.bottomOffsetVW ?? 9)}vw`;
+    goalMessage.style.transform = 'translateX(-50%)';
+    goalMessage.style.padding = `${(goalUi.paddingVW ?? 1.2)}vw`;
+    goalMessage.style.maxWidth = `${(goalUi.maxWidthVW ?? 52)}vw`;
+    goalMessage.style.fontSize = `${(goalUi.fontSizeVW ?? 1.8)}vw`;
+    goalMessage.style.fontWeight = '600';
+    goalMessage.style.color = colors.uiText;
+    goalMessage.style.background = colors.uiBackgroundActive;
+    goalMessage.style.borderRadius = `${(goalUi.borderRadiusVW ?? 2.4)}vw`;
+    goalMessage.style.boxShadow = `0 0 ${(ui.gap * 140).toFixed(3)}vh rgba(0,0,0,${ui.shadowOpacity * 0.8})`;
+    goalMessage.style.pointerEvents = 'none';
+    goalMessage.style.textAlign = 'center';
+    goalMessage.style.display = 'none';
+    goalMessage.style.backdropFilter = 'blur(0.8vmin)';
+    root.appendChild(goalMessage);
+    this._goalMessageEl = goalMessage;
+
+    const cursorCfg = ui.cursor || {};
+    const cursorEl = document.createElement('div');
+    cursorEl.style.position = 'absolute';
+    cursorEl.style.left = '0';
+    cursorEl.style.top = '0';
+    cursorEl.style.width = `${(cursorCfg.diameterVW ?? 1.8)}vw`;
+    cursorEl.style.height = `${(cursorCfg.diameterVW ?? 1.8)}vw`;
+    cursorEl.style.borderRadius = '50%';
+    cursorEl.style.pointerEvents = 'none';
+    cursorEl.style.transform = 'translate(-50%, -50%)';
+    cursorEl.style.display = 'none';
+    cursorEl.style.background = colors.cursorDisabled;
+    cursorEl.style.border = `${(cursorCfg.borderWidthVW ?? 0.14)}vw solid rgba(0,0,0,0.35)`;
+    const cursorTransition = (cursorCfg.transitionSeconds ?? 0.12);
+    cursorEl.style.transition = `background ${cursorTransition}s ease, box-shadow ${cursorTransition}s ease, opacity ${cursorTransition}s ease`;
+    cursorEl.style.opacity = '0';
+    root.appendChild(cursorEl);
+    this._cursorEl = cursorEl;
+
     this.app.root.appendChild(root);
     this._uiRoot = root;
-    this._seedPanelWidth = seedPanelWidth;
     this._buttons = {
       panel,
       seedPanel,
       waterUp: btnWaterUp,
       waterDown: btnWaterDown,
-      sediment: btnSediment
+      sediment: btnSediment,
+      remove: btnRemovePlant
     };
+
+    if (this.app?.canvas) {
+      this._originalCanvasCursor = this.app.canvas.style.cursor;
+      this.app.canvas.style.cursor = 'none';
+    }
 
     this._seedButtons = {};
     const { seeds } = this.params;
@@ -1587,13 +1959,14 @@ export class SimuladorScene extends BaseScene {
     const { ui } = this.params;
     this._buttons.panel.style.left = `${ui.panelLeft * 100}vw`;
     this._buttons.panel.style.top = `${ui.panelTop * 100}vh`;
-    this._buttons.panel.style.width = `${ui.panelWidth * 100}vw`;
+    this._buttons.panel.style.minWidth = `${(ui.panelMinWidth ?? ui.panelWidth * 0.6) * 100}vw`;
+    this._buttons.panel.style.maxWidth = `${(ui.panelMaxWidth ?? ui.panelWidth) * 100}vw`;
     if (this._buttons.seedPanel) {
-      const seedPanelWidth = this._seedPanelWidth ?? ui.panelWidth;
       this._buttons.seedPanel.style.left = 'auto';
       this._buttons.seedPanel.style.right = `${ui.panelLeft * 100}vw`;
       this._buttons.seedPanel.style.top = `${ui.panelTop * 100}vh`;
-      this._buttons.seedPanel.style.width = `${seedPanelWidth * 100}vw`;
+      this._buttons.seedPanel.style.minWidth = `${(ui.seedPanelMinWidth ?? ui.panelWidth * 0.7) * 100}vw`;
+      this._buttons.seedPanel.style.maxWidth = `${(ui.seedPanelMaxWidth ?? ui.panelWidth) * 100}vw`;
     }
   }
 
@@ -1630,6 +2003,7 @@ export class SimuladorScene extends BaseScene {
     };
 
     applyButtonStyles(this._buttons.sediment, activeId === 'sediment');
+    applyButtonStyles(this._buttons.remove, activeId === 'remove');
 
     Object.values(this._seedButtons).forEach(({ button, id }) => {
       const available = this._availableSeedIds.has(id);
@@ -1638,20 +2012,17 @@ export class SimuladorScene extends BaseScene {
       applyButtonStyles(button, activeId === id);
     });
 
-    if (this.app?.canvas) {
-      const cursor = activeId && activeId !== 'sediment' ? 'copy' : activeId === 'sediment' ? 'crosshair' : 'default';
-      this.app.canvas.style.cursor = cursor;
-    }
     if (activeId !== 'sediment') {
       this._pointerDown = false;
     }
+    this._refreshCursor();
   }
 
   _toggleTool(toolId) {
     if (toolId === this._activeTool) {
       this._activeTool = null;
     } else {
-      if (toolId === 'sediment' || this._availableSeedIds.has(toolId)) {
+      if (toolId === 'sediment' || toolId === 'remove' || this._availableSeedIds.has(toolId)) {
         this._activeTool = toolId;
       }
     }
@@ -1662,10 +2033,17 @@ export class SimuladorScene extends BaseScene {
     if (this._uiRoot && this._uiRoot.parentElement) {
       this._uiRoot.parentElement.removeChild(this._uiRoot);
     }
+    this._setCursorVisible(false);
+    if (this.app?.canvas && this._originalCanvasCursor !== null) {
+      this.app.canvas.style.cursor = this._originalCanvasCursor;
+      this._originalCanvasCursor = null;
+    }
     this._uiRoot = null;
     this._buttons = {};
-    this._seedPanelWidth = null;
     this._seedButtons = {};
+    this._cursorEl = null;
+    this._goalMessageEl = null;
+    this._lastPointerInfo = null;
     this._activeTool = null;
     this._removeMessageEl();
   }
@@ -1681,6 +2059,7 @@ export class SimuladorScene extends BaseScene {
     const canvas = this.app.canvas;
     canvas.addEventListener('pointerdown', this._boundOnPointerDown);
     canvas.addEventListener('pointermove', this._boundOnPointerMove);
+    canvas.addEventListener('pointerleave', this._boundOnPointerLeave);
     window.addEventListener('pointerup', this._boundOnPointerUp);
   }
 
@@ -1688,6 +2067,7 @@ export class SimuladorScene extends BaseScene {
     const canvas = this.app.canvas;
     canvas.removeEventListener('pointerdown', this._boundOnPointerDown);
     canvas.removeEventListener('pointermove', this._boundOnPointerMove);
+    canvas.removeEventListener('pointerleave', this._boundOnPointerLeave);
     window.removeEventListener('pointerup', this._boundOnPointerUp);
   }
 
@@ -1695,21 +2075,125 @@ export class SimuladorScene extends BaseScene {
     if (event.button !== 0) return;
     const tool = this._activeTool;
     if (!tool) return;
-    const point = this._getWorldPointer(event);
+    const point = this._recordPointerPosition(event);
     if (!point) return;
     if (tool === 'sediment') {
+      const state = this._resolveInteractionState(point.x, point.y);
+      if (!state?.canSediment) return;
       this._pointerDown = true;
-      this._emitSediment(point.x, point.y);
+      this._emitSediment(point.x, point.y, state);
+    } else if (tool === 'remove') {
+      const plant = this._findPlantAt(point.x, point.y);
+      if (plant) {
+        this._removePlant(plant);
+      }
     } else {
       this._handlePlantingAction(tool, point.x, point.y);
     }
   }
 
   _handlePointerMove(event) {
-    if (!this._pointerDown || this._activeTool !== 'sediment' || event.buttons === 0) return;
-    const point = this._getWorldPointer(event);
+    const point = this._recordPointerPosition(event);
     if (!point) return;
-    this._emitSediment(point.x, point.y);
+    if (!this._pointerDown || this._activeTool !== 'sediment' || event.buttons === 0) {
+      if (event.buttons === 0) this._pointerDown = false;
+      return;
+    }
+    const state = this._resolveInteractionState(point.x, point.y);
+    if (!state?.canSediment) {
+      this._pointerDown = false;
+      return;
+    }
+    this._emitSediment(point.x, point.y, state);
+  }
+
+  _handlePointerLeave() {
+    this._pointerDown = false;
+    this._lastPointerInfo = null;
+    this._setCursorVisible(false);
+  }
+
+  _recordPointerPosition(event) {
+    const point = this._getWorldPointer(event);
+    if (!point) {
+      this._lastPointerInfo = null;
+      this._refreshCursor();
+      return null;
+    }
+    this._lastPointerInfo = {
+      clientX: event.clientX,
+      clientY: event.clientY,
+      worldX: point.x,
+      worldY: point.y
+    };
+    this._refreshCursor();
+    return point;
+  }
+
+  _setCursorVisible(visible) {
+    if (!this._cursorEl) return;
+    this._cursorEl.style.display = visible ? 'block' : 'none';
+    if (!visible) {
+      this._cursorEl.style.opacity = '0';
+    }
+  }
+
+  _refreshCursor() {
+    if (!this._cursorEl) return;
+    const info = this._lastPointerInfo;
+    if (!info) {
+      this._cursorEl.style.opacity = '0';
+      this._setCursorVisible(false);
+      return;
+    }
+
+    this._cursorEl.style.left = `${info.clientX}px`;
+    this._cursorEl.style.top = `${info.clientY}px`;
+
+    const state = this._resolveInteractionState(info.worldX, info.worldY);
+    const colors = this.params.colors;
+    const cursorCfg = this.params.ui.cursor || {};
+    const diameter = cursorCfg.diameterVW ?? 1.8;
+    const borderWidth = cursorCfg.borderWidthVW ?? 0.14;
+    const transitionSeconds = cursorCfg.transitionSeconds ?? 0.12;
+
+    this._cursorEl.style.width = `${diameter}vw`;
+    this._cursorEl.style.height = `${diameter}vw`;
+    this._cursorEl.style.borderWidth = `${borderWidth}vw`;
+    this._cursorEl.style.transition = `background ${transitionSeconds}s ease, box-shadow ${transitionSeconds}s ease, opacity ${transitionSeconds}s ease`;
+
+    let mode = 'blocked';
+    if (!this._activeTool) {
+      mode = 'none';
+    } else if (this._activeTool === 'sediment') {
+      mode = state?.canSediment ? 'sediment' : 'blocked';
+    } else if (this._activeTool === 'remove') {
+      const plant = this._findPlantAt(info.worldX, info.worldY);
+      mode = plant ? 'remove' : 'blocked';
+    } else {
+      const seedAvailable = this._availableSeedIds.has(this._activeTool);
+      mode = seedAvailable && state?.canPlant ? 'seed' : 'blocked';
+    }
+
+    if (mode === 'none') {
+      this._cursorEl.style.opacity = '0';
+      this._setCursorVisible(false);
+      return;
+    }
+
+    const palette = {
+      sediment: colors.cursorSediment,
+      seed: colors.cursorSeed,
+      remove: colors.cursorRemove,
+      blocked: colors.cursorDisabled
+    };
+    const color = palette[mode] || colors.cursorDisabled;
+    this._cursorEl.style.background = color;
+    this._cursorEl.style.opacity = mode === 'blocked' ? '0.7' : '0.95';
+    this._cursorEl.style.boxShadow = mode === 'blocked'
+      ? '0 0 0.6vw rgba(0,0,0,0.25)'
+      : '0 0 1vw rgba(0,0,0,0.35)';
+    this._setCursorVisible(true);
   }
 
   _getWorldPointer(event) {
@@ -1758,9 +2242,9 @@ export class SimuladorScene extends BaseScene {
       }
     }
 
-    this._seedGeometryCache.forEach((geo) => geo.dispose?.());
+  this._plantGeometryCache.forEach((geo) => geo.dispose?.());
     this._seedMaterialCache.forEach((mat) => mat.dispose?.());
-    this._seedGeometryCache.clear();
+  this._plantGeometryCache.clear();
     this._seedMaterialCache.clear();
   this._seedCatalog.clear();
 
@@ -1768,7 +2252,6 @@ export class SimuladorScene extends BaseScene {
     this._seedEffectGroup = null;
     this._seedEffectMaterial = null;
     this._plants = [];
-    this._plantCounts = {};
     this._availableSeedIds.clear();
 
     this._background = null;
