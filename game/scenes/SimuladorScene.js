@@ -99,7 +99,7 @@ export const DEFAULT_PARAMS = Object.freeze({
     arrivalThreshold: 0.008,
     dissolveSpeed: 0.3,
     depositRadius: 0.12,
-    depositAmount: 0.002,
+    depositAmount: 0.01,
     particleSize: 0.015,
     minAlpha: 0.35
   }),
@@ -111,7 +111,18 @@ export const DEFAULT_PARAMS = Object.freeze({
     particleSize: 0.02,
     particleColor: '#4d3018',
     colonizers: Object.freeze([
-      Object.freeze({ id: 'CS1', label: 'CS 1', color: '#7dbf5d', width: 0.04, height: 0.18, growthRate: 0.55 }),
+      Object.freeze({
+        id: 'CS1',
+        label: 'Aliso',
+        color: '#7dbf5d',
+        width: 0.04,
+        height: 0.18,
+        growthRate: 0.55,
+        assetName: 'aliso',
+        spriteStageMap: Object.freeze([0, 1, 1, 1, 1]),
+        spriteTransitionMap: Object.freeze({ 0: true }),
+        spriteTransitionFrames: Object.freeze({ 0: 5 })
+      }),
       Object.freeze({ id: 'CS2', label: 'CS 2', color: '#6eb48f', width: 0.038, height: 0.16, growthRate: 0.6 }),
       Object.freeze({ id: 'CS3', label: 'CS 3', color: '#5d9d6d', width: 0.035, height: 0.14, growthRate: 0.5 })
     ]),
@@ -181,7 +192,7 @@ export const DEFAULT_PARAMS = Object.freeze({
           species: Object.freeze({
             CS1: 3,
             CS2: 3,
-            CS3: 2
+            CS3: 3
           })
         }),
         allowedSeedGroups: Object.freeze(['colonizers'])
@@ -215,6 +226,13 @@ export const DEFAULT_PARAMS = Object.freeze({
       mediumHeight: 0.78,
       largeWidth: 1.0,
       largeHeight: 1.0
+    }),
+    visuals: Object.freeze({
+      enableSprites: true,
+      basePath: '/game-assets/simulador/plants',
+      spriteWidthRatio: 0.1,
+      bottomMargin: 0.15,
+      transitionFps: 12
     })
   }),
   plantCompetition: Object.freeze({
@@ -283,7 +301,7 @@ export class SimuladorScene extends BaseScene {
 
     this._seedBursts = [];
 
-  this._plants = [];
+    this._plants = [];
     this._plantStages = [
       { id: 'seed', nextRequiresSubmerged: true },
       { id: 'germinated', nextRequiresSubmerged: false },
@@ -291,6 +309,12 @@ export class SimuladorScene extends BaseScene {
       { id: 'medium', nextRequiresSubmerged: false },
       { id: 'large', nextRequiresSubmerged: null }
     ];
+
+    this._textureLoader = new THREE.TextureLoader();
+    this._plantTextureCache = new Map();
+    this._plantTransitionFrameCache = new Map();
+    this._plantImageMaterialCache = new Map();
+    this._unitPlantPlane = new THREE.PlaneGeometry(1, 1);
 
     this._messageEl = null;
     this._messageTimer = null;
@@ -383,6 +407,9 @@ export class SimuladorScene extends BaseScene {
     this._updateWater();
     this._riverbedDirty = true;
     this._updateRiverbed();
+    for (let i = 0; i < this._plants.length; i++) {
+      this._refreshPlantVisual(this._plants[i]);
+    }
     this._updateParticleSize(width, height);
     this._updateSeedEffectSize(width, height);
   }
@@ -968,6 +995,518 @@ export class SimuladorScene extends BaseScene {
     this._seedEffectMaterial.uniforms.size.value = Math.max(2, minSide * (seeds.particleSize || 0.02));
   }
 
+  _getPlantVisualConfig() {
+    const visuals = this.params.plantGrowth?.visuals;
+    if (!visuals) return null;
+    if (visuals.enableSprites === false) return null;
+    return visuals;
+  }
+
+  _stageIdToIndex(stageId) {
+    if (!stageId) return 0;
+    const idx = this._plantStages.findIndex((stage) => stage.id === stageId);
+    return idx >= 0 ? idx : 0;
+  }
+
+  _resolvePlantAssetName(seed) {
+    if (!seed) return null;
+    if (seed.assetName) return String(seed.assetName).toLowerCase();
+    return null;
+  }
+
+  _spriteStageAssetIndex(seed, stageIndex) {
+    if (!seed || !Number.isInteger(stageIndex)) return null;
+    const map = seed.spriteStageMap;
+    if (Array.isArray(map)) {
+      const clampedIndex = stageIndex < map.length ? stageIndex : map.length - 1;
+      if (clampedIndex < 0) return null;
+      const value = map[clampedIndex];
+      if (typeof value === 'number' && Number.isFinite(value)) return Math.floor(value);
+      if (value === null || typeof value === 'undefined') return null;
+      return value;
+    }
+    const maxIndex = typeof seed.maxSpriteStageIndex === 'number' ? seed.maxSpriteStageIndex : null;
+    if (maxIndex !== null) {
+      return Math.min(stageIndex, maxIndex);
+    }
+    return stageIndex;
+  }
+
+  _spriteTransitionEnabled(seed, fromStageIndex) {
+    if (!seed || !Number.isInteger(fromStageIndex)) return false;
+    const map = seed.spriteTransitionMap;
+    if (map && Object.prototype.hasOwnProperty.call(map, fromStageIndex)) {
+      return !!map[fromStageIndex];
+    }
+    if (Array.isArray(seed.spriteStageMap)) {
+      const nextIdx = fromStageIndex + 1;
+      const currentAsset = this._spriteStageAssetIndex(seed, fromStageIndex);
+      const nextAsset = this._spriteStageAssetIndex(seed, nextIdx);
+      return currentAsset !== null && nextAsset !== null && currentAsset !== nextAsset;
+    }
+    return true;
+  }
+
+  _spriteTransitionFrameCount(seed, fromStageIndex) {
+    if (!seed || !Number.isInteger(fromStageIndex)) return null;
+    const map = seed.spriteTransitionFrames;
+    if (map && Object.prototype.hasOwnProperty.call(map, fromStageIndex)) {
+      const value = map[fromStageIndex];
+      if (Number.isFinite(value) && value > 0) return Math.floor(value);
+    }
+    return null;
+  }
+
+  _normalizeAssetPath(basePath, filename) {
+    const cleanBase = basePath ? basePath.replace(/\\/g, '/').replace(/\/+$/, '') : '';
+    if (!cleanBase) return filename;
+    return `${cleanBase}/${filename}`;
+  }
+
+  _loadTexture(url) {
+    return new Promise((resolve, reject) => {
+      if (!this._textureLoader) {
+        this._textureLoader = new THREE.TextureLoader();
+      }
+      this._textureLoader.load(
+        url,
+        (texture) => resolve(texture),
+        undefined,
+        () => reject(new Error(`Failed to load texture: ${url}`))
+      );
+    });
+  }
+
+  _getPlantTextureRecord(seed, stageIndex, transitionFrameIndex = null) {
+    const visuals = this._getPlantVisualConfig();
+    if (!visuals) return null;
+    const assetName = this._resolvePlantAssetName(seed);
+    if (!assetName) return null;
+    const assetStageIndex = this._spriteStageAssetIndex(seed, stageIndex);
+    if (assetStageIndex === null || typeof assetStageIndex === 'undefined') {
+      return null;
+    }
+    const normalizedStage = Math.max(0, Math.floor(assetStageIndex));
+    const name = assetName;
+    const frameSuffix = transitionFrameIndex !== null ? `-t${transitionFrameIndex}` : '';
+    const filename = `${name}-stage${normalizedStage}${frameSuffix}.png`;
+    const key = `${name}|stage${normalizedStage}${frameSuffix}`;
+
+    let record = this._plantTextureCache.get(key);
+    if (record) {
+      return record;
+    }
+
+    record = {
+      key,
+      status: 'loading',
+      texture: null,
+      width: 0,
+      height: 0,
+      imageData: null,
+      callbacks: [],
+      promise: null,
+      frameIndex: transitionFrameIndex,
+      assetName: name,
+      filename
+    };
+    this._plantTextureCache.set(key, record);
+
+    const basePath = visuals.basePath || '';
+    const url = this._normalizeAssetPath(basePath, filename);
+    record.promise = this._loadTexture(url)
+      .then((texture) => {
+        if (texture) {
+          if ('colorSpace' in texture && THREE && typeof THREE.SRGBColorSpace !== 'undefined') {
+            texture.colorSpace = THREE.SRGBColorSpace;
+          } else if ('encoding' in texture && THREE && typeof THREE.sRGBEncoding !== 'undefined') {
+            texture.encoding = THREE.sRGBEncoding;
+          }
+          texture.needsUpdate = true;
+        }
+        record.texture = texture;
+        const image = texture?.image;
+        if (image) {
+          record.width = image.width || 1;
+          record.height = image.height || 1;
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = record.width;
+            canvas.height = record.height;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(image, 0, 0);
+              record.imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              record._canvas = canvas;
+            }
+          } catch (err) {
+            record.imageData = null;
+          }
+        } else {
+          record.width = 1;
+          record.height = 1;
+        }
+        record.status = 'ready';
+      })
+      .catch(() => {
+        record.status = 'error';
+      })
+      .finally(() => {
+        const callbacks = record.callbacks.splice(0);
+        for (let i = 0; i < callbacks.length; i++) {
+          const cb = callbacks[i];
+          try {
+            cb(record);
+          } catch (err) {
+            // ignore callback errors to avoid cascading failures
+          }
+        }
+        record.promise = null;
+      });
+
+    return record;
+  }
+
+  _addTextureReadyCallback(record, callback) {
+    if (!record || typeof callback !== 'function') return;
+    if (record.status === 'ready' || record.status === 'error') {
+      callback(record);
+      return;
+    }
+    record.callbacks.push(callback);
+  }
+
+  _waitForTextureRecord(record) {
+    if (!record) return Promise.resolve(null);
+    if (record.status === 'ready' || record.status === 'error') {
+      return Promise.resolve(record);
+    }
+    if (record.promise) {
+      return record.promise.then(() => record).catch(() => record);
+    }
+    return Promise.resolve(record);
+  }
+
+  _getTransitionCacheKey(seed, fromStageIndex) {
+    const base = this._resolvePlantAssetName(seed) || (seed?.id ? String(seed.id).toLowerCase() : 'unknown');
+    const assetStage = this._spriteStageAssetIndex(seed, fromStageIndex);
+    if (assetStage === null || typeof assetStage === 'undefined') {
+      return `${base}|from-none`;
+    }
+    return `${base}|from${assetStage}`;
+  }
+
+  _ensureTransitionFrames(seed, fromStageIndex) {
+    const visuals = this._getPlantVisualConfig();
+    if (!visuals) return null;
+    if (!this._spriteTransitionEnabled(seed, fromStageIndex)) {
+      return null;
+    }
+    const key = this._getTransitionCacheKey(seed, fromStageIndex);
+    let entry = this._plantTransitionFrameCache.get(key);
+    if (!entry) {
+      entry = { key, records: [], loading: false, complete: false, promise: null };
+      this._plantTransitionFrameCache.set(key, entry);
+    }
+    if (entry.loading || entry.complete) {
+      return entry;
+    }
+    entry.loading = true;
+    entry.promise = this._loadTransitionFrameSeries(seed, fromStageIndex, entry)
+      .catch(() => {
+        entry.complete = true;
+      })
+      .finally(() => {
+        entry.loading = false;
+        entry.promise = null;
+      });
+    return entry;
+  }
+
+  async _loadTransitionFrameSeries(seed, fromStageIndex, entry) {
+    const configuredCount = this._spriteTransitionFrameCount(seed, fromStageIndex);
+    const maxFrames = Number.isInteger(configuredCount) && configuredCount > 0 ? configuredCount : 24;
+    for (let frameIndex = 0; frameIndex < maxFrames; frameIndex++) {
+      const record = this._getPlantTextureRecord(seed, fromStageIndex, frameIndex);
+      if (!record) {
+        entry.complete = true;
+        break;
+      }
+      if (!entry.records.includes(record)) {
+        record.frameIndex = frameIndex;
+        entry.records.push(record);
+      }
+      await this._waitForTextureRecord(record);
+      if (record.status !== 'ready') {
+        entry.complete = true;
+        break;
+      }
+    }
+    entry.complete = true;
+  }
+
+  _getTransitionFrameRecords(seed, fromStageIndex) {
+    const entry = this._ensureTransitionFrames(seed, fromStageIndex);
+    if (!entry) return [];
+    const ready = [];
+    for (let i = 0; i < entry.records.length; i++) {
+      const record = entry.records[i];
+      if (record.status === 'ready') {
+        ready.push(record);
+      }
+    }
+    ready.sort((a, b) => (a.frameIndex || 0) - (b.frameIndex || 0));
+    return ready;
+  }
+
+  _primePlantAssets(seed) {
+    const visuals = this._getPlantVisualConfig();
+    if (!visuals) return;
+    const baseName = this._resolvePlantAssetName(seed);
+    const seenStages = new Set();
+    for (let i = 0; i < this._plantStages.length; i++) {
+      const assetStage = this._spriteStageAssetIndex(seed, i);
+      if (assetStage === null || typeof assetStage === 'undefined') continue;
+      const key = `${baseName || seed?.id || 'unknown'}|stage${assetStage}`;
+      if (seenStages.has(key)) continue;
+      seenStages.add(key);
+      this._getPlantTextureRecord(seed, i);
+    }
+    for (let i = 0; i < this._plantStages.length - 1; i++) {
+      if (!this._spriteTransitionEnabled(seed, i)) continue;
+      this._ensureTransitionFrames(seed, i);
+    }
+  }
+
+  _getImageMaterialForRecord(record) {
+    if (!record) return null;
+    let material = this._plantImageMaterialCache.get(record.key);
+    if (!material) {
+      material = new THREE.MeshBasicMaterial({
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        toneMapped: false,
+        depthTest: false,
+        alphaTest: 0.01
+      });
+      this._plantImageMaterialCache.set(record.key, material);
+    }
+    if (material.map !== record.texture) {
+      material.map = record.texture || null;
+      material.needsUpdate = true;
+      if (material.map) {
+        material.map.needsUpdate = true;
+      }
+    }
+    material.color.setHex(0xffffff);
+    material.opacity = 1;
+    return material;
+  }
+
+  _applyPlantTextureRecord(plant, record) {
+    if (!plant || !record || record.status !== 'ready' || !record.texture) return;
+    if (!this._unitPlantPlane) {
+      this._unitPlantPlane = new THREE.PlaneGeometry(1, 1);
+    }
+    const visuals = this._getPlantVisualConfig();
+    const widthRatio = Math.max(1e-5, visuals?.spriteWidthRatio ?? 0.005);
+    const widthWorld = Math.max(1e-5, this.worldWidth * widthRatio);
+    const textureAspect = record.height && record.width ? record.height / record.width : 1;
+    const heightWorld = Math.max(1e-5, widthWorld * textureAspect);
+
+    const material = this._getImageMaterialForRecord(record);
+    plant.imageMaterial = material;
+    plant.mesh.geometry = this._unitPlantPlane;
+    plant.mesh.material = material;
+    plant.mesh.scale.set(widthWorld, heightWorld, 1);
+    plant.mesh.rotation.set(0, 0, 0);
+    plant.mesh.position.x = plant.x;
+    const margin = clamp(visuals?.bottomMargin ?? 0.05, 0, 1);
+    const centerY = plant.baseY + (0.5 - margin) * heightWorld;
+    plant.mesh.position.y = centerY;
+    plant.mesh.position.z = 0.15;
+
+    plant.currentStageHeight = heightWorld;
+    plant.currentStageHalfWidth = Math.max(widthWorld * 0.5, 0.01);
+    plant.visualMode = 'image';
+    plant.visualWidth = widthWorld;
+    plant.visualHeight = heightWorld;
+    plant.visualMargin = margin;
+    plant.activeTextureRecord = record;
+    if (this._lastPointerInfo) {
+      this._refreshCursor();
+    }
+  }
+
+  _applyTransitionFrameVisual(plant, record) {
+    if (!record || record.status !== 'ready') return;
+    this._applyPlantTextureRecord(plant, record);
+    if (plant.transition) {
+      plant.transition.activeRecord = record;
+    }
+  }
+
+  _startPlantTransition(plant, nextIndex, options = {}) {
+    if (!plant) return;
+    const visuals = this._getPlantVisualConfig();
+    if (!visuals) {
+      this._completePlantStageChange(plant, nextIndex);
+      return;
+    }
+    const { retryOnly = false } = options;
+    const fromAssetStage = this._spriteStageAssetIndex(plant.seed, plant.stageIndex);
+    const toAssetStage = this._spriteStageAssetIndex(plant.seed, nextIndex);
+    if (fromAssetStage === null || toAssetStage === null || fromAssetStage === toAssetStage) {
+      this._completePlantStageChange(plant, nextIndex);
+      return;
+    }
+    if (!this._spriteTransitionEnabled(plant.seed, plant.stageIndex)) {
+      this._completePlantStageChange(plant, nextIndex);
+      return;
+    }
+    const entry = this._ensureTransitionFrames(plant.seed, plant.stageIndex);
+    const allRecords = entry?.records || [];
+    const readyFrames = this._getTransitionFrameRecords(plant.seed, plant.stageIndex);
+    const totalCount = allRecords.length;
+    const readyCount = readyFrames.length;
+    const errorCount = allRecords.filter((rec) => rec.status === 'error').length;
+
+    if (readyCount && readyCount === totalCount) {
+      const fps = Math.max(1, visuals.transitionFps ?? 12);
+      plant.transition = {
+        toIndex: nextIndex,
+        frames: readyFrames,
+        fps,
+        frameIndex: 0,
+        elapsed: 0,
+        activeRecord: readyFrames[0]
+      };
+      plant.pendingTransition = null;
+      plant.stageTimer = 0;
+      this._applyTransitionFrameVisual(plant, readyFrames[0]);
+      return;
+    }
+
+    if (totalCount) {
+      if (errorCount === totalCount && !retryOnly) {
+        plant.pendingTransition = null;
+        this._completePlantStageChange(plant, nextIndex);
+        return;
+      }
+      if (!retryOnly) {
+        plant.pendingTransition = nextIndex;
+        for (let i = 0; i < allRecords.length; i++) {
+          const record = allRecords[i];
+          this._addTextureReadyCallback(record, () => {
+            if (plant.pendingTransition === nextIndex) {
+              this._startPlantTransition(plant, nextIndex, { retryOnly: true });
+            }
+          });
+        }
+      }
+      plant.stageTimer = 0;
+      return;
+    }
+
+    if (totalCount === 0 && entry?.loading) {
+      if (!retryOnly) {
+        plant.pendingTransition = nextIndex;
+        plant.stageTimer = 0;
+        if (entry.promise) {
+          entry.promise.finally(() => {
+            if (plant.pendingTransition === nextIndex) {
+              this._startPlantTransition(plant, nextIndex, { retryOnly: true });
+            }
+          });
+        }
+      }
+      return;
+    }
+
+    if (!retryOnly) {
+      plant.pendingTransition = null;
+      this._completePlantStageChange(plant, nextIndex);
+    } else if (totalCount === 0) {
+      plant.pendingTransition = null;
+      this._completePlantStageChange(plant, nextIndex);
+    }
+  }
+
+  _updatePlantTransition(plant, dt) {
+    const transition = plant.transition;
+    if (!plant || !transition || !Array.isArray(transition.frames) || !transition.frames.length) {
+      if (plant && transition) {
+        this._completePlantStageChange(plant, transition?.toIndex ?? plant.stageIndex);
+      }
+      return;
+    }
+    transition.elapsed += dt;
+    const frameDuration = 1 / Math.max(1, transition.fps || 1);
+    while (transition.elapsed >= frameDuration) {
+      transition.elapsed -= frameDuration;
+      transition.frameIndex += 1;
+      if (transition.frameIndex >= transition.frames.length) {
+        this._completePlantStageChange(plant, transition.toIndex);
+        return;
+      }
+      const record = transition.frames[transition.frameIndex];
+      if (record?.status === 'ready') {
+        this._applyTransitionFrameVisual(plant, record);
+      }
+    }
+  }
+
+  _completePlantStageChange(plant, nextIndex) {
+    if (!plant) return;
+    plant.transition = null;
+    plant.pendingTransition = null;
+    if (Number.isInteger(nextIndex) && nextIndex > plant.stageIndex && nextIndex < this._plantStages.length) {
+      plant.stageIndex = nextIndex;
+    }
+    plant.stageTimer = 0;
+    this._applyPlantStageVisual(plant);
+    if (this._lastPointerInfo) {
+      this._refreshCursor();
+    }
+  }
+
+  _refreshPlantVisual(plant) {
+    if (!plant) return;
+    if (plant.transition) {
+      const frames = plant.transition.frames || [];
+      const clampedIndex = Math.min(plant.transition.frameIndex || 0, Math.max(frames.length - 1, 0));
+      const record = frames[clampedIndex];
+      if (record?.status === 'ready') {
+        this._applyTransitionFrameVisual(plant, record);
+        return;
+      }
+    }
+    if (plant.pendingTransition !== null) {
+      this._startPlantTransition(plant, plant.pendingTransition, { retryOnly: true });
+      if (plant.transition) {
+        this._refreshPlantVisual(plant);
+        return;
+      }
+    }
+    this._applyPlantStageVisual(plant);
+  }
+
+  _sampleTextureAlpha(record, u, v) {
+    if (!record?.imageData) return 1;
+    const data = record.imageData;
+    const width = data.width || record.width || 1;
+    const height = data.height || record.height || 1;
+    if (!width || !height) return 1;
+    const uu = clamp(u, 0, 1);
+    const vv = clamp(v, 0, 1);
+    const px = Math.min(width - 1, Math.max(0, Math.round(uu * (width - 1))));
+    const py = Math.min(height - 1, Math.max(0, Math.round((1 - vv) * (height - 1))));
+    const idx = (py * width + px) * 4 + 3;
+    const alpha = data.data?.[idx] ?? 255;
+    return alpha / 255;
+  }
+
   _handlePlantingAction(toolId, worldX, worldY) {
     if (!this._availableSeedIds.has(toolId)) return false;
     const seed = this._seedCatalog.get(toolId);
@@ -999,6 +1538,8 @@ export class SimuladorScene extends BaseScene {
     mesh.renderOrder = 3;
     this.scene.add(mesh);
 
+    const initialWidth = stageInfo?.width || (stageInfo?.radius ? stageInfo.radius * 2 : 0.02);
+    const initialHeight = stageInfo?.height || (stageInfo?.radius ? stageInfo.radius * 2 : 0.02);
     const plant = {
       id: `${seed.id}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
       seed,
@@ -1007,9 +1548,20 @@ export class SimuladorScene extends BaseScene {
       baseY,
       stageIndex: initialStageIndex,
       stageTimer: 0,
-      currentStageHeight: stageInfo?.height || 0,
-      competitionBlocked: false
+      currentStageHeight: initialHeight,
+      currentStageHalfWidth: Math.max(initialWidth * 0.5, stageInfo?.radius || 0.01),
+      competitionBlocked: false,
+      colorMaterial: material,
+      imageMaterial: null,
+      visualMode: 'geometry',
+      visualWidth: initialWidth,
+      visualHeight: initialHeight,
+      visualMargin: this.params.plantGrowth?.visuals?.bottomMargin ?? 0.05,
+      activeTextureRecord: null,
+      transition: null,
+      pendingTransition: null
     };
+    this._primePlantAssets(seed);
     this._applyPlantStageVisual(plant, stageInfo);
     this._plants.push(plant);
     this._checkStageGoal();
@@ -1019,31 +1571,65 @@ export class SimuladorScene extends BaseScene {
     const stageData = this._plantStages[plant.stageIndex];
     if (!stageData) return;
     const stageId = stageData.id;
+    const visuals = this._getPlantVisualConfig();
+    const stageIndex = this._stageIdToIndex(stageId);
+
+    if (visuals) {
+      const record = this._getPlantTextureRecord(plant.seed, stageIndex);
+      if (record?.status === 'ready' && record.texture) {
+        this._applyPlantTextureRecord(plant, record);
+        return;
+      }
+      if (record?.status === 'loading') {
+        const handleReady = () => {
+          if (record.status === 'ready' && record.texture) {
+            this._applyPlantStageVisual(plant, providedInfo);
+          }
+        };
+        this._addTextureReadyCallback(record, handleReady);
+      }
+      if (record?.status === 'ready' && !record.texture) {
+        // texture failed to load usable data; fall back below
+      } else if (record?.status === 'loading') {
+        // Keep temporary geometry until texture is ready
+      } else if (record?.status === 'error') {
+        // Fall back to geometry immediately
+      } else if (!record) {
+        // No asset defined; fall back below
+      }
+    }
+
     const info = providedInfo || this._getPlantStageInfo(plant.seed, stageId);
     const geometry = this._getPlantGeometry(plant.seed, stageId, info);
     if (plant.mesh.geometry !== geometry) {
       plant.mesh.geometry = geometry;
     }
+    const material = plant.colorMaterial || this._getSeedMaterial(plant.seed);
+    if (plant.mesh.material !== material) {
+      plant.mesh.material = material;
+    }
     plant.mesh.scale.set(1, 1, 1);
     plant.mesh.rotation.set(0, 0, 0);
     plant.mesh.position.x = plant.x;
     plant.mesh.position.z = 0.15;
-    const height = info.height || 0;
+    const height = info.height || (info.radius ? info.radius * 2 : 0);
+    const width = info.width || (info.radius ? info.radius * 2 : 0);
     plant.mesh.position.y = plant.baseY + height * 0.5;
     plant.currentStageHeight = height;
-    const width = info.width || (info.radius ? info.radius * 2 : 0);
     plant.currentStageHalfWidth = Math.max(width * 0.5, info.radius || 0, 0.01);
+    plant.visualMode = 'geometry';
+    plant.visualWidth = width;
+    plant.visualHeight = height;
+    plant.activeTextureRecord = null;
+    if (this._lastPointerInfo) {
+      this._refreshCursor();
+    }
   }
 
   _advancePlantStage(plant, nextIndex) {
     if (!plant || nextIndex <= plant.stageIndex) return;
     if (nextIndex >= this._plantStages.length) return;
-    plant.stageIndex = nextIndex;
-    plant.stageTimer = 0;
-    this._applyPlantStageVisual(plant);
-    if (this._lastPointerInfo) {
-      this._refreshCursor();
-    }
+    this._startPlantTransition(plant, nextIndex);
   }
 
   _getPlantStageInfo(seed, stageId) {
@@ -1123,11 +1709,25 @@ export class SimuladorScene extends BaseScene {
 
     for (let i = 0; i < this._plants.length; i++) {
       const plant = this._plants[i];
-      const waterHeight = this._heightAt(this._waterHeights, waterSegments, plant.x);
-      const plantHeight = Math.max(plant.currentStageHeight || 0, 0);
-      const plantTop = plant.baseY + plantHeight;
-      const isSubmerged = waterHeight >= plantTop + subOffset;
-      const isAboveWater = waterHeight <= plant.baseY - emerOffset;
+
+      if (plant.transition) {
+        this._updatePlantTransition(plant, dt);
+        continue;
+      }
+
+      if (plant.pendingTransition !== null) {
+        this._startPlantTransition(plant, plant.pendingTransition, { retryOnly: true });
+        if (plant.transition) {
+          this._updatePlantTransition(plant, dt);
+          continue;
+        }
+        plant.stageTimer = 0;
+      }
+
+  const waterHeight = this._heightAt(this._waterHeights, waterSegments, plant.x);
+  const plantBase = plant.baseY;
+  const isSubmerged = waterHeight >= plantBase + subOffset;
+  const isAboveWater = waterHeight <= plantBase - emerOffset;
 
       const stageData = this._plantStages[plant.stageIndex];
       if (!stageData) continue;
@@ -1195,6 +1795,40 @@ export class SimuladorScene extends BaseScene {
     let closestDistSq = Infinity;
     for (let i = 0; i < this._plants.length; i++) {
       const plant = this._plants[i];
+      if (!plant) continue;
+
+      if (plant.visualMode === 'image' && plant.visualWidth && plant.visualHeight) {
+        const halfW = plant.visualWidth * 0.5;
+        const halfH = plant.visualHeight * 0.5;
+        const centerX = plant.x;
+        const centerY = plant.mesh?.position?.y ?? (plant.baseY + plant.visualHeight * 0.5);
+        const left = centerX - halfW;
+        const right = centerX + halfW;
+        const bottom = centerY - halfH;
+        const top = centerY + halfH;
+        if (x < left || x > right || y < bottom || y > top) {
+          continue;
+        }
+        let alpha = 1;
+        const record = plant.activeTextureRecord;
+        if (record?.status === 'ready' && record.imageData) {
+          const u = (x - left) / (right - left);
+          const v = (y - bottom) / (top - bottom);
+          alpha = this._sampleTextureAlpha(record, u, v);
+        }
+        if (alpha <= 0.5) {
+          continue;
+        }
+        const dx = x - centerX;
+        const dy = y - centerY;
+        const distSq = dx * dx + dy * dy;
+        if (distSq < closestDistSq) {
+          closest = plant;
+          closestDistSq = distSq;
+        }
+        continue;
+      }
+
       const height = Math.max(plant.currentStageHeight || 0, 0);
       const centerY = plant.baseY + height * 0.5;
       const dx = x - plant.x;
@@ -2242,11 +2876,28 @@ export class SimuladorScene extends BaseScene {
       }
     }
 
-  this._plantGeometryCache.forEach((geo) => geo.dispose?.());
+    this._plantGeometryCache.forEach((geo) => geo.dispose?.());
     this._seedMaterialCache.forEach((mat) => mat.dispose?.());
-  this._plantGeometryCache.clear();
+    this._plantImageMaterialCache.forEach((mat) => mat.dispose?.());
+    this._plantTextureCache.forEach((record) => {
+      if (record?.texture) {
+        record.texture.dispose?.();
+      }
+      if (record?._canvas) {
+        record._canvas.width = 0;
+        record._canvas.height = 0;
+      }
+    });
+    this._plantTextureCache.clear();
+    this._plantTransitionFrameCache.clear();
+    this._plantImageMaterialCache.clear();
+    this._plantGeometryCache.clear();
     this._seedMaterialCache.clear();
-  this._seedCatalog.clear();
+    this._seedCatalog.clear();
+    if (this._unitPlantPlane) {
+      this._unitPlantPlane.dispose?.();
+      this._unitPlantPlane = null;
+    }
 
     this._seedBursts = [];
     this._seedEffectGroup = null;
