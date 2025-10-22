@@ -47,7 +47,7 @@ export const DEFAULT_PARAMS = Object.freeze({
     levelDelta: 0.25,
     bottom: -0.4,
     smoothing: 2.2,
-    opacity: 0.77,
+    opacity: 0.6,
     wave: Object.freeze({
       primaryAmplitude: 0.036*0.5,
       secondaryAmplitude: 0.022*0.5,
@@ -547,7 +547,7 @@ export class SimuladorScene extends BaseScene {
       bottomIndices,
       bottomY: water.bottom
     };
-    this._waterStrip.mesh.renderOrder = 1;
+    this._waterStrip.mesh.renderOrder = 3;
     this.scene.add(this._waterStrip.mesh);
 
     this._waterHeights = new Float32Array(segments + 1);
@@ -647,7 +647,7 @@ export class SimuladorScene extends BaseScene {
       linewidth: 1
     });
     this._averageLine = new THREE.Line(geometry, material);
-    this._averageLine.renderOrder = 2;
+    this._averageLine.renderOrder = 4;
     this.scene.add(this._averageLine);
   }
 
@@ -907,7 +907,7 @@ export class SimuladorScene extends BaseScene {
     this._particlesGeometry = geometry;
   this._particlesPoints = new THREE.Points(geometry, material);
   this._particlesPoints.position.z = -0.02;
-  this._particlesPoints.renderOrder = 0;
+  this._particlesPoints.renderOrder = 1;
     this.scene.add(this._particlesPoints);
     this._updateParticleSize(this.app?.root?.clientWidth || 1, this.app?.root?.clientHeight || 1);
 
@@ -934,6 +934,7 @@ export class SimuladorScene extends BaseScene {
     const { seeds } = this.params;
     this._seedEffectGroup = new THREE.Group();
     this._seedEffectGroup.position.z = 0.06;
+    this._seedEffectGroup.renderOrder = 5;
     this.scene.add(this._seedEffectGroup);
 
     this._seedEffectMaterial = new THREE.ShaderMaterial({
@@ -1634,7 +1635,7 @@ export class SimuladorScene extends BaseScene {
     const geometry = this._getPlantGeometry(seed, stageId, stageInfo);
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, baseY, 0.15);
-    mesh.renderOrder = 3;
+    mesh.renderOrder = 2;
     this.scene.add(mesh);
 
     const initialWidth = stageInfo?.width || (stageInfo?.radius ? stageInfo.radius * 2 : 0.02);
