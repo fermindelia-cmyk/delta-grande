@@ -83,7 +83,7 @@ export const DEFAULT_PARAMS = Object.freeze({
     smoothing: 1.1,
     texture: Object.freeze({
       image: '/game-assets/simulador/sand.png',
-      tileWidthRatio: 0.1
+      tileWidthRatio: 0.24
     })
   }),
   sediment: Object.freeze({
