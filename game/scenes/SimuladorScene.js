@@ -229,10 +229,14 @@ export const DEFAULT_PARAMS = Object.freeze({
     }),
     visuals: Object.freeze({
       enableSprites: true,
-      basePath: '/game-assets/simulador/plants',
+      basePath: '/game-assets/simulador/plants/webp_seq',
       spriteWidthRatio: 0.1,
       bottomMargin: 0.15,
-      transitionFps: 12
+      transitionFps: 12,
+      stageFps: 12,
+      frameDigits: 3,
+      frameExtension: '.webp',
+      maxFramesPerClip: 240
     })
   }),
   plantCompetition: Object.freeze({
@@ -298,6 +302,8 @@ export class SimuladorScene extends BaseScene {
     this._seedCatalog = new Map();
     this._plantGeometryCache = new Map();
     this._seedMaterialCache = new Map();
+  this._plantSequenceCache = new Map();
+  this._plantMaterialCache = new Map();
 
     this._seedBursts = [];
 
@@ -311,9 +317,6 @@ export class SimuladorScene extends BaseScene {
     ];
 
     this._textureLoader = new THREE.TextureLoader();
-    this._plantTextureCache = new Map();
-    this._plantTransitionFrameCache = new Map();
-    this._plantImageMaterialCache = new Map();
     this._unitPlantPlane = new THREE.PlaneGeometry(1, 1);
 
     this._messageEl = null;
@@ -351,6 +354,7 @@ export class SimuladorScene extends BaseScene {
     this._createSedimentSystem();
     this._createSeedEffectSystem();
     this._createUI();
+    this._preloadAllPlantSequences();
     this._initProgression();
     this._bindEvents();
 
@@ -1038,23 +1042,7 @@ export class SimuladorScene extends BaseScene {
     if (map && Object.prototype.hasOwnProperty.call(map, fromStageIndex)) {
       return !!map[fromStageIndex];
     }
-    if (Array.isArray(seed.spriteStageMap)) {
-      const nextIdx = fromStageIndex + 1;
-      const currentAsset = this._spriteStageAssetIndex(seed, fromStageIndex);
-      const nextAsset = this._spriteStageAssetIndex(seed, nextIdx);
-      return currentAsset !== null && nextAsset !== null && currentAsset !== nextAsset;
-    }
     return true;
-  }
-
-  _spriteTransitionFrameCount(seed, fromStageIndex) {
-    if (!seed || !Number.isInteger(fromStageIndex)) return null;
-    const map = seed.spriteTransitionFrames;
-    if (map && Object.prototype.hasOwnProperty.call(map, fromStageIndex)) {
-      const value = map[fromStageIndex];
-      if (Number.isFinite(value) && value > 0) return Math.floor(value);
-    }
-    return null;
   }
 
   _normalizeAssetPath(basePath, filename) {
@@ -1077,210 +1065,261 @@ export class SimuladorScene extends BaseScene {
     });
   }
 
-  _getPlantTextureRecord(seed, stageIndex, transitionFrameIndex = null) {
+  _prepareTexture(texture) {
+    if (!texture) return;
+    if ('colorSpace' in texture && THREE && typeof THREE.SRGBColorSpace !== 'undefined') {
+      texture.colorSpace = THREE.SRGBColorSpace;
+    } else if ('encoding' in texture && THREE && typeof THREE.sRGBEncoding !== 'undefined') {
+      texture.encoding = THREE.sRGBEncoding;
+    }
+    texture.needsUpdate = true;
+  }
+
+  _createFrameRecord(texture) {
+    const frame = {
+      texture,
+      width: 1,
+      height: 1,
+      imageData: null,
+      canvas: null
+    };
+    const image = texture?.image;
+    if (image) {
+      frame.width = image.width || 1;
+      frame.height = image.height || 1;
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = frame.width;
+        canvas.height = frame.height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(image, 0, 0);
+          frame.imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          frame.canvas = canvas;
+        }
+      } catch (err) {
+        frame.imageData = null;
+      }
+    }
+    return frame;
+  }
+
+  _getPlantStageSequence(seed, stageIndex) {
+    const assetStage = this._spriteStageAssetIndex(seed, stageIndex);
+    return this._getOrLoadSequence(seed, {
+      type: 'stage',
+      stageIndex,
+      assetStage
+    });
+  }
+
+  _getPlantTransitionSequence(seed, fromStageIndex, toStageIndex) {
+    if (!this._spriteTransitionEnabled(seed, fromStageIndex)) {
+      return null;
+    }
+    const fromAssetStage = this._spriteStageAssetIndex(seed, fromStageIndex);
+    const toAssetStage = this._spriteStageAssetIndex(seed, toStageIndex);
+    return this._getOrLoadSequence(seed, {
+      type: 'transition',
+      fromStageIndex,
+      toStageIndex,
+      fromAssetStage,
+      toAssetStage
+    });
+  }
+
+  _getOrLoadSequence(seed, options) {
     const visuals = this._getPlantVisualConfig();
     if (!visuals) return null;
     const assetName = this._resolvePlantAssetName(seed);
     if (!assetName) return null;
-    const assetStageIndex = this._spriteStageAssetIndex(seed, stageIndex);
-    if (assetStageIndex === null || typeof assetStageIndex === 'undefined') {
+
+    const type = options.type;
+    const stageIndex = options.stageIndex;
+    const assetStage = options.assetStage;
+    const fromStageIndex = options.fromStageIndex;
+    const toStageIndex = options.toStageIndex;
+    const fromAssetStage = options.fromAssetStage;
+    const toAssetStage = options.toAssetStage;
+
+    const candidates = [];
+    const seen = new Set();
+
+    const addStageCandidate = (value) => {
+      if (!Number.isFinite(value)) return;
+      const intValue = Math.max(0, Math.floor(value));
+      const key = `stage-${intValue}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      const folderName = `${assetName}-stage-${intValue}`;
+      candidates.push({ folderName, filenamePrefix: folderName });
+    };
+
+    const addTransitionCandidate = (fromValue, toValue) => {
+      if (!Number.isFinite(fromValue) || !Number.isFinite(toValue)) return;
+      const fromInt = Math.max(0, Math.floor(fromValue));
+      const toInt = Math.max(0, Math.floor(toValue));
+      const key = `transition-${fromInt}-${toInt}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      const folderName = `${assetName}-stage-${fromInt}-to-${toInt}`;
+      candidates.push({ folderName, filenamePrefix: folderName });
+    };
+
+    if (type === 'stage') {
+      addStageCandidate(stageIndex);
+      if (assetStage !== null && typeof assetStage !== 'undefined') {
+        addStageCandidate(assetStage);
+      }
+    } else {
+      addTransitionCandidate(fromStageIndex, toStageIndex);
+      if (fromAssetStage !== null && typeof fromAssetStage !== 'undefined' && toAssetStage !== null && typeof toAssetStage !== 'undefined') {
+        addTransitionCandidate(fromAssetStage, toAssetStage);
+      }
+    }
+
+    if (!candidates.length) {
       return null;
     }
-    const normalizedStage = Math.max(0, Math.floor(assetStageIndex));
-    const name = assetName;
-    const frameSuffix = transitionFrameIndex !== null ? `-t${transitionFrameIndex}` : '';
-    const filename = `${name}-stage${normalizedStage}${frameSuffix}.png`;
-    const key = `${name}|stage${normalizedStage}${frameSuffix}`;
 
-    let record = this._plantTextureCache.get(key);
-    if (record) {
-      return record;
+    let cacheKey;
+    if (type === 'stage') {
+      cacheKey = `stage|${assetName}|${Math.max(0, Math.floor(stageIndex ?? 0))}`;
+    } else {
+      cacheKey = `transition|${assetName}|${Math.max(0, Math.floor(fromStageIndex ?? 0))}->${Math.max(0, Math.floor(toStageIndex ?? 0))}`;
     }
 
-    record = {
-      key,
-      status: 'loading',
-      texture: null,
-      width: 0,
-      height: 0,
-      imageData: null,
-      callbacks: [],
-      promise: null,
-      frameIndex: transitionFrameIndex,
-      assetName: name,
-      filename
-    };
-    this._plantTextureCache.set(key, record);
-
+    let entry = this._plantSequenceCache.get(cacheKey);
     const basePath = visuals.basePath || '';
-    const url = this._normalizeAssetPath(basePath, filename);
-    record.promise = this._loadTexture(url)
-      .then((texture) => {
-        if (texture) {
-          if ('colorSpace' in texture && THREE && typeof THREE.SRGBColorSpace !== 'undefined') {
-            texture.colorSpace = THREE.SRGBColorSpace;
-          } else if ('encoding' in texture && THREE && typeof THREE.sRGBEncoding !== 'undefined') {
-            texture.encoding = THREE.sRGBEncoding;
-          }
-          texture.needsUpdate = true;
-        }
-        record.texture = texture;
-        const image = texture?.image;
-        if (image) {
-          record.width = image.width || 1;
-          record.height = image.height || 1;
-          try {
-            const canvas = document.createElement('canvas');
-            canvas.width = record.width;
-            canvas.height = record.height;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-              ctx.drawImage(image, 0, 0);
-              record.imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-              record._canvas = canvas;
-            }
-          } catch (err) {
-            record.imageData = null;
-          }
-        } else {
-          record.width = 1;
-          record.height = 1;
-        }
-        record.status = 'ready';
-      })
-      .catch(() => {
-        record.status = 'error';
-      })
-      .finally(() => {
-        const callbacks = record.callbacks.splice(0);
+    const extension = visuals.frameExtension || '.webp';
+    const frameDigits = Math.max(1, visuals.frameDigits ?? 3);
+    const maxFrames = Math.max(1, visuals.maxFramesPerClip ?? 240);
+    const transitionFps = Math.max(1, visuals.transitionFps ?? 12);
+    const stageFps = Math.max(1, visuals.stageFps ?? transitionFps);
+
+    const fps = type === 'transition' ? transitionFps : stageFps;
+    const loop = type === 'transition' ? false : true;
+
+    if (!entry) {
+      entry = {
+        key: cacheKey,
+        status: 'loading',
+        frames: [],
+        fps,
+        loop,
+        type,
+        callbacks: [],
+        promise: null
+      };
+      this._plantSequenceCache.set(cacheKey, entry);
+      entry.promise = this._loadPlantSequence(entry, {
+        basePath,
+        candidates,
+        extension,
+        frameDigits,
+        maxFrames
+      }).catch(() => {
+        entry.status = 'error';
+      }).finally(() => {
+        entry.promise = null;
+        const callbacks = entry.callbacks.splice(0);
         for (let i = 0; i < callbacks.length; i++) {
           const cb = callbacks[i];
           try {
-            cb(record);
+            cb(entry);
           } catch (err) {
-            // ignore callback errors to avoid cascading failures
+            // ignore callback errors
           }
         }
-        record.promise = null;
       });
+    } else {
+      entry.fps = fps;
+      entry.loop = loop;
+    }
 
-    return record;
-  }
-
-  _addTextureReadyCallback(record, callback) {
-    if (!record || typeof callback !== 'function') return;
-    if (record.status === 'ready' || record.status === 'error') {
-      callback(record);
-      return;
-    }
-    record.callbacks.push(callback);
-  }
-
-  _waitForTextureRecord(record) {
-    if (!record) return Promise.resolve(null);
-    if (record.status === 'ready' || record.status === 'error') {
-      return Promise.resolve(record);
-    }
-    if (record.promise) {
-      return record.promise.then(() => record).catch(() => record);
-    }
-    return Promise.resolve(record);
-  }
-
-  _getTransitionCacheKey(seed, fromStageIndex) {
-    const base = this._resolvePlantAssetName(seed) || (seed?.id ? String(seed.id).toLowerCase() : 'unknown');
-    const assetStage = this._spriteStageAssetIndex(seed, fromStageIndex);
-    if (assetStage === null || typeof assetStage === 'undefined') {
-      return `${base}|from-none`;
-    }
-    return `${base}|from${assetStage}`;
-  }
-
-  _ensureTransitionFrames(seed, fromStageIndex) {
-    const visuals = this._getPlantVisualConfig();
-    if (!visuals) return null;
-    if (!this._spriteTransitionEnabled(seed, fromStageIndex)) {
-      return null;
-    }
-    const key = this._getTransitionCacheKey(seed, fromStageIndex);
-    let entry = this._plantTransitionFrameCache.get(key);
-    if (!entry) {
-      entry = { key, records: [], loading: false, complete: false, promise: null };
-      this._plantTransitionFrameCache.set(key, entry);
-    }
-    if (entry.loading || entry.complete) {
-      return entry;
-    }
-    entry.loading = true;
-    entry.promise = this._loadTransitionFrameSeries(seed, fromStageIndex, entry)
-      .catch(() => {
-        entry.complete = true;
-      })
-      .finally(() => {
-        entry.loading = false;
-        entry.promise = null;
-      });
     return entry;
   }
 
-  async _loadTransitionFrameSeries(seed, fromStageIndex, entry) {
-    const configuredCount = this._spriteTransitionFrameCount(seed, fromStageIndex);
-    const maxFrames = Number.isInteger(configuredCount) && configuredCount > 0 ? configuredCount : 24;
-    for (let frameIndex = 0; frameIndex < maxFrames; frameIndex++) {
-      const record = this._getPlantTextureRecord(seed, fromStageIndex, frameIndex);
-      if (!record) {
-        entry.complete = true;
-        break;
+  async _loadPlantSequence(entry, descriptor) {
+    const { basePath, candidates, extension, frameDigits, maxFrames } = descriptor;
+
+    for (let c = 0; c < candidates.length; c++) {
+      const candidate = candidates[c];
+      const folderPath = this._normalizeAssetPath(basePath, candidate.folderName);
+      const frames = [];
+
+      for (let index = 0; index < maxFrames; index++) {
+        const suffix = index.toString().padStart(frameDigits, '0');
+        const filename = `${candidate.filenamePrefix}_${suffix}${extension}`;
+        const url = this._normalizeAssetPath(folderPath, filename);
+        try {
+          const texture = await this._loadTexture(url);
+          if (!texture) {
+            break;
+          }
+          this._prepareTexture(texture);
+          frames.push(this._createFrameRecord(texture));
+        } catch (err) {
+          if (index === 0) {
+            frames.length = 0;
+          }
+          break;
+        }
       }
-      if (!entry.records.includes(record)) {
-        record.frameIndex = frameIndex;
-        entry.records.push(record);
-      }
-      await this._waitForTextureRecord(record);
-      if (record.status !== 'ready') {
-        entry.complete = true;
-        break;
+
+      if (frames.length > 0) {
+        entry.frames = frames;
+        entry.status = 'ready';
+        entry.activeCandidate = candidate;
+        return entry;
       }
     }
-    entry.complete = true;
+
+    entry.frames = [];
+    entry.status = 'error';
+    return entry;
   }
 
-  _getTransitionFrameRecords(seed, fromStageIndex) {
-    const entry = this._ensureTransitionFrames(seed, fromStageIndex);
-    if (!entry) return [];
-    const ready = [];
-    for (let i = 0; i < entry.records.length; i++) {
-      const record = entry.records[i];
-      if (record.status === 'ready') {
-        ready.push(record);
-      }
+  _addSequenceReadyCallback(entry, callback) {
+    if (!entry || typeof callback !== 'function') return;
+    if (entry.status === 'ready' || entry.status === 'error') {
+      callback(entry);
+      return;
     }
-    ready.sort((a, b) => (a.frameIndex || 0) - (b.frameIndex || 0));
-    return ready;
+    entry.callbacks.push(callback);
   }
 
   _primePlantAssets(seed) {
     const visuals = this._getPlantVisualConfig();
     if (!visuals) return;
-    const baseName = this._resolvePlantAssetName(seed);
-    const seenStages = new Set();
     for (let i = 0; i < this._plantStages.length; i++) {
-      const assetStage = this._spriteStageAssetIndex(seed, i);
-      if (assetStage === null || typeof assetStage === 'undefined') continue;
-      const key = `${baseName || seed?.id || 'unknown'}|stage${assetStage}`;
-      if (seenStages.has(key)) continue;
-      seenStages.add(key);
-      this._getPlantTextureRecord(seed, i);
+      this._getPlantStageSequence(seed, i);
     }
     for (let i = 0; i < this._plantStages.length - 1; i++) {
-      if (!this._spriteTransitionEnabled(seed, i)) continue;
-      this._ensureTransitionFrames(seed, i);
+      this._getPlantTransitionSequence(seed, i, i + 1);
     }
   }
 
-  _getImageMaterialForRecord(record) {
-    if (!record) return null;
-    let material = this._plantImageMaterialCache.get(record.key);
+  _preloadAllPlantSequences() {
+    const seedsConfig = this.params.seeds || {};
+    const seen = new Set();
+    const enqueue = (list) => {
+      if (!Array.isArray(list)) return;
+      for (let i = 0; i < list.length; i++) {
+        const seed = list[i];
+        if (!seed || !seed.id) continue;
+        if (seen.has(seed.id)) continue;
+        seen.add(seed.id);
+        this._primePlantAssets(seed);
+      }
+    };
+
+    Object.values(seedsConfig).forEach((value) => enqueue(value));
+  }
+
+  _ensurePlantMaterial(plant) {
+    if (!plant) return null;
+    let material = plant.imageMaterial;
     if (!material) {
       material = new THREE.MeshBasicMaterial({
         transparent: true,
@@ -1290,10 +1329,42 @@ export class SimuladorScene extends BaseScene {
         depthTest: false,
         alphaTest: 0.01
       });
-      this._plantImageMaterialCache.set(record.key, material);
+      plant.imageMaterial = material;
+      this._plantMaterialCache.set(plant.id, material);
     }
-    if (material.map !== record.texture) {
-      material.map = record.texture || null;
+    return material;
+  }
+
+  _playPlantAnimation(plant, entry, options = {}) {
+    if (!plant || !entry || entry.status !== 'ready' || !entry.frames.length) return;
+    if (!this._unitPlantPlane) {
+      this._unitPlantPlane = new THREE.PlaneGeometry(1, 1);
+    }
+    const fps = Math.max(1, options.fps ?? entry.fps ?? 12);
+    const loop = options.loop !== undefined ? options.loop : entry.loop;
+    const startFrame = clamp(options.startFrame ?? 0, 0, entry.frames.length - 1);
+    plant.animation = {
+      entry,
+      fps,
+      loop,
+      frameIndex: startFrame,
+      timer: 0,
+      onComplete: options.onComplete || null
+    };
+    plant.pendingTransition = null;
+    plant.visualMode = 'image';
+    plant.mesh.geometry = this._unitPlantPlane;
+    plant.mesh.material = this._ensurePlantMaterial(plant);
+    this._applyFrameToPlant(plant, entry.frames[startFrame]);
+  }
+
+  _applyFrameToPlant(plant, frame) {
+    if (!plant || !frame) return;
+    const visuals = this._getPlantVisualConfig();
+    if (!visuals) return;
+    const material = this._ensurePlantMaterial(plant);
+    if (material.map !== frame.texture) {
+      material.map = frame.texture || null;
       material.needsUpdate = true;
       if (material.map) {
         material.map.needsUpdate = true;
@@ -1301,166 +1372,111 @@ export class SimuladorScene extends BaseScene {
     }
     material.color.setHex(0xffffff);
     material.opacity = 1;
-    return material;
-  }
 
-  _applyPlantTextureRecord(plant, record) {
-    if (!plant || !record || record.status !== 'ready' || !record.texture) return;
-    if (!this._unitPlantPlane) {
-      this._unitPlantPlane = new THREE.PlaneGeometry(1, 1);
-    }
-    const visuals = this._getPlantVisualConfig();
-    const widthRatio = Math.max(1e-5, visuals?.spriteWidthRatio ?? 0.005);
+    const widthRatio = Math.max(1e-5, visuals.spriteWidthRatio ?? 0.005);
     const widthWorld = Math.max(1e-5, this.worldWidth * widthRatio);
-    const textureAspect = record.height && record.width ? record.height / record.width : 1;
-    const heightWorld = Math.max(1e-5, widthWorld * textureAspect);
+    const aspect = frame.height && frame.width ? frame.height / frame.width : 1;
+    const heightWorld = Math.max(1e-5, widthWorld * aspect);
 
-    const material = this._getImageMaterialForRecord(record);
-    plant.imageMaterial = material;
     plant.mesh.geometry = this._unitPlantPlane;
     plant.mesh.material = material;
     plant.mesh.scale.set(widthWorld, heightWorld, 1);
     plant.mesh.rotation.set(0, 0, 0);
     plant.mesh.position.x = plant.x;
-    const margin = clamp(visuals?.bottomMargin ?? 0.05, 0, 1);
+    const margin = clamp(visuals.bottomMargin ?? 0.05, 0, 1);
     const centerY = plant.baseY + (0.5 - margin) * heightWorld;
     plant.mesh.position.y = centerY;
     plant.mesh.position.z = 0.15;
 
-    plant.currentStageHeight = heightWorld;
-    plant.currentStageHalfWidth = Math.max(widthWorld * 0.5, 0.01);
     plant.visualMode = 'image';
     plant.visualWidth = widthWorld;
     plant.visualHeight = heightWorld;
     plant.visualMargin = margin;
-    plant.activeTextureRecord = record;
-    if (this._lastPointerInfo) {
-      this._refreshCursor();
+    plant.currentStageHeight = heightWorld;
+    plant.currentStageHalfWidth = Math.max(widthWorld * 0.5, 0.01);
+    plant.activeFrame = frame;
+  }
+
+  _updatePlantAnimation(plant, dt) {
+    const anim = plant?.animation;
+    if (!anim || !anim.entry?.frames?.length) return;
+    anim.timer += dt;
+    const frameDuration = 1 / Math.max(1, anim.fps);
+    let advanced = false;
+
+    while (anim.timer >= frameDuration) {
+      anim.timer -= frameDuration;
+      anim.frameIndex += 1;
+      advanced = true;
+      if (anim.frameIndex >= anim.entry.frames.length) {
+        if (anim.loop) {
+          anim.frameIndex = 0;
+        } else {
+          const onComplete = anim.onComplete;
+          plant.animation = null;
+          if (onComplete) {
+            onComplete();
+          }
+          return;
+        }
+      }
+    }
+
+    if (advanced) {
+      const frame = anim.entry.frames[anim.frameIndex];
+      if (frame) {
+        this._applyFrameToPlant(plant, frame);
+      }
     }
   }
 
-  _applyTransitionFrameVisual(plant, record) {
-    if (!record || record.status !== 'ready') return;
-    this._applyPlantTextureRecord(plant, record);
-    if (plant.transition) {
-      plant.transition.activeRecord = record;
-    }
-  }
-
-  _startPlantTransition(plant, nextIndex, options = {}) {
+  _startPlantTransition(plant, nextIndex) {
     if (!plant) return;
-    const visuals = this._getPlantVisualConfig();
-    if (!visuals) {
-      this._completePlantStageChange(plant, nextIndex);
-      return;
-    }
-    const { retryOnly = false } = options;
-    const fromAssetStage = this._spriteStageAssetIndex(plant.seed, plant.stageIndex);
-    const toAssetStage = this._spriteStageAssetIndex(plant.seed, nextIndex);
-    if (fromAssetStage === null || toAssetStage === null || fromAssetStage === toAssetStage) {
-      this._completePlantStageChange(plant, nextIndex);
-      return;
-    }
-    if (!this._spriteTransitionEnabled(plant.seed, plant.stageIndex)) {
-      this._completePlantStageChange(plant, nextIndex);
-      return;
-    }
-    const entry = this._ensureTransitionFrames(plant.seed, plant.stageIndex);
-    const allRecords = entry?.records || [];
-    const readyFrames = this._getTransitionFrameRecords(plant.seed, plant.stageIndex);
-    const totalCount = allRecords.length;
-    const readyCount = readyFrames.length;
-    const errorCount = allRecords.filter((rec) => rec.status === 'error').length;
+    if (nextIndex <= plant.stageIndex) return;
+    if (nextIndex >= this._plantStages.length) return;
 
-    if (readyCount && readyCount === totalCount) {
-      const fps = Math.max(1, visuals.transitionFps ?? 12);
-      plant.transition = {
-        toIndex: nextIndex,
-        frames: readyFrames,
-        fps,
-        frameIndex: 0,
-        elapsed: 0,
-        activeRecord: readyFrames[0]
-      };
-      plant.pendingTransition = null;
-      plant.stageTimer = 0;
-      this._applyTransitionFrameVisual(plant, readyFrames[0]);
+    const sequence = this._getPlantTransitionSequence(plant.seed, plant.stageIndex, nextIndex);
+    if (!sequence || sequence.status === 'error') {
+      this._completePlantStageChange(plant, nextIndex);
       return;
     }
 
-    if (totalCount) {
-      if (errorCount === totalCount && !retryOnly) {
-        plant.pendingTransition = null;
+    const startTransition = (entry) => {
+      plant.waitingTransitionKey = null;
+      if (entry.status !== 'ready' || !entry.frames.length) {
         this._completePlantStageChange(plant, nextIndex);
         return;
       }
-      if (!retryOnly) {
-        plant.pendingTransition = nextIndex;
-        for (let i = 0; i < allRecords.length; i++) {
-          const record = allRecords[i];
-          this._addTextureReadyCallback(record, () => {
-            if (plant.pendingTransition === nextIndex) {
-              this._startPlantTransition(plant, nextIndex, { retryOnly: true });
-            }
-          });
-        }
-      }
-      plant.stageTimer = 0;
-      return;
-    }
+      this._playPlantAnimation(plant, entry, {
+        loop: false,
+        fps: entry.fps,
+        onComplete: () => this._completePlantStageChange(plant, nextIndex)
+      });
+    };
 
-    if (totalCount === 0 && entry?.loading) {
-      if (!retryOnly) {
-        plant.pendingTransition = nextIndex;
-        plant.stageTimer = 0;
-        if (entry.promise) {
-          entry.promise.finally(() => {
-            if (plant.pendingTransition === nextIndex) {
-              this._startPlantTransition(plant, nextIndex, { retryOnly: true });
-            }
-          });
-        }
+    if (sequence.status === 'ready') {
+      plant.waitingTransitionKey = null;
+      startTransition(sequence);
+    } else if (sequence.status === 'loading') {
+      const alreadyWaiting = plant.pendingTransition === nextIndex && plant.waitingTransitionKey === sequence.key;
+      plant.pendingTransition = nextIndex;
+      plant.waitingTransitionKey = sequence.key;
+      if (!alreadyWaiting) {
+        this._addSequenceReadyCallback(sequence, (entry) => {
+          if (plant.pendingTransition !== nextIndex) return;
+          startTransition(entry);
+        });
       }
-      return;
-    }
-
-    if (!retryOnly) {
-      plant.pendingTransition = null;
+    } else {
       this._completePlantStageChange(plant, nextIndex);
-    } else if (totalCount === 0) {
-      plant.pendingTransition = null;
-      this._completePlantStageChange(plant, nextIndex);
-    }
-  }
-
-  _updatePlantTransition(plant, dt) {
-    const transition = plant.transition;
-    if (!plant || !transition || !Array.isArray(transition.frames) || !transition.frames.length) {
-      if (plant && transition) {
-        this._completePlantStageChange(plant, transition?.toIndex ?? plant.stageIndex);
-      }
-      return;
-    }
-    transition.elapsed += dt;
-    const frameDuration = 1 / Math.max(1, transition.fps || 1);
-    while (transition.elapsed >= frameDuration) {
-      transition.elapsed -= frameDuration;
-      transition.frameIndex += 1;
-      if (transition.frameIndex >= transition.frames.length) {
-        this._completePlantStageChange(plant, transition.toIndex);
-        return;
-      }
-      const record = transition.frames[transition.frameIndex];
-      if (record?.status === 'ready') {
-        this._applyTransitionFrameVisual(plant, record);
-      }
     }
   }
 
   _completePlantStageChange(plant, nextIndex) {
     if (!plant) return;
-    plant.transition = null;
     plant.pendingTransition = null;
+    plant.waitingTransitionKey = null;
+    plant.animation = null;
     if (Number.isInteger(nextIndex) && nextIndex > plant.stageIndex && nextIndex < this._plantStages.length) {
       plant.stageIndex = nextIndex;
     }
@@ -1473,30 +1489,36 @@ export class SimuladorScene extends BaseScene {
 
   _refreshPlantVisual(plant) {
     if (!plant) return;
-    if (plant.transition) {
-      const frames = plant.transition.frames || [];
-      const clampedIndex = Math.min(plant.transition.frameIndex || 0, Math.max(frames.length - 1, 0));
-      const record = frames[clampedIndex];
-      if (record?.status === 'ready') {
-        this._applyTransitionFrameVisual(plant, record);
+    const anim = plant.animation;
+    if (anim && anim.entry?.frames?.length) {
+      const frame = anim.entry.frames[clamp(anim.frameIndex, 0, anim.entry.frames.length - 1)];
+      if (frame) {
+        this._applyFrameToPlant(plant, frame);
         return;
       }
     }
+
     if (plant.pendingTransition !== null) {
-      this._startPlantTransition(plant, plant.pendingTransition, { retryOnly: true });
-      if (plant.transition) {
-        this._refreshPlantVisual(plant);
-        return;
+      this._startPlantTransition(plant, plant.pendingTransition);
+      if (plant.animation && plant.animation.entry?.frames?.length) {
+        const frame = plant.animation.entry.frames[clamp(plant.animation.frameIndex, 0, plant.animation.entry.frames.length - 1)];
+        if (frame) {
+          this._applyFrameToPlant(plant, frame);
+          return;
+        }
       }
     }
-    this._applyPlantStageVisual(plant);
+
+    if (plant.visualMode === 'geometry') {
+      this._applyPlantStageVisual(plant);
+    }
   }
 
-  _sampleTextureAlpha(record, u, v) {
-    if (!record?.imageData) return 1;
-    const data = record.imageData;
-    const width = data.width || record.width || 1;
-    const height = data.height || record.height || 1;
+  _sampleFrameAlpha(frame, u, v) {
+    if (!frame?.imageData) return 1;
+    const data = frame.imageData;
+    const width = data.width || frame.width || 1;
+    const height = data.height || frame.height || 1;
     if (!width || !height) return 1;
     const uu = clamp(u, 0, 1);
     const vv = clamp(v, 0, 1);
@@ -1557,9 +1579,10 @@ export class SimuladorScene extends BaseScene {
       visualWidth: initialWidth,
       visualHeight: initialHeight,
       visualMargin: this.params.plantGrowth?.visuals?.bottomMargin ?? 0.05,
-      activeTextureRecord: null,
-      transition: null,
-      pendingTransition: null
+      activeFrame: null,
+      animation: null,
+      pendingTransition: null,
+      waitingTransitionKey: null
     };
     this._primePlantAssets(seed);
     this._applyPlantStageVisual(plant, stageInfo);
@@ -1567,38 +1590,10 @@ export class SimuladorScene extends BaseScene {
     this._checkStageGoal();
   }
 
-  _applyPlantStageVisual(plant, providedInfo) {
+  _applyPlantStageGeometryFallback(plant, providedInfo) {
+    if (!plant) return;
     const stageData = this._plantStages[plant.stageIndex];
-    if (!stageData) return;
-    const stageId = stageData.id;
-    const visuals = this._getPlantVisualConfig();
-    const stageIndex = this._stageIdToIndex(stageId);
-
-    if (visuals) {
-      const record = this._getPlantTextureRecord(plant.seed, stageIndex);
-      if (record?.status === 'ready' && record.texture) {
-        this._applyPlantTextureRecord(plant, record);
-        return;
-      }
-      if (record?.status === 'loading') {
-        const handleReady = () => {
-          if (record.status === 'ready' && record.texture) {
-            this._applyPlantStageVisual(plant, providedInfo);
-          }
-        };
-        this._addTextureReadyCallback(record, handleReady);
-      }
-      if (record?.status === 'ready' && !record.texture) {
-        // texture failed to load usable data; fall back below
-      } else if (record?.status === 'loading') {
-        // Keep temporary geometry until texture is ready
-      } else if (record?.status === 'error') {
-        // Fall back to geometry immediately
-      } else if (!record) {
-        // No asset defined; fall back below
-      }
-    }
-
+    const stageId = stageData?.id || 'seed';
     const info = providedInfo || this._getPlantStageInfo(plant.seed, stageId);
     const geometry = this._getPlantGeometry(plant.seed, stageId, info);
     if (plant.mesh.geometry !== geometry) {
@@ -1611,19 +1606,56 @@ export class SimuladorScene extends BaseScene {
     plant.mesh.scale.set(1, 1, 1);
     plant.mesh.rotation.set(0, 0, 0);
     plant.mesh.position.x = plant.x;
-    plant.mesh.position.z = 0.15;
     const height = info.height || (info.radius ? info.radius * 2 : 0);
     const width = info.width || (info.radius ? info.radius * 2 : 0);
     plant.mesh.position.y = plant.baseY + height * 0.5;
+    plant.mesh.position.z = 0.15;
     plant.currentStageHeight = height;
     plant.currentStageHalfWidth = Math.max(width * 0.5, info.radius || 0, 0.01);
     plant.visualMode = 'geometry';
     plant.visualWidth = width;
     plant.visualHeight = height;
-    plant.activeTextureRecord = null;
+    plant.visualMargin = this.params.plantGrowth?.visuals?.bottomMargin ?? 0.05;
+    plant.activeFrame = null;
+    plant.animation = null;
+    plant.waitingTransitionKey = null;
     if (this._lastPointerInfo) {
       this._refreshCursor();
     }
+  }
+
+  _applyPlantStageVisual(plant, providedInfo) {
+    const stageData = this._plantStages[plant.stageIndex];
+    if (!stageData) return;
+    const stageId = stageData.id;
+    const visuals = this._getPlantVisualConfig();
+    const stageIndex = plant.stageIndex;
+
+    if (visuals) {
+      const sequence = this._getPlantStageSequence(plant.seed, stageIndex);
+      const tryActivate = (entry) => {
+        if (entry.status === 'ready' && entry.frames.length) {
+          this._playPlantAnimation(plant, entry, {
+            loop: entry.loop,
+            fps: entry.fps
+          });
+        } else {
+          this._applyPlantStageGeometryFallback(plant, providedInfo);
+        }
+      };
+
+      if (sequence?.status === 'ready') {
+        tryActivate(sequence);
+        return;
+      }
+      if (sequence?.status === 'loading') {
+        this._addSequenceReadyCallback(sequence, tryActivate);
+      } else if (!sequence || sequence.status === 'error') {
+        // fall through to geometry fallback
+      }
+    }
+
+    this._applyPlantStageGeometryFallback(plant, providedInfo);
   }
 
   _advancePlantStage(plant, nextIndex) {
@@ -1710,15 +1742,15 @@ export class SimuladorScene extends BaseScene {
     for (let i = 0; i < this._plants.length; i++) {
       const plant = this._plants[i];
 
-      if (plant.transition) {
-        this._updatePlantTransition(plant, dt);
+      this._updatePlantAnimation(plant, dt);
+
+      if (plant.animation && plant.animation.entry?.type === 'transition') {
         continue;
       }
 
       if (plant.pendingTransition !== null) {
-        this._startPlantTransition(plant, plant.pendingTransition, { retryOnly: true });
-        if (plant.transition) {
-          this._updatePlantTransition(plant, dt);
+        this._startPlantTransition(plant, plant.pendingTransition);
+        if (plant.animation && plant.animation.entry?.type === 'transition') {
           continue;
         }
         plant.stageTimer = 0;
@@ -1810,11 +1842,11 @@ export class SimuladorScene extends BaseScene {
           continue;
         }
         let alpha = 1;
-        const record = plant.activeTextureRecord;
-        if (record?.status === 'ready' && record.imageData) {
+        const frame = plant.activeFrame;
+        if (frame?.imageData) {
           const u = (x - left) / (right - left);
           const v = (y - bottom) / (top - bottom);
-          alpha = this._sampleTextureAlpha(record, u, v);
+          alpha = this._sampleFrameAlpha(frame, u, v);
         }
         if (alpha <= 0.5) {
           continue;
@@ -1851,6 +1883,11 @@ export class SimuladorScene extends BaseScene {
     if (plant.mesh) {
       this.scene.remove(plant.mesh);
     }
+    if (plant.imageMaterial) {
+      plant.imageMaterial.dispose?.();
+      this._plantMaterialCache.delete(plant.id);
+    }
+    plant.waitingTransitionKey = null;
     this._plants.splice(index, 1);
     this._checkStageGoal();
     this._refreshCursor();
@@ -2878,19 +2915,18 @@ export class SimuladorScene extends BaseScene {
 
     this._plantGeometryCache.forEach((geo) => geo.dispose?.());
     this._seedMaterialCache.forEach((mat) => mat.dispose?.());
-    this._plantImageMaterialCache.forEach((mat) => mat.dispose?.());
-    this._plantTextureCache.forEach((record) => {
-      if (record?.texture) {
-        record.texture.dispose?.();
-      }
-      if (record?._canvas) {
-        record._canvas.width = 0;
-        record._canvas.height = 0;
-      }
+    this._plantMaterialCache.forEach((mat) => mat.dispose?.());
+    this._plantSequenceCache.forEach((entry) => {
+      entry?.frames?.forEach((frame) => {
+        frame?.texture?.dispose?.();
+        if (frame?.canvas) {
+          frame.canvas.width = 0;
+          frame.canvas.height = 0;
+        }
+      });
     });
-    this._plantTextureCache.clear();
-    this._plantTransitionFrameCache.clear();
-    this._plantImageMaterialCache.clear();
+    this._plantSequenceCache.clear();
+    this._plantMaterialCache.clear();
     this._plantGeometryCache.clear();
     this._seedMaterialCache.clear();
     this._seedCatalog.clear();
