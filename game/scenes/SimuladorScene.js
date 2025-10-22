@@ -16,7 +16,8 @@ export const DEFAULT_PARAMS = Object.freeze({
     top: 1,
     bottom: -0.38,
     cameraZ: 6.5,
-    backgroundZ: -2
+    backgroundZ: -2,
+    backgroundImage: '/game-assets/simulador/bg.png'
   }),
   colors: Object.freeze({
     skyTop: '#8ecae6',
@@ -79,7 +80,11 @@ export const DEFAULT_PARAMS = Object.freeze({
       highFrequency: 11.0,
       seed: 37.42
     }),
-    smoothing: 1.1
+    smoothing: 1.1,
+    texture: Object.freeze({
+      image: '/game-assets/simulador/sand.png',
+      tileWidthRatio: 0.1
+    })
   }),
   sediment: Object.freeze({
     maxParticles: 55,
@@ -302,8 +307,13 @@ export class SimuladorScene extends BaseScene {
     this._seedCatalog = new Map();
     this._plantGeometryCache = new Map();
     this._seedMaterialCache = new Map();
-  this._plantSequenceCache = new Map();
-  this._plantMaterialCache = new Map();
+    this._plantSequenceCache = new Map();
+    this._plantMaterialCache = new Map();
+
+    this._background = null;
+    this._backgroundTexture = null;
+    this._sandTexture = null;
+    this._sandTileRatio = this.params.riverbed?.texture?.tileWidthRatio ?? 0.1;
 
     this._seedBursts = [];
 
@@ -419,62 +429,72 @@ export class SimuladorScene extends BaseScene {
   }
 
   _createBackground() {
-    const { colors, world } = this.params;
+    const { world, colors } = this.params;
 
     const geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
-    const material = new THREE.ShaderMaterial({
-      uniforms: {
-        colorTop: { value: new THREE.Color(colors.skyTop) },
-        colorBottom: { value: new THREE.Color(colors.skyBottom) }
-      },
-      vertexShader: `
-        varying vec2 vUv;
-        void main(){
-          vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        varying vec2 vUv;
-        uniform vec3 colorTop;
-        uniform vec3 colorBottom;
-        void main(){
-          float t = smoothstep(0.0, 1.0, vUv.y);
-          vec3 col = mix(colorBottom, colorTop, t);
-          gl_FragColor = vec4(col, 1.0);
-        }
-      `,
-      depthWrite: false
+    const material = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(colors.skyBottom || '#ffffff'),
+      depthWrite: false,
+      depthTest: false,
+      fog: false,
+      toneMapped: false
     });
 
     this._background = new THREE.Mesh(geometry, material);
+    this._background.renderOrder = -100;
     this._background.position.z = world.backgroundZ;
     this.scene.add(this._background);
 
-    const bankGeometry = new THREE.PlaneGeometry(1, 0.15);
-    const bankMaterial = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(colors.distantBank),
-      transparent: true,
-      opacity: 0.9
-    });
-    this._distantBank = new THREE.Mesh(bankGeometry, bankMaterial);
-    this._distantBank.position.z = world.backgroundZ + 0.01;
-    this.scene.add(this._distantBank);
+    const imagePath = world.backgroundImage;
+    if (imagePath) {
+      if (!this._textureLoader) {
+        this._textureLoader = new THREE.TextureLoader();
+      }
+      this._backgroundTexture = this._textureLoader.load(
+        imagePath,
+        () => {
+          this._prepareTexture(this._backgroundTexture);
+          if (this._background?.material) {
+            this._background.material.map = this._backgroundTexture;
+            this._background.material.color.setHex(0xffffff);
+            this._background.material.needsUpdate = true;
+          }
+          this._layoutBackground();
+        }
+      );
+    } else {
+      material.map = null;
+    }
   }
 
   _layoutBackground() {
     if (!this._background) return;
-    const height = this.worldHeight;
     const width = this.worldWidth;
+    const height = this.worldHeight;
 
-    this._background.scale.set(width, height * 1.2, 1);
-    this._background.position.set(width * 0.5, (this.worldTop + this.worldBottom) * 0.5 + height * 0.1, this.params.world.backgroundZ);
-
-    if (this._distantBank) {
-      this._distantBank.scale.set(width, height * 0.22, 1);
-      const bankHeight = this.worldTop - this._currentWaterLevel;
-      this._distantBank.position.set(width * 0.5, this._currentWaterLevel + bankHeight * 0.4, this.params.world.backgroundZ + 0.01);
+    let scaleX = width;
+    let scaleY = height;
+    const texture = this._backgroundTexture;
+    const texWidth = texture?.image?.width;
+    const texHeight = texture?.image?.height;
+    if (texWidth && texHeight) {
+      const texRatio = texWidth / texHeight;
+      const viewRatio = width / height;
+      if (viewRatio > texRatio) {
+        scaleX = width;
+        scaleY = width / texRatio;
+      } else {
+        scaleY = height;
+        scaleX = height * texRatio;
+      }
     }
+
+    this._background.scale.set(scaleX, scaleY, 1);
+    this._background.position.set(
+      width * 0.5,
+      (this.worldTop + this.worldBottom) * 0.5,
+      this.params.world.backgroundZ
+    );
   }
 
   _createWater() {
@@ -652,26 +672,18 @@ export class SimuladorScene extends BaseScene {
   }
 
   _createRiverbed() {
-    const { riverbed, colors } = this.params;
+    const { riverbed } = this.params;
     const segments = riverbed.segments;
     const { geometry, topIndices, bottomIndices } = this._buildStripGeometry(segments);
-
-    const colorsAttr = new Float32Array((segments + 1) * 2 * 3);
-    const colorTop = new THREE.Color(colors.riverbedBase);
-    const colorBottom = new THREE.Color(colors.riverbedShadow);
-    for (let i = 0; i <= segments; i++) {
-      const topIdx = topIndices[i] * 3;
-      const bottomIdx = bottomIndices[i] * 3;
-      colorTop.toArray(colorsAttr, topIdx);
-      colorBottom.toArray(colorsAttr, bottomIdx);
-    }
-    geometry.setAttribute('color', new THREE.BufferAttribute(colorsAttr, 3));
     geometry.attributes.position.setUsage(THREE.DynamicDrawUsage);
 
     const material = new THREE.MeshBasicMaterial({
-      vertexColors: true,
+      color: 0xffffff,
       transparent: true,
-      opacity: 0.95
+      opacity: 1,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      toneMapped: false
     });
 
     this._riverbedStrip = {
@@ -682,6 +694,35 @@ export class SimuladorScene extends BaseScene {
     };
     this._riverbedStrip.mesh.position.z = -0.05;
     this.scene.add(this._riverbedStrip.mesh);
+
+    const texturePath = riverbed.texture?.image;
+    if (texturePath) {
+      if (!this._textureLoader) {
+        this._textureLoader = new THREE.TextureLoader();
+      }
+      this._sandTexture = this._textureLoader.load(
+        texturePath,
+        () => {
+          this._prepareTexture(this._sandTexture);
+          if (this._sandTexture) {
+            this._sandTexture.wrapS = THREE.RepeatWrapping;
+            this._sandTexture.wrapT = THREE.RepeatWrapping;
+            this._sandTexture.needsUpdate = true;
+          }
+          this._updateRiverbedUVs();
+          if (this._riverbedStrip?.mesh?.material) {
+            this._riverbedStrip.mesh.material.needsUpdate = true;
+          }
+        }
+      );
+      if (this._sandTexture) {
+        this._sandTexture.wrapS = THREE.RepeatWrapping;
+        this._sandTexture.wrapT = THREE.RepeatWrapping;
+        this._sandTexture.needsUpdate = true;
+        material.map = this._sandTexture;
+        material.needsUpdate = true;
+      }
+    }
 
     this._riverbedHeights = new Float32Array(segments + 1);
     this._riverbedBase = new Float32Array(segments + 1);
@@ -710,6 +751,41 @@ export class SimuladorScene extends BaseScene {
     }
 
     geometry.attributes.position.needsUpdate = true;
+    this._updateRiverbedUVs();
+  }
+
+  _updateRiverbedUVs() {
+    if (!this._riverbedStrip) return;
+    const { geometry, topIndices, bottomIndices } = this._riverbedStrip;
+    const uvsAttr = geometry.attributes.uv;
+    if (!uvsAttr) return;
+    const positions = geometry.attributes.position.array;
+    const uvs = uvsAttr.array;
+    const tileRatio = Math.max(1e-4, this._sandTileRatio || 0.1);
+    const tileSize = Math.max(1e-4, this.worldWidth * tileRatio);
+    const bedBottom = this.params.riverbed.bottom;
+    const segments = this.params.riverbed.segments;
+
+    for (let i = 0; i <= segments; i++) {
+      const topIndex = topIndices[i];
+      const bottomIndex = bottomIndices[i];
+      const topPosIdx = topIndex * 3;
+      const bottomPosIdx = bottomIndex * 3;
+      const topUvIdx = topIndex * 2;
+      const bottomUvIdx = bottomIndex * 2;
+
+      const topX = positions[topPosIdx + 0];
+      const topY = positions[topPosIdx + 1];
+      const bottomX = positions[bottomPosIdx + 0];
+      const bottomY = positions[bottomPosIdx + 1];
+
+      uvs[topUvIdx + 0] = topX / tileSize;
+      uvs[topUvIdx + 1] = (topY - bedBottom) / tileSize;
+      uvs[bottomUvIdx + 0] = bottomX / tileSize;
+      uvs[bottomUvIdx + 1] = (bottomY - bedBottom) / tileSize;
+    }
+
+    uvsAttr.needsUpdate = true;
   }
 
   _initializeRiverbed() {
@@ -774,6 +850,7 @@ export class SimuladorScene extends BaseScene {
     }
 
     geometry.attributes.position.needsUpdate = true;
+    this._updateRiverbedUVs();
     this._riverbedDirty = false;
   }
 
@@ -2889,7 +2966,6 @@ export class SimuladorScene extends BaseScene {
     };
 
     disposeMesh(this._background);
-    disposeMesh(this._distantBank);
     disposeMesh(this._waterStrip?.mesh);
     disposeMesh(this._riverbedStrip?.mesh);
     disposeMesh(this._averageLine);
@@ -2942,9 +3018,16 @@ export class SimuladorScene extends BaseScene {
     this._availableSeedIds.clear();
 
     this._background = null;
-    this._distantBank = null;
+    if (this._backgroundTexture) {
+      this._backgroundTexture.dispose?.();
+      this._backgroundTexture = null;
+    }
     this._waterStrip = null;
     this._riverbedStrip = null;
+    if (this._sandTexture) {
+      this._sandTexture.dispose?.();
+      this._sandTexture = null;
+    }
     this._averageLine = null;
     this._particlesPoints = null;
     this._particlesGeometry = null;
