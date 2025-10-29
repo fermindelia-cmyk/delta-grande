@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Image Coordinate & Rectangle Annotator</title>
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --panel: #121419;
+      --muted: #9aa3b2;
+      --text: #e8ecf1;
+      --accent: #69b3ff;
+      --accent-2: #89f7d6;
+      --danger: #ff6b6b;
+      --ok: #8be28b;
+      --border: #1d2330;
+      --shadow: 0 10px 24px rgba(0,0,0,0.35);
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; background: linear-gradient(180deg, #0b0c10, #0f1420);
+      color: var(--text); font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    header {
+      position: sticky; top: 0; z-index: 10; backdrop-filter: blur(8px);
+      background: rgba(15,19,28,0.8); border-bottom: 1px solid var(--border);
+    }
+    .bar { max-width: 1200px; margin: 0 auto; padding: 10px 14px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .brand { font-weight: 700; letter-spacing: .3px; margin-right: 8px; }
+    .btn {
+      appearance: none; border: 1px solid var(--border); background: var(--panel); color: var(--text);
+      padding: 8px 12px; border-radius: 10px; cursor: pointer; box-shadow: var(--shadow) inset 0 0 0 rgba(0,0,0,0);
+      transition: transform .04s ease, background .15s ease, border-color .2s ease;
+      user-select: none; font-weight: 600;
+    }
+    .btn:hover { border-color: #2a3347; }
+    .btn:active { transform: translateY(1px); }
+    .btn.primary { background: linear-gradient(180deg, #1b6fff, #1552bf); border-color: #1b6fff; }
+    .btn.good { background: linear-gradient(180deg, #19c37d, #0c9d62); border-color: #19c37d; }
+    .btn.danger { background: linear-gradient(180deg, #ff5454, #c04242); border-color: #ff5454; }
+    .btn.ghost { background: transparent; }
+    .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .seg button { border: none; background: transparent; padding: 8px 12px; color: var(--muted); cursor: pointer; font-weight: 700; }
+    .seg button.active { color: var(--text); background: #182131; }
+    .spacer { flex: 1; }
+    input[type="file"], input[type="text"] { display: none; }
+    .hint { color: var(--muted); font-size: 12px; }
+
+    main { max-width: 1200px; margin: 16px auto; display: grid; grid-template-columns: 1fr 360px; gap: 12px; padding: 0 14px 24px; }
+    .board {
+      background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); min-height: 400px;
+      display: grid; grid-template-rows: auto 1fr; box-shadow: var(--shadow);
+    }
+    .board .toolbar { padding: 10px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center; }
+    .stage-wrap { position: relative; overflow: auto; border-radius: 0 0 var(--radius) var(--radius); background: #0a0d14; }
+    canvas { display: block; margin: 0 auto; background: #0b0f18; image-rendering: auto; }
+
+    .overlay { position: absolute; inset: 0; pointer-events: none; }
+    .overlay .tooltip { position: absolute; background: rgba(13,19,30,.92); padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; color: var(--text); }
+
+    .side {
+      background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px; display: grid; gap: 10px; height: fit-content; position: sticky; top: 68px; box-shadow: var(--shadow);
+    }
+    .side h3 { margin: 4px 4px 0; font-size: 13px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
+    .list { max-height: 420px; overflow: auto; display: grid; gap: 8px; }
+    .card { border: 1px solid var(--border); background: #0e131d; border-radius: 10px; padding: 8px; }
+    .card header { display: flex; justify-content: space-between; align-items: center; border: none; backdrop-filter: none; background: transparent; padding: 0; position: static; }
+    .card header .title { font-weight: 700; font-size: 13px; }
+    .card pre { margin: 6px 0 0; white-space: pre-wrap; word-break: break-word; font-size: 12px; color: #dfe6f7; background: #0b0f18; border: 1px dashed #2a3347; border-radius: 8px; padding: 6px; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .field { display: grid; gap: 4px; }
+    .field label { color: var(--muted); font-size: 12px; }
+    .field .value { background: #0b0f18; border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+
+    .kbd { font-family: ui-monospace, monospace; background: #101522; border: 1px solid var(--border); padding: 2px 6px; border-radius: 6px; font-size: 12px; color: #b7c3d8; }
+    .legend { font-size: 12px; color: var(--muted); }
+    .footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 6px; }
+    .small { font-size: 12px; color: var(--muted); }
+
+    .marker { position: absolute; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: var(--accent-2); box-shadow: 0 0 0 2px rgba(137,247,214,.35); pointer-events: none; }
+    .rect-shadow { position: absolute; border: 1px dashed var(--accent); background: rgba(105,179,255,.12); pointer-events: none; }
+
+    @media (max-width: 980px) {
+      main { grid-template-columns: 1fr; }
+      .side { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <div class="brand">🧭 Image Coordinate & Rectangle Annotator</div>
+      <div class="seg" id="modeSeg">
+        <button data-mode="point" class="active" title="Place points (P)">Point</button>
+        <button data-mode="rect" title="Draw rectangles (R)">Rect</button>
+        <button data-mode="panel" title="Move/resize subpanels (M)">Panel</button>
+      </div>
+      <button class="btn" id="setBgBtn" title="Set background image (B)">Set BG</button>
+      <input type="file" id="bgFileInput" accept="image/*" />
+      <button class="btn" id="addPanelBtn" title="Add subpanel (A)">Add Panel</button>
+      <input type="file" id="panelFileInput" accept="image/*" multiple />
+      <button class="btn ghost" id="fitBtn" title="Fit to screen">Fit</button>
+      <div class="spacer"></div>
+      <button class="btn" id="copyAllBtn" title="Copy all annotations (C)">Copy All</button>
+      <button class="btn good" id="exportBtn" title="Export JSON">Export JSON</button>
+      <button class="btn danger" id="clearBtn" title="Clear (Shift+Del)">Clear</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="board">
+      <div class="toolbar">
+        <div class="legend">Set a <b>background</b> image. Then add <b>subpanels</b> (draggable, resizable with locked aspect ratio). Points/rects/panels are all measured relative to the background's original pixels.</div>
+      </div>
+      <div class="stage-wrap" id="stageWrap">
+        <canvas id="stage" width="800" height="600"></canvas>
+        <div class="overlay" id="overlay"></div>
+      </div>
+    </section>
+
+    <aside class="side">
+      <div class="grid">
+        <div class="field"><label>Background Size</label><div class="value" id="imgInfo">—</div></div>
+        <div class="field"><label>Display Scale</label><div class="value" id="scaleInfo">—</div></div>
+      </div>
+
+      <h3>Annotations</h3>
+      <div class="list" id="list"></div>
+
+      <h3>Quick Help</h3>
+      <div class="card">
+        <div class="legend">
+          <div>• <span class="kbd">B</span> set background • <span class="kbd">A</span> add panel • <span class="kbd">P</span> point • <span class="kbd">R</span> rect • <span class="kbd">M</span> panel • <span class="kbd">Z</span> undo • <span class="kbd">C</span> copy all • <span class="kbd">Shift+Del</span> clear</div>
+          <div>• Drag inside a panel to move. Drag a corner handle to resize (aspect ratio locked).</div>
+        </div>
+      </div>
+      <div class="footer">Background-relative, pixel+percentage outputs.</div>
+    </aside>
+  </main>
+
+  <script>
+    // --- State ---
+    const state = {
+      bg: new Image(),
+      bgLoaded: false,
+      imgNaturalW: 0,
+      imgNaturalH: 0,
+      mode: 'point', // 'point' | 'rect' | 'panel'
+      points: [], // {id, x, y}
+      rects: [],  // {id, x, y, w, h}
+      panels: [], // {id, img, src, natW, natH, x, y, w, h, selected}
+      uid: 1,
+      isDragging: false,
+      dragStart: null,
+      dragTarget: null, // {type:'panel', id, action:'move'|'resize', corner:0..3, offsetX, offsetY}
+      displayScale: 1, // natural px to canvas px scale
+    };
+
+    // --- Elements ---
+    const canvas = document.getElementById('stage');
+    const ctx = canvas.getContext('2d');
+    const overlay = document.getElementById('overlay');
+    const stageWrap = document.getElementById('stageWrap');
+    const listEl = document.getElementById('list');
+    const imgInfo = document.getElementById('imgInfo');
+    const scaleInfo = document.getElementById('scaleInfo');
+
+    const bgFileInput = document.getElementById('bgFileInput');
+    const panelFileInput = document.getElementById('panelFileInput');
+    const setBgBtn = document.getElementById('setBgBtn');
+    const addPanelBtn = document.getElementById('addPanelBtn');
+    const fitBtn = document.getElementById('fitBtn');
+    const copyAllBtn = document.getElementById('copyAllBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    // Mode toggle
+    document.getElementById('modeSeg').addEventListener('click', (e) => {
+      if (e.target.tagName === 'BUTTON') {
+        const m = e.target.dataset.mode;
+        if (m) setMode(m);
+      }
+    });
+
+    function setMode(m) {
+      state.mode = m;
+      document.querySelectorAll('#modeSeg button').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+    }
+
+    // Load background image
+    setBgBtn.onclick = () => bgFileInput.click();
+    bgFileInput.onchange = (e) => {
+      const f = e.target.files?.[0];
+      if (!f) return;
+      const url = URL.createObjectURL(f);
+      loadBackground(url);
+    };
+
+    function loadBackground(src) {
+      state.bgLoaded = false;
+      state.bg = new Image();
+      state.bg.onload = () => {
+        state.bgLoaded = true;
+        state.imgNaturalW = state.bg.naturalWidth;
+        state.imgNaturalH = state.bg.naturalHeight;
+        fitCanvasToImage();
+        draw();
+        updateMeta();
+        clearAnnotations();
+      };
+      state.bg.onerror = () => alert('Failed to load background image.');
+      state.bg.src = src;
+    }
+
+    // Add subpanel(s)
+    addPanelBtn.onclick = () => {
+      if (!state.bgLoaded) { alert('Set a background first.'); return; }
+      panelFileInput.click();
+    };
+    panelFileInput.onchange = (e) => {
+      const files = Array.from(e.target.files || []);
+      files.forEach(f => addPanelFromFile(f));
+      panelFileInput.value = '';
+    };
+
+    function addPanelFromFile(file) {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const natW = img.naturalWidth, natH = img.naturalHeight;
+        // initial size: 25% width of background, keep aspect
+        const targetW = Math.max(20, Math.round(state.imgNaturalW * 0.25));
+        const scale = targetW / natW;
+        const w = Math.round(natW * scale);
+        const h = Math.round(natH * scale);
+        const x = Math.round((state.imgNaturalW - w) / 2);
+        const y = Math.round((state.imgNaturalH - h) / 2);
+        state.panels.push({ id: state.uid++, img, src: url, natW, natH, x, y, w, h, selected: false });
+        draw();
+        renderList();
+      };
+      img.onerror = () => alert('Failed to load panel image.');
+      img.src = url;
+    }
+
+    function fitCanvasToImage() {
+      const pad = 20;
+      const wrap = stageWrap.getBoundingClientRect();
+      const maxW = Math.max(320, wrap.width - pad);
+      const maxH = Math.max(240, wrap.height - pad);
+      const iw = state.imgNaturalW, ih = state.imgNaturalH;
+      const scale = Math.min(maxW / iw, maxH / ih, 1);
+      canvas.width = Math.round(iw * scale);
+      canvas.height = Math.round(ih * scale);
+      state.displayScale = scale;
+    }
+
+    function updateMeta() {
+      if (!state.bgLoaded) {
+        imgInfo.textContent = '—';
+        scaleInfo.textContent = '—';
+        return;
+      }
+      imgInfo.textContent = `${state.imgNaturalW} × ${state.imgNaturalH} px`;
+      scaleInfo.textContent = `${(state.displayScale*100).toFixed(1)}%`;
+    }
+
+    // --- Drawing ---
+    function draw() {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      if (state.bgLoaded) ctx.drawImage(state.bg, 0, 0, canvas.width, canvas.height);
+      drawPanels();
+      drawAnnotations();
+    }
+
+    function drawPanels() {
+      const s = state.displayScale;
+      state.panels.forEach(p => {
+        ctx.drawImage(p.img, p.x * s, p.y * s, p.w * s, p.h * s);
+        // outline
+        ctx.save();
+        ctx.lineWidth = 1; ctx.strokeStyle = p.selected ? '#89f7d6' : '#69b3ff';
+        ctx.strokeRect(p.x * s, p.y * s, p.w * s, p.h * s);
+        if (p.selected) drawHandles(p);
+        ctx.restore();
+      });
+    }
+
+    function drawHandles(p) {
+      const s = state.displayScale; const r = 4;
+      const corners = [
+        {x: p.x, y: p.y},
+        {x: p.x + p.w, y: p.y},
+        {x: p.x + p.w, y: p.y + p.h},
+        {x: p.x, y: p.y + p.h},
+      ];
+      ctx.save();
+      ctx.fillStyle = '#0b0f18';
+      ctx.strokeStyle = '#89f7d6';
+      corners.forEach(c => {
+        ctx.beginPath();
+        ctx.rect(c.x*s - r, c.y*s - r, r*2, r*2);
+        ctx.fill(); ctx.stroke();
+      });
+      ctx.restore();
+    }
+
+    function drawAnnotations() {
+      const s = state.displayScale;
+      // Rectangles
+      ctx.save();
+      ctx.strokeStyle = '#69b3ff';
+      ctx.lineWidth = 1;
+      ctx.fillStyle = 'rgba(105,179,255,.12)';
+      state.rects.forEach(r => {
+        ctx.strokeRect(r.x * s, r.y * s, r.w * s, r.h * s);
+        ctx.fillRect(r.x * s, r.y * s, r.w * s, r.h * s);
+      });
+      ctx.restore();
+      // Points
+      ctx.save();
+      ctx.fillStyle = '#89f7d6';
+      state.points.forEach(p => {
+        const x = p.x * s, y = p.y * s;
+        ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI*2); ctx.fill();
+      });
+      ctx.restore();
+    }
+
+    // --- Events & helpers ---
+    function canvasPosToImagePx(ev) {
+      const rect = canvas.getBoundingClientRect();
+      const cx = ev.clientX - rect.left;
+      const cy = ev.clientY - rect.top;
+      const x = clamp(Math.round(cx / state.displayScale), 0, state.imgNaturalW);
+      const y = clamp(Math.round(cy / state.displayScale), 0, state.imgNaturalH);
+      return { x, y, cx, cy };
+    }
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+    canvas.addEventListener('mousedown', (ev) => {
+      if (!state.bgLoaded) return;
+      const pos = canvasPosToImagePx(ev);
+      if (state.mode === 'panel') {
+        const hit = hitTestPanels(pos);
+        if (hit) {
+          state.isDragging = true;
+          state.dragTarget = hit;
+          selectPanel(hit.id);
+        } else {
+          selectPanel(null);
+        }
+        draw();
+        return;
+      }
+      if (state.mode === 'point') {
+        addPoint(pos.x, pos.y);
+      } else if (state.mode === 'rect') {
+        state.isDragging = true;
+        state.dragStart = pos;
+        drawLiveRect(pos, pos);
+      }
+    });
+
+    canvas.addEventListener('mousemove', (ev) => {
+      if (!state.bgLoaded) return;
+      const pos = canvasPosToImagePx(ev);
+      if (state.mode === 'panel' && state.isDragging && state.dragTarget) {
+        dragPanel(pos);
+        draw();
+        return;
+      }
+      if (state.mode === 'rect' && state.isDragging) {
+        draw();
+        drawLiveRect(state.dragStart, pos);
+      }
+    });
+
+    canvas.addEventListener('mouseup', (ev) => {
+      if (!state.bgLoaded) return;
+      if (state.mode === 'panel' && state.isDragging) {
+        state.isDragging = false; state.dragTarget = null; renderList(); return;
+      }
+      if (state.mode === 'rect' && state.isDragging) {
+        const end = canvasPosToImagePx(ev);
+        state.isDragging = false;
+        commitRect(state.dragStart, end);
+        clearLiveRect();
+      }
+    });
+
+    window.addEventListener('resize', () => { if (state.bgLoaded) { fitCanvasToImage(); updateMeta(); draw(); } });
+
+    function hitTestPanels(pos) {
+      // returns {type:'panel', id, action:'move'|'resize', corner?, offsetX, offsetY}
+      const s = state.displayScale; // for handle size in image px
+      const hr = 8 / s; // handle radius in image pixels
+      for (let i = state.panels.length - 1; i >= 0; i--) { // top-most first
+        const p = state.panels[i];
+        const corners = [
+          {x: p.x, y: p.y, idx:0},
+          {x: p.x + p.w, y: p.y, idx:1},
+          {x: p.x + p.w, y: p.y + p.h, idx:2},
+          {x: p.x, y: p.y + p.h, idx:3},
+        ];
+        // Corner handles first
+        for (const c of corners) {
+          if (Math.abs(pos.x - c.x) <= hr && Math.abs(pos.y - c.y) <= hr) {
+            return { type:'panel', id: p.id, action:'resize', corner: c.idx, anchor: oppositeCorner(p, c.idx) };
+          }
+        }
+        // Inside rect
+        if (pos.x >= p.x && pos.x <= p.x + p.w && pos.y >= p.y && pos.y <= p.y + p.h) {
+          return { type:'panel', id: p.id, action:'move', offsetX: pos.x - p.x, offsetY: pos.y - p.y };
+        }
+      }
+      return null;
+    }
+
+    function oppositeCorner(p, idx) {
+      const map = [ {x:p.x+p.w, y:p.y+p.h}, {x:p.x, y:p.y+p.h}, {x:p.x, y:p.y}, {x:p.x+p.w, y:p.y} ];
+      return map[idx];
+    }
+
+    function selectPanel(id) {
+      state.panels.forEach(p => p.selected = (p.id === id));
+    }
+
+    function dragPanel(pos) {
+      const t = state.dragTarget; if (!t) return;
+      const p = state.panels.find(pp => pp.id === t.id); if (!p) return;
+      if (t.action === 'move') {
+        p.x = clamp(pos.x - t.offsetX, 0, state.imgNaturalW - p.w);
+        p.y = clamp(pos.y - t.offsetY, 0, state.imgNaturalH - p.h);
+      } else if (t.action === 'resize') {
+        // keep anchor fixed, resize towards pos, maintain aspect
+        const ax = t.anchor.x, ay = t.anchor.y;
+        const ar = p.natW / p.natH; // natural aspect
+        let dx = pos.x - ax; let dy = pos.y - ay;
+        // project onto aspect by choosing width from max(|dx|, |dy|*ar)
+        const signX = Math.sign(dx) || 1; const signY = Math.sign(dy) || 1;
+        let w = Math.max(1, Math.round(Math.max(Math.abs(dx), Math.abs(dy)*ar)));
+        let h = Math.max(1, Math.round(w / ar));
+        let x = ax + (signX < 0 ? -w : 0);
+        let y = ay + (signY < 0 ? -h : 0);
+        // clamp to background bounds
+        if (x < 0) { w += x; x = 0; h = Math.round(w / ar); }
+        if (y < 0) { h += y; y = 0; w = Math.round(h * ar); }
+        if (x + w > state.imgNaturalW) { w = state.imgNaturalW - x; h = Math.round(w / ar); }
+        if (y + h > state.imgNaturalH) { h = state.imgNaturalH - y; w = Math.round(h * ar); }
+        p.x = x; p.y = y; p.w = w; p.h = h;
+      }
+    }
+
+    // Live rectangle overlay (for manual rect mode)
+    let liveRectEl = null;
+    function drawLiveRect(a, b) {
+      if (!liveRectEl) {
+        liveRectEl = document.createElement('div');
+        liveRectEl.className = 'rect-shadow';
+        overlay.appendChild(liveRectEl);
+      }
+      const s = state.displayScale;
+      const x = Math.min(a.x, b.x) * s;
+      const y = Math.min(a.y, b.y) * s;
+      const w = Math.abs(b.x - a.x) * s;
+      const h = Math.abs(b.y - a.y) * s;
+      liveRectEl.style.left = x + 'px';
+      liveRectEl.style.top = y + 'px';
+      liveRectEl.style.width = w + 'px';
+      liveRectEl.style.height = h + 'px';
+    }
+    function clearLiveRect(){ if (liveRectEl) { liveRectEl.remove(); liveRectEl = null; } }
+
+    // --- Actions ---
+    function addPoint(x, y) {
+      state.points.push({ id: state.uid++, x, y });
+      draw();
+      renderList();
+    }
+
+    function commitRect(a, b) {
+      const x = Math.min(a.x, b.x);
+      const y = Math.min(a.y, b.y);
+      const w = Math.abs(b.x - a.x);
+      const h = Math.abs(b.y - a.y);
+      if (w < 1 || h < 1) return; // ignore clicks
+      state.rects.push({ id: state.uid++, x, y, w, h });
+      draw();
+      renderList();
+    }
+
+    function clearAnnotations() {
+      state.points = []; state.rects = []; state.panels = []; state.uid = 1; renderList(); draw();
+    }
+
+    function undo() {
+      if (state.mode === 'panel' && state.panels.length) { state.panels.pop(); }
+      else if (state.rects.length || state.points.length) {
+        if (state.mode === 'rect' && state.rects.length) state.rects.pop();
+        else if (state.mode === 'point' && state.points.length) state.points.pop();
+        else if (state.rects.length) state.rects.pop();
+        else state.points.pop();
+      }
+      renderList(); draw();
+    }
+
+    // --- UI helpers ---
+    function pct(n, total) { return total ? (n / total * 100) : 0; }
+    function fmtPct(v) { return (Math.round(v * 10000) / 10000).toFixed(4); }
+
+    function annotationJSON() {
+      const W = state.imgNaturalW, H = state.imgNaturalH;
+      return {
+        background: { width_px: W, height_px: H },
+        points: state.points.map(p => ({
+          id: p.id,
+          x_px: p.x, y_px: p.y,
+          x_pct: +fmtPct(pct(p.x, W)), y_pct: +fmtPct(pct(p.y, H))
+        })),
+        rectangles: state.rects.map(r => ({
+          id: r.id,
+          top_left: { x_px: r.x, y_px: r.y, x_pct: +fmtPct(pct(r.x, W)), y_pct: +fmtPct(pct(r.y, H)) },
+          top_right: { x_px: r.x + r.w, y_px: r.y, x_pct: +fmtPct(pct(r.x + r.w, W)), y_pct: +fmtPct(pct(r.y, H)) },
+          bottom_right: { x_px: r.x + r.w, y_px: r.y + r.h, x_pct: +fmtPct(pct(r.x + r.w, W)), y_pct: +fmtPct(pct(r.y + r.h, H)) },
+          bottom_left: { x_px: r.x, y_px: r.y + r.h, x_pct: +fmtPct(pct(r.x, W)), y_pct: +fmtPct(pct(r.y + r.h, H)) },
+          width_px: r.w, height_px: r.h,
+          width_pct: +fmtPct(pct(r.w, W)), height_pct: +fmtPct(pct(r.h, H))
+        })),
+        panels: state.panels.map(p => ({
+          id: p.id,
+          src: p.src,
+          top_left: { x_px: p.x, y_px: p.y, x_pct: +fmtPct(pct(p.x, W)), y_pct: +fmtPct(pct(p.y, H)) },
+          top_right: { x_px: p.x + p.w, y_px: p.y, x_pct: +fmtPct(pct(p.x + p.w, W)), y_pct: +fmtPct(pct(p.y, H)) },
+          bottom_right: { x_px: p.x + p.w, y_px: p.y + p.h, x_pct: +fmtPct(pct(p.x + p.w, W)), y_pct: +fmtPct(pct(p.y + p.h, H)) },
+          bottom_left: { x_px: p.x, y_px: p.y + p.h, x_pct: +fmtPct(pct(p.x, W)), y_pct: +fmtPct(pct(p.y + p.h, H)) },
+          width_px: p.w, height_px: p.h,
+          width_pct: +fmtPct(pct(p.w, W)), height_pct: +fmtPct(pct(p.h, H))
+        }))
+      };
+    }
+
+    function renderList() {
+      const W = state.imgNaturalW, H = state.imgNaturalH;
+      listEl.innerHTML = '';
+
+      state.points.forEach(p => {
+        const card = document.createElement('div'); card.className = 'card';
+        card.innerHTML = `
+          <header>
+            <div class="title">Point #${p.id}</div>
+            <div>
+              <button class="btn ghost" data-act="copy">Copy</button>
+              <button class="btn ghost" data-act="del">Delete</button>
+            </div>
+          </header>
+          <pre>{ "id": ${p.id}, "x_px": ${p.x}, "y_px": ${p.y}, "x_pct": ${fmtPct(pct(p.x, W))}, "y_pct": ${fmtPct(pct(p.y, H))} }</pre>
+        `;
+        card.querySelector('[data-act="copy"]').onclick = () => copyText(card.querySelector('pre').innerText);
+        card.querySelector('[data-act="del"]').onclick = () => { state.points = state.points.filter(x => x.id !== p.id); renderList(); draw(); };
+        listEl.appendChild(card);
+      });
+
+      state.rects.forEach(r => {
+        const tl = { x: r.x, y: r.y };
+        const tr = { x: r.x + r.w, y: r.y };
+        const br = { x: r.x + r.w, y: r.y + r.h };
+        const bl = { x: r.x, y: r.y + r.h };
+        const json = `{
+  "id": ${r.id},
+  "top_left": {"x_px": ${tl.x}, "y_px": ${tl.y}, "x_pct": ${fmtPct(pct(tl.x, W))}, "y_pct": ${fmtPct(pct(tl.y, H))}},
+  "top_right": {"x_px": ${tr.x}, "y_px": ${tr.y}, "x_pct": ${fmtPct(pct(tr.x, W))}, "y_pct": ${fmtPct(pct(tr.y, H))}},
+  "bottom_right": {"x_px": ${br.x}, "y_px": ${br.y}, "x_pct": ${fmtPct(pct(br.x, W))}, "y_pct": ${fmtPct(pct(br.y, H))}},
+  "bottom_left": {"x_px": ${bl.x}, "y_px": ${bl.y}, "x_pct": ${fmtPct(pct(bl.x, W))}, "y_pct": ${fmtPct(pct(bl.y, H))}},
+  "width_px": ${r.w}, "height_px": ${r.h}, "width_pct": ${fmtPct(pct(r.w, W))}, "height_pct": ${fmtPct(pct(r.h, H))}
+}`;
+        const card = document.createElement('div'); card.className = 'card';
+        card.innerHTML = `
+          <header>
+            <div class="title">Rect #${r.id}</div>
+            <div>
+              <button class="btn ghost" data-act="copy">Copy</button>
+              <button class="btn ghost" data-act="del">Delete</button>
+            </div>
+          </header>
+          <pre></pre>
+        `;
+        card.querySelector('pre').innerText = json;
+        card.querySelector('[data-act="copy"]').onclick = () => copyText(json);
+        card.querySelector('[data-act="del"]').onclick = () => { state.rects = state.rects.filter(x => x.id !== r.id); renderList(); draw(); };
+        listEl.appendChild(card);
+      });
+
+      state.panels.forEach(p => {
+        const tl = { x: p.x, y: p.y };
+        const tr = { x: p.x + p.w, y: p.y };
+        const br = { x: p.x + p.w, y: p.y + p.h };
+        const bl = { x: p.x, y: p.y + p.h };
+        const json = `{
+  "id": ${p.id},
+  "src": "${p.src}",
+  "top_left": {"x_px": ${tl.x}, "y_px": ${tl.y}, "x_pct": ${fmtPct(pct(tl.x, W))}, "y_pct": ${fmtPct(pct(tl.y, H))}},
+  "top_right": {"x_px": ${tr.x}, "y_px": ${tr.y}, "x_pct": ${fmtPct(pct(tr.x, W))}, "y_pct": ${fmtPct(pct(tr.y, H))}},
+  "bottom_right": {"x_px": ${br.x}, "y_px": ${br.y}, "x_pct": ${fmtPct(pct(br.x, W))}, "y_pct": ${fmtPct(pct(br.y, H))}},
+  "bottom_left": {"x_px": ${bl.x}, "y_px": ${bl.y}, "x_pct": ${fmtPct(pct(bl.x, W))}, "y_pct": ${fmtPct(pct(bl.y, H))}},
+  "width_px": ${p.w}, "height_px": ${p.h}, "width_pct": ${fmtPct(pct(p.w, W))}, "height_pct": ${fmtPct(pct(p.h, H))}
+}`;
+        const card = document.createElement('div'); card.className = 'card';
+        card.innerHTML = `
+          <header>
+            <div class="title">Subpanel #${p.id}</div>
+            <div>
+              <button class="btn ghost" data-act="copy">Copy</button>
+              <button class="btn ghost" data-act="sel">Select</button>
+              <button class="btn ghost" data-act="del">Delete</button>
+            </div>
+          </header>
+          <pre></pre>
+        `;
+        card.querySelector('pre').innerText = json;
+        card.querySelector('[data-act="copy"]').onclick = () => copyText(json);
+        card.querySelector('[data-act="sel"]').onclick = () => { selectPanel(p.id); draw(); };
+        card.querySelector('[data-act="del"]').onclick = () => { state.panels = state.panels.filter(x => x.id !== p.id); renderList(); draw(); };
+        listEl.appendChild(card);
+      });
+    }
+
+    async function copyText(t) {
+      try { await navigator.clipboard.writeText(t); toast('Copied'); }
+      catch { alert('Copy failed. You can manually select and copy.'); }
+    }
+
+    function toast(msg) {
+      const tip = document.createElement('div');
+      tip.className = 'overlay tooltip';
+      tip.style.right = '12px'; tip.style.bottom = '12px';
+      tip.textContent = msg; document.body.appendChild(tip);
+      setTimeout(() => tip.remove(), 900);
+    }
+
+    // Buttons
+    fitBtn.onclick = () => { fitCanvasToImage(); updateMeta(); draw(); };
+    copyAllBtn.onclick = () => copyText(JSON.stringify(annotationJSON(), null, 2));
+    exportBtn.onclick = () => {
+      const blob = new Blob([JSON.stringify(annotationJSON(), null, 2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'annotations.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    };
+    clearBtn.onclick = () => { if (confirm('Clear all annotations?')) clearAnnotations(); };
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+      const k = e.key.toLowerCase();
+      if (k === 'p') setMode('point');
+      else if (k === 'r') setMode('rect');
+      else if (k === 'm') setMode('panel');
+      else if (k === 'z') undo();
+      else if (k === 'b') bgFileInput.click();
+      else if (k === 'a') addPanelBtn.click();
+      else if (k === 'c') copyAllBtn.click();
+      else if (k === 'delete' && e.shiftKey) clearBtn.click();
+    });
+
+    // Boot with a demo grid background
+    (function init(){
+      const w = canvas.width, h = canvas.height;
+      const g = 10, G = 50; // fine and coarse grid
+      ctx.fillStyle = '#0b0f18'; ctx.fillRect(0,0,w,h);
+      for (let x=0; x<w; x+=g) { ctx.fillStyle = (x%G===0)?'#152033':'#111827'; ctx.fillRect(x,0,1,h); }
+      for (let y=0; y<h; y+=g) { ctx.fillStyle = (y%G===0)?'#152033':'#111827'; ctx.fillRect(0,y,w,1); }
+      updateMeta();
+      renderList();
+    })();
+  </script>
+</body>
+</html>

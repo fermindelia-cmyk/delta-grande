@@ -43,7 +43,7 @@ export const DEFAULT_PARAMS = Object.freeze({
   }),
   water: Object.freeze({
     surfaceSegments: 200,
-    baseLevel: 0.45,
+    baseLevel: 0.35,
     levelDelta: 0.25,
     bottom: -0.4,
     smoothing: 2.2,
@@ -66,8 +66,8 @@ export const DEFAULT_PARAMS = Object.freeze({
   }),
   riverbed: Object.freeze({
     segments: 200,
-    baseHeight: -0.16,
-    highBaseline: 0.08,
+    baseHeight: -0.32,
+    highBaseline: -0.16,
     bottom: -0.38,
     maxHeight: 0.82,
     plateauStart: 0.15,
@@ -117,23 +117,87 @@ export const DEFAULT_PARAMS = Object.freeze({
     particleColor: '#4d3018',
     colonizers: Object.freeze([
       Object.freeze({
-        id: 'CS1',
+        id: 'aliso',
         label: 'Aliso',
         color: '#7dbf5d',
         width: 0.04,
         height: 0.18,
         growthRate: 0.55,
         assetName: 'aliso',
+        spriteWidthRatio: 0.06,
+        bottomMargin: 0.15,
         spriteStageMap: Object.freeze([0, 1, 1, 1, 1]),
         spriteTransitionMap: Object.freeze({ 0: true }),
         spriteTransitionFrames: Object.freeze({ 0: 5 })
       }),
-      Object.freeze({ id: 'CS2', label: 'CS 2', color: '#6eb48f', width: 0.038, height: 0.16, growthRate: 0.6 }),
-      Object.freeze({ id: 'CS3', label: 'CS 3', color: '#5d9d6d', width: 0.035, height: 0.14, growthRate: 0.5 })
+      Object.freeze({
+        id: 'sauce',
+        label: 'Sauce',
+        color: '#6eb48f',
+        width: 0.036,
+        height: 0.17,
+        growthRate: 0.6,
+        assetName: 'sauce',
+        spriteWidthRatio: 0.14,
+        bottomMargin: 0.15
+      }),
+      Object.freeze({
+        id: 'ambigua',
+        label: 'Ambigua',
+        color: '#5d9d6d',
+        width: 0.034,
+        height: 0.15,
+        growthRate: 0.58,
+        assetName: 'ambigua',
+        spriteWidthRatio: 0.07,
+        bottomMargin: 0.15
+      }),
+      Object.freeze({
+        id: 'distichlis',
+        label: 'Distichlis',
+        color: '#4e7d5a',
+        width: 0.03,
+        height: 0.13,
+        growthRate: 0.62,
+        assetName: 'distichlis',
+        spriteWidthRatio: 0.07,
+        bottomMargin: 0.15
+      })
     ]),
     nonColonizers: Object.freeze([
-      Object.freeze({ id: 'NCS1', label: 'NCS 1', color: '#b58b5a', width: 0.05, height: 0.22, growthRate: 0.45 }),
-      Object.freeze({ id: 'NCS2', label: 'NCS 2', color: '#a8733d', width: 0.048, height: 0.2, growthRate: 0.52 })
+      Object.freeze({
+        id: 'ceibo',
+        label: 'Ceibo',
+        color: '#b58b5a',
+        width: 0.05,
+        height: 0.24,
+        growthRate: 0.45,
+        assetName: 'ceibo',
+        spriteWidthRatio: 0.1,
+        bottomMargin: 0.15
+      }),
+      Object.freeze({
+        id: 'drago',
+        label: 'Drago',
+        color: '#a8733d',
+        width: 0.048,
+        height: 0.22,
+        growthRate: 0.48,
+        assetName: 'drago',
+        spriteWidthRatio: 0.1,
+        bottomMargin: 0.15
+      }),
+      Object.freeze({
+        id: 'acacia',
+        label: 'Acacia',
+        color: '#8b6a32',
+        width: 0.052,
+        height: 0.26,
+        growthRate: 0.5,
+        assetName: 'acacia',
+        spriteWidthRatio: 0.1,
+        bottomMargin: 0.15
+      })
     ])
   }),
   interactions: Object.freeze({
@@ -195,9 +259,10 @@ export const DEFAULT_PARAMS = Object.freeze({
         goal: Object.freeze({
           type: 'plantCounts',
           species: Object.freeze({
-            CS1: 3,
-            CS2: 3,
-            CS3: 3
+            aliso: 3,
+            sauce: 3,
+            ambigua: 3,
+            distichlis: 3
           })
         }),
         allowedSeedGroups: Object.freeze(['colonizers'])
@@ -210,8 +275,9 @@ export const DEFAULT_PARAMS = Object.freeze({
         goal: Object.freeze({
           type: 'plantCounts',
           species: Object.freeze({
-            NCS1: 3,
-            NCS2: 3
+            ceibo: 3,
+            drago: 3,
+            acacia: 3
           })
         }),
         allowedSeedGroups: Object.freeze(['colonizers', 'nonColonizers'])
@@ -1096,6 +1162,36 @@ export class SimuladorScene extends BaseScene {
     return null;
   }
 
+  _getSeedSpriteWidthRatio(seed) {
+    const visuals = this.params.plantGrowth?.visuals || {};
+    const ratio = typeof seed?.spriteWidthRatio === 'number'
+      ? seed.spriteWidthRatio
+      : visuals.spriteWidthRatio;
+    return Math.max(1e-5, ratio ?? 0.005);
+  }
+
+  _getSeedBottomMargin(seed) {
+    const visuals = this.params.plantGrowth?.visuals || {};
+    const margin = typeof seed?.bottomMargin === 'number'
+      ? seed.bottomMargin
+      : visuals.bottomMargin;
+    return clamp(margin ?? 0.05, 0, 1);
+  }
+
+  _computePlantDepth(centerY) {
+    const frontZ = -0.02;
+    const backZ = -0.045;
+    const height = Math.max(1e-5, this.worldHeight);
+    // Lower plants (smaller normalized) get a larger z so they render in front of higher plants.
+    const normalized = clamp((centerY - this.worldBottom) / height, 0, 1);
+    return backZ + (1 - normalized) * (frontZ - backZ);
+  }
+
+  _setPlantDepth(plant, centerY) {
+    if (!plant?.mesh) return;
+    plant.mesh.position.z = this._computePlantDepth(centerY);
+  }
+
   _spriteStageAssetIndex(seed, stageIndex) {
     if (!seed || !Number.isInteger(stageIndex)) return null;
     const map = seed.spriteStageMap;
@@ -1451,7 +1547,7 @@ export class SimuladorScene extends BaseScene {
     material.color.setHex(0xffffff);
     material.opacity = 1;
 
-    const widthRatio = Math.max(1e-5, visuals.spriteWidthRatio ?? 0.005);
+    const widthRatio = this._getSeedSpriteWidthRatio(plant.seed);
     const widthWorld = Math.max(1e-5, this.worldWidth * widthRatio);
     const aspect = frame.height && frame.width ? frame.height / frame.width : 1;
     const heightWorld = Math.max(1e-5, widthWorld * aspect);
@@ -1461,10 +1557,10 @@ export class SimuladorScene extends BaseScene {
     plant.mesh.scale.set(widthWorld, heightWorld, 1);
     plant.mesh.rotation.set(0, 0, 0);
     plant.mesh.position.x = plant.x;
-    const margin = clamp(visuals.bottomMargin ?? 0.05, 0, 1);
+    const margin = this._getSeedBottomMargin(plant.seed);
     const centerY = plant.baseY + (0.5 - margin) * heightWorld;
     plant.mesh.position.y = centerY;
-    plant.mesh.position.z = 0.15;
+    this._setPlantDepth(plant, centerY);
 
     plant.visualMode = 'image';
     plant.visualWidth = widthWorld;
@@ -1612,14 +1708,14 @@ export class SimuladorScene extends BaseScene {
     const seed = this._seedCatalog.get(toolId);
     if (!seed) return false;
 
-  const clampedX = clamp(worldX, 0, this.worldWidth);
-  const state = this._resolveInteractionState(clampedX, worldY);
+    const clampedX = clamp(worldX, 0, this.worldWidth);
+    const state = this._resolveInteractionState(clampedX, worldY);
     if (!state?.canPlant) return false;
 
-  const interactions = this.params.interactions || {};
-  const burstOffset = Math.max(0.005, interactions.seedBurstHeightOffset ?? 0.06);
-  const desiredBurstY = state.riverbedHeight + burstOffset;
-  const burstY = Math.min(this.worldTop, Math.max(worldY, desiredBurstY));
+    const interactions = this.params.interactions || {};
+    const burstOffset = Math.max(0.005, interactions.seedBurstHeightOffset ?? 0.06);
+    const desiredBurstY = state.riverbedHeight + burstOffset;
+    const burstY = Math.min(this.worldTop, Math.max(worldY, desiredBurstY));
     this._emitSeedBurst(clampedX, burstY);
 
     this._spawnPlant(seed, clampedX, state.riverbedHeight);
@@ -1634,12 +1730,14 @@ export class SimuladorScene extends BaseScene {
     const stageInfo = this._getPlantStageInfo(seed, stageId);
     const geometry = this._getPlantGeometry(seed, stageId, stageInfo);
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(x, baseY, 0.15);
-    mesh.renderOrder = 2;
-    this.scene.add(mesh);
 
     const initialWidth = stageInfo?.width || (stageInfo?.radius ? stageInfo.radius * 2 : 0.02);
     const initialHeight = stageInfo?.height || (stageInfo?.radius ? stageInfo.radius * 2 : 0.02);
+    const initialMargin = this._getSeedBottomMargin(seed);
+    const initialCenterY = baseY + (0.5 - initialMargin) * initialHeight;
+    mesh.position.set(x, initialCenterY, this._computePlantDepth(initialCenterY));
+    mesh.renderOrder = 2;
+    this.scene.add(mesh);
     const plant = {
       id: `${seed.id}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
       seed,
@@ -1656,7 +1754,7 @@ export class SimuladorScene extends BaseScene {
       visualMode: 'geometry',
       visualWidth: initialWidth,
       visualHeight: initialHeight,
-      visualMargin: this.params.plantGrowth?.visuals?.bottomMargin ?? 0.05,
+      visualMargin: initialMargin,
       activeFrame: null,
       animation: null,
       pendingTransition: null,
@@ -1686,14 +1784,16 @@ export class SimuladorScene extends BaseScene {
     plant.mesh.position.x = plant.x;
     const height = info.height || (info.radius ? info.radius * 2 : 0);
     const width = info.width || (info.radius ? info.radius * 2 : 0);
-    plant.mesh.position.y = plant.baseY + height * 0.5;
-    plant.mesh.position.z = 0.15;
+    const margin = this._getSeedBottomMargin(plant.seed);
+    const centerY = plant.baseY + (0.5 - margin) * height;
+    plant.mesh.position.y = centerY;
+    this._setPlantDepth(plant, centerY);
     plant.currentStageHeight = height;
     plant.currentStageHalfWidth = Math.max(width * 0.5, info.radius || 0, 0.01);
     plant.visualMode = 'geometry';
     plant.visualWidth = width;
     plant.visualHeight = height;
-    plant.visualMargin = this.params.plantGrowth?.visuals?.bottomMargin ?? 0.05;
+    plant.visualMargin = margin;
     plant.activeFrame = null;
     plant.animation = null;
     plant.waitingTransitionKey = null;

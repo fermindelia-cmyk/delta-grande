@@ -1,0 +1,61 @@
+Report created: 
+	23-Oct-25	11:04:18 AM
+
+Project name: D+_simulador catalogo_v01.aep
+
+Source files collected to: 
+	E:\DELTA GRANDE\aes\collects\23 10 25\D+_simulador catalogo_v02 folder
+
+Source files collected: For all comps
+
+Collected comps:  
+	PORTAL refe_parallax_V1
+	pre catalog
+	pre cuadro grid
+	FAUNA_pre oblea data_2
+	VNT pre comp_animal 01
+	FLORA_pre oblea data_viraro
+	pre cuadro grid 2
+	empty FLORA_pre oblea data_2
+	empty FAUNA_pre oblea data_3
+	FAUNA_pre oblea data_avispa
+	FAUNA_pre oblea data_ciervo
+	pre cuadro grid NEG
+	FAUNA_pre oblea data_rana
+	pre CURSOR
+	
+Number of collected files:  6
+
+Size of collected files:  9.8 MB
+
+Collected source files: 
+	E:\DELTA GRANDE\refes eva\D mapas\c6e57ea3250e09413a940f2c70568a65.jpg
+	E:\DELTA GRANDE\TOXI\animales y plantas\martin pescador.mp4
+	E:\DELTA GRANDE\TOXI\animales y plantas\Video de WhatsApp 2025-09-11 a las 15.35.25_e2942c83.mp4
+	E:\DELTA GRANDE\TOXI\animales y plantas\Video de WhatsApp 2025-09-11 a las 15.54.12_7e66d920.mp4
+	E:\DELTA GRANDE\TOXI\animales y plantas\Video de WhatsApp 2025-09-15 a las 12.25.14_b8052c56.mp4
+	E:\DELTA GRANDE\TOXI\animales y plantas\Video de WhatsApp 2025-09-15 a las 13.36.26_9805ae17.mp4
+	
+Rendering plug-ins:
+	Advanced 3D
+	Classic 3D
+	
+Effects used:  6
+
+Effect:  Drop Shadow
+	
+Effect:  Glow
+	
+Effect:  Linear Color Key
+	
+Effect:  Posterize Time
+	
+Effect:  Slider Control
+	
+Effect:  Venetian Blinds
+	
+
+Layer:  Text Layer
+	External dependencies:  
+		Font family: “Area Extended”, Font style: “Bold Italic”
+

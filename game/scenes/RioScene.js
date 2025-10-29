@@ -106,8 +106,8 @@ class SpatialHash {
  * ------------------------------------------------------------- */
 const SizeScale       = { small: 1.0,  medium: 1.5,  large: 2.0 };
 const SpeedScale      = { slow: 0.3,   medium: 0.8,  fast: 1.5 };
-//const AbundanceCount  = { scarce: 5,   usual: 15,    veryCommon: 30 };
-const AbundanceCount  = { scarce: 1,   usual: 1,    veryCommon: 1 };
+const AbundanceCount  = { scarce: 5,   usual: 15,    veryCommon: 30 };
+//const AbundanceCount  = { scarce: 1,   usual: 1,    veryCommon: 1 };
 
 /**
  * Species water-column / shore mapping keys:
