@@ -75,7 +75,7 @@ export const DEFAULT_PARAMS = Object.freeze({
     sediment: Object.freeze({
       file: 'Sedimento.mp3',
       volume: 1,
-      delay: 0.7
+      delay: 0.0
     }),
     waterRaise: Object.freeze({
       file: 'Sube el agua.mp3',
@@ -89,6 +89,16 @@ export const DEFAULT_PARAMS = Object.freeze({
     }),
     seedPlant: Object.freeze({
       files: Object.freeze(['Semilla 1.mp3', 'Semilla 2.mp3', 'Semilla 3.mp3']),
+      volume: 1,
+      delay: 0
+    }),
+    select: Object.freeze({
+      file: 'select.mp3',
+      volume: 0.2,
+      delay: 0
+    }),
+    removePlant: Object.freeze({
+      file: 'remover.mp3',
       volume: 1,
       delay: 0
     }),
@@ -325,6 +335,11 @@ export const DEFAULT_PARAMS = Object.freeze({
       maxWidthVW: 48,
       borderRadiusVW: 2.0,
       slideOffsetVW: 2.2,
+    removePlant: Object.freeze({
+      file: 'remover.mp3',
+      volume: 1,
+      delay: 0
+    }),
       transitionSeconds: 0.35
     }),
     elements: Object.freeze({
@@ -600,7 +615,10 @@ export class SimuladorScene extends BaseScene {
 
     this._audioTimers = new Set();
     this._ambientAudio = null;
-  this._transientAudios = new Set();
+    this._transientAudios = new Set();
+    this._sedimentAudio = null;
+    this._sedimentSoundPlaying = false;
+    this._sedimentSoundPending = false;
 
     this._background = null;
     this._backgroundTexture = null;
@@ -2490,6 +2508,21 @@ export class SimuladorScene extends BaseScene {
       });
       this._transientAudios.clear();
     }
+    if (this._sedimentAudio) {
+      try {
+        this._sedimentAudio.pause();
+      } catch (err) {
+        // ignore pause errors
+      }
+      try {
+        this._sedimentAudio.currentTime = 0;
+      } catch (err) {
+        // ignore reset issues
+      }
+    }
+    this._sedimentAudio = null;
+    this._sedimentSoundPlaying = false;
+    this._sedimentSoundPending = false;
     if (this._ambientAudio) {
       this._ambientAudio.pause();
       try {
@@ -2501,12 +2534,75 @@ export class SimuladorScene extends BaseScene {
     }
   }
 
-  _playSedimentSound() {
-    this._fireAndForgetSound(this.params.audio?.sediment);
+  _playSedimentImpactSound() {
+    const cfg = this.params.audio?.sediment;
+    if (!cfg?.file) return;
+    if (this._sedimentAudio && this._sedimentSoundPlaying) {
+      if (this._sedimentAudio.paused || this._sedimentAudio.ended) {
+        this._sedimentSoundPlaying = false;
+      }
+    }
+    if (this._sedimentSoundPlaying || this._sedimentSoundPending) return;
+
+    if (!this._sedimentAudio) {
+      const audio = this._createAudioElement(cfg.file);
+      if (!audio) return;
+      audio.loop = false;
+      audio.addEventListener('ended', () => {
+        this._sedimentSoundPlaying = false;
+      });
+      audio.addEventListener('error', () => {
+        this._sedimentSoundPlaying = false;
+      });
+      this._sedimentAudio = audio;
+    }
+
+    const audio = this._sedimentAudio;
+    if (!audio) return;
+    if (!audio.paused && !audio.ended) {
+      this._sedimentSoundPlaying = true;
+      return;
+    }
+
+    const startPlayback = () => {
+      this._sedimentSoundPending = false;
+      try {
+        audio.currentTime = 0;
+      } catch (err) {
+        // ignore reset issues
+      }
+      audio.volume = clamp(cfg.volume ?? 1, 0, 1);
+      this._sedimentSoundPlaying = true;
+      const playPromise = audio.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(() => {
+          this._sedimentSoundPlaying = false;
+        });
+      }
+    };
+
+    const delay = Math.max(0, cfg.delay ?? 0);
+    if (delay > 0) {
+      this._sedimentSoundPending = true;
+      const timer = this._scheduleAudioPlayback(startPlayback, delay);
+      if (!timer) {
+        startPlayback();
+      }
+    } else {
+      startPlayback();
+    }
   }
 
   _playSeedPlantSound() {
     this._fireAndForgetSound(this.params.audio?.seedPlant);
+  }
+
+  _playSelectSound() {
+    this._fireAndForgetSound(this.params.audio?.select);
+  }
+
+  _playRemovePlantSound() {
+    this._fireAndForgetSound(this.params.audio?.removePlant);
   }
 
   _playWaterLevelSound(previousIndex, nextIndex) {
@@ -2840,6 +2936,7 @@ export class SimuladorScene extends BaseScene {
         this._completePlantStageChange(plant, nextIndex);
         return;
       }
+      this._playPlantTransitionSound(plant.stageIndex, nextIndex);
       this._playPlantAnimation(plant, entry, {
         loop: false,
         fps: entry.fps,
@@ -3099,7 +3196,6 @@ export class SimuladorScene extends BaseScene {
   _advancePlantStage(plant, nextIndex) {
     if (!plant || nextIndex <= plant.stageIndex) return;
     if (nextIndex >= this._plantStages.length) return;
-    this._playPlantTransitionSound(plant.stageIndex, nextIndex);
     this._startPlantTransition(plant, nextIndex);
   }
 
@@ -3320,6 +3416,7 @@ export class SimuladorScene extends BaseScene {
     if (!plant) return;
     const index = this._plants.indexOf(plant);
     if (index === -1) return;
+    this._playRemovePlantSound();
     this._clearPlantSequenceCallbacks(plant);
     this._releasePlantAnimation(plant);
     if (plant.mesh) {
@@ -3736,6 +3833,7 @@ export class SimuladorScene extends BaseScene {
       if (p.x <= p.targetX + arrivalThresholdWorld) {
         p.x = p.targetX;
         p.y = p.targetY;
+        this._playSedimentImpactSound();
         this._raiseRiverbed(p.x, sediment.depositAmount);
         this._deactivateParticle(p, i);
         this._refreshCursor();
@@ -4384,6 +4482,8 @@ export class SimuladorScene extends BaseScene {
           segment.addEventListener('click', (event) => {
             event.preventDefault();
             this._resumeAmbientAudio();
+            const available = this._isToolAvailable(seedId);
+            if (!available) return;
             this._toggleTool(seedId);
           });
           this._seedButtons[seedId] = { segment, image: imageEl, overlay: overlayEl, highlight: highlightEl, label: labelEl, seed: seedDef };
@@ -5091,6 +5191,7 @@ export class SimuladorScene extends BaseScene {
     if (toolId === this._activeTool) {
       return;
     }
+    this._playSelectSound();
     this._activeTool = toolId;
     if (this._activeTool !== 'sediment') {
       this._pointerDown = false;
@@ -5176,9 +5277,6 @@ export class SimuladorScene extends BaseScene {
       if (!state?.canSediment) return;
       const emitted = this._emitSediment(point.x, point.y, state);
       this._pointerDown = emitted;
-      if (emitted) {
-        this._playSedimentSound();
-      }
     } else if (tool === 'remove') {
       if (!this._removeEnabled) return;
       const plant = this._findPlantAt(point.x, point.y);
