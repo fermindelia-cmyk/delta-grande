@@ -11,6 +11,8 @@ const smoothstep = (edge0, edge1, x) => {
   return t * t * (3 - 2 * t);
 };
 
+const WEATHER_PLAYBACK_SPEED = 2;
+
 export const DEFAULT_PARAMS = Object.freeze({
   world: Object.freeze({
     top: 1,
@@ -208,18 +210,15 @@ export const DEFAULT_PARAMS = Object.freeze({
     plantEmergenceOffset: 0.0008
   }),
   ui: Object.freeze({
-    panelWidth: 0.18,
-    panelMinWidth: 0.12,
-    panelMaxWidth: 0.2,
-    seedPanelMinWidth: 0.14,
-    seedPanelMaxWidth: 0.22,
-    panelTop: 0.05,
-    panelLeft: 0.04,
     gap: 0.012,
-    buttonHeight: 0.068,
     fontScale: 0.028,
     borderRadius: 0.035,
     shadowOpacity: 0.4,
+    cursor: Object.freeze({
+      diameterVW: 1.8,
+      borderWidthVW: 0.14,
+      transitionSeconds: 0.12
+    }),
     goalMessage: Object.freeze({
       bottomOffsetVW: 3.6,
       fontSizeVW: 1.3,
@@ -227,10 +226,92 @@ export const DEFAULT_PARAMS = Object.freeze({
       maxWidthVW: 48,
       borderRadiusVW: 2.0
     }),
-    cursor: Object.freeze({
-      diameterVW: 1.8,
-      borderWidthVW: 0.14,
-      transitionSeconds: 0.12
+    elements: Object.freeze({
+      basePath: '/game-assets/simulador/UI',
+      logo: Object.freeze({
+        image: 'logo.png',
+        leftPct: 91.1373,
+        topPct: 86.5553,
+        widthPct: 6.3922,
+        heightPct: 11.2967,
+        zIndex: 9
+      }),
+      sedimentButton: Object.freeze({
+        image: 'sediment_button.png',
+        leftPct: 75.8039,
+        topPct: 87.2713,
+        widthPct: 6.2353,
+        heightPct: 7.8759,
+        zIndex: 11
+      }),
+      removeButton: Object.freeze({
+        image: 'remove_plant.png',
+        leftPct: 84.1176,
+        topPct: 84.1687,
+        widthPct: 3.6471,
+        heightPct: 13.6834,
+        zIndex: 11
+      }),
+      seeder: Object.freeze({
+        image: 'seeder.png',
+        leftPct: 92.4314,
+        topPct: 24.105,
+        widthPct: 3.6471,
+        heightPct: 59.2681,
+        segments: 7,
+        zIndex: 10,
+        seedOrder: Object.freeze(['aliso', 'sauce', 'ambigua', 'distichlis', 'ceibo', 'drago', 'acacia'])
+      }),
+      seedImages: Object.freeze({
+        aliso: 'aliso.png',
+        sauce: 'sauce.png',
+        ambigua: 'ambigua.png',
+        distichlis: 'distichlis.png',
+        ceibo: 'ceibo.png',
+        drago: 'drago.png',
+        acacia: 'acacia.png'
+      }),
+      weather: Object.freeze({
+        fps: 25,
+        top: Object.freeze({
+          folder: 'weather_top',
+          framePrefix: 'weather_top_',
+          frameDigits: 5,
+          frameExtension: '.png',
+          area: Object.freeze({
+            leftPct: 87.3,
+            topPct: 5,
+            widthPct: 13.6157,
+            heightPct: 15.5370,
+            zIndex: 8
+          }),
+          frames: Object.freeze({
+            low: 50,
+            medium: 154,
+            highTransitionStart: 233,
+            highLoopStart: 233,
+            highLoopEnd: 602
+          })
+        }),
+        bottom: Object.freeze({
+          folder: 'weather_bottom',
+          framePrefix: 'weather_bottom_',
+          frameDigits: 5,
+          frameExtension: '.png',
+          area: Object.freeze({
+            leftPct: 87.3,
+            topPct: 5,
+            widthPct: 13.6157,
+            heightPct: 15.5370,
+            zIndex: 8
+          }),
+          frames: Object.freeze({
+            low: 233,
+            medium: 154,
+            high: 50
+          })
+        })
+      })
     })
   }),
   progress: Object.freeze({
@@ -403,6 +484,14 @@ export class SimuladorScene extends BaseScene {
     this._stages = this.params.progress.stages;
     this._currentStageIndex = 0;
     this._stageComplete = false;
+
+    this._weatherConfig = null;
+    this._weatherChannels = {};
+    this._weatherAnimations = {};
+    this._weatherTransitionPromise = Promise.resolve();
+    this._weatherState = 'low';
+    this._weatherCurrentFrame = { top: null, bottom: null };
+    this._uiAssetBasePath = this.params.ui?.elements?.basePath || '';
 
     this._boundOnPointerDown = (e) => this._handlePointerDown(e);
     this._boundOnPointerMove = (e) => this._handlePointerMove(e);
@@ -2593,140 +2682,312 @@ export class SimuladorScene extends BaseScene {
 
   _createUI() {
     const { ui, colors } = this.params;
+    const elements = ui.elements || {};
+    const basePath = elements.basePath || '';
+
+    this._uiAssetBasePath = basePath;
+    this._weatherConfig = elements.weather || null;
+    this._buttons = {};
+    this._seedButtons = {};
+
+    this._seedCatalog.clear();
+    const seedGroups = this.params.seeds || {};
+    ['colonizers', 'nonColonizers'].forEach((groupName) => {
+      const list = seedGroups[groupName];
+      if (!Array.isArray(list)) return;
+      for (let i = 0; i < list.length; i++) {
+        const seed = list[i];
+        if (seed?.id) {
+          this._seedCatalog.set(seed.id, seed);
+        }
+      }
+    });
+
+    const resolveAsset = (file) => this._normalizeAssetPath(basePath, file);
+
     const root = document.createElement('div');
     root.style.position = 'absolute';
     root.style.inset = '0';
     root.style.pointerEvents = 'none';
+    root.style.zIndex = '5';
 
-    const panel = document.createElement('div');
-    panel.style.position = 'absolute';
-    panel.style.left = `${ui.panelLeft * 100}vw`;
-    panel.style.top = `${ui.panelTop * 100}vh`;
-  panel.style.width = 'auto';
-  panel.style.minWidth = `${(ui.panelMinWidth ?? ui.panelWidth * 0.6) * 100}vw`;
-  panel.style.maxWidth = `${(ui.panelMaxWidth ?? ui.panelWidth) * 100}vw`;
-    panel.style.display = 'flex';
-    panel.style.flexDirection = 'column';
-  panel.style.alignItems = 'stretch';
-    panel.style.gap = `${ui.gap * 100}vh`;
-    panel.style.padding = `${ui.gap * 75}vh`;
-    panel.style.background = colors.uiBackground;
-    panel.style.borderRadius = `${ui.borderRadius * 100}vmin`;
-    panel.style.backdropFilter = 'blur(0.8vmin)';
-    panel.style.boxShadow = `0 0 ${ui.gap * 160}vh rgba(0,0,0,${ui.shadowOpacity})`;
-    panel.style.pointerEvents = 'auto';
+    const weatherCfg = this._weatherConfig;
+    let topImage = null;
+    let bottomImage = null;
+    let lowerBtn = null;
+    let raiseBtn = null;
+    let topContainer = null;
+    let bottomContainer = null;
 
-    const seedPanel = document.createElement('div');
-    seedPanel.style.position = 'absolute';
-    seedPanel.style.left = 'auto';
-    seedPanel.style.right = `${ui.panelLeft * 100}vw`;
-    seedPanel.style.top = `${ui.panelTop * 100}vh`;
-    seedPanel.style.width = 'auto';
-    seedPanel.style.minWidth = `${(ui.seedPanelMinWidth ?? ui.panelWidth * 0.7) * 100}vw`;
-    seedPanel.style.maxWidth = `${(ui.seedPanelMaxWidth ?? ui.panelWidth) * 100}vw`;
-    seedPanel.style.display = 'flex';
-    seedPanel.style.flexDirection = 'column';
-    seedPanel.style.alignItems = 'stretch';
-    seedPanel.style.gap = `${ui.gap * 100}vh`;
-    seedPanel.style.padding = `${ui.gap * 75}vh`;
-    seedPanel.style.background = colors.uiBackground;
-    seedPanel.style.borderRadius = `${ui.borderRadius * 100}vmin`;
-    seedPanel.style.backdropFilter = 'blur(0.8vmin)';
-    seedPanel.style.boxShadow = `0 0 ${ui.gap * 160}vh rgba(0,0,0,${ui.shadowOpacity})`;
-    seedPanel.style.pointerEvents = 'auto';
+    if (weatherCfg?.top?.area) {
+      topContainer = document.createElement('div');
+      topContainer.style.position = 'absolute';
+      this._applyViewportRect(topContainer, weatherCfg.top.area);
+      topContainer.style.pointerEvents = 'none';
+      topContainer.style.display = 'block';
+      if (Number.isFinite(weatherCfg.top.area.zIndex)) {
+        topContainer.style.zIndex = String(weatherCfg.top.area.zIndex);
+      }
 
-    const seedTitle = document.createElement('div');
-    seedTitle.textContent = 'Semillas';
-    seedTitle.style.fontSize = `${ui.fontScale * 110}vmin`;
-    seedTitle.style.fontWeight = '600';
-    seedTitle.style.color = colors.uiText;
-    seedTitle.style.marginBottom = `${ui.gap * 60}vh`;
+      topImage = document.createElement('img');
+      topImage.src = this._weatherFrameToUrl('top', weatherCfg.top.frames?.low);
+      topImage.style.width = '100%';
+      topImage.style.height = '100%';
+      topImage.style.objectFit = 'contain';
+      topImage.style.pointerEvents = 'none';
+      topImage.draggable = false;
+  topContainer.appendChild(topImage);
+    }
 
-    const colonizerGroup = document.createElement('div');
-    colonizerGroup.style.display = 'flex';
-    colonizerGroup.style.flexDirection = 'column';
-    colonizerGroup.style.gap = `${ui.gap * 70}vh`;
+    if (weatherCfg?.bottom?.area) {
+      bottomContainer = document.createElement('div');
+      bottomContainer.style.position = 'absolute';
+      this._applyViewportRect(bottomContainer, weatherCfg.bottom.area);
+      bottomContainer.style.pointerEvents = 'auto';
+      bottomContainer.style.display = 'block';
+      bottomContainer.style.background = 'transparent';
+      if (Number.isFinite(weatherCfg.bottom.area.zIndex)) {
+        bottomContainer.style.zIndex = String(weatherCfg.bottom.area.zIndex);
+      }
 
-    const colonizerLabel = document.createElement('div');
-    colonizerLabel.textContent = 'Colonizadoras';
-    colonizerLabel.style.fontSize = `${ui.fontScale * 90}vmin`;
-    colonizerLabel.style.color = colors.uiText;
-    colonizerLabel.style.opacity = '0.85';
+      bottomImage = document.createElement('img');
+      bottomImage.src = this._weatherFrameToUrl('bottom', weatherCfg.bottom.frames?.low);
+      bottomImage.style.width = '100%';
+      bottomImage.style.height = '100%';
+      bottomImage.style.objectFit = 'contain';
+      bottomImage.style.pointerEvents = 'none';
+      bottomImage.draggable = false;
+      bottomContainer.appendChild(bottomImage);
 
-    const nonColonizerGroup = document.createElement('div');
-    nonColonizerGroup.style.display = 'flex';
-    nonColonizerGroup.style.flexDirection = 'column';
-    nonColonizerGroup.style.gap = `${ui.gap * 70}vh`;
-
-    const nonColonizerLabel = document.createElement('div');
-    nonColonizerLabel.textContent = 'No colonizadoras';
-    nonColonizerLabel.style.fontSize = `${ui.fontScale * 90}vmin`;
-    nonColonizerLabel.style.color = colors.uiText;
-    nonColonizerLabel.style.opacity = '0.85';
-
-    const makeButton = (label) => {
-      const btn = document.createElement('button');
-      btn.textContent = label;
-      btn.style.width = '100%';
-      btn.style.fontFamily = 'inherit';
-      btn.style.fontSize = `${ui.fontScale * 100}vmin`;
-      btn.style.padding = `${ui.gap * 70}vh`;
-      btn.style.border = 'none';
-      btn.style.borderRadius = `${ui.borderRadius * 80}vmin`;
-      btn.style.cursor = 'pointer';
-      btn.style.color = colors.uiText;
-      btn.style.background = colors.uiBackground;
-      btn.style.transition = 'background 0.2s ease, transform 0.2s ease';
-      btn.onmouseenter = () => {
-        btn.style.transform = 'translateY(-0.4vh)';
-        if (!btn.dataset.lockedColor) btn.style.background = colors.uiBackgroundActive;
-      };
-      btn.onmouseleave = () => {
-        btn.style.transform = 'translateY(0)';
-        if (!btn.dataset.lockedColor) btn.style.background = colors.uiBackground;
-      };
-      return btn;
-    };
-
-  const btnWaterUp = makeButton('Subir agua');
-  const btnWaterDown = makeButton('Bajar agua');
-  const btnSediment = makeButton('Sedimento');
-  const btnRemovePlant = makeButton('Quitar planta');
-
-    const registerToolButton = (type, id, button) => {
-      this._seedButtons[id] = { button, type, id };
-      button.addEventListener('click', (e) => {
-        e.preventDefault();
-        this._toggleTool(id);
+      lowerBtn = document.createElement('div');
+      lowerBtn.style.position = 'absolute';
+      lowerBtn.style.left = '0';
+      lowerBtn.style.top = '0';
+      lowerBtn.style.width = '50%';
+      lowerBtn.style.height = '100%';
+      lowerBtn.style.pointerEvents = 'auto';
+      lowerBtn.style.cursor = 'pointer';
+      lowerBtn.style.background = 'transparent';
+      lowerBtn.style.touchAction = 'manipulation';
+      lowerBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        this._setWaterLevel(this._waterLevelIndex - 1);
       });
-    };
+      bottomContainer.appendChild(lowerBtn);
 
-    btnWaterUp.addEventListener('click', (e) => {
-      e.preventDefault();
-      this._setWaterLevel(this._waterLevelIndex + 1);
-    });
-    btnWaterDown.addEventListener('click', (e) => {
-      e.preventDefault();
-      this._setWaterLevel(this._waterLevelIndex - 1);
-    });
-    btnSediment.addEventListener('click', (e) => {
-      e.preventDefault();
-      this._toggleTool('sediment');
-    });
-    btnRemovePlant.addEventListener('click', (e) => {
-      e.preventDefault();
-      this._toggleTool('remove');
-    });
+      raiseBtn = document.createElement('div');
+      raiseBtn.style.position = 'absolute';
+      raiseBtn.style.left = '50%';
+      raiseBtn.style.top = '0';
+      raiseBtn.style.width = '50%';
+      raiseBtn.style.height = '100%';
+      raiseBtn.style.pointerEvents = 'auto';
+      raiseBtn.style.cursor = 'pointer';
+      raiseBtn.style.background = 'transparent';
+      raiseBtn.style.touchAction = 'manipulation';
+      raiseBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        this._setWaterLevel(this._waterLevelIndex + 1);
+      });
+      bottomContainer.appendChild(raiseBtn);
+      root.appendChild(bottomContainer);
+    }
 
-    panel.append(btnWaterUp, btnWaterDown, btnSediment, btnRemovePlant);
-    seedPanel.appendChild(seedTitle);
-    seedPanel.appendChild(colonizerLabel);
-    seedPanel.appendChild(colonizerGroup);
-    seedPanel.appendChild(nonColonizerLabel);
-    seedPanel.appendChild(nonColonizerGroup);
+    if (topContainer) {
+      root.appendChild(topContainer);
+    }
 
-    root.appendChild(panel);
-    root.appendChild(seedPanel);
+    if (topImage || bottomImage) {
+      this._buttons.weather = {
+        topImage,
+        bottomImage,
+        lower: lowerBtn,
+        raise: raiseBtn,
+        topContainer,
+        bottomContainer
+      };
+    }
+
+  this._weatherChannels = {};
+  this._weatherAnimations = {};
+  this._weatherCurrentFrame = { top: null, bottom: null };
+    if (topImage && weatherCfg?.top) {
+      this._weatherChannels.top = {
+        image: topImage,
+        config: weatherCfg.top
+      };
+    }
+    if (bottomImage && weatherCfg?.bottom) {
+      this._weatherChannels.bottom = {
+        image: bottomImage,
+        config: weatherCfg.bottom
+      };
+    }
+
+    if (elements.sedimentButton?.image) {
+      const sedimentBtn = document.createElement('img');
+      sedimentBtn.src = resolveAsset(elements.sedimentButton.image);
+      sedimentBtn.style.position = 'absolute';
+      this._applyViewportRect(sedimentBtn, elements.sedimentButton);
+      sedimentBtn.style.pointerEvents = 'auto';
+      sedimentBtn.style.cursor = 'pointer';
+      sedimentBtn.style.userSelect = 'none';
+      sedimentBtn.style.transition = 'transform 0.15s ease, filter 0.15s ease';
+      if (Number.isFinite(elements.sedimentButton.zIndex)) {
+        sedimentBtn.style.zIndex = String(elements.sedimentButton.zIndex);
+      }
+      sedimentBtn.draggable = false;
+      sedimentBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        this._toggleTool('sediment');
+      });
+      root.appendChild(sedimentBtn);
+      this._buttons.sediment = sedimentBtn;
+    }
+
+    if (elements.removeButton?.image) {
+      const removeBtn = document.createElement('img');
+      removeBtn.src = resolveAsset(elements.removeButton.image);
+      removeBtn.style.position = 'absolute';
+      this._applyViewportRect(removeBtn, elements.removeButton);
+      removeBtn.style.pointerEvents = 'auto';
+      removeBtn.style.cursor = 'pointer';
+      removeBtn.style.userSelect = 'none';
+      removeBtn.style.transition = 'transform 0.15s ease, filter 0.15s ease';
+      if (Number.isFinite(elements.removeButton.zIndex)) {
+        removeBtn.style.zIndex = String(elements.removeButton.zIndex);
+      }
+      removeBtn.draggable = false;
+      removeBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        this._toggleTool('remove');
+      });
+      root.appendChild(removeBtn);
+      this._buttons.remove = removeBtn;
+    }
+
+    if (elements.seeder?.image) {
+      const seederCfg = elements.seeder;
+      const seederContainer = document.createElement('div');
+      seederContainer.style.position = 'absolute';
+      this._applyViewportRect(seederContainer, seederCfg);
+      seederContainer.style.pointerEvents = 'auto';
+      seederContainer.style.backgroundImage = `url(${resolveAsset(seederCfg.image)})`;
+      seederContainer.style.backgroundSize = '100% 100%';
+      seederContainer.style.backgroundRepeat = 'no-repeat';
+      seederContainer.style.display = 'block';
+      seederContainer.style.transition = 'transform 0.15s ease';
+      if (Number.isFinite(seederCfg.zIndex)) {
+        seederContainer.style.zIndex = String(seederCfg.zIndex);
+      }
+      root.appendChild(seederContainer);
+
+      const segments = Math.max(1, seederCfg.segments || 1);
+      const seedOrder = Array.isArray(seederCfg.seedOrder) ? seederCfg.seedOrder : [];
+      const segmentHeight = 100 / segments;
+      const seederMaskUrl = resolveAsset(seederCfg.image);
+
+      for (let i = 0; i < segments; i++) {
+        const seedId = seedOrder[i] || null;
+        const seedDef = seedId ? this._seedCatalog.get(seedId) : null;
+        const posPct = segments > 1 ? (i / (segments - 1)) * 100 : 0;
+
+  const segment = document.createElement('div');
+  segment.style.position = 'absolute';
+        segment.style.left = '0';
+        segment.style.width = '100%';
+        segment.style.height = `${segmentHeight}%`;
+        segment.style.top = `${i * segmentHeight}%`;
+        segment.style.display = 'flex';
+        segment.style.alignItems = 'center';
+        segment.style.justifyContent = 'center';
+        segment.style.pointerEvents = seedDef ? 'auto' : 'none';
+        segment.style.cursor = seedDef ? 'pointer' : 'default';
+        segment.style.transition = 'transform 0.15s ease, box-shadow 0.15s ease';
+  segment.style.overflow = 'hidden';
+        seederContainer.appendChild(segment);
+
+        let overlayEl = null;
+        if (seedId) {
+          overlayEl = document.createElement('div');
+          overlayEl.style.position = 'absolute';
+          overlayEl.style.left = '0';
+          overlayEl.style.top = '0';
+          overlayEl.style.width = '100%';
+          overlayEl.style.height = '100%';
+          overlayEl.style.pointerEvents = 'none';
+          overlayEl.style.opacity = '0';
+          overlayEl.style.transition = 'opacity 0.18s ease';
+          overlayEl.style.backgroundColor = 'rgba(32, 40, 48, 0.55)';
+          this._applySegmentMask(overlayEl, seederMaskUrl, segments, posPct);
+          overlayEl.style.zIndex = '0';
+          segment.appendChild(overlayEl);
+        }
+
+        let highlightEl = null;
+        if (seedId) {
+          highlightEl = document.createElement('div');
+          highlightEl.style.position = 'absolute';
+          highlightEl.style.left = '0';
+          highlightEl.style.top = '0';
+          highlightEl.style.width = '100%';
+          highlightEl.style.height = '100%';
+          highlightEl.style.pointerEvents = 'none';
+          highlightEl.style.opacity = '0';
+          highlightEl.style.transition = 'opacity 0.2s ease';
+          highlightEl.style.backgroundColor = 'rgba(255, 214, 102, 0.9)';
+          this._applySegmentMask(highlightEl, seederMaskUrl, segments, posPct);
+          highlightEl.style.filter = 'brightness(1.35) saturate(1.2)';
+          highlightEl.style.mixBlendMode = 'screen';
+          highlightEl.style.transformOrigin = 'center';
+          highlightEl.style.zIndex = '1';
+          segment.appendChild(highlightEl);
+        }
+
+        let imageEl = null;
+        if (seedId) {
+          const seedImageFile = elements.seedImages?.[seedId];
+          if (seedImageFile) {
+            imageEl = document.createElement('img');
+            imageEl.src = resolveAsset(seedImageFile);
+            imageEl.style.maxWidth = '90%';
+            imageEl.style.maxHeight = '90%';
+            imageEl.style.objectFit = 'contain';
+            imageEl.style.pointerEvents = 'none';
+            imageEl.style.transition = 'transform 0.18s ease, filter 0.18s ease, opacity 0.18s ease';
+            imageEl.style.zIndex = '2';
+            imageEl.draggable = false;
+            segment.appendChild(imageEl);
+          }
+        }
+
+        if (seedDef && seedId) {
+          segment.dataset.seedId = seedId;
+          segment.title = seedDef.label || seedId;
+          segment.addEventListener('click', (event) => {
+            event.preventDefault();
+            this._toggleTool(seedId);
+          });
+          this._seedButtons[seedId] = { segment, image: imageEl, overlay: overlayEl, highlight: highlightEl };
+        }
+      }
+
+      this._buttons.seeder = seederContainer;
+    }
+
+    if (elements.logo?.image) {
+      const logo = document.createElement('img');
+      logo.src = resolveAsset(elements.logo.image);
+      logo.style.position = 'absolute';
+      this._applyViewportRect(logo, elements.logo);
+      logo.style.pointerEvents = 'none';
+      logo.style.objectFit = 'contain';
+      if (Number.isFinite(elements.logo.zIndex)) {
+        logo.style.zIndex = String(elements.logo.zIndex);
+      }
+      logo.draggable = false;
+      root.appendChild(logo);
+    }
 
     const goalMessage = document.createElement('div');
     const goalUi = ui.goalMessage || {};
@@ -2762,7 +3023,7 @@ export class SimuladorScene extends BaseScene {
     cursorEl.style.display = 'none';
     cursorEl.style.background = colors.cursorDisabled;
     cursorEl.style.border = `${(cursorCfg.borderWidthVW ?? 0.14)}vw solid rgba(0,0,0,0.35)`;
-    const cursorTransition = (cursorCfg.transitionSeconds ?? 0.12);
+    const cursorTransition = cursorCfg.transitionSeconds ?? 0.12;
     cursorEl.style.transition = `background ${cursorTransition}s ease, box-shadow ${cursorTransition}s ease, opacity ${cursorTransition}s ease`;
     cursorEl.style.opacity = '0';
     root.appendChild(cursorEl);
@@ -2770,53 +3031,24 @@ export class SimuladorScene extends BaseScene {
 
     this.app.root.appendChild(root);
     this._uiRoot = root;
-    this._buttons = {
-      panel,
-      seedPanel,
-      waterUp: btnWaterUp,
-      waterDown: btnWaterDown,
-      sediment: btnSediment,
-      remove: btnRemovePlant
-    };
 
     if (this.app?.canvas) {
       this._originalCanvasCursor = this.app.canvas.style.cursor;
       this.app.canvas.style.cursor = 'none';
     }
 
-    this._seedButtons = {};
-    const { seeds } = this.params;
-    const registerSeedGroup = (group, container, type) => {
-      group.forEach((seed) => {
-        const btn = makeButton(seed.label);
-        btn.dataset.seedId = seed.id;
-        container.appendChild(btn);
-        this._seedCatalog.set(seed.id, seed);
-        registerToolButton(type, seed.id, btn);
-      });
-    };
-
-    registerSeedGroup(seeds.colonizers || [], colonizerGroup, 'seed');
-    registerSeedGroup(seeds.nonColonizers || [], nonColonizerGroup, 'seed');
-
     this._syncWaterButtons();
     this._syncToolButtons();
+    this._updateGoalMessage();
+
+    const initialState = this._indexToWeatherState(this._waterLevelIndex);
+    this._setWeatherVisualInstant(initialState);
   }
 
   _updateUILayout(width, height) {
-    if (!this._buttons.panel) return;
-    const { ui } = this.params;
-    this._buttons.panel.style.left = `${ui.panelLeft * 100}vw`;
-    this._buttons.panel.style.top = `${ui.panelTop * 100}vh`;
-    this._buttons.panel.style.minWidth = `${(ui.panelMinWidth ?? ui.panelWidth * 0.6) * 100}vw`;
-    this._buttons.panel.style.maxWidth = `${(ui.panelMaxWidth ?? ui.panelWidth) * 100}vw`;
-    if (this._buttons.seedPanel) {
-      this._buttons.seedPanel.style.left = 'auto';
-      this._buttons.seedPanel.style.right = `${ui.panelLeft * 100}vw`;
-      this._buttons.seedPanel.style.top = `${ui.panelTop * 100}vh`;
-      this._buttons.seedPanel.style.minWidth = `${(ui.seedPanelMinWidth ?? ui.panelWidth * 0.7) * 100}vw`;
-      this._buttons.seedPanel.style.maxWidth = `${(ui.seedPanelMaxWidth ?? ui.panelWidth) * 100}vw`;
-    }
+    // Layout uses viewport-relative units, so dynamic resizing is not required here.
+    void width;
+    void height;
   }
 
   _updateParticleSize(width, height) {
@@ -2826,40 +3058,507 @@ export class SimuladorScene extends BaseScene {
   }
 
   _syncWaterButtons() {
-    if (!this._buttons.waterUp) return;
-    this._buttons.waterUp.disabled = this._waterLevelIndex >= 2;
-    this._buttons.waterDown.disabled = this._waterLevelIndex <= 0;
-    this._buttons.waterUp.style.opacity = this._buttons.waterUp.disabled ? '0.45' : '1';
-    this._buttons.waterDown.style.opacity = this._buttons.waterDown.disabled ? '0.45' : '1';
+    const weatherButtons = this._buttons.weather;
+    if (!weatherButtons) return;
+    const atLow = this._waterLevelIndex <= 0;
+    const atHigh = this._waterLevelIndex >= 2;
+
+    if (weatherButtons.lower) {
+      weatherButtons.lower.style.pointerEvents = atLow ? 'none' : 'auto';
+      weatherButtons.lower.style.opacity = atLow ? '0.45' : '1';
+      weatherButtons.lower.style.cursor = atLow ? 'default' : 'pointer';
+    }
+
+    if (weatherButtons.raise) {
+      weatherButtons.raise.style.pointerEvents = atHigh ? 'none' : 'auto';
+      weatherButtons.raise.style.opacity = atHigh ? '0.45' : '1';
+      weatherButtons.raise.style.cursor = atHigh ? 'default' : 'pointer';
+    }
+  }
+
+  _applyViewportRect(element, rect) {
+    if (!element || !rect) return;
+    if (typeof rect.leftPct === 'number') {
+      element.style.left = `${rect.leftPct}vw`;
+    }
+    if (typeof rect.topPct === 'number') {
+      element.style.top = `${rect.topPct}vh`;
+    }
+    if (typeof rect.widthPct === 'number') {
+      element.style.width = `${rect.widthPct}vw`;
+    }
+    if (typeof rect.heightPct === 'number') {
+      element.style.height = `${rect.heightPct}vh`;
+    }
+  }
+
+  _applySegmentMask(element, maskUrl, segments, posPct) {
+    if (!element || !maskUrl) return;
+    const size = `100% ${Math.max(1, segments) * 100}%`;
+    const position = `center ${posPct}%`;
+    element.style.maskImage = `url(${maskUrl})`;
+    element.style.webkitMaskImage = `url(${maskUrl})`;
+    element.style.maskSize = size;
+    element.style.webkitMaskSize = size;
+    element.style.maskPosition = position;
+    element.style.webkitMaskPosition = position;
+    element.style.maskRepeat = 'no-repeat';
+    element.style.webkitMaskRepeat = 'no-repeat';
+  }
+
+  _indexToWeatherState(index) {
+    if (index >= 2) return 'high';
+    if (index === 1) return 'medium';
+    return 'low';
+  }
+
+  _setWeatherVisualInstant(state) {
+    if (!this._weatherConfig) {
+      this._weatherState = state;
+      return;
+    }
+
+    this._clearWeatherAnimation(null, { resolveCancelled: false });
+
+    const topPlan = this._getWeatherPlan('top', state, state);
+    const bottomPlan = this._getWeatherPlan('bottom', state, state);
+
+    if (topPlan) {
+      if (Number.isFinite(topPlan.finalFrame)) {
+        this._setWeatherFrame('top', topPlan.finalFrame);
+      }
+      if (topPlan.loop) {
+        const loopFps = topPlan.loop.fps ?? Math.max(1, this._weatherConfig.fps ?? 25);
+        this._startWeatherLoop('top', topPlan.loop.start, topPlan.loop.end, loopFps);
+      }
+    }
+
+    if (bottomPlan && Number.isFinite(bottomPlan.finalFrame)) {
+      this._setWeatherFrame('bottom', bottomPlan.finalFrame);
+    }
+
+    this._weatherState = state;
+  }
+
+  _queueWeatherStateChange(fromState, toState) {
+    if (!this._weatherConfig || (!this._weatherChannels.top && !this._weatherChannels.bottom)) {
+      this._weatherState = toState;
+      return;
+    }
+    if (!this._weatherTransitionPromise) {
+      this._weatherTransitionPromise = Promise.resolve();
+    }
+    this._weatherTransitionPromise = this._weatherTransitionPromise
+      .then(() => this._transitionWeatherState(fromState, toState))
+      .catch(() => {});
+  }
+
+  async _transitionWeatherState(fromState, toState) {
+    if (!this._weatherConfig || (!this._weatherChannels.top && !this._weatherChannels.bottom)) {
+      this._weatherState = toState;
+      return;
+    }
+
+    const transitions = [];
+    const topPlan = this._getWeatherPlan('top', fromState, toState);
+    if (topPlan) {
+      transitions.push(this._executeWeatherPlan('top', topPlan));
+    }
+    const bottomPlan = this._getWeatherPlan('bottom', fromState, toState);
+    if (bottomPlan) {
+      transitions.push(this._executeWeatherPlan('bottom', bottomPlan));
+    }
+
+    if (transitions.length) {
+      await Promise.all(transitions);
+    }
+
+    this._weatherState = toState;
+  }
+
+  _getWeatherPlan(channelKey, fromState, toState) {
+    if (!this._weatherConfig) return null;
+    const channelCfg = this._weatherConfig[channelKey];
+    if (!channelCfg) return null;
+
+    const normalize = (state) => {
+      if (state === 'medium') return 'medium';
+      if (state === 'high') return 'high';
+      return 'low';
+    };
+
+    const from = normalize(fromState);
+    const to = normalize(toState);
+    const fpsDefault = Math.max(1, this._weatherConfig.fps ?? 25);
+    const plan = { sequences: [], finalFrame: undefined, loop: null, fps: fpsDefault };
+    const addSequence = (start, end) => {
+      if (!Number.isFinite(start) || !Number.isFinite(end)) return;
+      const s = Math.round(start);
+      const e = Math.round(end);
+      if (s === e) return;
+      plan.sequences.push({ start: s, end: e, fps: fpsDefault });
+    };
+
+    if (channelKey === 'top') {
+      const frames = channelCfg.frames || {};
+      const low = frames.low;
+      const medium = frames.medium;
+      const highTransition = frames.highTransitionStart ?? frames.highLoopStart ?? medium ?? low;
+      const loopStart = frames.highLoopStart ?? highTransition;
+      const loopEnd = frames.highLoopEnd ?? loopStart;
+      const hasLoop = Number.isFinite(loopStart) && Number.isFinite(loopEnd);
+
+      if (!Number.isFinite(low) || !Number.isFinite(medium)) {
+        return null;
+      }
+
+      if (from === to) {
+        if (to === 'high' && hasLoop) {
+          plan.finalFrame = Math.round(loopStart);
+          plan.loop = { start: Math.round(loopStart), end: Math.round(loopEnd), fps: fpsDefault };
+        } else if (to === 'medium') {
+          plan.finalFrame = Math.round(medium);
+        } else {
+          plan.finalFrame = Math.round(low);
+        }
+        return plan;
+      }
+
+      let finalFrame;
+      let loop = null;
+      const path = `${from}->${to}`;
+      switch (path) {
+        case 'low->medium':
+          addSequence(low, medium);
+          finalFrame = medium;
+          break;
+        case 'medium->low':
+          addSequence(medium, low);
+          finalFrame = low;
+          break;
+        case 'medium->high':
+          addSequence(medium, highTransition);
+          if (hasLoop) {
+            loop = { start: Math.round(loopStart), end: Math.round(loopEnd), fps: fpsDefault };
+            finalFrame = loop.start;
+          } else {
+            finalFrame = highTransition;
+          }
+          break;
+        case 'low->high':
+          addSequence(low, medium);
+          addSequence(medium, highTransition);
+          if (hasLoop) {
+            loop = { start: Math.round(loopStart), end: Math.round(loopEnd), fps: fpsDefault };
+            finalFrame = loop.start;
+          } else {
+            finalFrame = highTransition;
+          }
+          break;
+        case 'high->medium':
+          addSequence(loopStart, medium);
+          finalFrame = medium;
+          break;
+        case 'high->low':
+          addSequence(loopStart, medium);
+          addSequence(medium, low);
+          finalFrame = low;
+          break;
+        default:
+          finalFrame = to === 'medium' ? medium : low;
+          break;
+      }
+
+      if (Number.isFinite(finalFrame)) {
+        plan.finalFrame = Math.round(finalFrame);
+      }
+      if (loop) {
+        plan.loop = loop;
+      }
+
+      if (!plan.sequences.length && !Number.isFinite(plan.finalFrame) && !plan.loop) {
+        return null;
+      }
+      return plan;
+    }
+
+    if (channelKey === 'bottom') {
+      const frames = channelCfg.frames || {};
+      const low = frames.low;
+      const medium = frames.medium;
+      const high = frames.high;
+      if (!Number.isFinite(low) || !Number.isFinite(medium) || !Number.isFinite(high)) {
+        return null;
+      }
+
+      if (from === to) {
+        const final = to === 'high' ? high : to === 'medium' ? medium : low;
+        plan.finalFrame = Math.round(final);
+        return plan;
+      }
+
+      let finalFrame;
+      const path = `${from}->${to}`;
+      switch (path) {
+        case 'low->medium':
+          addSequence(low, medium);
+          finalFrame = medium;
+          break;
+        case 'medium->low':
+          addSequence(medium, low);
+          finalFrame = low;
+          break;
+        case 'medium->high':
+          addSequence(medium, high);
+          finalFrame = high;
+          break;
+        case 'low->high':
+          addSequence(low, medium);
+          addSequence(medium, high);
+          finalFrame = high;
+          break;
+        case 'high->medium':
+          addSequence(high, medium);
+          finalFrame = medium;
+          break;
+        case 'high->low':
+          addSequence(high, medium);
+          addSequence(medium, low);
+          finalFrame = low;
+          break;
+        default:
+          finalFrame = to === 'high' ? high : to === 'medium' ? medium : low;
+          break;
+      }
+
+      if (Number.isFinite(finalFrame)) {
+        plan.finalFrame = Math.round(finalFrame);
+      }
+
+      if (!plan.sequences.length && !Number.isFinite(plan.finalFrame)) {
+        return null;
+      }
+      return plan;
+    }
+
+    return null;
+  }
+
+  async _executeWeatherPlan(channelKey, plan) {
+    if (!plan) return;
+    this._clearWeatherAnimation(channelKey, { resolveCancelled: true });
+
+    if (Array.isArray(plan.sequences) && plan.sequences.length) {
+      for (let i = 0; i < plan.sequences.length; i++) {
+        const seq = plan.sequences[i];
+        await this._playWeatherRange(channelKey, seq.start, seq.end, seq.fps ?? plan.fps);
+      }
+    }
+
+    if (Number.isFinite(plan.finalFrame)) {
+      this._setWeatherFrame(channelKey, plan.finalFrame);
+    }
+
+    if (plan.loop) {
+      this._startWeatherLoop(channelKey, plan.loop.start, plan.loop.end, plan.loop.fps ?? plan.fps);
+    }
+  }
+
+  _playWeatherRange(channelKey, start, end, fps) {
+    const channel = this._weatherChannels?.[channelKey];
+    if (!channel?.image) {
+      return Promise.resolve();
+    }
+    const s = Math.round(start ?? 0);
+    const e = Math.round(end ?? s);
+    if (s === e) {
+      this._setWeatherFrame(channelKey, s);
+      return Promise.resolve();
+    }
+    const step = s < e ? 1 : -1;
+    const frameDuration = 1000 / (Math.max(1, fps ?? this._weatherConfig?.fps ?? 25) * WEATHER_PLAYBACK_SPEED);
+    const frameJump = Math.max(1, Math.round(WEATHER_PLAYBACK_SPEED));
+
+    return new Promise((resolve) => {
+      const anim = { timerId: null, resolve, type: 'sequence' };
+      let current = s;
+
+      const tick = () => {
+        this._setWeatherFrame(channelKey, current);
+        if (current === e) {
+          if (this._weatherAnimations[channelKey] === anim) {
+            this._weatherAnimations[channelKey] = null;
+          }
+          if (typeof anim.resolve === 'function') {
+            const done = anim.resolve;
+            anim.resolve = null;
+            done();
+          }
+          return;
+        }
+        if (step > 0) {
+          current = Math.min(current + step * frameJump, e);
+        } else {
+          current = Math.max(current + step * frameJump, e);
+        }
+        anim.timerId = setTimeout(tick, frameDuration);
+      };
+
+      this._weatherAnimations[channelKey] = anim;
+      tick();
+    });
+  }
+
+  _startWeatherLoop(channelKey, start, end, fps) {
+    const channel = this._weatherChannels?.[channelKey];
+    if (!channel?.image) return;
+    const frameDuration = 1000 / (Math.max(1, fps ?? this._weatherConfig?.fps ?? 25) * WEATHER_PLAYBACK_SPEED);
+    const s = Math.round(start ?? 0);
+    const e = Math.round(end ?? s);
+    if (s === e) {
+      this._setWeatherFrame(channelKey, s);
+      return;
+    }
+
+    const step = s < e ? 1 : -1;
+    let current = s;
+    const anim = { timerId: null, loop: true, type: 'loop' };
+    const frameJump = Math.max(1, Math.round(WEATHER_PLAYBACK_SPEED));
+    const range = Math.abs(e - s) + 1;
+
+    const tick = () => {
+      this._setWeatherFrame(channelKey, current);
+      if (step > 0) {
+        let next = current + step * frameJump;
+        if (next > e) {
+          const offset = (next - s) % range;
+          next = s + offset;
+        }
+        current = next;
+      } else {
+        let next = current + step * frameJump;
+        if (next < e) {
+          const offset = (s - next) % range;
+          next = s - offset;
+          if (next < e) {
+            next = s;
+          }
+        }
+        current = next;
+      }
+      anim.timerId = setTimeout(tick, frameDuration);
+    };
+
+    this._weatherAnimations[channelKey] = anim;
+    tick();
+  }
+
+  _clearWeatherAnimation(channelKey = null, options = {}) {
+    const { resolveCancelled = true } = options;
+    if (!this._weatherAnimations) return;
+    const keys = channelKey ? [channelKey] : Object.keys(this._weatherAnimations);
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i];
+      const anim = this._weatherAnimations[key];
+      if (!anim) continue;
+      if (anim.timerId !== null) {
+        clearTimeout(anim.timerId);
+        anim.timerId = null;
+      }
+      if (resolveCancelled && typeof anim.resolve === 'function') {
+        const resolver = anim.resolve;
+        anim.resolve = null;
+        resolver();
+      }
+      this._weatherAnimations[key] = null;
+    }
+  }
+
+  _weatherFrameToUrl(channelKey, frame) {
+    if (!Number.isFinite(frame)) return '';
+    const cfg = this._weatherChannels?.[channelKey]?.config || this._weatherConfig?.[channelKey];
+    if (!cfg) return '';
+    const digits = Math.max(1, cfg.frameDigits ?? 1);
+    const prefix = cfg.framePrefix || '';
+    const extension = cfg.frameExtension || '.png';
+    const folderPath = cfg.folder
+      ? this._normalizeAssetPath(this._uiAssetBasePath, cfg.folder)
+      : this._uiAssetBasePath;
+    const frameNumber = Math.max(0, Math.round(frame ?? 0));
+    const filename = `${prefix}${frameNumber.toString().padStart(digits, '0')}${extension}`;
+    return this._normalizeAssetPath(folderPath, filename);
+  }
+
+  _setWeatherFrame(channelKey, frame) {
+    if (!Number.isFinite(frame)) return;
+    if (!this._weatherCurrentFrame) {
+      this._weatherCurrentFrame = {};
+    }
+    const channel = this._weatherChannels?.[channelKey];
+    if (!channel?.image) return;
+    const rounded = Math.round(frame);
+    if (this._weatherCurrentFrame[channelKey] === rounded) {
+      return;
+    }
+    const url = this._weatherFrameToUrl(channelKey, rounded);
+    if (!url) return;
+    channel.image.src = url;
+    this._weatherCurrentFrame[channelKey] = rounded;
   }
 
   _syncToolButtons() {
-    const { colors, ui } = this.params;
     const activeId = this._activeTool;
-    const applyButtonStyles = (btn, isActive) => {
-      if (!btn) return;
-      if (isActive) {
-        btn.dataset.lockedColor = '1';
-        btn.style.background = colors.uiAccent;
-        btn.style.color = '#0a223d';
-        btn.style.boxShadow = `0 0 ${(ui.gap * 200).toFixed(3)}vh rgba(255, 209, 102, 0.55)`;
-      } else {
-        delete btn.dataset.lockedColor;
-        btn.style.background = colors.uiBackground;
-        btn.style.color = colors.uiText;
-        btn.style.boxShadow = `0 0 ${(ui.gap * 120).toFixed(3)}vh rgba(0,0,0,${ui.shadowOpacity * 0.6})`;
-      }
+
+    const highlightButton = (element, isActive) => {
+      if (!element) return;
+      element.style.transform = isActive ? 'scale(1.03)' : 'scale(1)';
+      element.style.filter = isActive ? 'drop-shadow(0 0 1.4vw rgba(255, 209, 102, 0.85))' : 'none';
     };
 
-    applyButtonStyles(this._buttons.sediment, activeId === 'sediment');
-    applyButtonStyles(this._buttons.remove, activeId === 'remove');
+    highlightButton(this._buttons.sediment, activeId === 'sediment');
+    highlightButton(this._buttons.remove, activeId === 'remove');
 
-    Object.values(this._seedButtons).forEach(({ button, id }) => {
-      const available = this._availableSeedIds.has(id);
-      button.disabled = !available;
-      button.style.opacity = available ? '1' : '0.35';
-      applyButtonStyles(button, activeId === id);
-    });
+    const unavailableFilter = 'grayscale(100%) brightness(0.65)';
+    const seedIds = Object.keys(this._seedButtons);
+    for (let i = 0; i < seedIds.length; i++) {
+      const seedId = seedIds[i];
+      const entry = this._seedButtons[seedId];
+      if (!entry) continue;
+      const { segment, image, overlay, highlight } = entry;
+      const available = this._availableSeedIds.has(seedId);
+      const isActive = activeId === seedId;
+
+      if (segment) {
+        segment.style.pointerEvents = available ? 'auto' : 'none';
+        segment.style.cursor = available ? 'pointer' : 'default';
+        segment.style.transform = 'scale(1)';
+        segment.style.boxShadow = 'none';
+        segment.style.opacity = '1';
+        segment.style.filter = 'none';
+      }
+
+      if (overlay) {
+        overlay.style.opacity = available ? '0' : '0.85';
+      }
+
+      if (highlight) {
+        highlight.style.opacity = available && isActive ? '1' : '0';
+        highlight.style.transform = available && isActive ? 'scale(1.03)' : 'scale(1)';
+      }
+
+      if (image) {
+        const filters = [];
+        if (!available) {
+          filters.push(unavailableFilter);
+        }
+        if (available && isActive) {
+          filters.push('saturate(1.2) brightness(1.05)');
+        }
+        image.style.filter = filters.length ? filters.join(' ') : 'none';
+        image.style.opacity = available ? '1' : '0.6';
+        image.style.transform = available && isActive ? 'scale(1.05)' : 'scale(1)';
+      }
+    }
 
     if (activeId !== 'sediment') {
       this._pointerDown = false;
@@ -2879,6 +3578,7 @@ export class SimuladorScene extends BaseScene {
   }
 
   _destroyUI() {
+    this._clearWeatherAnimation(null, { resolveCancelled: false });
     if (this._uiRoot && this._uiRoot.parentElement) {
       this._uiRoot.parentElement.removeChild(this._uiRoot);
     }
@@ -2894,14 +3594,26 @@ export class SimuladorScene extends BaseScene {
     this._goalMessageEl = null;
     this._lastPointerInfo = null;
     this._activeTool = null;
+    this._weatherChannels = {};
+    this._weatherAnimations = {};
+    this._weatherCurrentFrame = { top: null, bottom: null };
+    this._weatherConfig = null;
+    this._weatherTransitionPromise = Promise.resolve();
+    this._weatherState = 'low';
+    this._uiAssetBasePath = this.params.ui?.elements?.basePath || '';
     this._removeMessageEl();
   }
 
   _setWaterLevel(index) {
     const clamped = clamp(index, 0, 2);
+    const previousIndex = this._waterLevelIndex;
     this._waterLevelIndex = clamped;
     this._targetWaterLevel = [this._waterLevels.low, this._waterLevels.medium, this._waterLevels.high][clamped];
     this._syncWaterButtons();
+    this._queueWeatherStateChange(
+      this._indexToWeatherState(previousIndex),
+      this._indexToWeatherState(clamped)
+    );
   }
 
   _bindEvents() {
