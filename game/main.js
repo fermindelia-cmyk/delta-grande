@@ -17,11 +17,13 @@ const app = new App('#app');
 
 
 // UI overlays (hud)
-UI.init({ app, clockEl: document.getElementById('clock'),
+UI.init({
+app,
 inventoryEl: document.getElementById('inventoryPanel'),
 achievementsEl: document.getElementById('achievementsPanel'),
 videoOverlayEl: document.getElementById('videoOverlay'),
-videoEl: document.getElementById('labVideo') });
+videoEl: document.getElementById('labVideo')
+});
 
 
 // Global router + scenes

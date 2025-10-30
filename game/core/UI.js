@@ -2,20 +2,26 @@ import { Time } from './Time.js';
 import { EventBus } from './EventBus.js';
 
 export const UI = new class{
-  init({ app, clockEl, inventoryEl, achievementsEl, videoOverlayEl, videoEl }){
+  init({ app, clockEl = null, inventoryEl, achievementsEl, videoOverlayEl, videoEl }){
     this.app = app;
-    this.clockEl = clockEl;
+    this.clockEl = clockEl || null;
     this.inventoryEl = inventoryEl;
     this.achievementsEl = achievementsEl;
     this.videoOverlayEl = videoOverlayEl;
     this.videoEl = videoEl;
+    if (this._clockInterval) {
+      clearInterval(this._clockInterval);
+    }
+    this._clockInterval = null;
 
-    // Reloj local
-    this.clockEl.textContent = '--:--';
-    setInterval(()=>{
-      const d = Time.now();
-      this.clockEl.textContent = d.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
-    }, 1000);
+    if (this.clockEl) {
+      // Reloj local
+      this.clockEl.textContent = '--:--';
+      this._clockInterval = setInterval(()=>{
+        const d = Time.now();
+        this.clockEl.textContent = d.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
+      }, 1000);
+    }
 
     // Cerrar overlay al click “afuera” o con ESC
     this.videoOverlayEl.addEventListener('click', (e)=>{

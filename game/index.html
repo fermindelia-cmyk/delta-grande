@@ -45,26 +45,24 @@
       display: flex;
       gap: 8px;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
       pointer-events: auto;
     }
 
-    .pill {
-      background: #0009;
-      border: 1px solid #ffffff22;
-      border-radius: 999px;
-      padding: 6px 10px;
-      font-size: 14px;
+    .scene-buttons {
+      display: flex;
+      gap: 6px;
     }
 
     .btn {
       background: #1a2230;
       border: 1px solid #2a3547;
-      border-radius: 10px;
-      padding: 8px 12px;
+      border-radius: 8px;
+      padding: 4px 8px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 10px;
       color: var(--fg);
+      line-height: 1.1;
     }
 
     .btn:hover {
@@ -179,8 +177,7 @@
 
   <div class="hud" id="hud">
     <div class="topbar">
-      <div class="pill" id="clock">--:--</div>
-      <div style="display:flex; gap:8px">
+      <div class="scene-buttons">
         <button class="btn" data-nav="#lab">Laboratorio</button>
         <button class="btn" data-nav="#recorrido">Recorrido</button>
         <button class="btn" data-nav="#simulador">Simulador</button>
