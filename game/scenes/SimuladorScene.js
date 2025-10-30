@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { SimplexNoise } from 'three/addons/math/SimplexNoise.js';
+import { AssetLoader } from '../core/AssetLoader.js';
 import { BaseScene } from '../core/BaseScene.js';
 
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
@@ -68,6 +69,57 @@ export const DEFAULT_PARAMS = Object.freeze({
     cursorSeed: '#68c08b',
     cursorRemove: '#e76f51',
     cursorDisabled: '#8a96a8'
+  }),
+  audio: Object.freeze({
+    basePath: '/game-assets/simulador/sound',
+    sediment: Object.freeze({
+      file: 'Sedimento.mp3',
+      volume: 1,
+      delay: 0.7
+    }),
+    waterRaise: Object.freeze({
+      file: 'Sube el agua.mp3',
+      volume: 0.4,
+      delay: 0
+    }),
+    waterLower: Object.freeze({
+      file: 'Desenso de agua.mp3',
+      volume: 0.4,
+      delay: 0
+    }),
+    seedPlant: Object.freeze({
+      files: Object.freeze(['Semilla 1.mp3', 'Semilla 2.mp3', 'Semilla 3.mp3']),
+      volume: 1,
+      delay: 0
+    }),
+    ambient: Object.freeze({
+      file: 'Sonido general naturaleza simulador.mp3',
+      volume: 1,
+      delay: 0,
+      loop: true
+    }),
+    plantTransitions: Object.freeze({
+      seedToSprout: Object.freeze({
+        file: 'De semilla a brote.mp3',
+        volume: 0.2,
+        delay: 0
+      }),
+      sproutToSapling: Object.freeze({
+        file: 'Brote a arbolito.mp3',
+        volume: 0.2,
+        delay: 0
+      }),
+      saplingToTree: Object.freeze({
+        file: 'Arbolito a arbol.mp3',
+        volume: 0.2,
+        delay: 0
+      }),
+      treeToFinal: Object.freeze({
+        file: 'Arbol a Arbol final.mp3',
+        volume: 0.2,
+        delay: 0
+      })
+    })
   }),
   water: Object.freeze({
     surfaceSegments: 200,
@@ -544,14 +596,18 @@ export class SimuladorScene extends BaseScene {
     this._seedMaterialCache = new Map();
     this._plantSequenceCache = new Map();
     this._plantMaterialCache = new Map();
-  this._removeEnabled = false;
+    this._removeEnabled = false;
+
+    this._audioTimers = new Set();
+    this._ambientAudio = null;
+  this._transientAudios = new Set();
 
     this._background = null;
     this._backgroundTexture = null;
-  this._cloudGroup = null;
-  this._clouds = [];
-  this._cloudTextures = new Map();
-  this._cloudSpawnTimer = 0;
+    this._cloudGroup = null;
+    this._clouds = [];
+    this._cloudTextures = new Map();
+    this._cloudSpawnTimer = 0;
     this._sandTexture = null;
     this._sandTileRatio = this.params.riverbed?.texture?.tileWidthRatio ?? 0.1;
 
@@ -574,14 +630,14 @@ export class SimuladorScene extends BaseScene {
     this._messageTimer = null;
     this._messageHideTimer = null;
     this._stageAdvanceTimer = null;
-  this._hintCycle = null;
-  this._hintShowTimer = null;
-  this._hintDelayTimer = null;
-  this._goalMessageHideTimer = null;
-  this._goalMessageTransition = null;
-  this._goalMessageTransitionDurationMs = 0;
-  this._goalMessageHiddenTransform = 'translate(-50%, 2vw)';
-  this._goalMessageVisibleTransform = 'translate(-50%, 0)';
+    this._hintCycle = null;
+    this._hintShowTimer = null;
+    this._hintDelayTimer = null;
+    this._goalMessageHideTimer = null;
+    this._goalMessageTransition = null;
+    this._goalMessageTransitionDurationMs = 0;
+    this._goalMessageHiddenTransform = 'translate(-50%, 2vw)';
+    this._goalMessageVisibleTransform = 'translate(-50%, 0)';
 
     this._stages = this.params.progress.stages;
     this._currentStageIndex = 0;
@@ -594,7 +650,7 @@ export class SimuladorScene extends BaseScene {
     this._weatherState = 'low';
     this._weatherCurrentFrame = { top: null, bottom: null };
     this._uiAssetBasePath = this.params.ui?.elements?.basePath || '';
-  this._uiFontFamily = null;
+    this._uiFontFamily = null;
     this._loadingOverlay = null;
     this._loadingOverlayHideTimer = null;
     this._loadingLogoUrl = null;
@@ -634,6 +690,7 @@ export class SimuladorScene extends BaseScene {
       this._createSedimentSystem();
       this._createSeedEffectSystem();
       this._createUI();
+  this._initAudio();
       this._initProgression();
       this._bindEvents();
 
@@ -650,6 +707,7 @@ export class SimuladorScene extends BaseScene {
     this._isReady = false;
     this._hideLoadingOverlay(true);
     this._unbindEvents();
+    this._disposeAudio();
     this._destroyUI();
     this._clearMessageTimer();
     this._clearStageAdvanceTimer();
@@ -1830,6 +1888,10 @@ export class SimuladorScene extends BaseScene {
     }
 
     let entry = this._plantSequenceCache.get(cacheKey);
+    if (entry && (entry.status === 'evicted' || entry.status === 'disposed')) {
+      this._plantSequenceCache.delete(cacheKey);
+      entry = null;
+    }
     const basePath = visuals.basePath || '';
     const extension = visuals.frameExtension || '.webp';
     const frameDigits = Math.max(1, visuals.frameDigits ?? 3);
@@ -1849,7 +1911,12 @@ export class SimuladorScene extends BaseScene {
         loop,
         type,
         callbacks: [],
-        promise: null
+        firstFrameCallbacks: [],
+        firstFrameReady: false,
+        promise: null,
+        refCount: 0,
+        evictOnReady: false,
+        disposed: false
       };
       this._plantSequenceCache.set(cacheKey, entry);
       entry.promise = this._loadPlantSequence(entry, {
@@ -1871,13 +1938,170 @@ export class SimuladorScene extends BaseScene {
             // ignore callback errors
           }
         }
+        if (entry.refCount <= 0 && entry.evictOnReady) {
+          this._evictSequence(entry);
+        } else {
+          entry.evictOnReady = false;
+        }
       });
     } else {
       entry.fps = fps;
       entry.loop = loop;
+      entry.refCount = entry.refCount || 0;
+      entry.firstFrameCallbacks = entry.firstFrameCallbacks || [];
+      entry.firstFrameReady = entry.firstFrameReady || (Array.isArray(entry.frames) && entry.frames.length > 0);
     }
 
     return entry;
+  }
+
+  _retainSequence(entry) {
+    if (!entry || entry.disposed) return;
+    entry.refCount = (entry.refCount || 0) + 1;
+    entry.evictOnReady = false;
+  }
+
+  _releaseSequence(entry) {
+    if (!entry || entry.disposed) return;
+    entry.refCount = Math.max(0, (entry.refCount || 0) - 1);
+    if (entry.refCount > 0) return;
+    if (entry.status === 'loading') {
+      entry.evictOnReady = true;
+      return;
+    }
+    this._evictSequence(entry);
+  }
+
+  _disposeSequence(entry, { removeFromCache = true } = {}) {
+    if (!entry || entry.disposed) return;
+    entry.disposed = true;
+    entry.refCount = 0;
+    entry.evictOnReady = false;
+    if (Array.isArray(entry.frames)) {
+      for (let i = 0; i < entry.frames.length; i++) {
+        const frame = entry.frames[i];
+        if (!frame) continue;
+        frame.texture?.dispose?.();
+        if (frame.canvas) {
+          frame.canvas.width = 0;
+          frame.canvas.height = 0;
+          frame.canvas = null;
+        }
+        frame.imageData = null;
+      }
+      entry.frames.length = 0;
+    }
+    if (Array.isArray(entry.callbacks)) {
+      entry.callbacks.length = 0;
+    }
+    if (Array.isArray(entry.firstFrameCallbacks)) {
+      entry.firstFrameCallbacks.length = 0;
+    }
+    entry.firstFrameReady = false;
+    entry.status = 'evicted';
+    entry.promise = null;
+    entry.activeCandidate = null;
+    if (removeFromCache && entry.key) {
+      this._plantSequenceCache.delete(entry.key);
+    }
+  }
+
+  _evictSequence(entry) {
+    if (!entry || entry.disposed) return;
+    this._disposeSequence(entry);
+  }
+
+  _releasePlantPreview(plant) {
+    if (!plant?.previewSequenceEntry) return;
+    this._releaseSequence(plant.previewSequenceEntry);
+    plant.previewSequenceEntry = null;
+  }
+
+  _releasePlantAnimation(plant, { keepPreview = false } = {}) {
+    if (!plant) return;
+    if (plant.animation && plant.animation.entry) {
+      this._releaseSequence(plant.animation.entry);
+    }
+    plant.animation = null;
+    if (!keepPreview) {
+      plant.activeFrame = null;
+      this._releasePlantPreview(plant);
+      if (plant.imageMaterial && plant.imageMaterial.map) {
+        plant.imageMaterial.map = null;
+        plant.imageMaterial.needsUpdate = true;
+      }
+    }
+  }
+
+  _removeSequenceCallback(entry, callback, type = 'ready') {
+    if (!entry || typeof callback !== 'function') return;
+    const list = type === 'firstFrame' ? entry.firstFrameCallbacks : entry.callbacks;
+    if (!Array.isArray(list)) return;
+    const idx = list.indexOf(callback);
+    if (idx >= 0) {
+      list.splice(idx, 1);
+    }
+  }
+
+  _registerPlantSequenceCallback(plant, entry, handler) {
+    if (!plant || !entry || typeof handler !== 'function') return;
+    const key = entry.key;
+    if (!key) return;
+    entry.evictOnReady = false;
+    if (!plant.pendingSequenceCallbacks) {
+      plant.pendingSequenceCallbacks = new Map();
+    }
+    const mapKey = `ready|${key}`;
+    const existing = plant.pendingSequenceCallbacks.get(mapKey);
+    if (existing) {
+      this._removeSequenceCallback(existing.entry, existing.wrapper, existing.type);
+    }
+    const wrapper = (result) => {
+      plant.pendingSequenceCallbacks?.delete(mapKey);
+      handler(result);
+    };
+    plant.pendingSequenceCallbacks.set(mapKey, { entry, wrapper, type: 'ready' });
+    this._addSequenceReadyCallback(entry, wrapper);
+  }
+
+  _registerPlantSequenceFirstFrameCallback(plant, entry, handler) {
+    if (!plant || !entry || typeof handler !== 'function') return;
+    const key = entry.key;
+    if (!key) return;
+    entry.evictOnReady = false;
+    if (!plant.pendingSequenceCallbacks) {
+      plant.pendingSequenceCallbacks = new Map();
+    }
+    const mapKey = `first|${key}`;
+    const existing = plant.pendingSequenceCallbacks.get(mapKey);
+    if (existing) {
+      this._removeSequenceCallback(existing.entry, existing.wrapper, existing.type);
+    }
+    const wrapper = (result) => {
+      plant.pendingSequenceCallbacks?.delete(mapKey);
+      handler(result);
+    };
+    plant.pendingSequenceCallbacks.set(mapKey, { entry, wrapper, type: 'firstFrame' });
+    this._addSequenceFirstFrameCallback(entry, wrapper);
+  }
+
+  _clearPlantSequenceCallbacks(plant) {
+    if (!plant?.pendingSequenceCallbacks) return;
+    plant.pendingSequenceCallbacks.forEach(({ entry, wrapper, type }) => {
+      this._removeSequenceCallback(entry, wrapper, type);
+      if (!entry) return;
+      const hasRefs = (entry.refCount || 0) > 0;
+      const hasCallbacks = (Array.isArray(entry.callbacks) && entry.callbacks.length > 0)
+        || (Array.isArray(entry.firstFrameCallbacks) && entry.firstFrameCallbacks.length > 0);
+      if (!hasRefs && !hasCallbacks) {
+        if (entry.status === 'loading') {
+          entry.evictOnReady = true;
+        } else if (entry.status === 'ready' || entry.status === 'error') {
+          this._evictSequence(entry);
+        }
+      }
+    });
+    plant.pendingSequenceCallbacks.clear();
   }
 
   async _loadPlantSequence(entry, descriptor) {
@@ -1887,6 +2111,8 @@ export class SimuladorScene extends BaseScene {
       const candidate = candidates[c];
       const folderPath = this._normalizeAssetPath(basePath, candidate.folderName);
       const frames = [];
+      entry.frames = frames;
+      entry.firstFrameReady = false;
 
       for (let index = 0; index < maxFrames; index++) {
         const suffix = index.toString().padStart(frameDigits, '0');
@@ -1899,6 +2125,7 @@ export class SimuladorScene extends BaseScene {
           }
           this._prepareTexture(texture);
           frames.push(this._createFrameRecord(texture));
+          this._notifySequenceFirstFrame(entry);
         } catch (err) {
           if (index === 0) {
             frames.length = 0;
@@ -1917,7 +2144,47 @@ export class SimuladorScene extends BaseScene {
 
     entry.frames = [];
     entry.status = 'error';
+    if (Array.isArray(entry.firstFrameCallbacks) && entry.firstFrameCallbacks.length) {
+      const callbacks = entry.firstFrameCallbacks.splice(0);
+      for (let i = 0; i < callbacks.length; i++) {
+        const cb = callbacks[i];
+        try {
+          cb(entry);
+        } catch (err) {
+          // ignore callback errors
+        }
+      }
+    }
     return entry;
+  }
+
+  _notifySequenceFirstFrame(entry) {
+    if (!entry) return;
+    if (!Array.isArray(entry.frames) || entry.frames.length === 0) return;
+    if (entry.firstFrameReady) return;
+    entry.firstFrameReady = true;
+    if (!Array.isArray(entry.firstFrameCallbacks) || !entry.firstFrameCallbacks.length) return;
+    const callbacks = entry.firstFrameCallbacks.splice(0);
+    for (let i = 0; i < callbacks.length; i++) {
+      const cb = callbacks[i];
+      try {
+        cb(entry);
+      } catch (err) {
+        // ignore callback errors
+      }
+    }
+  }
+
+  _addSequenceFirstFrameCallback(entry, callback) {
+    if (!entry || typeof callback !== 'function') return;
+    if (entry.firstFrameReady || (Array.isArray(entry.frames) && entry.frames.length > 0)) {
+      callback(entry);
+      return;
+    }
+    if (!Array.isArray(entry.firstFrameCallbacks)) {
+      entry.firstFrameCallbacks = [];
+    }
+    entry.firstFrameCallbacks.push(callback);
   }
 
   _addSequenceReadyCallback(entry, callback) {
@@ -1927,50 +2194,6 @@ export class SimuladorScene extends BaseScene {
       return;
     }
     entry.callbacks.push(callback);
-  }
-
-  _collectSequencePromise(entry, collector) {
-    if (!collector || !entry) return;
-    if (collector.entries.has(entry)) return;
-    collector.entries.add(entry);
-    if (entry.status === 'loading' && entry.promise) {
-      collector.promises.push(entry.promise);
-    }
-  }
-
-  _primePlantAssets(seed, collector = null) {
-    const visuals = this._getPlantVisualConfig();
-    if (!visuals) return;
-    for (let i = 0; i < this._plantStages.length; i++) {
-      const entry = this._getPlantStageSequence(seed, i);
-      this._collectSequencePromise(entry, collector);
-    }
-    for (let i = 0; i < this._plantStages.length - 1; i++) {
-      const entry = this._getPlantTransitionSequence(seed, i, i + 1);
-      this._collectSequencePromise(entry, collector);
-    }
-  }
-
-  async _preloadAllPlantSequences() {
-    const visuals = this._getPlantVisualConfig();
-    if (!visuals) return;
-    const seedsConfig = this.params.seeds || {};
-    const seen = new Set();
-    const collector = { entries: new Set(), promises: [] };
-    const enqueue = (list) => {
-      if (!Array.isArray(list)) return;
-      for (let i = 0; i < list.length; i++) {
-        const seed = list[i];
-        if (!seed || !seed.id) continue;
-        if (seen.has(seed.id)) continue;
-        seen.add(seed.id);
-        this._primePlantAssets(seed, collector);
-      }
-    };
-
-    Object.values(seedsConfig).forEach((value) => enqueue(value));
-    if (!collector.promises.length) return;
-    await Promise.allSettled(collector.promises);
   }
 
   async _preloadCriticalAssets() {
@@ -2003,10 +2226,6 @@ export class SimuladorScene extends BaseScene {
 
     pending.push(this._preloadUiImages());
     pending.push(this._preloadCloudTextures());
-
-    if (this._getPlantVisualConfig()) {
-      pending.push(this._preloadAllPlantSequences());
-    }
 
     const tasks = pending.filter(Boolean);
     if (!tasks.length) return;
@@ -2131,6 +2350,199 @@ export class SimuladorScene extends BaseScene {
         img.decode().then(finalize).catch(finalize);
       }
     });
+  }
+
+  _resolveAudioUrl(file) {
+    if (!file) return null;
+    const basePath = this.params.audio?.basePath || '';
+    return this._normalizeAssetPath(basePath, file);
+  }
+
+  _createAudioElement(file) {
+    const url = this._resolveAudioUrl(file);
+    if (!url) return null;
+    if (typeof Audio === 'undefined') return null;
+    try {
+      return AssetLoader.audio(url);
+    } catch (err) {
+      console.warn('[SimuladorScene] Unable to load audio:', url, err);
+      return null;
+    }
+  }
+
+  _scheduleAudioPlayback(callback, delaySeconds) {
+    if (typeof callback !== 'function') return null;
+    const delayMs = Math.max(0, Number(delaySeconds) || 0) * 1000;
+    if (delayMs <= 0) {
+      callback();
+      return null;
+    }
+    const scheduler = (typeof window !== 'undefined' && typeof window.setTimeout === 'function')
+      ? window.setTimeout.bind(window)
+      : setTimeout;
+    const timer = scheduler(() => {
+      this._audioTimers.delete(timer);
+      callback();
+    }, delayMs);
+    this._audioTimers.add(timer);
+    return timer;
+  }
+
+  _clearAudioTimers() {
+    if (!this._audioTimers || !this._audioTimers.size) return;
+    this._audioTimers.forEach((timer) => {
+      if (typeof window !== 'undefined' && typeof window.clearTimeout === 'function') {
+        window.clearTimeout(timer);
+      } else {
+        clearTimeout(timer);
+      }
+    });
+    this._audioTimers.clear();
+  }
+
+  _fireAndForgetSound(config, overrides = {}) {
+    if (!config) return;
+    const candidates = overrides.files || config.files;
+    let file = overrides.file || config.file;
+    if (!file && Array.isArray(candidates) && candidates.length) {
+      const index = Math.floor(Math.random() * candidates.length);
+      file = candidates[index];
+    }
+    if (!file) return;
+    const volume = clamp(overrides.volume ?? config.volume ?? 1, 0, 1);
+    const delay = Math.max(0, overrides.delay ?? config.delay ?? 0);
+    const loop = !!(overrides.loop ?? config.loop);
+    const play = () => {
+      const audio = this._createAudioElement(file);
+      if (!audio) return;
+      audio.loop = loop;
+      audio.volume = volume;
+      if (this._transientAudios) {
+        this._transientAudios.add(audio);
+        const cleanup = () => {
+          this._transientAudios.delete(audio);
+        };
+        audio.addEventListener('ended', cleanup, { once: true });
+        audio.addEventListener('error', cleanup, { once: true });
+      }
+      try {
+        audio.currentTime = 0;
+      } catch (err) {
+        // ignore reset issues
+      }
+      const promise = audio.play();
+      if (promise && typeof promise.catch === 'function') {
+        promise.catch(() => {
+          if (this._transientAudios) {
+            this._transientAudios.delete(audio);
+          }
+        });
+      }
+    };
+    if (delay > 0) {
+      this._scheduleAudioPlayback(play, delay);
+    } else {
+      play();
+    }
+  }
+
+  _initAudio() {
+    if (!this._audioTimers) {
+      this._audioTimers = new Set();
+    }
+    this._disposeAudio();
+    const ambientCfg = this.params.audio?.ambient;
+    if (!ambientCfg?.file) return;
+    const ambient = this._createAudioElement(ambientCfg.file);
+    if (!ambient) return;
+    ambient.loop = ambientCfg.loop !== false;
+    ambient.volume = clamp(ambientCfg.volume ?? 1, 0, 1);
+    this._ambientAudio = ambient;
+    const start = () => {
+      if (!this._ambientAudio) return;
+      try {
+        this._ambientAudio.currentTime = 0;
+      } catch (err) {
+        // ignore reset issues
+      }
+      const promise = this._ambientAudio.play();
+      if (promise && typeof promise.catch === 'function') {
+        promise.catch(() => {});
+      }
+    };
+    const delay = Math.max(0, ambientCfg.delay ?? 0);
+    if (delay > 0) {
+      this._scheduleAudioPlayback(start, delay);
+    } else {
+      start();
+    }
+  }
+
+  _disposeAudio() {
+    this._clearAudioTimers();
+    if (this._transientAudios && this._transientAudios.size) {
+      this._transientAudios.forEach((audio) => {
+        try {
+          audio.pause();
+        } catch (err) {
+          // ignore pause errors
+        }
+      });
+      this._transientAudios.clear();
+    }
+    if (this._ambientAudio) {
+      this._ambientAudio.pause();
+      try {
+        this._ambientAudio.currentTime = 0;
+      } catch (err) {
+        // ignore reset issues
+      }
+      this._ambientAudio = null;
+    }
+  }
+
+  _playSedimentSound() {
+    this._fireAndForgetSound(this.params.audio?.sediment);
+  }
+
+  _playSeedPlantSound() {
+    this._fireAndForgetSound(this.params.audio?.seedPlant);
+  }
+
+  _playWaterLevelSound(previousIndex, nextIndex) {
+    if (!Number.isInteger(previousIndex) || !Number.isInteger(nextIndex)) return;
+    if (nextIndex === previousIndex) return;
+    const cfg = nextIndex > previousIndex
+      ? this.params.audio?.waterRaise
+      : this.params.audio?.waterLower;
+    this._fireAndForgetSound(cfg);
+  }
+
+  _playPlantTransitionSound(fromIndex, toIndex) {
+    if (!Number.isInteger(fromIndex) || !Number.isInteger(toIndex)) return;
+    const transitions = this.params.audio?.plantTransitions;
+    if (!transitions) return;
+    let config = null;
+    if (fromIndex === 0 && toIndex >= 1) {
+      config = transitions.seedToSprout;
+    } else if (fromIndex === 1 && toIndex >= 2) {
+      config = transitions.sproutToSapling;
+    } else if (fromIndex === 2 && toIndex >= 3) {
+      config = transitions.saplingToTree;
+    } else if (fromIndex === 3 && toIndex >= 4) {
+      config = transitions.treeToFinal;
+    }
+    if (config) {
+      this._fireAndForgetSound(config);
+    }
+  }
+
+  _resumeAmbientAudio() {
+    if (!this._ambientAudio || !this._ambientAudio.paused) return;
+    const promise = this._ambientAudio.play();
+    if (promise && typeof promise.catch === 'function') {
+      promise.catch(() => {});
+    }
   }
 
   _getLoadingLogoUrl() {
@@ -2286,6 +2698,18 @@ export class SimuladorScene extends BaseScene {
     if (!this._unitPlantPlane) {
       this._unitPlantPlane = new THREE.PlaneGeometry(1, 1);
     }
+    const reuseExistingEntry = plant.animation?.entry === entry;
+    const keepPreview = plant.previewSequenceEntry === entry;
+    if (!reuseExistingEntry) {
+      this._releasePlantAnimation(plant, { keepPreview });
+      this._retainSequence(entry);
+      if (keepPreview) {
+        this._releasePlantPreview(plant);
+      }
+    } else {
+      plant.animation = null;
+      plant.activeFrame = null;
+    }
     const fps = Math.max(1, options.fps ?? entry.fps ?? 12);
     const loop = options.loop !== undefined ? options.loop : entry.loop;
     const startFrame = clamp(options.startFrame ?? 0, 0, entry.frames.length - 1);
@@ -2333,6 +2757,7 @@ export class SimuladorScene extends BaseScene {
     const centerY = plant.baseY + (0.5 - margin) * heightWorld;
     plant.mesh.position.y = centerY;
     this._setPlantDepth(plant, centerY);
+  plant.mesh.visible = true;
 
     plant.visualMode = 'image';
     plant.visualWidth = widthWorld;
@@ -2341,6 +2766,27 @@ export class SimuladorScene extends BaseScene {
     plant.currentStageHeight = heightWorld;
     plant.currentStageHalfWidth = Math.max(widthWorld * 0.5, 0.01);
     plant.activeFrame = frame;
+  }
+
+  _applyPlantPreviewFrame(plant, entry) {
+    if (!plant || !entry || !Array.isArray(entry.frames) || !entry.frames.length) return;
+    if (plant.previewSequenceEntry !== entry) {
+      this._releasePlantPreview(plant);
+      this._retainSequence(entry);
+      plant.previewSequenceEntry = entry;
+    }
+    const frame = entry.frames[0];
+    this._applyFrameToPlant(plant, frame);
+    plant.visualMode = 'image';
+  }
+
+  _hidePlantVisual(plant) {
+    if (!plant) return;
+    this._releasePlantAnimation(plant);
+    if (plant.mesh) {
+      plant.mesh.visible = false;
+    }
+    plant.visualMode = 'hidden';
   }
 
   _updatePlantAnimation(plant, dt) {
@@ -2359,7 +2805,7 @@ export class SimuladorScene extends BaseScene {
           anim.frameIndex = 0;
         } else {
           const onComplete = anim.onComplete;
-          plant.animation = null;
+          this._releasePlantAnimation(plant);
           if (onComplete) {
             onComplete();
           }
@@ -2388,6 +2834,7 @@ export class SimuladorScene extends BaseScene {
     }
 
     const startTransition = (entry) => {
+      if (!plant || plant.disposed) return;
       plant.waitingTransitionKey = null;
       if (entry.status !== 'ready' || !entry.frames.length) {
         this._completePlantStageChange(plant, nextIndex);
@@ -2408,8 +2855,10 @@ export class SimuladorScene extends BaseScene {
       plant.pendingTransition = nextIndex;
       plant.waitingTransitionKey = sequence.key;
       if (!alreadyWaiting) {
-        this._addSequenceReadyCallback(sequence, (entry) => {
+        this._registerPlantSequenceCallback(plant, sequence, (entry) => {
+          if (plant.disposed) return;
           if (plant.pendingTransition !== nextIndex) return;
+          if (plant.waitingTransitionKey !== sequence.key) return;
           startTransition(entry);
         });
       }
@@ -2420,9 +2869,10 @@ export class SimuladorScene extends BaseScene {
 
   _completePlantStageChange(plant, nextIndex) {
     if (!plant) return;
+    this._clearPlantSequenceCallbacks(plant);
+    this._releasePlantAnimation(plant);
     plant.pendingTransition = null;
     plant.waitingTransitionKey = null;
-    plant.animation = null;
     if (Number.isInteger(nextIndex) && nextIndex > plant.stageIndex && nextIndex < this._plantStages.length) {
       plant.stageIndex = nextIndex;
     }
@@ -2455,7 +2905,12 @@ export class SimuladorScene extends BaseScene {
       }
     }
 
-    if (plant.visualMode === 'geometry') {
+    if (!plant.animation && plant.activeFrame && plant.visualMode === 'image') {
+      this._applyFrameToPlant(plant, plant.activeFrame);
+      return;
+    }
+
+    if (plant.visualMode === 'geometry' || plant.visualMode === 'hidden') {
       this._applyPlantStageVisual(plant);
     }
   }
@@ -2491,6 +2946,7 @@ export class SimuladorScene extends BaseScene {
     this._emitSeedBurst(clampedX, burstY);
 
     this._spawnPlant(seed, clampedX, state.riverbedHeight);
+    this._playSeedPlantSound();
     this._refreshCursor();
     return true;
   }
@@ -2509,6 +2965,7 @@ export class SimuladorScene extends BaseScene {
     const initialCenterY = baseY + (0.5 - initialMargin) * initialHeight;
     mesh.position.set(x, initialCenterY, this._computePlantDepth(initialCenterY));
     mesh.renderOrder = 2;
+    mesh.visible = false;
     this.scene.add(mesh);
     const plant = {
       id: `${seed.id}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -2523,16 +2980,18 @@ export class SimuladorScene extends BaseScene {
       competitionBlocked: false,
       colorMaterial: material,
       imageMaterial: null,
-      visualMode: 'geometry',
+      visualMode: 'hidden',
       visualWidth: initialWidth,
       visualHeight: initialHeight,
       visualMargin: initialMargin,
       activeFrame: null,
       animation: null,
       pendingTransition: null,
-      waitingTransitionKey: null
+      waitingTransitionKey: null,
+      disposed: false,
+      pendingSequenceCallbacks: new Map(),
+      previewSequenceEntry: null
     };
-    this._primePlantAssets(seed);
     this._applyPlantStageVisual(plant, stageInfo);
     this._plants.push(plant);
     this._checkStageGoal();
@@ -2540,6 +2999,7 @@ export class SimuladorScene extends BaseScene {
 
   _applyPlantStageGeometryFallback(plant, providedInfo) {
     if (!plant) return;
+    this._releasePlantAnimation(plant);
     const stageData = this._plantStages[plant.stageIndex];
     const stageId = stageData?.id || 'seed';
     const info = providedInfo || this._getPlantStageInfo(plant.seed, stageId);
@@ -2560,6 +3020,7 @@ export class SimuladorScene extends BaseScene {
     const centerY = plant.baseY + (0.5 - margin) * height;
     plant.mesh.position.y = centerY;
     this._setPlantDepth(plant, centerY);
+  plant.mesh.visible = true;
     plant.currentStageHeight = height;
     plant.currentStageHalfWidth = Math.max(width * 0.5, info.radius || 0, 0.01);
     plant.visualMode = 'geometry';
@@ -2583,25 +3044,52 @@ export class SimuladorScene extends BaseScene {
 
     if (visuals) {
       const sequence = this._getPlantStageSequence(plant.seed, stageIndex);
-      const tryActivate = (entry) => {
+      const expectedStageIndex = stageIndex;
+      const activateAnimation = (entry) => {
+        if (!plant || plant.disposed) return;
+        if (plant.stageIndex !== expectedStageIndex) return;
         if (entry.status === 'ready' && entry.frames.length) {
           this._playPlantAnimation(plant, entry, {
             loop: entry.loop,
             fps: entry.fps
           });
-        } else {
+        } else if (entry.status === 'error') {
           this._applyPlantStageGeometryFallback(plant, providedInfo);
+        } else if (!entry.frames.length) {
+          this._hidePlantVisual(plant);
         }
       };
 
       if (sequence?.status === 'ready') {
-        tryActivate(sequence);
+        activateAnimation(sequence);
         return;
       }
+
       if (sequence?.status === 'loading') {
-        this._addSequenceReadyCallback(sequence, tryActivate);
-      } else if (!sequence || sequence.status === 'error') {
-        // fall through to geometry fallback
+        if (Array.isArray(sequence.frames) && sequence.frames.length > 0) {
+          this._applyPlantPreviewFrame(plant, sequence);
+        } else {
+          this._hidePlantVisual(plant);
+        }
+
+        this._registerPlantSequenceFirstFrameCallback(plant, sequence, (entry) => {
+          if (!plant || plant.disposed) return;
+          if (plant.stageIndex !== expectedStageIndex) return;
+          if (!Array.isArray(entry.frames) || !entry.frames.length) return;
+          this._applyPlantPreviewFrame(plant, entry);
+        });
+
+        this._registerPlantSequenceCallback(plant, sequence, (entry) => {
+          if (!plant || plant.disposed) return;
+          if (plant.stageIndex !== expectedStageIndex) return;
+          activateAnimation(entry);
+        });
+        return;
+      }
+
+      if (!sequence || sequence.status === 'error') {
+        this._applyPlantStageGeometryFallback(plant, providedInfo);
+        return;
       }
     }
 
@@ -2611,6 +3099,7 @@ export class SimuladorScene extends BaseScene {
   _advancePlantStage(plant, nextIndex) {
     if (!plant || nextIndex <= plant.stageIndex) return;
     if (nextIndex >= this._plantStages.length) return;
+    this._playPlantTransitionSound(plant.stageIndex, nextIndex);
     this._startPlantTransition(plant, nextIndex);
   }
 
@@ -2778,6 +3267,7 @@ export class SimuladorScene extends BaseScene {
     for (let i = 0; i < this._plants.length; i++) {
       const plant = this._plants[i];
       if (!plant) continue;
+      if (plant.visualMode === 'hidden') continue;
 
       if (plant.visualMode === 'image' && plant.visualWidth && plant.visualHeight) {
         const halfW = plant.visualWidth * 0.5;
@@ -2830,6 +3320,8 @@ export class SimuladorScene extends BaseScene {
     if (!plant) return;
     const index = this._plants.indexOf(plant);
     if (index === -1) return;
+    this._clearPlantSequenceCallbacks(plant);
+    this._releasePlantAnimation(plant);
     if (plant.mesh) {
       this.scene.remove(plant.mesh);
     }
@@ -2837,6 +3329,8 @@ export class SimuladorScene extends BaseScene {
       plant.imageMaterial.dispose?.();
       this._plantMaterialCache.delete(plant.id);
     }
+    plant.disposed = true;
+    plant.pendingTransition = null;
     plant.waitingTransitionKey = null;
     this._plants.splice(index, 1);
     this._checkStageGoal();
@@ -3498,6 +3992,7 @@ export class SimuladorScene extends BaseScene {
     if (emitted > 0) {
       this._refreshCursor();
     }
+    return emitted > 0;
   }
 
   _acquireParticle() {
@@ -3620,6 +4115,7 @@ export class SimuladorScene extends BaseScene {
       lowerBtn.style.webkitUserSelect = 'none';
       lowerBtn.addEventListener('click', (event) => {
         event.preventDefault();
+        this._resumeAmbientAudio();
         this._setWaterLevel(this._waterLevelIndex - 1);
       });
       bottomContainer.appendChild(lowerBtn);
@@ -3638,6 +4134,7 @@ export class SimuladorScene extends BaseScene {
       raiseBtn.style.webkitUserSelect = 'none';
       raiseBtn.addEventListener('click', (event) => {
         event.preventDefault();
+        this._resumeAmbientAudio();
         this._setWaterLevel(this._waterLevelIndex + 1);
       });
       bottomContainer.appendChild(raiseBtn);
@@ -3691,6 +4188,7 @@ export class SimuladorScene extends BaseScene {
       sedimentBtn.style.webkitUserSelect = 'none';
       sedimentBtn.addEventListener('click', (event) => {
         event.preventDefault();
+        this._resumeAmbientAudio();
         this._toggleTool('sediment');
       });
       root.appendChild(sedimentBtn);
@@ -3714,6 +4212,7 @@ export class SimuladorScene extends BaseScene {
       removeBtn.style.webkitUserSelect = 'none';
       removeBtn.addEventListener('click', (event) => {
         event.preventDefault();
+        this._resumeAmbientAudio();
         this._toggleTool('remove');
       });
       root.appendChild(removeBtn);
@@ -3884,6 +4383,7 @@ export class SimuladorScene extends BaseScene {
           segment.setAttribute('aria-label', seedDef.label || seedId);
           segment.addEventListener('click', (event) => {
             event.preventDefault();
+            this._resumeAmbientAudio();
             this._toggleTool(seedId);
           });
           this._seedButtons[seedId] = { segment, image: imageEl, overlay: overlayEl, highlight: highlightEl, label: labelEl, seed: seedDef };
@@ -4632,6 +5132,9 @@ export class SimuladorScene extends BaseScene {
     const previousIndex = this._waterLevelIndex;
     this._waterLevelIndex = clamped;
     this._targetWaterLevel = [this._waterLevels.low, this._waterLevels.medium, this._waterLevels.high][clamped];
+    if (clamped !== previousIndex) {
+      this._playWaterLevelSound(previousIndex, clamped);
+    }
     this._syncWaterButtons();
     this._queueWeatherStateChange(
       this._indexToWeatherState(previousIndex),
@@ -4667,11 +5170,15 @@ export class SimuladorScene extends BaseScene {
     if (!tool) return;
     const point = this._recordPointerPosition(event);
     if (!point) return;
+    this._resumeAmbientAudio();
     if (tool === 'sediment') {
       const state = this._resolveInteractionState(point.x, point.y);
       if (!state?.canSediment) return;
-      this._pointerDown = true;
-      this._emitSediment(point.x, point.y, state);
+      const emitted = this._emitSediment(point.x, point.y, state);
+      this._pointerDown = emitted;
+      if (emitted) {
+        this._playSedimentSound();
+      }
     } else if (tool === 'remove') {
       if (!this._removeEnabled) return;
       const plant = this._findPlantAt(point.x, point.y);
@@ -4695,7 +5202,10 @@ export class SimuladorScene extends BaseScene {
       this._pointerDown = false;
       return;
     }
-    this._emitSediment(point.x, point.y, state);
+    const emitted = this._emitSediment(point.x, point.y, state);
+    if (!emitted) {
+      this._pointerDown = false;
+    }
   }
 
   _handlePointerLeave() {
@@ -4846,6 +5356,9 @@ export class SimuladorScene extends BaseScene {
 
     for (let i = 0; i < this._plants.length; i++) {
       const plant = this._plants[i];
+      this._clearPlantSequenceCallbacks(plant);
+      this._releasePlantAnimation(plant);
+      plant.disposed = true;
       if (plant.mesh) {
         this.scene.remove(plant.mesh);
       }
@@ -4854,15 +5367,10 @@ export class SimuladorScene extends BaseScene {
     this._plantGeometryCache.forEach((geo) => geo.dispose?.());
     this._seedMaterialCache.forEach((mat) => mat.dispose?.());
     this._plantMaterialCache.forEach((mat) => mat.dispose?.());
-    this._plantSequenceCache.forEach((entry) => {
-      entry?.frames?.forEach((frame) => {
-        frame?.texture?.dispose?.();
-        if (frame?.canvas) {
-          frame.canvas.width = 0;
-          frame.canvas.height = 0;
-        }
-      });
-    });
+    const sequenceEntries = Array.from(this._plantSequenceCache.values());
+    for (let i = 0; i < sequenceEntries.length; i++) {
+      this._disposeSequence(sequenceEntries[i]);
+    }
     this._plantSequenceCache.clear();
     this._plantMaterialCache.clear();
     this._plantGeometryCache.clear();

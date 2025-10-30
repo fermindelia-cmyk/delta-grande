@@ -1,0 +1,380 @@
+{
+    "acacia-stage-0": {
+        "file": "acacia-stage-0.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "acacia-stage-0-to-1": {
+        "file": "acacia-stage-0-to-1.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "acacia-stage-1": {
+        "file": "acacia-stage-1.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "acacia-stage-1-to-2": {
+        "file": "acacia-stage-1-to-2.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "acacia-stage-2": {
+        "file": "acacia-stage-2.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "acacia-stage-2-to-3": {
+        "file": "acacia-stage-2-to-3.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "acacia-stage-3": {
+        "file": "acacia-stage-3.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "acacia-stage-3-to-4": {
+        "file": "acacia-stage-3-to-4.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "acacia-stage-4": {
+        "file": "acacia-stage-4.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "ambigua-stage-0": {
+        "file": "ambigua-stage-0.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "ambigua-stage-0-to-1": {
+        "file": "ambigua-stage-0-to-1.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "ambigua-stage-1": {
+        "file": "ambigua-stage-1.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "ambigua-stage-1-to-2": {
+        "file": "ambigua-stage-1-to-2.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "ambigua-stage-2": {
+        "file": "ambigua-stage-2.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "ambigua-stage-2-to-3": {
+        "file": "ambigua-stage-2-to-3.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "ambigua-stage-3": {
+        "file": "ambigua-stage-3.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "ambigua-stage-3-to-4": {
+        "file": "ambigua-stage-3-to-4.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "ambigua-stage-4": {
+        "file": "ambigua-stage-4.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "ceibo-stage-0": {
+        "file": "ceibo-stage-0.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "ceibo-stage-0-to-1": {
+        "file": "ceibo-stage-0-to-1.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "ceibo-stage-1": {
+        "file": "ceibo-stage-1.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "ceibo-stage-1-to-2": {
+        "file": "ceibo-stage-1-to-2.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "ceibo-stage-2": {
+        "file": "ceibo-stage-2.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "ceibo-stage-2-to-3": {
+        "file": "ceibo-stage-2-to-3.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "ceibo-stage-3": {
+        "file": "ceibo-stage-3.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "ceibo-stage-3-to-4": {
+        "file": "ceibo-stage-3-to-4.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "ceibo-stage-4": {
+        "file": "ceibo-stage-4.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "distichlis-stage-0": {
+        "file": "distichlis-stage-0.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "distichlis-stage-0-to-1": {
+        "file": "distichlis-stage-0-to-1.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "distichlis-stage-1": {
+        "file": "distichlis-stage-1.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "distichlis-stage-1-to-2": {
+        "file": "distichlis-stage-1-to-2.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "distichlis-stage-2": {
+        "file": "distichlis-stage-2.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "distichlis-stage-2-to-3": {
+        "file": "distichlis-stage-2-to-3.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "distichlis-stage-3": {
+        "file": "distichlis-stage-3.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "distichlis-stage-3-to-4": {
+        "file": "distichlis-stage-3-to-4.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "distichlis-stage-4": {
+        "file": "distichlis-stage-4.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "drago-stage-0": {
+        "file": "drago-stage-0.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "drago-stage-0-to-1": {
+        "file": "drago-stage-0-to-1.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "drago-stage-1": {
+        "file": "drago-stage-1.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "drago-stage-1-to-2": {
+        "file": "drago-stage-1-to-2.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "drago-stage-2": {
+        "file": "drago-stage-2.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "drago-stage-2-to-3": {
+        "file": "drago-stage-2-to-3.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "drago-stage-3": {
+        "file": "drago-stage-3.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "drago-stage-3-to-4": {
+        "file": "drago-stage-3-to-4.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "drago-stage-4": {
+        "file": "drago-stage-4.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "sauce-stage-0": {
+        "file": "sauce-stage-0.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "sauce-stage-0-to-1": {
+        "file": "sauce-stage-0-to-1.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "sauce-stage-1": {
+        "file": "sauce-stage-1.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "sauce-stage-1-to-2": {
+        "file": "sauce-stage-1-to-2.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "sauce-stage-2": {
+        "file": "sauce-stage-2.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "sauce-stage-2-to-3": {
+        "file": "sauce-stage-2-to-3.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "sauce-stage-3": {
+        "file": "sauce-stage-3.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "sauce-stage-3-to-4": {
+        "file": "sauce-stage-3-to-4.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    },
+    "sauce-stage-4": {
+        "file": "sauce-stage-4.webp",
+        "frameCount": 33,
+        "frameWidth": 480,
+        "frameHeight": 848,
+        "layout": "horizontal"
+    }
+}
