@@ -298,8 +298,14 @@ export const DEFAULT_PARAMS = Object.freeze({
           borderRadiusVW: 0.6,
           rightGapVW: 0.8,
           transitionSeconds: 0.22,
+          transitionEasing: 'cubic-bezier(0.33, 1, 0.68, 1)',
+          opacityEasing: 'ease-out',
           hiddenOffsetVW: 1.2,
           maxWidthVW: 18,
+          lineHeight: 1.1,
+          shadow: '0 0 0.3vw rgba(0, 0, 0, 0.35)',
+          fontWeight: 600,
+          textTransform: 'none',
           fontFamily: '"new-science-mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace'
         })
       }),
@@ -1894,11 +1900,11 @@ export class SimuladorScene extends BaseScene {
     style.id = LOADING_STYLE_ID;
     style.textContent = `
       @keyframes simulador-loading-spin {
-        0% { transform: rotateX(18deg) rotateZ(0deg); }
-        20% { transform: rotateX(18deg) rotateZ(25deg); }
-        50% { transform: rotateX(18deg) rotateZ(200deg); }
-        80% { transform: rotateX(18deg) rotateZ(335deg); }
-        100% { transform: rotateX(18deg) rotateZ(360deg); }
+        0% { transform: rotateX(18deg) rotateY(0deg); }
+        20% { transform: rotateX(18deg) rotateY(25deg); }
+        50% { transform: rotateX(18deg) rotateY(200deg); }
+        80% { transform: rotateX(18deg) rotateY(335deg); }
+        100% { transform: rotateX(18deg) rotateY(360deg); }
       }
     `;
     document.head?.appendChild(style);
@@ -3038,13 +3044,44 @@ export class SimuladorScene extends BaseScene {
     const radius = sediment.depositRadius * this.worldWidth;
     const center = clamp(x, 0, this.worldWidth);
 
+    // Define mound boundaries where sediment can accumulate
+    const plateauStartRaw = clamp(riverbed.plateauStart ?? 0.2, 0, 1);
+    const plateauEndRaw = clamp(riverbed.plateauEnd ?? 0.8, 0, 1);
+    const plateauStart = Math.min(plateauStartRaw, plateauEndRaw);
+    const plateauEnd = Math.max(plateauStartRaw, plateauEndRaw);
+    const transitionWidth = Math.max(0.0001, riverbed.transitionWidth ?? 0.1);
+    const halfTransition = transitionWidth * 0.5;
+    const innerStart = plateauStart;
+    const innerEnd = plateauEnd;
+    const outerStart = clamp(innerStart - halfTransition, 0, 1);
+    const outerEnd = clamp(innerEnd + halfTransition, 0, 1);
+    const outerStartWorld = outerStart * this.worldWidth;
+    const outerEndWorld = outerEnd * this.worldWidth;
+    const leftSpan = Math.max(1e-5, innerStart - outerStart);
+    const rightSpan = Math.max(1e-5, outerEnd - innerEnd);
+
     let changed = false;
     for (let i = 0; i <= segments; i++) {
       const px = this.worldWidth * (i / segments);
       const dist = Math.abs(px - center);
       if (dist > radius) continue;
+      
+      // Only allow growth inside the mound boundaries, easing into/out of the plateau
+      if (px < outerStartWorld || px > outerEndWorld) continue;
+
+      const normalized = px / this.worldWidth;
+      let boundaryFactor = 1;
+      if (normalized < innerStart) {
+        const t = saturate((normalized - outerStart) / leftSpan);
+        boundaryFactor = smoothstep(0, 1, t);
+      } else if (normalized > innerEnd) {
+        const t = saturate((outerEnd - normalized) / rightSpan);
+        boundaryFactor = smoothstep(0, 1, t);
+      }
+      if (boundaryFactor <= 0) continue;
+
       const weight = Math.cos((dist / radius) * Math.PI * 0.5);
-      const delta = amount * weight * weight;
+      const delta = amount * weight * weight * boundaryFactor;
       const next = clamp(this._riverbedHeights[i] + delta, riverbed.bottom, riverbed.maxHeight);
       if (next !== this._riverbedHeights[i]) {
         this._riverbedHeights[i] = next;
@@ -3445,7 +3482,7 @@ export class SimuladorScene extends BaseScene {
       seederContainer.style.display = 'block';
       seederContainer.style.transition = 'transform 0.15s ease';
       seederContainer.style.userSelect = 'none';
-  seederContainer.style.webkitUserSelect = 'none';
+      seederContainer.style.webkitUserSelect = 'none';
       if (Number.isFinite(seederCfg.zIndex)) {
         seederContainer.style.zIndex = String(seederCfg.zIndex);
       }
@@ -3455,31 +3492,44 @@ export class SimuladorScene extends BaseScene {
       const seedOrder = Array.isArray(seederCfg.seedOrder) ? seederCfg.seedOrder : [];
       const segmentHeight = 100 / segments;
       const seederMaskUrl = resolveAsset(seederCfg.image);
+      const segmentMaskSize = `100% ${segments * 100}%`;
       const seedImageScale = clamp(seederCfg.seedImageScale ?? 1, 0.05, 1);
       const labelCfg = seederCfg.label || {};
       const labelTransitionSeconds = Math.max(0.05, labelCfg.transitionSeconds ?? 0.2);
-  const hiddenOffsetVW = labelCfg.hiddenOffsetVW ?? 1.2;
+      const hiddenOffsetVW = labelCfg.hiddenOffsetVW ?? 1.2;
+      const labelGapVW = labelCfg.rightGapVW ?? 0.8;
+      const slideEasing = labelCfg.transitionEasing || 'cubic-bezier(0.33, 1, 0.68, 1)';
+      const opacityEasing = labelCfg.opacityEasing || slideEasing;
+      const hiddenTransform = `translate3d(${hiddenOffsetVW}vw, -50%, 0)`;
+      const visibleTransform = 'translate3d(0, -50%, 0)';
+      const labelShadow = labelCfg.shadow || '0 0 0.3vw rgba(0,0,0,0.35)';
+      const labelLineHeight = labelCfg.lineHeight ?? 1.1;
+      const labelFontWeight = labelCfg.fontWeight ?? 600;
+      const labelTextTransform = labelCfg.textTransform ?? 'none';
 
       for (let i = 0; i < segments; i++) {
         const seedId = seedOrder[i] || null;
         const seedDef = seedId ? this._seedCatalog.get(seedId) : null;
         const posPct = segments > 1 ? (i / (segments - 1)) * 100 : 0;
+        const segmentMaskPosition = `center ${posPct}%`;
 
-    const segment = document.createElement('div');
-    segment.style.position = 'absolute';
-    segment.style.left = '0';
-    segment.style.width = '100%';
-    segment.style.height = `${segmentHeight}%`;
-    segment.style.top = `${i * segmentHeight}%`;
-    segment.style.display = 'flex';
-    segment.style.alignItems = 'center';
-    segment.style.justifyContent = 'center';
-    segment.style.pointerEvents = seedDef ? 'auto' : 'none';
-    segment.style.cursor = seedDef ? 'pointer' : 'default';
-    segment.style.transition = 'transform 0.15s ease, box-shadow 0.15s ease';
-    segment.style.overflow = 'hidden';
-    segment.style.userSelect = 'none';
-    segment.style.webkitUserSelect = 'none';
+        const segment = document.createElement('div');
+        segment.style.position = 'absolute';
+        segment.style.left = '0';
+        segment.style.width = '100%';
+        segment.style.height = `${segmentHeight}%`;
+        segment.style.top = `${i * segmentHeight}%`;
+        segment.style.display = 'flex';
+        segment.style.alignItems = 'center';
+        segment.style.justifyContent = 'center';
+        segment.style.pointerEvents = seedDef ? 'auto' : 'none';
+        segment.style.cursor = seedDef ? 'pointer' : 'default';
+        segment.style.transition = 'transform 0.15s ease, box-shadow 0.15s ease';
+  segment.style.overflow = 'visible';
+        segment.style.userSelect = 'none';
+        segment.style.webkitUserSelect = 'none';
+        segment.style.touchAction = 'manipulation';
+        segment.setAttribute('role', 'button');
         seederContainer.appendChild(segment);
 
         let overlayEl = null;
@@ -3492,8 +3542,12 @@ export class SimuladorScene extends BaseScene {
           overlayEl.style.height = '100%';
           overlayEl.style.pointerEvents = 'none';
           overlayEl.style.opacity = '0';
-          overlayEl.style.transition = 'opacity 0.18s ease';
-          overlayEl.style.backgroundColor = 'rgba(32, 40, 48, 0.55)';
+          overlayEl.style.transition = 'opacity 0.18s ease, filter 0.18s ease';
+          overlayEl.style.backgroundImage = `url(${seederMaskUrl})`;
+          overlayEl.style.backgroundSize = segmentMaskSize;
+          overlayEl.style.backgroundPosition = segmentMaskPosition;
+          overlayEl.style.backgroundRepeat = 'no-repeat';
+          overlayEl.style.filter = 'none';
           this._applySegmentMask(overlayEl, seederMaskUrl, segments, posPct);
           overlayEl.style.zIndex = '0';
           segment.appendChild(overlayEl);
@@ -3543,7 +3597,8 @@ export class SimuladorScene extends BaseScene {
           labelEl = document.createElement('div');
           labelEl.textContent = seedDef.label || seedId;
           labelEl.style.position = 'absolute';
-          labelEl.style.right = '100%';
+          labelEl.style.boxSizing = 'border-box';
+          labelEl.style.right = `calc(100% + ${labelGapVW}vw)`;
           labelEl.style.top = '50%';
           labelEl.style.display = 'inline-flex';
           labelEl.style.alignItems = 'center';
@@ -3551,28 +3606,32 @@ export class SimuladorScene extends BaseScene {
           labelEl.style.whiteSpace = 'nowrap';
           labelEl.style.opacity = '0';
           labelEl.style.pointerEvents = 'none';
-          labelEl.style.transform = `translate(${hiddenOffsetVW}vw, -50%)`;
-          labelEl.style.transition = `transform ${labelTransitionSeconds}s ease, opacity ${labelTransitionSeconds}s ease`;
-          labelEl.style.marginRight = `${labelCfg.rightGapVW ?? 0.8}vw`;
+          labelEl.style.transformOrigin = '100% 50%';
+          labelEl.style.transform = hiddenTransform;
+          labelEl.style.transition = `transform ${labelTransitionSeconds}s ${slideEasing}, opacity ${labelTransitionSeconds}s ${opacityEasing}`;
           labelEl.style.maxWidth = `${labelCfg.maxWidthVW ?? 18}vw`;
           labelEl.style.padding = `${labelCfg.paddingVH ?? 0.35}vh ${labelCfg.paddingVW ?? 0.6}vw`;
           labelEl.style.borderRadius = `${labelCfg.borderRadiusVW ?? 0.6}vw`;
           labelEl.style.background = labelCfg.backgroundColor || '#b86f2d';
           labelEl.style.color = labelCfg.textColor || '#ffffff';
           labelEl.style.fontSize = `${labelCfg.fontSizeVW ?? 1.1}vw`;
-          labelEl.style.textTransform = 'none';
-          labelEl.style.fontWeight = '600';
-          labelEl.style.boxShadow = '0 0 0.3vw rgba(0,0,0,0.35)';
+          labelEl.style.textTransform = labelTextTransform;
+          labelEl.style.fontWeight = String(labelFontWeight);
+          labelEl.style.lineHeight = typeof labelLineHeight === 'number' ? String(labelLineHeight) : labelLineHeight;
+          labelEl.style.boxShadow = labelShadow;
           labelEl.style.zIndex = '3';
+          labelEl.style.willChange = 'transform, opacity';
           if (labelCfg.fontFamily || this._uiFontFamily) {
             labelEl.style.fontFamily = labelCfg.fontFamily || this._uiFontFamily;
           }
+          labelEl.dataset.hiddenTransform = hiddenTransform;
+          labelEl.dataset.visibleTransform = visibleTransform;
           segment.appendChild(labelEl);
         }
 
         if (seedDef && seedId) {
           segment.dataset.seedId = seedId;
-          segment.title = seedDef.label || seedId;
+          segment.setAttribute('aria-label', seedDef.label || seedId);
           segment.addEventListener('click', (event) => {
             event.preventDefault();
             this._toggleTool(seedId);
@@ -4188,6 +4247,7 @@ export class SimuladorScene extends BaseScene {
     highlightButton(this._buttons.remove, activeId === 'remove', this._removeEnabled);
 
     const unavailableFilter = 'grayscale(100%) brightness(0.65)';
+    const unavailableOpacity = '0.65';
     const seedIds = Object.keys(this._seedButtons);
     for (let i = 0; i < seedIds.length; i++) {
       const seedId = seedIds[i];
@@ -4202,12 +4262,12 @@ export class SimuladorScene extends BaseScene {
         segment.style.cursor = available ? 'pointer' : 'default';
         segment.style.transform = 'scale(1)';
         segment.style.boxShadow = 'none';
-        segment.style.opacity = '1';
-        segment.style.filter = 'none';
+        segment.style.opacity = available ? '1' : unavailableOpacity;
+        segment.style.filter = available ? 'none' : unavailableFilter;
       }
 
       if (overlay) {
-        overlay.style.opacity = available ? '0' : '0.85';
+        overlay.style.opacity = available ? '0' : '1';
       }
 
       if (highlight) {
@@ -4224,7 +4284,7 @@ export class SimuladorScene extends BaseScene {
           filters.push('saturate(1.2) brightness(1.05)');
         }
         image.style.filter = filters.length ? filters.join(' ') : 'none';
-        image.style.opacity = available ? '1' : '0.6';
+        image.style.opacity = available ? '1' : unavailableOpacity;
         image.style.transform = available && isActive ? 'scale(1.05)' : 'scale(1)';
       }
     }
@@ -4239,23 +4299,26 @@ export class SimuladorScene extends BaseScene {
   _updateSeedLabelDisplay(activeSeedId) {
     const labelCfg = this.params.ui?.elements?.seeder?.label || {};
     const hiddenOffsetVW = labelCfg.hiddenOffsetVW ?? 1.2;
-    const hiddenTransform = `translate(${hiddenOffsetVW}vw, -50%)`;
-    const visibleTransform = 'translate(0, -50%)';
+    const fallbackHidden = `translate3d(${hiddenOffsetVW}vw, -50%, 0)`;
+    const fallbackVisible = 'translate3d(0, -50%, 0)';
     const entries = Object.entries(this._seedButtons || {});
     for (let i = 0; i < entries.length; i++) {
       const [seedId, entry] = entries[i];
       if (!entry?.label) continue;
       const available = this._availableSeedIds.has(seedId);
       const shouldShow = available && seedId === activeSeedId;
+      const labelEl = entry.label;
+      const hiddenTransform = labelEl.dataset.hiddenTransform || fallbackHidden;
+      const visibleTransform = labelEl.dataset.visibleTransform || fallbackVisible;
       if (shouldShow) {
         if (entry.seed?.label) {
-          entry.label.textContent = entry.seed.label;
+          labelEl.textContent = entry.seed.label;
         }
-        entry.label.style.opacity = '1';
-        entry.label.style.transform = visibleTransform;
+        labelEl.style.opacity = '1';
+        labelEl.style.transform = visibleTransform;
       } else {
-        entry.label.style.opacity = '0';
-        entry.label.style.transform = hiddenTransform;
+        labelEl.style.opacity = '0';
+        labelEl.style.transform = hiddenTransform;
       }
     }
   }
