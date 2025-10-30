@@ -23,7 +23,29 @@ export const DEFAULT_PARAMS = Object.freeze({
     bottom: -0.38,
     cameraZ: 6.5,
     backgroundZ: -2,
-    backgroundImage: '/game-assets/simulador/bg.png'
+    backgroundImage: null
+  }),
+  sky: Object.freeze({
+    gradientTopColor: '#8ecae6',
+    gradientBottomColor: '#e3f1ff',
+    clouds: Object.freeze({
+      enabled: true,
+      textureBasePath: '/game-assets/simulador',
+      texturePrefix: 'cloud',
+      textureExtension: '.png',
+      textureCount: 8,
+      maxConcurrent: 5,
+      spawnInterval: 5,
+      spawnIntervalJitter: 3,
+      baseSpeed: 0.035,
+      speedVariance: 0.015,
+      baseScale: 0.12,
+      scaleVariance: 0.05,
+      verticalRange: Object.freeze([0.7, 0.95]),
+      depth: -1.6,
+      despawnMargin: 0.2,
+      spawnOffset: 0.25
+    })
   }),
   colors: Object.freeze({
     skyTop: '#8ecae6',
@@ -53,7 +75,7 @@ export const DEFAULT_PARAMS = Object.freeze({
     levelDelta: 0.25,
     bottom: -0.4,
     smoothing: 2.2,
-    opacity: 0.6,
+    opacity: 0.5,
     wave: Object.freeze({
       primaryAmplitude: 0.036*0.5,
       secondaryAmplitude: 0.022*0.5,
@@ -82,7 +104,7 @@ export const DEFAULT_PARAMS = Object.freeze({
         Object.freeze({ amplitude: 0.006, frequency: 4.2, speed: 0.65 }),
         Object.freeze({ amplitude: 0.005, frequency: 7.8, speed: 1.25 })
       ]),
-      noiseAmplitude: 0.0035,
+      noiseAmplitude: 0.0075,
       noiseScale: 1.4,
       noiseSpeed: 0.35
     })
@@ -126,8 +148,8 @@ export const DEFAULT_PARAMS = Object.freeze({
     approachLead: 0.22,
     arrivalThreshold: 0.008,
     dissolveSpeed: 0.3,
-    depositRadius: 0.12,
-    depositAmount: 0.01,
+    depositRadius: 0.09,
+    depositAmount: 0.003,
     particleSize: 0.015,
     minAlpha: 0.35
   }),
@@ -526,6 +548,10 @@ export class SimuladorScene extends BaseScene {
 
     this._background = null;
     this._backgroundTexture = null;
+  this._cloudGroup = null;
+  this._clouds = [];
+  this._cloudTextures = new Map();
+  this._cloudSpawnTimer = 0;
     this._sandTexture = null;
     this._sandTileRatio = this.params.riverbed?.texture?.tileWidthRatio ?? 0.1;
 
@@ -542,6 +568,7 @@ export class SimuladorScene extends BaseScene {
 
     this._textureLoader = new THREE.TextureLoader();
     this._unitPlantPlane = new THREE.PlaneGeometry(1, 1);
+  this._cloudUnitPlane = new THREE.PlaneGeometry(1, 1);
 
     this._messageEl = null;
     this._messageTimer = null;
@@ -643,6 +670,7 @@ export class SimuladorScene extends BaseScene {
 
     this._updateWater();
   this._updateAverageLine();
+    this._updateClouds(dt);
     this._updateRiverbed();
     this._updateSediment(dt);
     this._updateSeedBursts(dt);
@@ -655,6 +683,7 @@ export class SimuladorScene extends BaseScene {
   onResize(width, height) {
     if (!width || !height) return;
 
+    const prevWidth = this.worldWidth || 1;
     const aspect = width / height;
     this.worldHeight = this.params.world.top - this.params.world.bottom;
     this.worldWidth = this.worldHeight * aspect;
@@ -678,14 +707,37 @@ export class SimuladorScene extends BaseScene {
     }
     this._updateParticleSize(width, height);
     this._updateSeedEffectSize(width, height);
+    this._resizeClouds(prevWidth);
   }
 
   _createBackground() {
-    const { world, colors } = this.params;
+    const { world, colors, sky } = this.params;
+    const topColor = sky?.gradientTopColor || colors.skyTop || '#8ecae6';
+    const bottomColor = sky?.gradientBottomColor || colors.skyBottom || '#e3f1ff';
 
     const geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(colors.skyBottom || '#ffffff'),
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        topColor: { value: new THREE.Color(topColor) },
+        bottomColor: { value: new THREE.Color(bottomColor) }
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main(){
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        varying vec2 vUv;
+        uniform vec3 topColor;
+        uniform vec3 bottomColor;
+        void main(){
+          float t = smoothstep(0.0, 1.0, vUv.y);
+          vec3 col = mix(bottomColor, topColor, t);
+          gl_FragColor = vec4(col, 1.0);
+        }
+      `,
       depthWrite: false,
       depthTest: false,
       fog: false,
@@ -697,32 +749,8 @@ export class SimuladorScene extends BaseScene {
     this._background.position.z = world.backgroundZ;
     this.scene.add(this._background);
 
-    const imagePath = world.backgroundImage;
-    if (this._backgroundTexture) {
-      this._prepareTexture(this._backgroundTexture);
-      material.map = this._backgroundTexture;
-      material.color.setHex(0xffffff);
-      material.needsUpdate = true;
-      this._layoutBackground();
-    } else if (imagePath) {
-      if (!this._textureLoader) {
-        this._textureLoader = new THREE.TextureLoader();
-      }
-      this._backgroundTexture = this._textureLoader.load(
-        imagePath,
-        () => {
-          this._prepareTexture(this._backgroundTexture);
-          if (this._background?.material) {
-            this._background.material.map = this._backgroundTexture;
-            this._background.material.color.setHex(0xffffff);
-            this._background.material.needsUpdate = true;
-          }
-          this._layoutBackground();
-        }
-      );
-    } else {
-      material.map = null;
-    }
+    this._layoutBackground();
+    this._createCloudSystem();
   }
 
   _layoutBackground() {
@@ -753,6 +781,193 @@ export class SimuladorScene extends BaseScene {
       (this.worldTop + this.worldBottom) * 0.5,
       this.params.world.backgroundZ
     );
+  }
+
+  _createCloudSystem() {
+    const config = this.params.sky?.clouds;
+    if (!config?.enabled) return;
+    if (!this._cloudUnitPlane) {
+      this._cloudUnitPlane = new THREE.PlaneGeometry(1, 1);
+    }
+    if (!this._cloudGroup) {
+      this._cloudGroup = new THREE.Group();
+      this._cloudGroup.position.z = typeof config.depth === 'number'
+        ? config.depth
+        : (this.params.world.backgroundZ + 0.01);
+      this.scene.add(this._cloudGroup);
+    }
+    this._clouds = [];
+    this._cloudSpawnTimer = 0;
+  }
+
+  _resetCloudSpawnTimer() {
+    const config = this.params.sky?.clouds;
+    if (!config) return;
+    const base = Math.max(0.1, config.spawnInterval ?? 12);
+    const jitter = Math.max(0, config.spawnIntervalJitter ?? 0);
+    const offset = jitter > 0 ? (Math.random() - 0.5) * jitter : 0;
+    this._cloudSpawnTimer = Math.max(0.1, base + offset);
+  }
+
+  _pickRandomCloudTexture() {
+    if (!this._cloudTextures.size) return null;
+    const textures = Array.from(this._cloudTextures.values()).filter(Boolean);
+    if (!textures.length) return null;
+    const index = Math.floor(Math.random() * textures.length);
+    return textures[index] || null;
+  }
+
+  _spawnCloud() {
+    const config = this.params.sky?.clouds;
+    if (!config?.enabled || !this._cloudGroup || !this._cloudUnitPlane) return false;
+    if (!this._cloudTextures.size) return false;
+    const texture = this._pickRandomCloudTexture();
+    if (!texture) return false;
+
+    const material = new THREE.MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+      depthWrite: false,
+      depthTest: false,
+      toneMapped: false
+    });
+
+    const mesh = new THREE.Mesh(this._cloudUnitPlane, material);
+    mesh.renderOrder = -95;
+    mesh.frustumCulled = false;
+
+    const direction = Math.random() < 0.5 ? 1 : -1;
+    const baseScale = config.baseScale ?? 0.4;
+    const scaleVariance = config.scaleVariance ?? 0;
+    const sizeNorm = Math.max(0.05, baseScale + (Math.random() - 0.5) * 2 * scaleVariance);
+    const width = sizeNorm * this.worldWidth;
+  const image = texture.image;
+  const texWidth = image?.width ? Math.max(1, image.width) : null;
+  const aspect = texWidth ? (image?.height || texWidth) / texWidth : 0.5;
+    const height = width * aspect;
+    mesh.scale.set(width, height, 1);
+
+    const spawnOffsetNorm = config.spawnOffset ?? config.despawnMargin ?? 0.2;
+    const marginNorm = config.despawnMargin ?? 0.2;
+    const offset = spawnOffsetNorm * this.worldWidth;
+    const halfWidth = width * 0.5;
+    const startX = direction > 0
+      ? -offset - halfWidth
+      : this.worldWidth + offset + halfWidth;
+
+    const range = Array.isArray(config.verticalRange) && config.verticalRange.length >= 2
+      ? config.verticalRange
+      : [0.6, 0.9];
+    const minNorm = clamp(Math.min(range[0], range[1]), 0, 1);
+    const maxNorm = clamp(Math.max(range[0], range[1]), 0, 1);
+    const yNorm = lerp(minNorm, maxNorm, Math.random());
+    const posY = this.worldBottom + yNorm * this.worldHeight;
+
+    mesh.position.set(startX, posY, 0);
+
+    const baseSpeed = config.baseSpeed ?? 0.03;
+    const speedVariance = config.speedVariance ?? 0;
+    const speedNorm = Math.max(0.002, baseSpeed + (Math.random() - 0.5) * 2 * speedVariance);
+
+    const cloud = {
+      mesh,
+      direction,
+      speedNorm,
+      widthNorm: width / this.worldWidth,
+      positionNorm: startX / this.worldWidth,
+      marginNorm,
+      aspect: aspect || 0.5
+    };
+
+    this._cloudGroup.add(mesh);
+    this._clouds.push(cloud);
+    return true;
+  }
+
+  _removeCloud(index) {
+    const cloud = this._clouds[index];
+    if (!cloud) return;
+    if (cloud.mesh) {
+      this._cloudGroup.remove(cloud.mesh);
+      const material = cloud.mesh.material;
+      if (material) {
+        material.dispose?.();
+      }
+    }
+    this._clouds.splice(index, 1);
+  }
+
+  _updateClouds(dt) {
+    const config = this.params.sky?.clouds;
+    if (!config?.enabled || !this._cloudGroup) return;
+
+    if (this._cloudSpawnTimer > 0) {
+      this._cloudSpawnTimer -= dt;
+    }
+
+    if (this._clouds.length < (config.maxConcurrent ?? 0)) {
+      if (this._cloudSpawnTimer <= 0) {
+        const spawned = this._spawnCloud();
+        this._resetCloudSpawnTimer();
+        if (!spawned) {
+          // Avoid tight loops if textures are missing.
+          this._cloudSpawnTimer = Math.max(this._cloudSpawnTimer, 2);
+        }
+      }
+    }
+
+    if (!this._clouds.length) return;
+
+    const worldWidth = this.worldWidth;
+    const removals = [];
+
+    for (let i = 0; i < this._clouds.length; i++) {
+      const cloud = this._clouds[i];
+      const mesh = cloud.mesh;
+      if (!mesh) {
+        removals.push(i);
+        continue;
+      }
+
+      const delta = cloud.speedNorm * worldWidth * dt * cloud.direction;
+      mesh.position.x += delta;
+      cloud.positionNorm = mesh.position.x / worldWidth;
+
+      const width = cloud.widthNorm * worldWidth;
+      const halfWidth = width * 0.5;
+      const margin = (cloud.marginNorm ?? 0.2) * worldWidth;
+
+      if (cloud.direction > 0) {
+        if (mesh.position.x - halfWidth > worldWidth + margin) {
+          removals.push(i);
+        }
+      } else {
+        if (mesh.position.x + halfWidth < -margin) {
+          removals.push(i);
+        }
+      }
+    }
+
+    if (removals.length) {
+      for (let i = removals.length - 1; i >= 0; i--) {
+        this._removeCloud(removals[i]);
+      }
+    }
+  }
+
+  _resizeClouds(prevWidth) {
+    if (!this._clouds?.length || !prevWidth) return;
+    const worldWidth = this.worldWidth;
+    for (let i = 0; i < this._clouds.length; i++) {
+      const cloud = this._clouds[i];
+      const mesh = cloud.mesh;
+      if (!mesh) continue;
+      const width = cloud.widthNorm * worldWidth;
+      const height = width * cloud.aspect;
+      mesh.scale.set(width, height, 1);
+      mesh.position.x = cloud.positionNorm * worldWidth;
+      cloud.positionNorm = mesh.position.x / worldWidth;
+    }
   }
 
   _createWater() {
@@ -1783,6 +1998,7 @@ export class SimuladorScene extends BaseScene {
     }
 
     pending.push(this._preloadUiImages());
+    pending.push(this._preloadCloudTextures());
 
     if (this._getPlantVisualConfig()) {
       pending.push(this._preloadAllPlantSequences());
@@ -1797,6 +2013,36 @@ export class SimuladorScene extends BaseScene {
         console.warn('[SimuladorScene] Asset preload failed:', results[i].reason);
       }
     }
+  }
+
+  async _preloadCloudTextures() {
+    const config = this.params.sky?.clouds;
+    if (!config?.enabled) return;
+    const count = Math.max(0, Math.floor(config.textureCount ?? 0));
+    if (!count) return;
+
+    this._cloudTextures.clear();
+
+    const basePath = config.textureBasePath || '';
+    const prefix = config.texturePrefix || 'cloud';
+    const extension = config.textureExtension || '.png';
+    const tasks = [];
+
+    for (let i = 1; i <= count; i++) {
+      const filename = `${prefix}${i}${extension}`;
+      const url = this._normalizeAssetPath(basePath, filename);
+      const task = this._loadTexture(url)
+        .then((texture) => {
+          if (!texture) return;
+          this._prepareTexture(texture);
+          this._cloudTextures.set(i, texture);
+        })
+        .catch(() => {});
+      tasks.push(task);
+    }
+
+    if (!tasks.length) return;
+    await Promise.allSettled(tasks);
   }
 
   async _preloadUiImages() {
@@ -4563,6 +4809,25 @@ export class SimuladorScene extends BaseScene {
     disposeMesh(this._riverbedStrip?.mesh);
     disposeMesh(this._averageLine);
     disposeMesh(this._particlesPoints);
+
+    if (this._cloudGroup) {
+      for (let i = this._cloudGroup.children.length - 1; i >= 0; i--) {
+        const child = this._cloudGroup.children[i];
+        if (child.material) {
+          child.material.dispose?.();
+        }
+      }
+      this.scene.remove(this._cloudGroup);
+    }
+    this._cloudGroup = null;
+    this._clouds = [];
+    this._cloudSpawnTimer = 0;
+    this._cloudTextures.forEach((texture) => texture.dispose?.());
+    this._cloudTextures.clear();
+    if (this._cloudUnitPlane) {
+      this._cloudUnitPlane.dispose?.();
+      this._cloudUnitPlane = null;
+    }
 
     if (this._seedEffectGroup) {
       for (let i = 0; i < this._seedEffectGroup.children.length; i++) {
