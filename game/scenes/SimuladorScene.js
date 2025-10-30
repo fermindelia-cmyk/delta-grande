@@ -11,6 +11,9 @@ const smoothstep = (edge0, edge1, x) => {
   return t * t * (3 - 2 * t);
 };
 
+const FONT_LINK_DATA_ATTR = 'data-simulador-fontkit';
+let loadedFontHref = null;
+
 const WEATHER_PLAYBACK_SPEED = 2;
 
 export const DEFAULT_PARAMS = Object.freeze({
@@ -26,10 +29,10 @@ export const DEFAULT_PARAMS = Object.freeze({
     skyBottom: '#e3f1ff',
     distantBank: '#86b58d',
     distantBankShadow: '#5a8760',
-    waterSurface: '#4aa0d9',
-    waterDeep: '#1c4b6b',
-    waterHighlight: '#9fe2ff',
-    waterAverageLine: '#f4fbff',
+    waterSurface: '#8c6b43',
+    waterDeep: '#3f2c21',
+    waterHighlight: '#d7b983',
+    waterAverageLine: '#f5d06d',
     riverbedBase: '#caa46b',
     riverbedShadow: '#a67548',
     sedimentParticle: '#f3d3a2',
@@ -64,6 +67,23 @@ export const DEFAULT_PARAMS = Object.freeze({
       noiseAmplitude: 0.018,
       noiseScale: 1.7,
       noiseSpeed: 0.16
+    }),
+    averageLine: Object.freeze({
+      color: '#f5d06d',
+      opacity: 1,
+      dashSize: 0.035,
+      gapSize: 0.02,
+      baseAmplitude: 0.009,
+      baseFrequency: 6.5,
+      baseSpeed: 0.4,
+      waves: Object.freeze([
+        Object.freeze({ amplitude: 0.008, frequency: 11.5, speed: -0.85 }),
+        Object.freeze({ amplitude: 0.006, frequency: 4.2, speed: 0.65 }),
+        Object.freeze({ amplitude: 0.005, frequency: 7.8, speed: 1.25 })
+      ]),
+      noiseAmplitude: 0.0035,
+      noiseScale: 1.4,
+      noiseSpeed: 0.35
     })
   }),
   riverbed: Object.freeze({
@@ -214,6 +234,10 @@ export const DEFAULT_PARAMS = Object.freeze({
     fontScale: 0.028,
     borderRadius: 0.035,
     shadowOpacity: 0.4,
+    fonts: Object.freeze({
+      fontKitHref: 'https://use.typekit.net/vmy8ypx.css',
+      family: '"new-science-mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace'
+    }),
     cursor: Object.freeze({
       diameterVW: 1.8,
       borderWidthVW: 0.14,
@@ -262,7 +286,21 @@ export const DEFAULT_PARAMS = Object.freeze({
         heightPct: 59.2681,
         segments: 7,
         zIndex: 10,
-        seedOrder: Object.freeze(['aliso', 'sauce', 'ambigua', 'distichlis', 'ceibo', 'drago', 'acacia'])
+        seedOrder: Object.freeze(['aliso', 'sauce', 'ambigua', 'distichlis', 'ceibo', 'drago', 'acacia']),
+        seedImageScale: 0.5,
+        label: Object.freeze({
+          backgroundColor: '#b86f2d',
+          textColor: '#ffffff',
+          fontSizeVW: 1.1,
+          paddingVW: 0.6,
+          paddingVH: 0.35,
+          borderRadiusVW: 0.6,
+          rightGapVW: 0.8,
+          transitionSeconds: 0.22,
+          hiddenOffsetVW: 1.2,
+          maxWidthVW: 18,
+          fontFamily: '"new-science-mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace'
+        })
       }),
       seedImages: Object.freeze({
         aliso: 'aliso.png',
@@ -522,11 +560,13 @@ export class SimuladorScene extends BaseScene {
     this._weatherState = 'low';
     this._weatherCurrentFrame = { top: null, bottom: null };
     this._uiAssetBasePath = this.params.ui?.elements?.basePath || '';
+  this._uiFontFamily = null;
 
     this._boundOnPointerDown = (e) => this._handlePointerDown(e);
     this._boundOnPointerMove = (e) => this._handlePointerMove(e);
     this._boundOnPointerUp = () => { this._pointerDown = false; };
     this._boundOnPointerLeave = () => this._handlePointerLeave();
+    this._boundPreventSelection = (e) => e.preventDefault();
   }
 
   async mount() {
@@ -576,6 +616,7 @@ export class SimuladorScene extends BaseScene {
     );
 
     this._updateWater();
+  this._updateAverageLine();
     this._updateRiverbed();
     this._updateSediment(dt);
     this._updateSeedBursts(dt);
@@ -814,46 +855,93 @@ export class SimuladorScene extends BaseScene {
 
   _createAverageLine() {
     const segments = this.params.water.surfaceSegments;
-    const points = [];
-    const medium = this._waterLevels.medium;
-    const amplitude = 0.015;
-    const frequency = 6.5;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array((segments + 1) * 3);
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.attributes.position.setUsage(THREE.DynamicDrawUsage);
 
-    for (let i = 0; i <= segments; i++) {
-      const t = i / segments;
-      const x = t * this.worldWidth;
-      const y = medium + Math.sin(t * frequency) * amplitude;
-      points.push(new THREE.Vector3(x, y, 0.01));
-    }
-
-    const geometry = new THREE.BufferGeometry().setFromPoints(points);
-    const material = new THREE.LineBasicMaterial({
-      color: new THREE.Color(this.params.colors.waterAverageLine),
-      linewidth: 1
+    const averageCfg = this.params.water.averageLine || {};
+    const avgColor = averageCfg.color || this.params.colors.waterAverageLine;
+    const material = new THREE.LineDashedMaterial({
+      color: new THREE.Color(avgColor || '#f5d06d'),
+      linewidth: 1,
+      transparent: true,
+      opacity: averageCfg.opacity ?? 1,
+      dashSize: Math.max(1e-4, averageCfg.dashSize ?? 0.035),
+      gapSize: Math.max(1e-4, averageCfg.gapSize ?? 0.02)
     });
+    material.needsUpdate = true;
+
     this._averageLine = new THREE.Line(geometry, material);
     this._averageLine.renderOrder = 4;
     this.scene.add(this._averageLine);
+    this._updateAverageLineGeometry(0);
   }
 
   _layoutAverageLine() {
-    if (!this._averageLine) return;
-    const segments = this.params.water.surfaceSegments;
-    const medium = this._waterLevels.medium;
-    const amplitude = 0.015;
-    const frequency = 6.5;
+    this._updateAverageLineGeometry(this._elapsed);
+  }
 
-    const positions = this._averageLine.geometry.attributes.position.array;
+  _updateAverageLine() {
+    this._updateAverageLineGeometry(this._elapsed);
+  }
+
+  _updateAverageLineGeometry(time = 0) {
+    if (!this._averageLine) return;
+    const geometry = this._averageLine.geometry;
+    const positionsAttr = geometry?.attributes?.position;
+    if (!positionsAttr) return;
+    const positions = positionsAttr.array;
+    const segments = this.params.water.surfaceSegments;
+
     for (let i = 0; i <= segments; i++) {
-      const t = i / segments;
+      const t = segments > 0 ? (i / segments) : 0;
       const x = t * this.worldWidth;
-      const y = medium + Math.sin(t * frequency) * amplitude;
+      const y = this._sampleAverageLineHeight(t, time);
       const idx = i * 3;
       positions[idx + 0] = x;
       positions[idx + 1] = y;
       positions[idx + 2] = 0.01;
     }
-    this._averageLine.geometry.attributes.position.needsUpdate = true;
+
+    positionsAttr.needsUpdate = true;
+    if (typeof this._averageLine.computeLineDistances === 'function') {
+      this._averageLine.computeLineDistances();
+    }
+    geometry.computeBoundingSphere?.();
+  }
+
+  _sampleAverageLineHeight(t, time) {
+    const averageCfg = this.params.water.averageLine || {};
+    const medium = this._waterLevels.medium;
+    let height = medium;
+
+    const baseAmplitude = averageCfg.baseAmplitude ?? 0;
+    const baseFrequency = averageCfg.baseFrequency ?? 6.5;
+    const baseSpeed = averageCfg.baseSpeed ?? 0.4;
+    if (baseAmplitude !== 0) {
+      height += Math.sin(t * baseFrequency + time * baseSpeed) * baseAmplitude;
+    }
+
+    const waves = Array.isArray(averageCfg.waves) ? averageCfg.waves : [];
+    for (let i = 0; i < waves.length; i++) {
+      const wave = waves[i];
+      if (!wave) continue;
+      const amp = wave.amplitude ?? 0;
+      if (amp === 0) continue;
+      const freq = wave.frequency ?? 0;
+      const speed = wave.speed ?? 0;
+      height += Math.sin(t * freq + time * speed + i * 0.47) * amp;
+    }
+
+    const noiseAmplitude = averageCfg.noiseAmplitude ?? 0;
+    if (noiseAmplitude !== 0) {
+      const scale = averageCfg.noiseScale ?? 1;
+      const speed = averageCfg.noiseSpeed ?? 1;
+      height += this._noise2D(t * scale + 19.17, time * speed + 7.31) * noiseAmplitude;
+    }
+
+    return height;
   }
 
   _createRiverbed() {
@@ -2469,6 +2557,9 @@ export class SimuladorScene extends BaseScene {
       el.style.opacity = '0';
       el.style.transition = `opacity ${fadeDuration}s ease, transform ${fadeDuration}s ease`;
       el.style.zIndex = '12';
+      if (this._uiFontFamily) {
+        el.style.fontFamily = this._uiFontFamily;
+      }
       this.app.root.appendChild(el);
       this._messageEl = el;
     }
@@ -2834,6 +2925,8 @@ export class SimuladorScene extends BaseScene {
     const elements = ui.elements || {};
     const basePath = elements.basePath || '';
 
+    this._applyFontSettings();
+
     this._uiAssetBasePath = basePath;
     this._weatherConfig = elements.weather || null;
     this._buttons = {};
@@ -2859,6 +2952,11 @@ export class SimuladorScene extends BaseScene {
     root.style.inset = '0';
     root.style.pointerEvents = 'none';
     root.style.zIndex = '5';
+    root.style.userSelect = 'none';
+    root.style.webkitUserSelect = 'none';
+    if (this._uiFontFamily) {
+      root.style.fontFamily = this._uiFontFamily;
+    }
 
     const weatherCfg = this._weatherConfig;
     let topImage = null;
@@ -2874,6 +2972,8 @@ export class SimuladorScene extends BaseScene {
       this._applyViewportRect(topContainer, weatherCfg.top.area);
       topContainer.style.pointerEvents = 'none';
       topContainer.style.display = 'block';
+      topContainer.style.userSelect = 'none';
+      topContainer.style.webkitUserSelect = 'none';
       if (Number.isFinite(weatherCfg.top.area.zIndex)) {
         topContainer.style.zIndex = String(weatherCfg.top.area.zIndex);
       }
@@ -2885,7 +2985,7 @@ export class SimuladorScene extends BaseScene {
       topImage.style.objectFit = 'contain';
       topImage.style.pointerEvents = 'none';
       topImage.draggable = false;
-  topContainer.appendChild(topImage);
+      topContainer.appendChild(topImage);
     }
 
     if (weatherCfg?.bottom?.area) {
@@ -2895,6 +2995,8 @@ export class SimuladorScene extends BaseScene {
       bottomContainer.style.pointerEvents = 'auto';
       bottomContainer.style.display = 'block';
       bottomContainer.style.background = 'transparent';
+      bottomContainer.style.userSelect = 'none';
+      bottomContainer.style.webkitUserSelect = 'none';
       if (Number.isFinite(weatherCfg.bottom.area.zIndex)) {
         bottomContainer.style.zIndex = String(weatherCfg.bottom.area.zIndex);
       }
@@ -2918,6 +3020,8 @@ export class SimuladorScene extends BaseScene {
       lowerBtn.style.cursor = 'pointer';
       lowerBtn.style.background = 'transparent';
       lowerBtn.style.touchAction = 'manipulation';
+      lowerBtn.style.userSelect = 'none';
+      lowerBtn.style.webkitUserSelect = 'none';
       lowerBtn.addEventListener('click', (event) => {
         event.preventDefault();
         this._setWaterLevel(this._waterLevelIndex - 1);
@@ -2934,6 +3038,8 @@ export class SimuladorScene extends BaseScene {
       raiseBtn.style.cursor = 'pointer';
       raiseBtn.style.background = 'transparent';
       raiseBtn.style.touchAction = 'manipulation';
+      raiseBtn.style.userSelect = 'none';
+      raiseBtn.style.webkitUserSelect = 'none';
       raiseBtn.addEventListener('click', (event) => {
         event.preventDefault();
         this._setWaterLevel(this._waterLevelIndex + 1);
@@ -2956,10 +3062,9 @@ export class SimuladorScene extends BaseScene {
         bottomContainer
       };
     }
-
-  this._weatherChannels = {};
-  this._weatherAnimations = {};
-  this._weatherCurrentFrame = { top: null, bottom: null };
+    this._weatherChannels = {};
+    this._weatherAnimations = {};
+    this._weatherCurrentFrame = { top: null, bottom: null };
     if (topImage && weatherCfg?.top) {
       this._weatherChannels.top = {
         image: topImage,
@@ -2986,6 +3091,8 @@ export class SimuladorScene extends BaseScene {
         sedimentBtn.style.zIndex = String(elements.sedimentButton.zIndex);
       }
       sedimentBtn.draggable = false;
+      sedimentBtn.style.userSelect = 'none';
+      sedimentBtn.style.webkitUserSelect = 'none';
       sedimentBtn.addEventListener('click', (event) => {
         event.preventDefault();
         this._toggleTool('sediment');
@@ -3007,6 +3114,8 @@ export class SimuladorScene extends BaseScene {
         removeBtn.style.zIndex = String(elements.removeButton.zIndex);
       }
       removeBtn.draggable = false;
+      removeBtn.style.userSelect = 'none';
+      removeBtn.style.webkitUserSelect = 'none';
       removeBtn.addEventListener('click', (event) => {
         event.preventDefault();
         this._toggleTool('remove');
@@ -3026,6 +3135,8 @@ export class SimuladorScene extends BaseScene {
       seederContainer.style.backgroundRepeat = 'no-repeat';
       seederContainer.style.display = 'block';
       seederContainer.style.transition = 'transform 0.15s ease';
+      seederContainer.style.userSelect = 'none';
+  seederContainer.style.webkitUserSelect = 'none';
       if (Number.isFinite(seederCfg.zIndex)) {
         seederContainer.style.zIndex = String(seederCfg.zIndex);
       }
@@ -3035,25 +3146,31 @@ export class SimuladorScene extends BaseScene {
       const seedOrder = Array.isArray(seederCfg.seedOrder) ? seederCfg.seedOrder : [];
       const segmentHeight = 100 / segments;
       const seederMaskUrl = resolveAsset(seederCfg.image);
+      const seedImageScale = clamp(seederCfg.seedImageScale ?? 1, 0.05, 1);
+      const labelCfg = seederCfg.label || {};
+      const labelTransitionSeconds = Math.max(0.05, labelCfg.transitionSeconds ?? 0.2);
+  const hiddenOffsetVW = labelCfg.hiddenOffsetVW ?? 1.2;
 
       for (let i = 0; i < segments; i++) {
         const seedId = seedOrder[i] || null;
         const seedDef = seedId ? this._seedCatalog.get(seedId) : null;
         const posPct = segments > 1 ? (i / (segments - 1)) * 100 : 0;
 
-  const segment = document.createElement('div');
-  segment.style.position = 'absolute';
-        segment.style.left = '0';
-        segment.style.width = '100%';
-        segment.style.height = `${segmentHeight}%`;
-        segment.style.top = `${i * segmentHeight}%`;
-        segment.style.display = 'flex';
-        segment.style.alignItems = 'center';
-        segment.style.justifyContent = 'center';
-        segment.style.pointerEvents = seedDef ? 'auto' : 'none';
-        segment.style.cursor = seedDef ? 'pointer' : 'default';
-        segment.style.transition = 'transform 0.15s ease, box-shadow 0.15s ease';
-  segment.style.overflow = 'hidden';
+    const segment = document.createElement('div');
+    segment.style.position = 'absolute';
+    segment.style.left = '0';
+    segment.style.width = '100%';
+    segment.style.height = `${segmentHeight}%`;
+    segment.style.top = `${i * segmentHeight}%`;
+    segment.style.display = 'flex';
+    segment.style.alignItems = 'center';
+    segment.style.justifyContent = 'center';
+    segment.style.pointerEvents = seedDef ? 'auto' : 'none';
+    segment.style.cursor = seedDef ? 'pointer' : 'default';
+    segment.style.transition = 'transform 0.15s ease, box-shadow 0.15s ease';
+    segment.style.overflow = 'hidden';
+    segment.style.userSelect = 'none';
+    segment.style.webkitUserSelect = 'none';
         seederContainer.appendChild(segment);
 
         let overlayEl = null;
@@ -3099,15 +3216,49 @@ export class SimuladorScene extends BaseScene {
           if (seedImageFile) {
             imageEl = document.createElement('img');
             imageEl.src = resolveAsset(seedImageFile);
-            imageEl.style.maxWidth = '90%';
-            imageEl.style.maxHeight = '90%';
+            const scalePct = (seedImageScale * 100).toFixed(3) + '%';
+            imageEl.style.maxWidth = scalePct;
+            imageEl.style.maxHeight = scalePct;
             imageEl.style.objectFit = 'contain';
             imageEl.style.pointerEvents = 'none';
             imageEl.style.transition = 'transform 0.18s ease, filter 0.18s ease, opacity 0.18s ease';
             imageEl.style.zIndex = '2';
+            imageEl.style.userSelect = 'none';
             imageEl.draggable = false;
             segment.appendChild(imageEl);
           }
+        }
+
+        let labelEl = null;
+        if (seedDef && seedId) {
+          labelEl = document.createElement('div');
+          labelEl.textContent = seedDef.label || seedId;
+          labelEl.style.position = 'absolute';
+          labelEl.style.right = '100%';
+          labelEl.style.top = '50%';
+          labelEl.style.display = 'inline-flex';
+          labelEl.style.alignItems = 'center';
+          labelEl.style.justifyContent = 'center';
+          labelEl.style.whiteSpace = 'nowrap';
+          labelEl.style.opacity = '0';
+          labelEl.style.pointerEvents = 'none';
+          labelEl.style.transform = `translate(${hiddenOffsetVW}vw, -50%)`;
+          labelEl.style.transition = `transform ${labelTransitionSeconds}s ease, opacity ${labelTransitionSeconds}s ease`;
+          labelEl.style.marginRight = `${labelCfg.rightGapVW ?? 0.8}vw`;
+          labelEl.style.maxWidth = `${labelCfg.maxWidthVW ?? 18}vw`;
+          labelEl.style.padding = `${labelCfg.paddingVH ?? 0.35}vh ${labelCfg.paddingVW ?? 0.6}vw`;
+          labelEl.style.borderRadius = `${labelCfg.borderRadiusVW ?? 0.6}vw`;
+          labelEl.style.background = labelCfg.backgroundColor || '#b86f2d';
+          labelEl.style.color = labelCfg.textColor || '#ffffff';
+          labelEl.style.fontSize = `${labelCfg.fontSizeVW ?? 1.1}vw`;
+          labelEl.style.textTransform = 'none';
+          labelEl.style.fontWeight = '600';
+          labelEl.style.boxShadow = '0 0 0.3vw rgba(0,0,0,0.35)';
+          labelEl.style.zIndex = '3';
+          if (labelCfg.fontFamily || this._uiFontFamily) {
+            labelEl.style.fontFamily = labelCfg.fontFamily || this._uiFontFamily;
+          }
+          segment.appendChild(labelEl);
         }
 
         if (seedDef && seedId) {
@@ -3117,7 +3268,7 @@ export class SimuladorScene extends BaseScene {
             event.preventDefault();
             this._toggleTool(seedId);
           });
-          this._seedButtons[seedId] = { segment, image: imageEl, overlay: overlayEl, highlight: highlightEl };
+          this._seedButtons[seedId] = { segment, image: imageEl, overlay: overlayEl, highlight: highlightEl, label: labelEl, seed: seedDef };
         }
       }
 
@@ -3140,11 +3291,11 @@ export class SimuladorScene extends BaseScene {
 
     const goalMessage = document.createElement('div');
     const goalUi = ui.goalMessage || {};
-  const goalTransitionSeconds = Math.max(0.05, goalUi.transitionSeconds ?? 0.35);
-  const goalHiddenOffset = goalUi.slideOffsetVW ?? 2;
-  const goalTransition = `transform ${goalTransitionSeconds}s ease, opacity ${goalTransitionSeconds}s ease`;
-  const goalHiddenTransform = `translate(-50%, ${goalHiddenOffset}vw)`;
-  const goalVisibleTransform = 'translate(-50%, 0)';
+    const goalTransitionSeconds = Math.max(0.05, goalUi.transitionSeconds ?? 0.35);
+    const goalHiddenOffset = goalUi.slideOffsetVW ?? 2;
+    const goalTransition = `transform ${goalTransitionSeconds}s ease, opacity ${goalTransitionSeconds}s ease`;
+    const goalHiddenTransform = `translate(-50%, ${goalHiddenOffset}vw)`;
+    const goalVisibleTransform = 'translate(-50%, 0)';
     goalMessage.style.position = 'absolute';
     goalMessage.style.left = '50%';
     goalMessage.style.bottom = `${(goalUi.bottomOffsetVW ?? 9)}vw`;
@@ -3160,10 +3311,13 @@ export class SimuladorScene extends BaseScene {
     goalMessage.style.textAlign = 'center';
     goalMessage.style.display = 'none';
     goalMessage.style.backdropFilter = 'blur(0.8vmin)';
-  goalMessage.style.opacity = '0';
-  goalMessage.style.transform = goalHiddenTransform;
-  goalMessage.style.transition = goalTransition;
-  goalMessage.style.willChange = 'transform, opacity';
+    goalMessage.style.opacity = '0';
+    goalMessage.style.transform = goalHiddenTransform;
+    goalMessage.style.transition = goalTransition;
+    goalMessage.style.willChange = 'transform, opacity';
+    if (this._uiFontFamily) {
+      goalMessage.style.fontFamily = this._uiFontFamily;
+    }
     root.appendChild(goalMessage);
     this._goalMessageEl = goalMessage;
   this._goalMessageTransition = goalTransition;
@@ -3210,6 +3364,41 @@ export class SimuladorScene extends BaseScene {
     // Layout uses viewport-relative units, so dynamic resizing is not required here.
     void width;
     void height;
+  }
+
+  _applyFontSettings() {
+    const fontsCfg = this.params.ui?.fonts;
+    if (!fontsCfg) {
+      this._uiFontFamily = null;
+      return;
+    }
+
+    if (fontsCfg.fontKitHref && typeof document !== 'undefined') {
+      if (loadedFontHref !== fontsCfg.fontKitHref) {
+        const existing = document.querySelector(`link[${FONT_LINK_DATA_ATTR}="true"]`);
+        if (existing) {
+          existing.parentElement?.removeChild(existing);
+        }
+        const linkEl = document.createElement('link');
+        linkEl.rel = 'stylesheet';
+        linkEl.href = fontsCfg.fontKitHref;
+        linkEl.setAttribute(FONT_LINK_DATA_ATTR, 'true');
+        document.head?.appendChild(linkEl);
+        loadedFontHref = fontsCfg.fontKitHref;
+      }
+    }
+
+    if (fontsCfg.family) {
+      this._uiFontFamily = fontsCfg.family;
+      if (this.app?.root) {
+        this.app.root.style.fontFamily = fontsCfg.family;
+      }
+      if (typeof document !== 'undefined' && document.body) {
+        document.body.style.fontFamily = fontsCfg.family;
+      }
+    } else {
+      this._uiFontFamily = null;
+    }
   }
 
   _updateParticleSize(width, height) {
@@ -3734,7 +3923,32 @@ export class SimuladorScene extends BaseScene {
     if (activeId !== 'sediment') {
       this._pointerDown = false;
     }
+    this._updateSeedLabelDisplay(activeId);
     this._refreshCursor();
+  }
+
+  _updateSeedLabelDisplay(activeSeedId) {
+    const labelCfg = this.params.ui?.elements?.seeder?.label || {};
+    const hiddenOffsetVW = labelCfg.hiddenOffsetVW ?? 1.2;
+    const hiddenTransform = `translate(${hiddenOffsetVW}vw, -50%)`;
+    const visibleTransform = 'translate(0, -50%)';
+    const entries = Object.entries(this._seedButtons || {});
+    for (let i = 0; i < entries.length; i++) {
+      const [seedId, entry] = entries[i];
+      if (!entry?.label) continue;
+      const available = this._availableSeedIds.has(seedId);
+      const shouldShow = available && seedId === activeSeedId;
+      if (shouldShow) {
+        if (entry.seed?.label) {
+          entry.label.textContent = entry.seed.label;
+        }
+        entry.label.style.opacity = '1';
+        entry.label.style.transform = visibleTransform;
+      } else {
+        entry.label.style.opacity = '0';
+        entry.label.style.transform = hiddenTransform;
+      }
+    }
   }
 
   _isToolAvailable(toolId) {
@@ -3809,6 +4023,9 @@ export class SimuladorScene extends BaseScene {
     canvas.addEventListener('pointermove', this._boundOnPointerMove);
     canvas.addEventListener('pointerleave', this._boundOnPointerLeave);
     window.addEventListener('pointerup', this._boundOnPointerUp);
+    if (this.app?.root) {
+      this.app.root.addEventListener('selectstart', this._boundPreventSelection);
+    }
   }
 
   _unbindEvents() {
@@ -3817,6 +4034,9 @@ export class SimuladorScene extends BaseScene {
     canvas.removeEventListener('pointermove', this._boundOnPointerMove);
     canvas.removeEventListener('pointerleave', this._boundOnPointerLeave);
     window.removeEventListener('pointerup', this._boundOnPointerUp);
+    if (this.app?.root) {
+      this.app.root.removeEventListener('selectstart', this._boundPreventSelection);
+    }
   }
 
   _handlePointerDown(event) {
