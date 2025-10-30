@@ -15,6 +15,7 @@ const FONT_LINK_DATA_ATTR = 'data-simulador-fontkit';
 let loadedFontHref = null;
 
 const WEATHER_PLAYBACK_SPEED = 2;
+const LOADING_STYLE_ID = 'simulador-loading-style';
 
 export const DEFAULT_PARAMS = Object.freeze({
   world: Object.freeze({
@@ -561,6 +562,10 @@ export class SimuladorScene extends BaseScene {
     this._weatherCurrentFrame = { top: null, bottom: null };
     this._uiAssetBasePath = this.params.ui?.elements?.basePath || '';
   this._uiFontFamily = null;
+    this._loadingOverlay = null;
+    this._loadingOverlayHideTimer = null;
+    this._loadingLogoUrl = null;
+    this._isReady = false;
 
     this._boundOnPointerDown = (e) => this._handlePointerDown(e);
     this._boundOnPointerMove = (e) => this._handlePointerMove(e);
@@ -570,33 +575,47 @@ export class SimuladorScene extends BaseScene {
   }
 
   async mount() {
-    // Replace default camera with orthographic for side-view 2D layout.
-    const { top, bottom, cameraZ } = this.params.world;
-    this.worldHeight = top - bottom;
-    this.worldBottom = bottom;
-    this.worldTop = top;
+    this._isReady = false;
+    this._showLoadingOverlay();
 
-    this.camera = new THREE.OrthographicCamera(0, 1, top, bottom, -10, 20);
-    this.camera.position.set(0, 0, cameraZ);
-    this.camera.lookAt(new THREE.Vector3(0, 0, 0));
+    let initialized = false;
+    try {
+      await this._preloadCriticalAssets();
 
-    this.scene = new THREE.Scene();
+      // Replace default camera with orthographic for side-view 2D layout.
+      const { top, bottom, cameraZ } = this.params.world;
+      this.worldHeight = top - bottom;
+      this.worldBottom = bottom;
+      this.worldTop = top;
 
-    this._createBackground();
-    this._createRiverbed();
-    this._createWater();
-    this._createAverageLine();
-    this._createSedimentSystem();
-    this._createSeedEffectSystem();
-    this._createUI();
-    this._preloadAllPlantSequences();
-    this._initProgression();
-    this._bindEvents();
+      this.camera = new THREE.OrthographicCamera(0, 1, top, bottom, -10, 20);
+      this.camera.position.set(0, 0, cameraZ);
+      this.camera.lookAt(new THREE.Vector3(0, 0, 0));
 
-    this.onResize(this.app.root.clientWidth, this.app.root.clientHeight);
+      this.scene = new THREE.Scene();
+
+      this._createBackground();
+      this._createRiverbed();
+      this._createWater();
+      this._createAverageLine();
+      this._createSedimentSystem();
+      this._createSeedEffectSystem();
+      this._createUI();
+      this._initProgression();
+      this._bindEvents();
+
+      this.onResize(this.app.root.clientWidth, this.app.root.clientHeight);
+
+      initialized = true;
+      this._isReady = true;
+    } finally {
+      this._hideLoadingOverlay(!initialized);
+    }
   }
 
   async unmount() {
+    this._isReady = false;
+    this._hideLoadingOverlay(true);
     this._unbindEvents();
     this._destroyUI();
     this._clearMessageTimer();
@@ -606,6 +625,7 @@ export class SimuladorScene extends BaseScene {
 
   update(dt) {
     this._elapsed += dt;
+    if (!this._isReady) return;
 
     const smoothing = this.params.water.smoothing;
     this._currentWaterLevel = THREE.MathUtils.damp(
@@ -672,7 +692,13 @@ export class SimuladorScene extends BaseScene {
     this.scene.add(this._background);
 
     const imagePath = world.backgroundImage;
-    if (imagePath) {
+    if (this._backgroundTexture) {
+      this._prepareTexture(this._backgroundTexture);
+      material.map = this._backgroundTexture;
+      material.color.setHex(0xffffff);
+      material.needsUpdate = true;
+      this._layoutBackground();
+    } else if (imagePath) {
       if (!this._textureLoader) {
         this._textureLoader = new THREE.TextureLoader();
       }
@@ -969,7 +995,15 @@ export class SimuladorScene extends BaseScene {
     this.scene.add(this._riverbedStrip.mesh);
 
     const texturePath = riverbed.texture?.image;
-    if (texturePath) {
+    if (this._sandTexture) {
+      this._prepareTexture(this._sandTexture);
+      this._sandTexture.wrapS = THREE.RepeatWrapping;
+      this._sandTexture.wrapT = THREE.RepeatWrapping;
+      this._sandTexture.needsUpdate = true;
+      material.map = this._sandTexture;
+      material.needsUpdate = true;
+      this._updateRiverbedUVs();
+    } else if (texturePath) {
       if (!this._textureLoader) {
         this._textureLoader = new THREE.TextureLoader();
       }
@@ -1670,20 +1704,34 @@ export class SimuladorScene extends BaseScene {
     entry.callbacks.push(callback);
   }
 
-  _primePlantAssets(seed) {
-    const visuals = this._getPlantVisualConfig();
-    if (!visuals) return;
-    for (let i = 0; i < this._plantStages.length; i++) {
-      this._getPlantStageSequence(seed, i);
-    }
-    for (let i = 0; i < this._plantStages.length - 1; i++) {
-      this._getPlantTransitionSequence(seed, i, i + 1);
+  _collectSequencePromise(entry, collector) {
+    if (!collector || !entry) return;
+    if (collector.entries.has(entry)) return;
+    collector.entries.add(entry);
+    if (entry.status === 'loading' && entry.promise) {
+      collector.promises.push(entry.promise);
     }
   }
 
-  _preloadAllPlantSequences() {
+  _primePlantAssets(seed, collector = null) {
+    const visuals = this._getPlantVisualConfig();
+    if (!visuals) return;
+    for (let i = 0; i < this._plantStages.length; i++) {
+      const entry = this._getPlantStageSequence(seed, i);
+      this._collectSequencePromise(entry, collector);
+    }
+    for (let i = 0; i < this._plantStages.length - 1; i++) {
+      const entry = this._getPlantTransitionSequence(seed, i, i + 1);
+      this._collectSequencePromise(entry, collector);
+    }
+  }
+
+  async _preloadAllPlantSequences() {
+    const visuals = this._getPlantVisualConfig();
+    if (!visuals) return;
     const seedsConfig = this.params.seeds || {};
     const seen = new Set();
+    const collector = { entries: new Set(), promises: [] };
     const enqueue = (list) => {
       if (!Array.isArray(list)) return;
       for (let i = 0; i < list.length; i++) {
@@ -1691,11 +1739,272 @@ export class SimuladorScene extends BaseScene {
         if (!seed || !seed.id) continue;
         if (seen.has(seed.id)) continue;
         seen.add(seed.id);
-        this._primePlantAssets(seed);
+        this._primePlantAssets(seed, collector);
       }
     };
 
     Object.values(seedsConfig).forEach((value) => enqueue(value));
+    if (!collector.promises.length) return;
+    await Promise.allSettled(collector.promises);
+  }
+
+  async _preloadCriticalAssets() {
+    const pending = [];
+
+    const backgroundImage = this.params.world?.backgroundImage;
+    if (backgroundImage && !this._backgroundTexture) {
+      pending.push(
+        this._loadTexture(backgroundImage)
+          .then((texture) => {
+            this._prepareTexture(texture);
+            this._backgroundTexture = texture;
+          })
+      );
+    }
+
+    const sandImage = this.params.riverbed?.texture?.image;
+    if (sandImage && !this._sandTexture) {
+      pending.push(
+        this._loadTexture(sandImage)
+          .then((texture) => {
+            this._prepareTexture(texture);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.needsUpdate = true;
+            this._sandTexture = texture;
+          })
+      );
+    }
+
+    pending.push(this._preloadUiImages());
+
+    if (this._getPlantVisualConfig()) {
+      pending.push(this._preloadAllPlantSequences());
+    }
+
+    const tasks = pending.filter(Boolean);
+    if (!tasks.length) return;
+
+    const results = await Promise.allSettled(tasks);
+    for (let i = 0; i < results.length; i++) {
+      if (results[i].status === 'rejected') {
+        console.warn('[SimuladorScene] Asset preload failed:', results[i].reason);
+      }
+    }
+  }
+
+  async _preloadUiImages() {
+    const elements = this.params.ui?.elements;
+    if (!elements) return;
+    if (typeof Image === 'undefined') return;
+
+    const basePath = elements.basePath || '';
+    const urls = new Set();
+    const addUrl = (relative) => {
+      if (!relative) return;
+      urls.add(this._normalizeAssetPath(basePath, relative));
+    };
+
+    if (elements.logo?.image) {
+      const logoUrl = this._normalizeAssetPath(basePath, elements.logo.image);
+      addUrl(elements.logo.image);
+      if (!this._loadingLogoUrl) {
+        this._loadingLogoUrl = logoUrl;
+      }
+    }
+
+    addUrl(elements.sedimentButton?.image);
+    addUrl(elements.removeButton?.image);
+    addUrl(elements.seeder?.image);
+
+    const seedImages = elements.seedImages;
+    if (seedImages) {
+      Object.values(seedImages).forEach((value) => addUrl(value));
+    }
+
+    const weather = elements.weather;
+    const buildWeatherUrl = (channelCfg, frameNumber) => {
+      if (!channelCfg || !Number.isFinite(frameNumber)) return null;
+      const folderPath = channelCfg.folder
+        ? this._normalizeAssetPath(basePath, channelCfg.folder)
+        : basePath;
+      const digits = Math.max(1, channelCfg.frameDigits ?? 1);
+      const prefix = channelCfg.framePrefix || '';
+      const extension = channelCfg.frameExtension || '.png';
+      const frameValue = Math.max(0, Math.round(frameNumber));
+      return this._normalizeAssetPath(
+        folderPath,
+        `${prefix}${frameValue.toString().padStart(digits, '0')}${extension}`
+      );
+    };
+
+    if (weather?.top?.frames?.low !== undefined) {
+      const url = buildWeatherUrl(weather.top, weather.top.frames.low);
+      if (url) urls.add(url);
+    }
+    if (weather?.bottom?.frames?.low !== undefined) {
+      const url = buildWeatherUrl(weather.bottom, weather.bottom.frames.low);
+      if (url) urls.add(url);
+    }
+
+    if (!urls.size) return;
+
+    const promises = [];
+    urls.forEach((url) => {
+      promises.push(this._preloadImage(url));
+    });
+
+    if (!promises.length) return;
+    await Promise.allSettled(promises);
+  }
+
+  _preloadImage(url) {
+    if (!url || typeof Image === 'undefined') return Promise.resolve();
+    return new Promise((resolve) => {
+      const img = new Image();
+      let done = false;
+      const finalize = () => {
+        if (done) return;
+        done = true;
+        resolve();
+      };
+      img.onload = finalize;
+      img.onerror = finalize;
+      img.src = url;
+      if (typeof img.decode === 'function') {
+        img.decode().then(finalize).catch(finalize);
+      }
+    });
+  }
+
+  _getLoadingLogoUrl() {
+    if (this._loadingLogoUrl) return this._loadingLogoUrl;
+    const elements = this.params.ui?.elements;
+    if (elements?.logo?.image) {
+      const basePath = elements.basePath || '';
+      this._loadingLogoUrl = this._normalizeAssetPath(basePath, elements.logo.image);
+    }
+    return this._loadingLogoUrl || '';
+  }
+
+  _ensureLoadingStyles() {
+    if (typeof document === 'undefined') return;
+    if (document.getElementById(LOADING_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = LOADING_STYLE_ID;
+    style.textContent = `
+      @keyframes simulador-loading-spin {
+        0% { transform: rotateX(18deg) rotateZ(0deg); }
+        20% { transform: rotateX(18deg) rotateZ(25deg); }
+        50% { transform: rotateX(18deg) rotateZ(200deg); }
+        80% { transform: rotateX(18deg) rotateZ(335deg); }
+        100% { transform: rotateX(18deg) rotateZ(360deg); }
+      }
+    `;
+    document.head?.appendChild(style);
+  }
+
+  _showLoadingOverlay() {
+    if (!this.app?.root || this._loadingOverlay) return;
+    if (typeof document === 'undefined') return;
+
+    this._ensureLoadingStyles();
+
+    const overlay = document.createElement('div');
+    overlay.style.position = 'absolute';
+    overlay.style.inset = '0';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.background = this.params.colors?.uiBackgroundActive || 'rgba(10, 34, 61, 0.88)';
+    overlay.style.backdropFilter = 'blur(1.2vmin)';
+    overlay.style.zIndex = '999';
+    overlay.style.pointerEvents = 'auto';
+  overlay.style.cursor = 'wait';
+    overlay.style.transition = 'opacity 0.4s ease';
+    overlay.style.opacity = '0';
+
+    const content = document.createElement('div');
+    content.style.display = 'flex';
+    content.style.flexDirection = 'column';
+    content.style.alignItems = 'center';
+    content.style.justifyContent = 'center';
+    content.style.gap = '1.6vmin';
+
+    const logoWrapper = document.createElement('div');
+    logoWrapper.style.perspective = '1200px';
+
+    const logo = document.createElement('img');
+    const logoUrl = this._getLoadingLogoUrl();
+    if (logoUrl) {
+      logo.src = logoUrl;
+    }
+    logo.alt = 'Logo';
+    logo.draggable = false;
+    logo.style.width = '18vmin';
+    logo.style.maxWidth = '42vw';
+    logo.style.transform = 'rotateX(18deg)';
+    logo.style.transformOrigin = '50% 50%';
+  logo.style.transformStyle = 'preserve-3d';
+    logo.style.animation = 'simulador-loading-spin 3.2s cubic-bezier(0.37, 0, 0.63, 1) infinite';
+    logo.style.willChange = 'transform';
+    logo.style.filter = 'drop-shadow(0 1.2vmin 2.4vmin rgba(0, 0, 0, 0.35))';
+    logo.style.pointerEvents = 'none';
+    logoWrapper.appendChild(logo);
+
+    const text = document.createElement('div');
+    text.textContent = 'Cargando...';
+    text.style.fontSize = '2.4vmin';
+    text.style.letterSpacing = '0.12em';
+    text.style.fontWeight = '600';
+    text.style.textTransform = 'uppercase';
+    text.style.color = this.params.colors?.uiText || '#f8fafc';
+    text.style.textShadow = '0 0.6vmin 1.8vmin rgba(0, 0, 0, 0.4)';
+    text.style.pointerEvents = 'none';
+    const fontFamily = this.params.ui?.fonts?.family || this._uiFontFamily;
+    if (fontFamily) {
+      text.style.fontFamily = fontFamily;
+    }
+
+    content.appendChild(logoWrapper);
+    content.appendChild(text);
+    overlay.appendChild(content);
+
+    this.app.root.appendChild(overlay);
+    this._loadingOverlay = overlay;
+
+    requestAnimationFrame(() => {
+      if (!this._loadingOverlay) return;
+      this._loadingOverlay.style.opacity = '1';
+    });
+  }
+
+  _hideLoadingOverlay(immediate = false) {
+    if (!this._loadingOverlay) return;
+    if (this._loadingOverlayHideTimer) {
+      clearTimeout(this._loadingOverlayHideTimer);
+      this._loadingOverlayHideTimer = null;
+    }
+
+    const overlay = this._loadingOverlay;
+    if (immediate) {
+      overlay.parentElement?.removeChild(overlay);
+      if (this._loadingOverlay === overlay) {
+        this._loadingOverlay = null;
+      }
+      return;
+    }
+
+    overlay.style.pointerEvents = 'none';
+    overlay.style.cursor = 'default';
+    overlay.style.opacity = '0';
+    this._loadingOverlayHideTimer = setTimeout(() => {
+      overlay.parentElement?.removeChild(overlay);
+      if (this._loadingOverlay === overlay) {
+        this._loadingOverlay = null;
+      }
+      this._loadingOverlayHideTimer = null;
+    }, 450);
   }
 
   _ensurePlantMaterial(plant) {
