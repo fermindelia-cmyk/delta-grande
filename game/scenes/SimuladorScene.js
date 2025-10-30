@@ -224,7 +224,9 @@ export const DEFAULT_PARAMS = Object.freeze({
       fontSizeVW: 1.3,
       paddingVW: 1.1,
       maxWidthVW: 48,
-      borderRadiusVW: 2.0
+      borderRadiusVW: 2.0,
+      slideOffsetVW: 2.2,
+      transitionSeconds: 0.35
     }),
     elements: Object.freeze({
       basePath: '/game-assets/simulador/UI',
@@ -319,6 +321,10 @@ export const DEFAULT_PARAMS = Object.freeze({
     messageFadeDuration: 0.6,
     messageGap: 1.2,
     victoryMessage: '¡Lograste equilibrar el ecosistema! Has ganado.',
+    hintDurations: Object.freeze({
+      showSeconds: 10,
+      delaySeconds: 30
+    }),
     stages: Object.freeze([
       Object.freeze({
         id: 'formation',
@@ -330,7 +336,12 @@ export const DEFAULT_PARAMS = Object.freeze({
           coverage: 0.5,
           minElevationAboveWater: 0.0
         }),
-        allowedSeedGroups: Object.freeze([])
+        allowedSeedGroups: Object.freeze([]),
+        hints: Object.freeze([
+          'Formá el banco de arena depositando sedimentos.',
+          'Elevá el banco por encima de la línea blanca del agua promedio.',
+          'Elevá el nivel del agua para tener más espacio y seguir depositando sedimentos.'
+        ])
       }),
       Object.freeze({
         id: 'colonization',
@@ -340,13 +351,18 @@ export const DEFAULT_PARAMS = Object.freeze({
         goal: Object.freeze({
           type: 'plantCounts',
           species: Object.freeze({
-            aliso: 3,
-            sauce: 3,
-            ambigua: 3,
-            distichlis: 3
+            aliso: 1,
+            sauce: 1,
+            ambigua: 1,
+            distichlis: 1
           })
         }),
-        allowedSeedGroups: Object.freeze(['colonizers'])
+        allowedSeedGroups: Object.freeze(['colonizers']),
+        hints: Object.freeze([
+          'Estabilizá la isla sembrando las especies colonizadoras.',
+          'En el Delta las plantas crecen cuando cambia el nivel del agua; probá mover la crecida.',
+          'Plantá al menos una semilla de cada especie colonizadora y hacelas crecer hasta la etapa final.'
+        ])
       }),
       Object.freeze({
         id: 'expansion',
@@ -356,12 +372,17 @@ export const DEFAULT_PARAMS = Object.freeze({
         goal: Object.freeze({
           type: 'plantCounts',
           species: Object.freeze({
-            ceibo: 3,
-            drago: 3,
-            acacia: 3
+            ceibo: 1,
+            drago: 1,
+            acacia: 1
           })
         }),
-        allowedSeedGroups: Object.freeze(['colonizers', 'nonColonizers'])
+        allowedSeedGroups: Object.freeze(['colonizers', 'nonColonizers']),
+        hints: Object.freeze([
+          'Sumá especies no colonizadoras para construir un ecosistema complejo.',
+          'Las plantas compiten por luz y nutrientes; usá la pala para liberar espacio cuando lo necesites.',
+          'Necesitás al menos una planta madura de cada especie para completar el ecosistema.'
+        ])
       })
     ])
   }),
@@ -456,6 +477,7 @@ export class SimuladorScene extends BaseScene {
     this._seedMaterialCache = new Map();
     this._plantSequenceCache = new Map();
     this._plantMaterialCache = new Map();
+  this._removeEnabled = false;
 
     this._background = null;
     this._backgroundTexture = null;
@@ -480,6 +502,14 @@ export class SimuladorScene extends BaseScene {
     this._messageTimer = null;
     this._messageHideTimer = null;
     this._stageAdvanceTimer = null;
+  this._hintCycle = null;
+  this._hintShowTimer = null;
+  this._hintDelayTimer = null;
+  this._goalMessageHideTimer = null;
+  this._goalMessageTransition = null;
+  this._goalMessageTransitionDurationMs = 0;
+  this._goalMessageHiddenTransform = 'translate(-50%, 2vw)';
+  this._goalMessageVisibleTransform = 'translate(-50%, 0)';
 
     this._stages = this.params.progress.stages;
     this._currentStageIndex = 0;
@@ -2194,10 +2224,20 @@ export class SimuladorScene extends BaseScene {
     const stage = this._stages[this._currentStageIndex];
     if (!stage) return;
 
+    this._stopHintCycle();
     this._showMessage(stage.completionMessage || 'Etapa completada.', {
       onComplete: () => this._scheduleStageAdvance()
     });
-    this._updateGoalMessage();
+
+    const isFinalStage = this._currentStageIndex >= this._stages.length - 1;
+    if (isFinalStage) {
+      const victoryMsg = this.params.progress?.victoryMessage;
+      if (victoryMsg) {
+        this._showGoalMessage(victoryMsg);
+      }
+    } else {
+      this._hideGoalMessage();
+    }
   }
 
   _scheduleStageAdvance() {
@@ -2240,51 +2280,160 @@ export class SimuladorScene extends BaseScene {
         });
       });
     }
-    if (this._activeTool && this._activeTool !== 'sediment' && this._activeTool !== 'remove' && !this._availableSeedIds.has(this._activeTool)) {
-      this._activeTool = null;
+    this._removeEnabled = this._currentStageIndex > 0;
+    if (!this._isToolAvailable(this._activeTool)) {
+      this._activeTool = 'sediment';
     }
     if (!this._activeTool) {
       this._activeTool = 'sediment';
     }
     this._syncToolButtons();
-    this._updateGoalMessage();
+    this._restartStageHints();
   }
 
-  _goalMessageForStage(stage) {
-    if (!stage) return '';
-    const conciseById = {
-      formation: 'Formá un banco de arena depositando sedimentos bajos.',
-      colonization: 'Estabilizá el banco con especies colonizadoras.',
-      expansion: 'Diversificá la isla con nuevas especies.'
-    };
-    if (stage.id && conciseById[stage.id]) {
-      return conciseById[stage.id];
+  _getStageHints(stage) {
+    if (!stage) return [];
+    return Array.isArray(stage.hints) ? stage.hints : [];
+  }
+
+  _showGoalMessage(text) {
+    if (!this._goalMessageEl || !text) {
+      this._hideGoalMessage();
+      return;
     }
-    if (stage.introMessage) return stage.introMessage;
-    if (stage.name) return stage.name;
-    return '';
+    const el = this._goalMessageEl;
+    if (this._goalMessageHideTimer) {
+      clearTimeout(this._goalMessageHideTimer);
+      this._goalMessageHideTimer = null;
+    }
+    el.textContent = text;
+    el.style.display = 'block';
+    const transition = this._goalMessageTransition;
+    if (transition) {
+      el.style.transition = 'none';
+    }
+    el.style.opacity = '0';
+    el.style.transform = this._goalMessageHiddenTransform;
+    // Force reflow so the transition can retrigger even if already visible.
+    void el.offsetWidth;
+    if (transition) {
+      el.style.transition = transition;
+    }
+    requestAnimationFrame(() => {
+      if (!this._goalMessageEl || this._goalMessageEl.textContent !== text) return;
+      this._goalMessageEl.style.opacity = '1';
+      this._goalMessageEl.style.transform = this._goalMessageVisibleTransform;
+    });
   }
 
-  _updateGoalMessage() {
+  _hideGoalMessage(immediate = false) {
     if (!this._goalMessageEl) return;
-    const victoryMsg = this.params.progress?.victoryMessage;
-    if (this._stageComplete && this._currentStageIndex >= this._stages.length - 1) {
-      if (victoryMsg) {
-        this._goalMessageEl.textContent = victoryMsg;
-        this._goalMessageEl.style.display = 'block';
+    if (this._goalMessageHideTimer) {
+      clearTimeout(this._goalMessageHideTimer);
+      this._goalMessageHideTimer = null;
+    }
+    const el = this._goalMessageEl;
+    if (immediate || !this._goalMessageTransitionDurationMs) {
+      const transition = this._goalMessageTransition;
+      if (transition) {
+        el.style.transition = 'none';
+      }
+      el.style.opacity = '0';
+      el.style.transform = this._goalMessageHiddenTransform;
+      el.style.display = 'none';
+      el.textContent = '';
+      void el.offsetWidth;
+      if (transition) {
+        el.style.transition = transition;
+      }
+      return;
+    }
+
+    el.style.opacity = '0';
+    el.style.transform = this._goalMessageHiddenTransform;
+    const delay = Math.max(0, this._goalMessageTransitionDurationMs);
+    this._goalMessageHideTimer = setTimeout(() => {
+      this._goalMessageHideTimer = null;
+      if (!this._goalMessageEl) return;
+      this._goalMessageEl.style.display = 'none';
+      this._goalMessageEl.textContent = '';
+    }, delay);
+  }
+
+  _stopHintCycle(options = {}) {
+    const { hide = true, immediate = false } = options;
+    if (this._hintShowTimer) {
+      clearTimeout(this._hintShowTimer);
+      this._hintShowTimer = null;
+    }
+    if (this._hintDelayTimer) {
+      clearTimeout(this._hintDelayTimer);
+      this._hintDelayTimer = null;
+    }
+    this._hintCycle = null;
+    if (hide) {
+      this._hideGoalMessage(immediate);
+    }
+  }
+
+  _restartStageHints() {
+    this._stopHintCycle();
+    if (this._stageComplete) return;
+    const stage = this._stages[this._currentStageIndex];
+    const hints = this._getStageHints(stage);
+    if (!hints.length || !this._goalMessageEl) {
+      this._hideGoalMessage();
+      return;
+    }
+    this._hintCycle = { hints, index: 0 };
+    this._runHintCycle();
+  }
+
+  _runHintCycle() {
+    if (this._stageComplete) return;
+    const state = this._hintCycle;
+    if (!state || !Array.isArray(state.hints) || !state.hints.length || !this._goalMessageEl) {
+      return;
+    }
+
+    const showSeconds = Math.max(0, this.params.progress?.hintDurations?.showSeconds ?? 10);
+    const delaySeconds = Math.max(0, this.params.progress?.hintDurations?.delaySeconds ?? 30);
+    const index = state.index % state.hints.length;
+    const message = state.hints[index];
+    this._showGoalMessage(message);
+    state.index = (index + 1) % state.hints.length;
+
+    const showMs = Math.max(0, showSeconds * 1000);
+    const delayMs = Math.max(0, delaySeconds * 1000);
+
+    if (showMs === 0 && delayMs === 0) {
+      return;
+    }
+
+    if (this._hintShowTimer) {
+      clearTimeout(this._hintShowTimer);
+    }
+    this._hintShowTimer = setTimeout(() => {
+      this._hintShowTimer = null;
+      if (!this._hintCycle || this._stageComplete) {
         return;
       }
-    }
-
-    const stage = this._stages[this._currentStageIndex];
-    const text = this._goalMessageForStage(stage);
-    if (text) {
-      this._goalMessageEl.textContent = text;
-      this._goalMessageEl.style.display = 'block';
-    } else {
-      this._goalMessageEl.textContent = '';
-      this._goalMessageEl.style.display = 'none';
-    }
+      this._hideGoalMessage();
+      if (delayMs === 0) {
+        this._runHintCycle();
+        return;
+      }
+      if (this._hintDelayTimer) {
+        clearTimeout(this._hintDelayTimer);
+      }
+      this._hintDelayTimer = setTimeout(() => {
+        this._hintDelayTimer = null;
+        if (!this._hintCycle || this._stageComplete) {
+          return;
+        }
+        this._runHintCycle();
+      }, delayMs);
+    }, showMs);
   }
 
   _showStageIntro() {
@@ -2313,7 +2462,7 @@ export class SimuladorScene extends BaseScene {
       el.style.borderRadius = `${(ui.borderRadius * 120).toFixed(3)}vmin`;
       el.style.boxShadow = `0 0 ${(ui.gap * 220).toFixed(3)}vh rgba(0,0,0,${ui.shadowOpacity})`;
       el.style.color = colors.uiText;
-      el.style.fontSize = `${(ui.fontScale * 150).toFixed(3)}vmin`;
+  el.style.fontSize = `${(ui.fontScale * 110).toFixed(3)}vmin`;
       el.style.fontWeight = '600';
       el.style.textAlign = 'center';
       el.style.pointerEvents = 'none';
@@ -2991,10 +3140,14 @@ export class SimuladorScene extends BaseScene {
 
     const goalMessage = document.createElement('div');
     const goalUi = ui.goalMessage || {};
+  const goalTransitionSeconds = Math.max(0.05, goalUi.transitionSeconds ?? 0.35);
+  const goalHiddenOffset = goalUi.slideOffsetVW ?? 2;
+  const goalTransition = `transform ${goalTransitionSeconds}s ease, opacity ${goalTransitionSeconds}s ease`;
+  const goalHiddenTransform = `translate(-50%, ${goalHiddenOffset}vw)`;
+  const goalVisibleTransform = 'translate(-50%, 0)';
     goalMessage.style.position = 'absolute';
     goalMessage.style.left = '50%';
     goalMessage.style.bottom = `${(goalUi.bottomOffsetVW ?? 9)}vw`;
-    goalMessage.style.transform = 'translateX(-50%)';
     goalMessage.style.padding = `${(goalUi.paddingVW ?? 1.2)}vw`;
     goalMessage.style.maxWidth = `${(goalUi.maxWidthVW ?? 52)}vw`;
     goalMessage.style.fontSize = `${(goalUi.fontSizeVW ?? 1.8)}vw`;
@@ -3007,8 +3160,16 @@ export class SimuladorScene extends BaseScene {
     goalMessage.style.textAlign = 'center';
     goalMessage.style.display = 'none';
     goalMessage.style.backdropFilter = 'blur(0.8vmin)';
+  goalMessage.style.opacity = '0';
+  goalMessage.style.transform = goalHiddenTransform;
+  goalMessage.style.transition = goalTransition;
+  goalMessage.style.willChange = 'transform, opacity';
     root.appendChild(goalMessage);
     this._goalMessageEl = goalMessage;
+  this._goalMessageTransition = goalTransition;
+  this._goalMessageTransitionDurationMs = goalTransitionSeconds * 1000;
+  this._goalMessageHiddenTransform = goalHiddenTransform;
+  this._goalMessageVisibleTransform = goalVisibleTransform;
 
     const cursorCfg = ui.cursor || {};
     const cursorEl = document.createElement('div');
@@ -3039,7 +3200,7 @@ export class SimuladorScene extends BaseScene {
 
     this._syncWaterButtons();
     this._syncToolButtons();
-    this._updateGoalMessage();
+  this._restartStageHints();
 
     const initialState = this._indexToWeatherState(this._waterLevelIndex);
     this._setWeatherVisualInstant(initialState);
@@ -3509,14 +3670,24 @@ export class SimuladorScene extends BaseScene {
   _syncToolButtons() {
     const activeId = this._activeTool;
 
-    const highlightButton = (element, isActive) => {
+    const highlightButton = (element, isActive, enabled = true) => {
       if (!element) return;
-      element.style.transform = isActive ? 'scale(1.03)' : 'scale(1)';
-      element.style.filter = isActive ? 'drop-shadow(0 0 1.4vw rgba(255, 209, 102, 0.85))' : 'none';
+      element.style.transform = isActive && enabled ? 'scale(1.03)' : 'scale(1)';
+      if (enabled) {
+        element.style.filter = isActive ? 'drop-shadow(0 0 1.4vw rgba(255, 209, 102, 0.85))' : 'none';
+        element.style.opacity = '1';
+        element.style.pointerEvents = 'auto';
+        element.style.cursor = 'pointer';
+      } else {
+        element.style.filter = 'grayscale(100%) brightness(0.65)';
+        element.style.opacity = '0.65';
+        element.style.pointerEvents = 'none';
+        element.style.cursor = 'default';
+      }
     };
 
-    highlightButton(this._buttons.sediment, activeId === 'sediment');
-    highlightButton(this._buttons.remove, activeId === 'remove');
+    highlightButton(this._buttons.sediment, activeId === 'sediment', true);
+    highlightButton(this._buttons.remove, activeId === 'remove', this._removeEnabled);
 
     const unavailableFilter = 'grayscale(100%) brightness(0.65)';
     const seedIds = Object.keys(this._seedButtons);
@@ -3566,18 +3737,33 @@ export class SimuladorScene extends BaseScene {
     this._refreshCursor();
   }
 
+  _isToolAvailable(toolId) {
+    if (!toolId) return false;
+    if (toolId === 'sediment') {
+      return true;
+    }
+    if (toolId === 'remove') {
+      return this._removeEnabled;
+    }
+    return this._availableSeedIds.has(toolId);
+  }
+
   _toggleTool(toolId) {
+    if (!this._isToolAvailable(toolId)) {
+      return;
+    }
     if (toolId === this._activeTool) {
-      this._activeTool = null;
-    } else {
-      if (toolId === 'sediment' || toolId === 'remove' || this._availableSeedIds.has(toolId)) {
-        this._activeTool = toolId;
-      }
+      return;
+    }
+    this._activeTool = toolId;
+    if (this._activeTool !== 'sediment') {
+      this._pointerDown = false;
     }
     this._syncToolButtons();
   }
 
   _destroyUI() {
+    this._stopHintCycle({ immediate: true });
     this._clearWeatherAnimation(null, { resolveCancelled: false });
     if (this._uiRoot && this._uiRoot.parentElement) {
       this._uiRoot.parentElement.removeChild(this._uiRoot);
@@ -3594,6 +3780,7 @@ export class SimuladorScene extends BaseScene {
     this._goalMessageEl = null;
     this._lastPointerInfo = null;
     this._activeTool = null;
+    this._removeEnabled = false;
     this._weatherChannels = {};
     this._weatherAnimations = {};
     this._weatherCurrentFrame = { top: null, bottom: null };
@@ -3644,6 +3831,7 @@ export class SimuladorScene extends BaseScene {
       this._pointerDown = true;
       this._emitSediment(point.x, point.y, state);
     } else if (tool === 'remove') {
+      if (!this._removeEnabled) return;
       const plant = this._findPlantAt(point.x, point.y);
       if (plant) {
         this._removePlant(plant);
