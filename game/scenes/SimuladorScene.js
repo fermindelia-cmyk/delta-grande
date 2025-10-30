@@ -2035,14 +2035,36 @@ export class SimuladorScene extends BaseScene {
     plant.previewSequenceEntry = null;
   }
 
-  _releasePlantAnimation(plant, { keepPreview = false } = {}) {
+  _releasePlantAnimation(plant, { keepPreview = false, preserveLastFrame = false } = {}) {
     if (!plant) return;
-    if (plant.animation && plant.animation.entry) {
-      this._releaseSequence(plant.animation.entry);
-    }
-    plant.animation = null;
-    if (!keepPreview) {
+    const anim = plant.animation;
+    const entry = anim?.entry;
+    const frames = Array.isArray(entry?.frames) ? entry.frames : null;
+    const canPreserveFrame = preserveLastFrame && frames && frames.length > 0;
+    let preservedFrame = null;
+
+    if (canPreserveFrame) {
+      const currentIndex = clamp(anim?.frameIndex ?? frames.length - 1, 0, frames.length - 1);
+      preservedFrame = frames[currentIndex] || frames[frames.length - 1] || null;
+      if (plant.previewSequenceEntry && plant.previewSequenceEntry !== entry) {
+        this._releasePlantPreview(plant);
+      }
+      plant.previewSequenceEntry = entry;
+      plant.activeFrame = preservedFrame;
+    } else if (!keepPreview) {
       plant.activeFrame = null;
+    }
+
+    if (entry && !canPreserveFrame) {
+      this._releaseSequence(entry);
+    }
+
+    plant.animation = null;
+
+    if (canPreserveFrame && preservedFrame) {
+      this._applyFrameToPlant(plant, preservedFrame);
+      plant.visualMode = 'image';
+    } else if (!keepPreview) {
       this._releasePlantPreview(plant);
       if (plant.imageMaterial && plant.imageMaterial.map) {
         plant.imageMaterial.map = null;
@@ -2901,7 +2923,7 @@ export class SimuladorScene extends BaseScene {
           anim.frameIndex = 0;
         } else {
           const onComplete = anim.onComplete;
-          this._releasePlantAnimation(plant);
+          this._releasePlantAnimation(plant, { preserveLastFrame: true });
           if (onComplete) {
             onComplete();
           }
@@ -2967,7 +2989,9 @@ export class SimuladorScene extends BaseScene {
   _completePlantStageChange(plant, nextIndex) {
     if (!plant) return;
     this._clearPlantSequenceCallbacks(plant);
-    this._releasePlantAnimation(plant);
+    if (plant.animation) {
+      this._releasePlantAnimation(plant, { preserveLastFrame: true });
+    }
     plant.pendingTransition = null;
     plant.waitingTransitionKey = null;
     if (Number.isInteger(nextIndex) && nextIndex > plant.stageIndex && nextIndex < this._plantStages.length) {
@@ -3165,6 +3189,8 @@ export class SimuladorScene extends BaseScene {
       if (sequence?.status === 'loading') {
         if (Array.isArray(sequence.frames) && sequence.frames.length > 0) {
           this._applyPlantPreviewFrame(plant, sequence);
+        } else if (plant.activeFrame) {
+          this._applyFrameToPlant(plant, plant.activeFrame);
         } else {
           this._hidePlantVisual(plant);
         }
