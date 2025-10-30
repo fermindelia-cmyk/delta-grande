@@ -169,7 +169,7 @@ export const DEFAULT_PARAMS = Object.freeze({
         height: 0.18,
         growthRate: 0.55,
         assetName: 'aliso',
-        spriteWidthRatio: 0.06,
+        spriteWidthMultiplier: 0.6,
         bottomMargin: 0.15,
         spriteStageMap: Object.freeze([0, 1, 1, 1, 1]),
         spriteTransitionMap: Object.freeze({ 0: true }),
@@ -183,7 +183,7 @@ export const DEFAULT_PARAMS = Object.freeze({
         height: 0.17,
         growthRate: 0.6,
         assetName: 'sauce',
-        spriteWidthRatio: 0.14,
+        spriteWidthMultiplier: 1.1,
         bottomMargin: 0.15
       }),
       Object.freeze({
@@ -194,7 +194,7 @@ export const DEFAULT_PARAMS = Object.freeze({
         height: 0.15,
         growthRate: 0.58,
         assetName: 'ambigua',
-        spriteWidthRatio: 0.07,
+        spriteWidthMultiplier: 0.7,
         bottomMargin: 0.15
       }),
       Object.freeze({
@@ -205,7 +205,7 @@ export const DEFAULT_PARAMS = Object.freeze({
         height: 0.13,
         growthRate: 0.62,
         assetName: 'distichlis',
-        spriteWidthRatio: 0.07,
+        spriteWidthMultiplier: 0.7,
         bottomMargin: 0.15
       })
     ]),
@@ -218,7 +218,7 @@ export const DEFAULT_PARAMS = Object.freeze({
         height: 0.24,
         growthRate: 0.45,
         assetName: 'ceibo',
-        spriteWidthRatio: 0.1,
+        spriteWidthMultiplier: 1,
         bottomMargin: 0.15
       }),
       Object.freeze({
@@ -229,7 +229,7 @@ export const DEFAULT_PARAMS = Object.freeze({
         height: 0.22,
         growthRate: 0.48,
         assetName: 'drago',
-        spriteWidthRatio: 0.1,
+        spriteWidthMultiplier: 1,
         bottomMargin: 0.15
       }),
       Object.freeze({
@@ -240,7 +240,7 @@ export const DEFAULT_PARAMS = Object.freeze({
         height: 0.26,
         growthRate: 0.5,
         assetName: 'acacia',
-        spriteWidthRatio: 0.1,
+        spriteWidthMultiplier: 0.8,
         bottomMargin: 0.15
       })
     ])
@@ -470,7 +470,7 @@ export const DEFAULT_PARAMS = Object.freeze({
     visuals: Object.freeze({
       enableSprites: true,
       basePath: '/game-assets/simulador/plants/webp_seq',
-      spriteWidthRatio: 0.1,
+      spriteWidthRatio: 0.15,
       bottomMargin: 0.15,
       transitionFps: 12,
       stageFps: 12,
@@ -481,7 +481,7 @@ export const DEFAULT_PARAMS = Object.freeze({
   }),
   plantCompetition: Object.freeze({
     neighborRadius: 0.02,
-    minNeighbors: 4
+    minNeighbors: 2
   })
 });
 
@@ -1626,10 +1626,14 @@ export class SimuladorScene extends BaseScene {
 
   _getSeedSpriteWidthRatio(seed) {
     const visuals = this.params.plantGrowth?.visuals || {};
+    const baseRatio = Math.max(1e-5, visuals.spriteWidthRatio ?? 0.005);
+    if (typeof seed?.spriteWidthMultiplier === 'number') {
+      return Math.max(1e-5, baseRatio * seed.spriteWidthMultiplier);
+    }
     const ratio = typeof seed?.spriteWidthRatio === 'number'
       ? seed.spriteWidthRatio
-      : visuals.spriteWidthRatio;
-    return Math.max(1e-5, ratio ?? 0.005);
+      : baseRatio;
+    return Math.max(1e-5, ratio);
   }
 
   _getSeedBottomMargin(seed) {
