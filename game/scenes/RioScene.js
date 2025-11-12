@@ -287,6 +287,14 @@ const DEFAULT_PARAMS = {
   deadzone: 0.08,
   damping: 0.15,
 
+  /** Wheel zoom dampening parameters */
+  wheelZoom: {
+    acceleration: 3.0,     // How quickly velocity builds up from wheel input
+    maxVelocity: 15.0,     // Maximum zoom velocity
+    damping: 0.92,         // Velocity decay per frame (0.9 = 10% decay)
+    friction: 0.85,        // Additional friction when no wheel input
+  },
+
   /** Visuals */
   skyColor: 0xF6B26B,
   waterColor: 0x1b1a16,
@@ -556,6 +564,16 @@ const DEFAULT_PARAMS = {
       startIndex: 163,     // <-- ajustá si tu primera imagen NO es 00163
       maxFramesProbe: 1200 // tope de prueba por si hay huecos; param seguro
     }
+  },
+
+  /** Raycast configuration for fish detection */
+  raycastUI: {
+    // Make raycast area similar to cursor size for better detection
+    // Uses cursor scale as reference (0.15) to determine detection area
+    radiusScale: 0.15,  // Same as cursor scale for consistent feel
+    maxDistance: 100,   // Maximum raycast distance
+    // If true, uses fat raycast (multiple rays), else uses distance-based detection
+    useFatRaycast: true
   },
 
   /** Radar overlay (plays on correct-catch) */
@@ -1024,6 +1042,10 @@ class Deck {
     this.cards = [];
     this.currentIndex = 0;
     this.isAnimating = false;
+    
+    // Game state
+    this.gameWon = false;
+    this.bonusAchieved = false;
 
     // scrolling
     this.isPointerInside = false;
@@ -1125,7 +1147,8 @@ class Deck {
       numbersEl.className = 'numbers-mono';
       // Fill after we know totals
       const totalForThisSpecies = speciesObj.count ?? 0;
-      numbersEl.textContent = `0\n${totalForThisSpecies}`;
+      numbersEl.textContent = `0\n${Math.ceil(totalForThisSpecies / 2)}`;
+      numbersEl.title = `Win: ${Math.ceil(totalForThisSpecies / 2)} fish\nBonus: ${totalForThisSpecies} fish`;
 
       textWrap.appendChild(nameEl);
       textWrap.appendChild(numbersEl);
@@ -1220,8 +1243,10 @@ class Deck {
         fullDisplayName: speciesDef.displayName,
         revealed: false,
         completed: false,
+        bonusCompleted: false,
         count: 0,
         totalCount: totalForThisSpecies,
+        winCount: Math.ceil(totalForThisSpecies / 2),
         originalMaterials,
         bgBase: imgBase,
         bgSel: imgSelected,
@@ -1320,11 +1345,22 @@ class Deck {
         const newCount = Math.min(cur.totalCount, cur.count + 1);
         if (newCount !== cur.count) {
           cur.count = newCount;
-          cur.numbersEl.textContent = `${cur.count}\n${cur.totalCount}`;
+          cur.numbersEl.textContent = `${cur.count}\n${cur.winCount}`;
+          if (cur.bonusCompleted) {
+            cur.numbersEl.textContent += `\n(${cur.totalCount} BONUS!)`;
+          } else if (cur.completed) {
+            cur.numbersEl.textContent += `\n(BONUS: ${cur.totalCount})`;
+          }
         }
-        if (cur.count >= cur.totalCount && !cur.completed) {
+        if (cur.count >= cur.winCount && !cur.completed) {
           cur.completed = true;
           cur.element.classList.add('completed');
+          this.checkGameWin();
+        }
+        if (cur.count >= cur.totalCount && !cur.bonusCompleted) {
+          cur.bonusCompleted = true;
+          cur.element.classList.add('bonus-completed');
+          this.checkGameBonus();
         }
       } else if (!cur.revealed) {
         this.setRevealed(this.currentIndex);
@@ -1336,6 +1372,35 @@ class Deck {
       this._flashCanvasGlow(wrong, 'error');
       return false;
     }
+  }
+
+  checkGameWin() {
+    // Check if all species have reached their win count (half)
+    const allCompleted = this.cards.every(card => card.completed);
+    if (allCompleted && !this.gameWon) {
+      this.gameWon = true;
+      this.showWinMessage();
+    }
+  }
+
+  checkGameBonus() {
+    // Check if all species have reached their total count (bonus)
+    const allBonusCompleted = this.cards.every(card => card.bonusCompleted);
+    if (allBonusCompleted && !this.bonusAchieved) {
+      this.bonusAchieved = true;
+      this.showBonusMessage();
+    }
+  }
+
+  showWinMessage() {
+    console.log('🎉 Congratulations! You have won the game by finding half of each species!');
+    // You can add more visual feedback here like a popup or overlay
+    // For now, we'll just log to console
+  }
+
+  showBonusMessage() {
+    console.log('🌟 BONUS ACHIEVED! You found ALL fish of every species! Amazing work!');
+    // You can add more visual feedback here like a special bonus popup
   }
 
 
@@ -1373,7 +1438,8 @@ class Deck {
       height: `${availH}px`,
       pointerEvents: 'auto',
       overflow: 'hidden',
-      zIndex: 9997
+      zIndex: 9997,
+      cursor: 'none'
     });
 
     // logo sizing and position
@@ -1811,6 +1877,16 @@ class Deck {
       .deck-card-vert .deck-bg-completed { opacity: 0; transition: opacity 220ms ease; }
 
       .deck-card-vert.completed .deck-bg-completed { opacity: 1 !important; }
+      
+      .deck-card-vert.bonus-completed { 
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+        border: 2px solid #FFD700;
+      }
+      
+      .deck-card-vert.bonus-completed .deck-bg-completed { 
+        opacity: 1 !important;
+        filter: brightness(1.3) hue-rotate(45deg);
+      }
 
       .deck-canvas { pointer-events: none; }
 
@@ -2629,6 +2705,9 @@ export class RioScene extends BaseScene {
   this._deckSelectionTime = 0;
   this._lastDeckIndex = null;
 
+  // Cursor state
+  this._originalCanvasCursor = null;
+
         /* === ADD: timer & cursor state === */
     this.timer = {
       el: null,        // wrapper
@@ -2759,6 +2838,11 @@ export class RioScene extends BaseScene {
 
     // --- Intro state & control gating ---
     this.controlsEnabled = true; // will be disabled if intro.enabled
+    
+    // --- Zoom velocity state ---
+    this.zoomVelocity = 0;    // Current velocity for smooth zoom
+    this._lastWheelTime = 0;  // Time of last wheel event for friction timing
+    
     this.introState = {
       active: false,
       phase: 'idle', // 'idle' | 'pre' | 'move' | 'post' | 'done'
@@ -2773,7 +2857,11 @@ export class RioScene extends BaseScene {
 
   async mount() {
     this._createLoadingOverlay();
-    if (this.app?.canvas) this.app.canvas.style.visibility = 'hidden';
+    if (this.app?.canvas) {
+      this.app.canvas.style.visibility = 'hidden';
+      this._originalCanvasCursor = this.app.canvas.style.cursor;
+      this.app.canvas.style.cursor = 'none';
+    }
 
     // Background + lights
     const hemi = new THREE.HemisphereLight(0xFFD1A6, 0x4A2F1B, 1.5);
@@ -3189,6 +3277,11 @@ export class RioScene extends BaseScene {
       this._insideOverlay.parentNode.removeChild(this._insideOverlay);
     }
     this._insideOverlay = null;
+
+    // Restore original cursor
+    if (this.app?.canvas && this._originalCanvasCursor !== null) {
+      this.app.canvas.style.cursor = this._originalCanvasCursor;
+    }
   }
 
   /* ------------------------------- Model helpers ------------------------------- */
@@ -4882,17 +4975,20 @@ export class RioScene extends BaseScene {
       return;
     }
 
-    // BELOW water → keep existing zoom (X-move) behavior
+    // BELOW water → smooth zoom with velocity-based movement
     e.preventDefault();
-    const step = this.params.wheelStepX ?? 2.0;
-    const dir = Math.sign(e.deltaY); // +1 when scrolling down, -1 up
-
-    const minX = (this.swimBox?.min?.x ?? this.params.shoreLevel);
-    const maxX = this.params.start.x;
-    let newX = this.camera.position.x + (dir > 0 ? +step : -step);
-
-    newX = clamp(newX, minX, maxX);
-    this.camera.position.x = newX;
+    
+    const wheelConfig = this.params.wheelZoom;
+    const direction = Math.sign(e.deltaY); // +1 when scrolling down (zoom in), -1 up (zoom out)
+    
+    // Add velocity based on wheel direction
+    this.zoomVelocity += direction * wheelConfig.acceleration;
+    
+    // Clamp velocity to max speed
+    this.zoomVelocity = clamp(this.zoomVelocity, -wheelConfig.maxVelocity, wheelConfig.maxVelocity);
+    
+    // Record wheel input time for friction control
+    this._lastWheelTime = performance.now();
 
     this.updateSwimBoxDynamic();
     this.camera.lookAt(this.camera.position.clone().add(this.forward));
@@ -4907,17 +5003,17 @@ export class RioScene extends BaseScene {
     // 1) Always play cursor click animation at mouse position (outside deck constraint is implicit: canvas receives the event)
     this._startCursorClick(e.clientX, e.clientY);
 
-    // 2) Raycast for fish logic (unchanged) + fire radar if it's a correct catch
+    // 2) Fat raycast for fish logic + fire radar if it's a correct catch
     const rect = this.app.canvas.getBoundingClientRect();
     this.clickMouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     this.clickMouse.y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
 
-    this.raycaster.setFromCamera(this.clickMouse, this.camera);
-
     const raycastTargets = [
       ...this.fishGroup.children // Only non-instanced meshes
     ];
-    const intersects = this.raycaster.intersectObjects(raycastTargets, true);
+    
+    // Use fat raycast for better detection area matching cursor size
+    const intersects = this._performFatRaycast(this.clickMouse, this.camera, raycastTargets);
 
     for (const intersect of intersects) {
       let obj = intersect.object;
@@ -4986,6 +5082,107 @@ export class RioScene extends BaseScene {
       // Update scale to maintain fixed screen size
       agent.tracker.scale.set(fixedSize, fixedSize, 1);
     }
+  }
+
+  /**
+   * Performs a "fat" raycast for better fish detection.
+   * Either uses multiple rays in a pattern or single ray with distance-based detection.
+   * @param {THREE.Vector2} normalizedScreenPos - Mouse position in normalized device coordinates (-1 to 1)
+   * @param {THREE.Camera} camera - The camera to cast rays from
+   * @param {Array} targets - Array of objects to intersect with
+   * @returns {Array} Array of intersection results with enhanced detection area
+   */
+  _performFatRaycast(normalizedScreenPos, camera, targets) {
+    const config = this.params.raycastUI;
+    const intersects = [];
+
+    if (config.useFatRaycast) {
+      // Multi-ray approach: create a pattern of rays around the center point
+      const radiusScale = config.radiusScale || 0.15;
+      const numRays = 8; // Number of rays in circle pattern
+      const centerRadius = radiusScale * 0.5; // Scale down for raycast offset
+      
+      // Center ray
+      this.raycaster.setFromCamera(normalizedScreenPos, camera);
+      intersects.push(...this.raycaster.intersectObjects(targets, true));
+      
+      // Circle of rays around center
+      for (let i = 0; i < numRays; i++) {
+        const angle = (i / numRays) * Math.PI * 2;
+        const offsetX = Math.cos(angle) * centerRadius;
+        const offsetY = Math.sin(angle) * centerRadius;
+        
+        const offsetPos = new THREE.Vector2(
+          normalizedScreenPos.x + offsetX,
+          normalizedScreenPos.y + offsetY
+        );
+        
+        this.raycaster.setFromCamera(offsetPos, camera);
+        intersects.push(...this.raycaster.intersectObjects(targets, true));
+      }
+    } else {
+      // Single ray with distance-based detection
+      this.raycaster.setFromCamera(normalizedScreenPos, camera);
+      const allIntersects = this.raycaster.intersectObjects(targets, true);
+      
+      // For each intersection, check if there are nearby fish within cursor radius
+      const radiusScale = config.radiusScale || 0.15;
+      const screenRadius = radiusScale * Math.min(window.innerWidth, window.innerHeight) * 0.5;
+      
+      // Convert click position to world space at intersection depth
+      if (allIntersects.length > 0) {
+        intersects.push(...allIntersects);
+      }
+      
+      // Also check for fish near the ray but not directly intersected
+      const ray = this.raycaster.ray;
+      for (const target of targets) {
+        if (allIntersects.find(hit => hit.object === target)) continue; // Already found
+        
+        const worldPos = new THREE.Vector3().setFromMatrixPosition(target.matrixWorld);
+        const screenPos = worldPos.clone().project(camera);
+        
+        // Convert to screen pixels
+        const rect = this.app.canvas.getBoundingClientRect();
+        const screenX = (screenPos.x * 0.5 + 0.5) * rect.width;
+        const screenY = (-screenPos.y * 0.5 + 0.5) * rect.height;
+        
+        // Get click position in screen pixels
+        const clickScreenX = (normalizedScreenPos.x * 0.5 + 0.5) * rect.width;
+        const clickScreenY = (-normalizedScreenPos.y * 0.5 + 0.5) * rect.height;
+        
+        // Check distance in screen space
+        const distance = Math.sqrt(
+          (screenX - clickScreenX) ** 2 + (screenY - clickScreenY) ** 2
+        );
+        
+        if (distance <= screenRadius) {
+          // Create a fake intersection result
+          intersects.push({
+            object: target,
+            distance: worldPos.distanceTo(camera.position),
+            point: worldPos.clone(),
+            screenDistance: distance
+          });
+        }
+      }
+    }
+    
+    // Remove duplicates and sort by distance
+    const uniqueIntersects = [];
+    const seenObjects = new Set();
+    
+    for (const intersect of intersects) {
+      if (!seenObjects.has(intersect.object)) {
+        seenObjects.add(intersect.object);
+        uniqueIntersects.push(intersect);
+      }
+    }
+    
+    // Sort by distance (closest first)
+    uniqueIntersects.sort((a, b) => a.distance - b.distance);
+    
+    return uniqueIntersects;
   }
 
 
@@ -5215,6 +5412,35 @@ export class RioScene extends BaseScene {
       // Apply X clamps: first soft bounds, then ensure ≥ shoreLevel
       p.x = clamp(p.x, xMinSoft, xMaxSoft);
       p.x = Math.max(p.x, xMinHard);
+
+      // --- Smooth zoom velocity system ---
+      if (Math.abs(this.zoomVelocity) > 0.01) {
+        const wheelConfig = this.params.wheelZoom;
+        const timeSinceLastWheel = performance.now() - this._lastWheelTime;
+        
+        // Apply different damping based on whether we recently had wheel input
+        let dampingFactor;
+        if (timeSinceLastWheel < 100) {
+          // Recent wheel input - use normal damping
+          dampingFactor = wheelConfig.damping;
+        } else {
+          // No recent wheel input - apply stronger friction
+          dampingFactor = wheelConfig.friction;
+        }
+        
+        // Apply damping to velocity
+        this.zoomVelocity *= dampingFactor;
+        
+        // Move camera based on current velocity
+        const zoomMovement = this.zoomVelocity * dt;
+        const newXWithZoom = p.x + zoomMovement;
+        
+        // Apply the same X bounds for zoom movement
+        const minX = (this.swimBox?.min?.x ?? this.params.shoreLevel);
+        const maxX = this.params.start.x;
+        
+        p.x = clamp(newXWithZoom, minX, maxX);
+      }
 
       // Z clamp with camera margins (does NOT affect swimBox limits)
       {

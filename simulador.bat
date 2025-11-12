@@ -29,92 +29,50 @@ echo Iniciando servidor en http://127.0.0.1:%PORT%
 echo Presiona Ctrl+C para detener el servidor
 echo.
 
-:: Crear script de PowerShell temporal para el servidor HTTP
-set "PS_SCRIPT=%TEMP%\delta_server_%PORT%.ps1"
+:: Ruta esperada del Python portable (Windows embeddable o similar)
+set "PYTHON_DIR=%~dp0tools\python"
+set "PYTHON_EXE=%PYTHON_DIR%\python.exe"
 
-> "%PS_SCRIPT%" echo $http = [System.Net.HttpListener]::new()
->> "%PS_SCRIPT%" echo $http.Prefixes.Add("http://127.0.0.1:%PORT%/")
->> "%PS_SCRIPT%" echo $http.Start()
->> "%PS_SCRIPT%" echo.
->> "%PS_SCRIPT%" echo if ($http.IsListening) {
->> "%PS_SCRIPT%" echo     Write-Host "Servidor HTTP iniciado en http://127.0.0.1:%PORT%" -ForegroundColor Green
->> "%PS_SCRIPT%" echo     Write-Host "Presiona Ctrl+C para detener" -ForegroundColor Yellow
->> "%PS_SCRIPT%" echo }
->> "%PS_SCRIPT%" echo.
->> "%PS_SCRIPT%" echo while ($http.IsListening) {
->> "%PS_SCRIPT%" echo     try {
->> "%PS_SCRIPT%" echo         $context = $http.GetContext()
->> "%PS_SCRIPT%" echo         $request = $context.Request
->> "%PS_SCRIPT%" echo         $response = $context.Response
->> "%PS_SCRIPT%" echo.
->> "%PS_SCRIPT%" echo         $path = $request.Url.LocalPath
->> "%PS_SCRIPT%" echo         if ($path -eq "/") { $path = "/index.html" }
->> "%PS_SCRIPT%" echo.
->> "%PS_SCRIPT%" echo         $filePath = Join-Path $PWD ($path.TrimStart('/') -replace '/', '\')
->> "%PS_SCRIPT%" echo.
->> "%PS_SCRIPT%" echo         if (Test-Path $filePath -PathType Leaf) {
->> "%PS_SCRIPT%" echo             $content = [System.IO.File]::ReadAllBytes($filePath)
->> "%PS_SCRIPT%" echo             $response.ContentLength64 = $content.Length
->> "%PS_SCRIPT%" echo.
->> "%PS_SCRIPT%" echo             $ext = [System.IO.Path]::GetExtension($filePath).ToLower()
->> "%PS_SCRIPT%" echo             switch ($ext) {
->> "%PS_SCRIPT%" echo                 ".html" { $response.ContentType = "text/html; charset=utf-8" }
->> "%PS_SCRIPT%" echo                 ".js"   { $response.ContentType = "text/javascript; charset=utf-8" }
->> "%PS_SCRIPT%" echo                 ".json" { $response.ContentType = "application/json; charset=utf-8" }
->> "%PS_SCRIPT%" echo                 ".css"  { $response.ContentType = "text/css; charset=utf-8" }
->> "%PS_SCRIPT%" echo                 ".png"  { $response.ContentType = "image/png" }
->> "%PS_SCRIPT%" echo                 ".jpg"  { $response.ContentType = "image/jpeg" }
->> "%PS_SCRIPT%" echo                 ".jpeg" { $response.ContentType = "image/jpeg" }
->> "%PS_SCRIPT%" echo                 ".gif"  { $response.ContentType = "image/gif" }
->> "%PS_SCRIPT%" echo                 ".svg"  { $response.ContentType = "image/svg+xml" }
->> "%PS_SCRIPT%" echo                 ".webp" { $response.ContentType = "image/webp" }
->> "%PS_SCRIPT%" echo                 ".mp4"  { $response.ContentType = "video/mp4" }
->> "%PS_SCRIPT%" echo                 ".webm" { $response.ContentType = "video/webm" }
->> "%PS_SCRIPT%" echo                 ".wav"  { $response.ContentType = "audio/wav" }
->> "%PS_SCRIPT%" echo                 ".mp3"  { $response.ContentType = "audio/mpeg" }
->> "%PS_SCRIPT%" echo                 ".ogg"  { $response.ContentType = "audio/ogg" }
->> "%PS_SCRIPT%" echo                 ".woff" { $response.ContentType = "font/woff" }
->> "%PS_SCRIPT%" echo                 ".woff2" { $response.ContentType = "font/woff2" }
->> "%PS_SCRIPT%" echo                 ".ttf"  { $response.ContentType = "font/ttf" }
->> "%PS_SCRIPT%" echo                 default { $response.ContentType = "application/octet-stream" }
->> "%PS_SCRIPT%" echo             }
->> "%PS_SCRIPT%" echo.
->> "%PS_SCRIPT%" echo             $response.StatusCode = 200
->> "%PS_SCRIPT%" echo             $response.OutputStream.Write($content, 0, $content.Length)
->> "%PS_SCRIPT%" echo         } else {
->> "%PS_SCRIPT%" echo             $response.StatusCode = 404
->> "%PS_SCRIPT%" echo             $responseString = "404 - Archivo no encontrado: $path"
->> "%PS_SCRIPT%" echo             $buffer = [System.Text.Encoding]::UTF8.GetBytes($responseString)
->> "%PS_SCRIPT%" echo             $response.ContentLength64 = $buffer.Length
->> "%PS_SCRIPT%" echo             $response.OutputStream.Write($buffer, 0, $buffer.Length)
->> "%PS_SCRIPT%" echo         }
->> "%PS_SCRIPT%" echo.
->> "%PS_SCRIPT%" echo         $response.OutputStream.Close()
->> "%PS_SCRIPT%" echo     } catch {
->> "%PS_SCRIPT%" echo         Write-Host "Error: $_" -ForegroundColor Red
->> "%PS_SCRIPT%" echo     }
->> "%PS_SCRIPT%" echo }
->> "%PS_SCRIPT%" echo.
->> "%PS_SCRIPT%" echo $http.Stop()
+if exist "%PYTHON_EXE%" goto HAVE_PYTHON
+
+echo [ERROR] No se encontro python.exe en:
+echo         %PYTHON_EXE%
+echo.
+echo Revisa que hayas copiado TODOS los archivos del paquete "Windows embeddable"
+echo desde python.org directamente dentro de tools\python\ (sin carpetas intermedias).
+echo El contenido esperado incluye archivos como python.exe, python3xx.dll y python3xx.zip.
+echo.
+echo Contenido actual de tools\python\ :
+dir "%PYTHON_DIR%"
+echo.
+pause
+endlocal
+goto :eof
+
+:HAVE_PYTHON
+
+:: Asegurar que Python encuentre su stdlib (útil para paquetes embebidos)
+set "PYTHONHOME=%PYTHON_DIR%"
+set "PYTHONPATH="
 
 :: Abrir navegador después de 2 segundos con el puerto correcto
 start "" cmd /c "timeout /t 2 /nobreak >nul && start http://127.0.0.1:%PORT%/game/index.html#simulador"
 
-:: Iniciar servidor PowerShell (sin mostrar errores detallados)
-powershell -ExecutionPolicy Bypass -NoLogo -File "%PS_SCRIPT%" 2>nul
+echo =====================================
+echo   Servidor Python embebido en marcha
+echo   (Ctrl+C para detener)
+echo =====================================
+echo.
+echo Lanzando: %PYTHON_EXE% -m http.server %PORT% --bind 127.0.0.1
+echo.
 
-:: Capturar error
-if %errorlevel% neq 0 (
-    echo.
-    echo [ERROR] El servidor PowerShell falló con código: %errorlevel%
-    echo.
-    pause
-)
-
-:: Limpiar script temporal
-del "%PS_SCRIPT%" 2>nul
+pushd "%~dp0"
+"%PYTHON_EXE%" -m http.server %PORT% --bind 127.0.0.1
+set "SERVER_CODE=%errorlevel%"
+popd
 
 echo.
-echo Servidor detenido.
+echo Servidor detenido. Codigo de salida: %SERVER_CODE%
+echo.
 pause
 endlocal
