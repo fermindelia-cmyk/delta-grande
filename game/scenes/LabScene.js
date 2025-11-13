@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { BaseScene } from '../core/BaseScene.js';
 import { EventBus } from '../core/EventBus.js';
 import { State } from '../core/State.js';
+import { resolvePublicPath } from '../core/paths.js';
 
 export class LabScene extends BaseScene{
   constructor(app){
@@ -29,7 +30,7 @@ export class LabScene extends BaseScene{
 
     // Un “monitor” (placeholder) que abre un video overlay (imagina tus videos del Delta)
     const monitor = new THREE.Mesh(new THREE.BoxGeometry(1.2,0.7,0.05), new THREE.MeshStandardMaterial({ color:0x354a6a }));
-    monitor.position.set(-2, 0.9, -1.5); this.scene.add(monitor); monitor.userData = { video:'/game-assets/recorrido/transicion01.mp4', label:'Video Delta' };
+    monitor.position.set(-2, 0.9, -1.5); this.scene.add(monitor); monitor.userData = { video:resolvePublicPath('/game-assets/recorrido/transicion01.mp4'), label:'Video Delta' };
     this.interactives.push(monitor);
 
     // Cámara

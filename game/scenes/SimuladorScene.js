@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { SimplexNoise } from 'three/addons/math/SimplexNoise.js';
 import { AssetLoader } from '../core/AssetLoader.js';
 import { BaseScene } from '../core/BaseScene.js';
+import { resolvePublicPath } from '../core/paths.js';
 
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -31,7 +32,7 @@ export const DEFAULT_PARAMS = Object.freeze({
     gradientBottomColor: '#e3f1ff',
     clouds: Object.freeze({
       enabled: true,
-      textureBasePath: '/game-assets/simulador',
+      textureBasePath: resolvePublicPath('/game-assets/simulador'),
       texturePrefix: 'cloud',
       textureExtension: '.png',
       textureCount: 8,
@@ -71,7 +72,7 @@ export const DEFAULT_PARAMS = Object.freeze({
     cursorDisabled: '#8a96a8'
   }),
   audio: Object.freeze({
-    basePath: '/game-assets/simulador/sound',
+    basePath: resolvePublicPath('/game-assets/simulador/sound'),
     sediment: Object.freeze({
       file: 'Sedimento.mp3',
       volume: 1,
@@ -189,7 +190,7 @@ export const DEFAULT_PARAMS = Object.freeze({
     }),
     smoothing: 1.1,
     texture: Object.freeze({
-      image: '/game-assets/simulador/sand.png',
+      image: resolvePublicPath('/game-assets/simulador/sand.png'),
       tileWidthRatio: 0.24
     })
   }),
@@ -343,7 +344,7 @@ export const DEFAULT_PARAMS = Object.freeze({
       transitionSeconds: 0.35
     }),
     elements: Object.freeze({
-      basePath: '/game-assets/simulador/UI',
+      basePath: resolvePublicPath('/game-assets/simulador/UI'),
       logo: Object.freeze({
         image: 'logo.png',
         leftPct: 91.1373,
@@ -536,7 +537,7 @@ export const DEFAULT_PARAMS = Object.freeze({
     }),
     visuals: Object.freeze({
       enableSprites: true,
-      basePath: '/game-assets/simulador/plants/webp_seq',
+      basePath: resolvePublicPath('/game-assets/simulador/plants/webp_seq'),
       spriteWidthRatio: 0.15,
       bottomMargin: 0.15,
       transitionFps: 12,

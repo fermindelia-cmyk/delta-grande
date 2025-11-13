@@ -3,6 +3,7 @@ import { BaseScene } from '../core/BaseScene.js';
 import { AssetLoader } from '../core/AssetLoader.js';
 import { State } from '../core/State.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { normalizeAssetPaths, resolvePublicPath } from '../core/paths.js';
 
 
 export class RecorridoScene extends BaseScene {
@@ -80,7 +81,8 @@ export class RecorridoScene extends BaseScene {
     this.setupOverlay();
 
     // Cargar config JSON
-    const conf = await fetch('./data/recorrido.json', { cache: 'no-store' }).then(r => r.json());
+    const confRaw = await fetch('./data/recorrido.json', { cache: 'no-store' }).then(r => r.json());
+    const conf = normalizeAssetPaths(confRaw);
     this.stages = conf.stages || [];
     await this.loadStage(0);
 
@@ -117,7 +119,7 @@ export class RecorridoScene extends BaseScene {
 
     // 👇 preload your PNG here
     this.inventoryImg = new Image();
-    this.inventoryImg.src = "/game-assets/recorrido/paneles/paneles_vacio.png";
+    this.inventoryImg.src = resolvePublicPath('/game-assets/recorrido/paneles/paneles_vacio.png');
   }
 
   resizeInventoryCanvas() {
@@ -197,7 +199,7 @@ export class RecorridoScene extends BaseScene {
   loadInventory3D() {
     const loader = new GLTFLoader();
     loader.load(
-      '/game-assets/recorrido/paneles/inventario.glb',
+      resolvePublicPath('/game-assets/recorrido/paneles/inventario.glb'),
       (gltf) => {
         const model = gltf.scene;
         console.log('Inventario GLB loaded:', model);
@@ -240,7 +242,7 @@ export class RecorridoScene extends BaseScene {
 
     // dibujar contenido inicial
     const img = new Image();
-    img.src = "/game-assets/recorrido/paneles/paneles_entero.png";
+    img.src = resolvePublicPath('/game-assets/recorrido/paneles/paneles_entero.png');
     img.onload = () => {
       this.inventoryCtx.clearRect(0, 0, canvas.width, canvas.height);
       // ejemplo: centrarlo en la parte baja de la pantalla

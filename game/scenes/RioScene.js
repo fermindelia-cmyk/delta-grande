@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { BaseScene } from '../core/BaseScene.js';
 import { AssetLoader } from '../core/AssetLoader.js';
+import { normalizeAssetPaths, resolvePublicPath } from '../core/paths.js';
 import {
   autoRigTwoBoneFishMesh,
   findTailBoneFromSkeleton,
@@ -127,7 +128,7 @@ const default_wiggle = {
   softness: 0.12                // head–tail blend width (0..0.5)
 }
 
-const SPECIES = [
+const SPECIES = normalizeAssetPaths([
   {
     key: 'dorado',
     displayName: 'Dorado (Salminus brasiliensis)',
@@ -256,13 +257,13 @@ const SPECIES = [
     },
     size: 'medium', abundance: 'usual', speed: 'slow', water: 'bottom', shore: 'near'
   }
-];
+]);
 
 /* -------------------------------------------------------------
  * Single source of truth: explicit world & behavior parameters
  * Place any tunables here; everything else reads from this block.
  * ------------------------------------------------------------- */
-const DEFAULT_PARAMS = {
+const DEFAULT_PARAMS = normalizeAssetPaths({
   /** Camera pose (initial) & world orientation */
   start: { x: 80.0, y: -6.542, z: 4.291, yawDeg: -90 },
 
@@ -723,7 +724,7 @@ const DEFAULT_PARAMS = {
     fadeIn: 3.0,           // overlay text fade-in time
     fadeOut: 1.5           // overlay text fade-out time
   },
-};
+});
 
 /* ========================================================================== */
 /* Fish species & agent implementation (unchanged behavior, clearer mapping)  */
@@ -2893,7 +2894,7 @@ export class RioScene extends BaseScene {
     
     // Load environment model (floor/walls)
     try {
-      const gltf = await AssetLoader.gltf('/game-assets/sub/environment.glb');
+      const gltf = await AssetLoader.gltf(resolvePublicPath('/game-assets/sub/environment.glb'));
       this.model = gltf.scene || gltf.scenes?.[0];
       if (this.model) {
         // Optional: set mesh flags

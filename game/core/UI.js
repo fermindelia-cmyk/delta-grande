@@ -1,5 +1,6 @@
 import { Time } from './Time.js';
 import { EventBus } from './EventBus.js';
+import { resolvePublicPath } from './paths.js';
 
 export const UI = new class{
   init({ app, clockEl = null, inventoryEl, achievementsEl, videoOverlayEl, videoEl }){
@@ -69,7 +70,7 @@ export const UI = new class{
     const { src, controls=false, muted=true, immersive=true, onended } = opts;
 
     // Atributos y estilo para que no muestre controles y cubra pantalla
-    this.videoEl.src = src || '';
+    this.videoEl.src = src ? resolvePublicPath(src) : '';
     this.videoEl.controls = !!controls;
     this.videoEl.muted = !!muted;
     this.videoEl.playsInline = true;
