@@ -30,8 +30,3 @@ jobs:
           server-dir: /public_html/
           log-level: verbose
           security: loose
-          exclude: |
-            **/.git*
-            **/.github/**
-            **/node_modules/**
-            **/README.md
