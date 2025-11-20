@@ -12,7 +12,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Upload via FTP (GoDaddy safe mode)
+      - name: Upload via FTP (GoDaddy stable)
         uses: SamKirkland/FTP-Deploy-Action@4.3.0
         with:
           server: ${{ secrets.FTP_HOST }}
@@ -20,11 +20,12 @@ jobs:
           password: ${{ secrets.FTP_PASS }}
           protocol: ftps
           port: 21
-          server-dir: /public_html/
           local-dir: ./
+          server-dir: /public_html/
           log-level: verbose
-          # GoDaddy stability fixes:
-          concurrency: 1
-          max-retries: 5
-          timeout: 600000
-          git-ftp-args: "--insecure"
+          security: loose
+          exclude: |
+            **/.git*
+            **/node_modules/**
+            **/.github/**
+            **/README.md
