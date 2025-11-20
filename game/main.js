@@ -4,8 +4,6 @@ import { SceneManager } from './core/SceneManager.js';
 import { EventBus } from './core/EventBus.js';
 import { State } from './core/State.js';
 import { UI } from './core/UI.js';
-import { PreloaderUI } from './core/PreloaderUI.js';
-import { AssetPreloader } from './core/AssetPreloader.js';
 
 
 import { MenuScene } from './scenes/MenuScene.js';
@@ -207,55 +205,9 @@ showPauseMenu();
 });
 
 
-// Initialize preloader and asset loading
-let globalAssetPreloader = null;
-
-async function initializeApp() {
-  console.log('🚀 Iniciando precarga de assets a RAM...');
-  
-  // Crear y mostrar preloader
-  const preloaderUI = new PreloaderUI();
-  globalAssetPreloader = new AssetPreloader();
-  
-  const allAssets = globalAssetPreloader.getAllAssets();
-  preloaderUI.setTotalAssets(allAssets.length);
-  
-  console.log(`📦 Precargando ${allAssets.length} assets a memoria RAM...`);
-  
-  try {
-    // Precargar todos los assets a RAM
-    await globalAssetPreloader.preloadAll((loadedCount, currentFile) => {
-      preloaderUI.updateProgress(loadedCount, currentFile);
-      console.log(`📁 Cargado a RAM: ${currentFile} (${loadedCount}/${allAssets.length})`);
-    });
-    
-    console.log('✅ Assets cargados en memoria RAM exitosamente');
-    
-    // Esperar un momento para mostrar "100%" antes de ocultar
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Ocultar preloader
-    await preloaderUI.hide();
-    
-    console.log('🎮 Aplicación lista - todos los assets en RAM');
-    
-  } catch (error) {
-    console.error('❌ Error durante la precarga:', error);
-    await preloaderUI.hide();
-  }
-}
-
-// Exponer globalmente para que las escenas puedan acceder
-window.getAssetFromMemory = (path) => {
-  return globalAssetPreloader?.getAssetFromMemory(path);
-};
-
 // Initialize everything
 async function startApp() {
-  // Start asset preloading
-  await initializeApp();
-  
-  // Start the application after assets are loaded
+  // Start the application
   app.start();
   router.boot(); // reads current hash and triggers first scene
 
