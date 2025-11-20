@@ -9,10 +9,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Upload via FTP (GoDaddy stable)
+      - name: Install deps
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      - name: Upload to GoDaddy (dist only)
         uses: SamKirkland/FTP-Deploy-Action@4.3.0
         with:
           server: ${{ secrets.FTP_HOST }}
@@ -20,12 +26,12 @@ jobs:
           password: ${{ secrets.FTP_PASS }}
           protocol: ftps
           port: 21
-          local-dir: ./
+          local-dir: ./dist
           server-dir: /public_html/
           log-level: verbose
           security: loose
           exclude: |
             **/.git*
-            **/node_modules/**
             **/.github/**
+            **/node_modules/**
             **/README.md
