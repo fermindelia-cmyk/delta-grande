@@ -1,72 +1,22 @@
-import { Time } from './Time.js';
-import { EventBus } from './EventBus.js';
-
 export const UI = new class{
-  init({ app, clockEl = null, inventoryEl, achievementsEl, videoOverlayEl, videoEl }){
+  init({ app, videoOverlayEl, videoEl }){
     this.app = app;
-    this.clockEl = clockEl || null;
-    this.inventoryEl = inventoryEl;
-    this.achievementsEl = achievementsEl;
     this.videoOverlayEl = videoOverlayEl;
     this.videoEl = videoEl;
-    if (this._clockInterval) {
-      clearInterval(this._clockInterval);
-    }
-    this._clockInterval = null;
-
-    if (this.clockEl) {
-      // Reloj local
-      this.clockEl.textContent = '--:--';
-      this._clockInterval = setInterval(()=>{
-        const d = Time.now();
-        this.clockEl.textContent = d.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
-      }, 1000);
-    }
 
     // Cerrar overlay al click “afuera” o con ESC
     this.videoOverlayEl.addEventListener('click', (e)=>{
       if (e.target === this.videoOverlayEl) this.hideVideo();
     });
     addEventListener('keydown', (e)=>{ if (e.key === 'Escape') this.hideVideo(); });
-
-    // Mostrar paneles solo en LAB
-    EventBus.on('scene:changed', ({ name })=>{
-      const inLab = (name === 'lab' || name === 'LabScene');
-      this.setPanelsVisible(inLab);
-    });
-
-    // Ocultos hasta que cargue primera escena
-    this.setPanelsVisible(false);
-  }
-
-  setPanelsVisible(visible){
-    const disp = visible ? 'block' : 'none';
-    if (this.inventoryEl) this.inventoryEl.style.display = disp;
-    if (this.achievementsEl) this.achievementsEl.style.display = disp;
-  }
-
-  renderInventory(State){
-    const inv = State.get().inventory;
-    this.inventoryEl.innerHTML = `<h3>Inventario</h3>` +
-      (inv.length
-        ? `<ul>${inv.map(i=>`<li>${i.name} <small>(${new Date(i.whenISO).toLocaleDateString('es-AR')})</small></li>`).join('')}</ul>`
-        : `<p style="color:#94a3b8">Vacío</p>`);
-  }
-
-  renderAchievements(State){
-    const ac = State.get().achievements;
-    this.achievementsEl.innerHTML = `<h3>Logros</h3>` +
-      (ac.length
-        ? `<ul>${ac.map(i=>`<li>${i.name}</li>`).join('')}</ul>`
-        : `<p style="color:#94a3b8">Sin logros aún</p>`);
   }
 
   /**
    * Reproduce un video en overlay full-screen “cover”.
-   * opts: { src, controls=false, muted=true, immersive=true, onended }
+   * opts: { src, controls=false, muted=true, immersive=true, playbackRate=1, onended }
    */
   showVideo(opts = {}){
-    const { src, controls=false, muted=true, immersive=true, onended } = opts;
+    const { src, controls=false, muted=true, immersive=true, playbackRate=1, onended } = opts;
 
     // Atributos y estilo para que no muestre controles y cubra pantalla
     this.videoEl.src = src || '';
@@ -75,25 +25,85 @@ export const UI = new class{
     this.videoEl.playsInline = true;
 
     this.videoOverlayEl.style.display = 'block';
+    this.videoEl.playbackRate = playbackRate || 1;
 
     const done = () => {
       this.videoEl.onended = null;
-      this.hideVideo();
-      if (typeof onended === 'function') onended();
-    };
-    this.videoEl.onended = done;
+      try { this.videoEl.pause(); } catch {}
 
-    const p = this.videoEl.play();
-    if (p && typeof p.catch === 'function') p.catch(()=>{});
+      let awaitable = null;
+      if (typeof onended === 'function') {
+        try {
+          awaitable = onended({ video: this.videoEl, overlay: this.videoOverlayEl });
+        } catch { awaitable = null; }
+      }
+
+      const finalize = () => { this.hideVideo(); };
+
+      if (awaitable && typeof awaitable.then === 'function') {
+        return awaitable.catch(()=>{}).finally(finalize);
+      }
+
+      finalize();
+      return undefined;
+    };
+
+    this.videoEl.onended = () => {
+      const res = done();
+      if (res && typeof res.then === 'function') {
+        res.catch(()=>{});
+      }
+    };
+
+    const playbackReady = new Promise((resolve) => {
+      const onReady = () => {
+        cleanup();
+        resolve();
+      };
+
+      const cleanup = () => {
+        this.videoEl.removeEventListener('playing', onReady);
+        this.videoEl.removeEventListener('canplay', onReady);
+        if (fallbackTimer !== null) {
+          clearTimeout(fallbackTimer);
+          fallbackTimer = null;
+        }
+      };
+
+      let fallbackTimer = setTimeout(() => {
+        cleanup();
+        resolve();
+      }, 500);
+
+      if (!this.videoEl.paused && this.videoEl.readyState >= 2) {
+        cleanup();
+        resolve();
+        return;
+      }
+
+      this.videoEl.addEventListener('playing', onReady, { once: true });
+      this.videoEl.addEventListener('canplay', onReady, { once: true });
+    });
+
+    let playPromise = this.videoEl.play();
+    if (!(playPromise && typeof playPromise.then === 'function')) {
+      playPromise = Promise.resolve();
+    } else {
+      playPromise = playPromise.catch(()=>{});
+    }
 
     // Intento opcional de fullscreen nativo (ignora si falla/iOS)
     if (immersive && this.videoOverlayEl.requestFullscreen) {
       this.videoOverlayEl.requestFullscreen().catch(()=>{});
     }
+
+    return Promise.all([playPromise, playbackReady]).then(() => this.videoEl);
   }
 
   hideVideo(){
     try { this.videoEl.pause(); } catch {}
+    // restaurar playbackRate por si se modificó
+    try { this.videoEl.playbackRate = 1; } catch {}
     this.videoOverlayEl.style.display = 'none';
     if (document.fullscreenElement && document.exitFullscreen) {
       document.exitFullscreen().catch(()=>{});

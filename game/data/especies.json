@@ -1,0 +1,545 @@
+{
+  "species": [
+    {
+      "round": 1,
+      "stage": 1,
+      "commonName": "Efedra tweediana",
+      "scientificName": "Ephedra tweediana",
+      "id": "efedra",
+      "meshNames": {
+        "glitch": "efedra_glitch",
+        "rastro": "efedra_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/efedra/efedra_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/efedra/efedra_data.webm"
+      },
+      "text": "<p><strong>Ephedra</strong> es un nombre genérico que proviene del griego antiguo: <strong>éphedra</strong> = \"asentada sobre\". Es un arbusto trepador o liana que puede alcanzar hasta 6 metros de largo.</p><p>Planta endémica de las regiones Pampeana Espinal/ Chaqueña, también presente en el Delta del Paraná. Pertenece a las <strong>gimnospermas</strong>, plantas antiguas sin flores ni frutos, con <strong>plantas macho y hembra separadas</strong> y <strong>polinización por viento</strong>. Sus ramas <strong>realizan la fotosíntesis</strong> y puede vivir muchos años.</p><p>Históricamente se usó con fines <strong>medicinales</strong>, ya que de ella se obtiene <strong>efedrina</strong>, y sus infusiones se empleaban como <strong>digestivas, diuréticas y calmantes</strong>.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 1,
+      "stage": 2,
+      "commonName": "Teta de perro/ Tembetarí",
+      "scientificName": "Zanthoxylum rhoifolium",
+      "id": "tembetari",
+      "meshNames": {
+        "glitch": "tembetari_glitch",
+        "rastro": "tembetari_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/tembetari/tembetari_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/tembetari/tembetari_data.webm"
+      },
+      "text": "<p>Árbol <strong>endémico de Sudamérica</strong>, presente en desde <strong>Buenos Aires a Misiones</strong>. Crece en <strong>bosques de barranca, abiertos y secundarios</strong>. Pertenece a la <strong>familia Rutácea</strong>, la misma de los cítricos.</p><p>Alcanza hasta <strong>15 m de altura</strong>, con <strong>copa aplanada</strong> y <strong>tronco gris con grandes aguijones achatados</strong>, que le dan su nombre común.</p><p>Florece de <strong>septiembre a febrero</strong> con <strong>flores verdosas o amarillentas</strong>, y fructifica de <strong>marzo a agosto</strong> con folículos rojizos de semillas dispersadas por el viento.</p><p>Sus <strong>flores</strong> atraen numerosos <strong>polinizadores</strong>: aves, abejas y mariposas como la <strong>andrógeno, polibio, bustrís, daga naranja, limonera grande, mario y mancha rubí</strong>.</p><p>De <strong>uso medicinal</strong>, su <strong>corteza</strong> se emplea para aliviar <strong>dolor de muelas y oído</strong> por sus propiedades <strong>antisépticas</strong>. Su <strong>madera</strong> se usa en <strong>construcción, muebles y herramientas</strong>.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 1,
+      "stage": 3,
+      "commonName": "Viraró",
+      "scientificName": "Ruprechtia laxiflora",
+      "id": "viraro",
+      "meshNames": {
+        "glitch": "viraro_glitch",
+        "rastro": "viraro_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/viraro/viraro_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/viraro/viraro_data.webm"
+      },
+      "text": "<p>Árbol o arbusto <strong>nativo del Litoral argentino</strong>, de <strong>8 a 30 m de altura</strong>. Es una especie <strong>dioica</strong>, con flores <strong>masculinas</strong>(blanco-verdosas) y <strong>femeninas</strong> (rosadas) dispuestas en <strong>racimos</strong>.</p><p>El fruto es un <strong>aquenio con sépalos</strong> que cambian de <strong>verde a rojizo</strong>, ayudando a su <strong>dispersión</strong>.</p><p>Sus usos <strong>tradicionales</strong> incluyen infusiones de <strong>corteza</strong> para tratar <strong>parásitos intestinales</strong> y empleo de <strong>hojas y leño</strong> por sus propiedades <strong>astringentes</strong>.</p><p>La <strong>madera</strong>, de buena calidad, se usa en <strong>carpintería y mueblería</strong>.</p><p>El nombre <strong>viraró</strong> proviene del <strong>guaraní <em>ibirá-ro</em></strong>, que significa <strong>\"árbol amargo\"</strong>.</p>",
+      "glitchVideoSpeed": 0.6,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 1,
+      "stage": 4,
+      "commonName": "Ombú",
+      "scientificName": "Phytolacca dioica",
+      "id": "ombu",
+      "meshNames": {
+        "glitch": "ombu_glitch",
+        "rastro": "ombu_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/ombu/ombu_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/ombu/ombu_data.webm"
+      },
+      "text": "<p>Planta originaria del <strong>noreste argentino</strong>, con <strong>tronco grueso</strong> y de <strong>gran altura</strong>. Aunque tiene aspecto de <strong>árbol</strong>, su estructura es <strong>herbácea, carnosa</strong>, sin <strong>crecimiento secundario</strong> ni anillos de crecimiento.</p><p>Presente en la <strong>región pampeana, Espinal mesopotámico, Esteros del Iberá, Selva Paranaense, Delta e Islas del Paraná y Chaco Húmedo</strong>.</p><p>Puede considerarse un <strong>árbol</strong> o una <strong>hierba gigante</strong>, según el criterio. Se destaca por su <strong>gran porte</strong>, su base en forma de plataforma, y su sombra abundante, que proyecta su <strong>copa frondosa</strong>.</p><p>Es una especie <strong>dioica</strong> (ejemplares masculinos y femeninos). Su <strong>follaje es semi-persistente o caducifolio</strong> en climas fríos. Tiene <strong>hojas grandes, simples y alternas</strong>. Florece en <strong>primavera-verano</strong> y da <strong>frutos en racimos tipo baya</strong>.</p>",
+      "glitchVideoSpeed": 1,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 1,
+      "stage": 5,
+      "commonName": "Carancho",
+      "scientificName": "Caracara plancus",
+      "id": "carancho",
+      "meshNames": {
+        "glitch": "carancho_glitch",
+        "rastro": "carancho_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/carancho/carancho_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/carancho/carancho_data.webm"
+      },
+      "text": "<p>Ave rapaz de <strong>55 a 60 cm de longitud</strong>, conocida por su <strong>dieta variada</strong>: aunque se la asocia con <strong>carroña</strong>, también caza <strong>insectos, pequeños mamíferos y aves</strong>. A veces realiza <strong>caza cooperativa</strong> para atacar presas más grandes como <strong>garzas moras o coscrobas</strong>. También <strong>roba huevos</strong> y consume <strong>frutos</strong>, ayudando a su dispersión, especialmente de <strong>palmeras</strong>.</p><p>En vuelo, combina <strong>aleteos con planeos circulares</strong>. Baja con frecuencia <strong>a caminar por el suelo</strong>, algo inusual en otras rapaces.</p><p>Tiene una amplia distribución: desde el <strong>sur de EE. UU. hasta el extremo sur de Sudamérica</strong>, habitando <strong>campos abiertos, desiertos y playas</strong>. En vuelo es identificable por una <strong>mancha blanca circular en las puntas de las alas</strong>.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 1,
+      "stage": 6,
+      "commonName": "Camalote",
+      "scientificName": "Eichhornia crassipes",
+      "id": "camalote",
+      "meshNames": {
+        "glitch": "camalote_glitch",
+        "rastro": "camalote_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/camalote/camalote_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/camalote/camalote_data.webm"
+      },
+      "text": "<p>El <strong>Eichhornia crassipes</strong>, conocido en el Paraná como <strong>camalote o jacinto de agua</strong>, es una planta flotante muy común en los <strong>ríos y lagunas del Litoral</strong>. Forma <strong>grandes mantos de vegetación</strong> que viajan con la corriente, a veces <strong>transportando insectos, ranas o incluso pequeños peces</strong>. Aunque es <strong>nativa de Sudamérica</strong>, su <strong>rápida reproducción</strong> la ha convertido en una especie <strong>invasora en otras partes del mundo</strong>. En el delta, cumple un <strong>papel ecológico importante</strong>: <strong>nitrifica el agua</strong> y <strong>ofrece refugio a muchas especies</strong>, aunque en exceso puede <strong>obstruir canales y afectar la navegación</strong>. Su flor violeta es una de las <strong>más vistosas del humedal</strong>.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5,
+      "animationSpeed": 0.1
+    },
+    {
+      "round": 2,
+      "stage": 1,
+      "commonName": "Yarará",
+      "scientificName": "Bothrops alternatus",
+      "id": "yarara",
+      "meshNames": {
+        "glitch": "yarara_glitch",
+        "rastro": "yarara_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/yarara/yarara_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/yarara/yarara_data.webm"
+      },
+      "text": "<p>Serpiente <strong>venenosa</strong> de la subfamilia <strong>Crotalinae</strong>, presente en Brasil, Argentina, Bolivia, Paraguay y Uruguay.</p><p>Habita en <strong>zonas húmedas, pantanos, pajonales y márgenes de ríos</strong>, también en bosques y áreas rurales.</p><p>Su <strong>veneno hemotóxico</strong> impide el transporte de oxígeno a los tejidos.</p><p>En Argentina se la encuentra en el <strong>norte y centro-este</strong> del país. Es terrestre y aunque puede parecer <strong>agresiva</strong>, solo ataca si se siente amenazada, <strong>adoptando una postura defensiva enroscada</strong> y moviendo la cola rápidamente.</p><p>Mide hasta <strong>1,3 m</strong> y se alimenta de <strong>roedores, anfibios, aves pequeñas y otros reptiles</strong>.</p><p>Se distingue por sus <strong>manchas oscuras en forma de U o riñón, cabeza triangular y fosas termorreceptoras</strong>, aunque suele confundirse con las \"<strong>falsas yararás</strong>\", menos peligrosas.</p><p>Su <strong>reproducción es ovovivípara</strong>, con camadas de <strong>10 a 20 crías</strong>.</p>",
+      "glitchVideoSpeed": 1,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 2,
+      "stage": 2,
+      "commonName": "Salvia Violeta",
+      "scientificName": "Lippia alba",
+      "id": "salvia",
+      "meshNames": {
+        "glitch": "salvia_glitch",
+        "rastro": "salvia_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/salvia/salvia_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/salvia/salvia_data.webm"
+      },
+      "text": "<p>Planta <strong>nativa de Sudamérica</strong>, de la familia <strong>Verbenáceas</strong>, muy apreciada como <strong>ornamental</strong>. Sus <strong>flores aromáticas</strong> atraen <strong>picaflores, mariposas y abejas</strong>, y sus frutos son consumidos por aves conocidas como <strong>\"comeflores\"</strong>. Es <strong>hospedante de la junonia</strong> (Anartia jatrophae).</p><p>Es un <strong>subarbusto ramificado</strong>, de hasta <strong>1,5 m de altura</strong>, con hojas opuestas o en tríos y flores blancas <strong>con aroma a azahar</strong>, en inflorescencias de unos 2 cm.</p><p>De hojas <strong>aromáticas</strong> y flores <strong>perfumadas</strong>, posee <strong>propiedades sedativas, antidepresivas y analgésicas</strong>, y se usa en <strong>infusiones medicinales</strong>. Estudios también le atribuyen <strong>efectos antifúngicos y antitumorales</strong>.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 2,
+      "stage": 3,
+      "commonName": "Helechos puntos rojos",
+      "scientificName": "Microgramma vacciniifolia",
+      "id": "helecho",
+      "meshNames": {
+        "glitch": "helecho_glitch",
+        "rastro": "helecho_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/helecho/helecho_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/helecho/helecho_data.webm"
+      },
+      "text": "<p>Pequeño <strong>helecho epífito</strong> nativo de <strong>América tropical y subtropical</strong> (Brasil, Paraguay, Uruguay, Bolivia y Argentina). Habita en <strong>selvas y bosques húmedos</strong>, como la <strong>selva paranaense o chaqueña</strong>.</p><p>Posee <strong>hojas verdes brillantes</strong> con <strong>venas oscuras y rizomas</strong> cubiertos de una pubescencia <strong>blanca</strong>, rasgo característico. Crece sobre <strong>árboles o rocas musgosas</strong>, por lo que requiere soporte para desarrollarse.</p><p>En la medicina tradicional se usa para tratar <strong>afecciones renales, hematomas, abscesos y tos</strong>, aunque <strong>sin respaldo científico</strong>.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 2,
+      "stage": 4,
+      "commonName": "Clavel del Aire",
+      "scientificName": "Tillandsia aeranthos",
+      "id": "clavel",
+      "meshNames": {
+        "glitch": "clavel_glitch",
+        "rastro": "clavel_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/clavel/clavel_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/clavel/clavel_data.webm"
+      },
+      "text": "<p>Es una <strong>planta nativa</strong> que se encuentra en el sur de Sudamérica, en <strong>Paraguay, Uruguay, sur de Brasil y Argentina</strong>. Es de la familia de <strong>las Bromelias</strong>, cercanas al ananá y otras especies ornamentales características por su condición de crecer sobre otras plantas (epi-fitas).</p><p>Se <strong>reproducen</strong> simplemente de manera vegetativa, es decir, por <strong>los brotes que crecen alrededor de la planta madre</strong>, llamadas \"hijuelos\".</p><p>Sus <strong>flores</strong> son <strong>pequeñas pero vistosas</strong> de colores rosados y azules. Las ramas son planas y muy ramificadas y juntas, semiplegadas, de color grisáceo.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 2,
+      "stage": 5,
+      "commonName": "Ceibo",
+      "scientificName": "Erythrina crista-galli",
+      "id": "ceibo",
+      "meshNames": {
+        "glitch": "ceibo_glitch",
+        "rastro": "ceibo_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/ceibo/ceibo_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/ceibo/ceibo_data.webm"
+      },
+      "text": "<p>Árbol <strong>nativo de Sudamérica</strong>, pertenece a la familia <strong>Fabaceae</strong>. Es la <strong>flor nacional de Argentina</strong> desde 1942, conmemorado el 22 de noviembre como el <em>Día Nacional del Ceibo</em>. También es <strong>flor nacional de Uruguay</strong>, donde suele plantarse en escuelas.</p><p>De porte <strong>mediano</strong>, alcanza entre <strong>5 y 8 m de altura</strong> (hasta 20 m en casos excepcionales), con <strong>tronco de más de 50 cm de diámetro</strong>. El <strong>tronco es tortuoso</strong> y <strong>las ramas espinosas</strong>, que mueren tras la floración. Sus hojas son <strong>caducas</strong>, compuestas por <strong>tres folíolos</strong> oblongo-lanceolados y de textura coriácea.</p><p>Las <strong>flores rojas</strong>, agrupadas en <strong>inflorescencias en racimo</strong>, tienen <strong>cinco pétalos con simetría bilateral</strong>.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 2,
+      "stage": 6,
+      "commonName": "Tortuga de agua",
+      "scientificName": "Phrynops hilarii",
+      "id": "tortuga",
+      "meshNames": {
+        "glitch": "tortuga_glitch",
+        "rastro": "tortuga_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/tortuga/tortuga_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/tortuga/tortuga_data.webm"
+      },
+      "text": "<p>La <strong>tortuga sudamericana de arroyo</strong>, <strong>tortuga de laguna</strong> o <strong>tortuga campanita</strong> (<em>Phrynops hilarii</em>) es una especie de tortuga acuática de la familia <strong>Chelidae</strong>, nativa del <strong>noreste de Argentina, sur de Brasil, Paraguay y Uruguay</strong>.</p><p><em>Phrynops hilarii</em> llega a alcanzar una talla de <strong>hasta 40 cm</strong>. El caparazón se halla <strong>comprimido en su parte dorsal y ventral</strong>. Las extremidades están achatadas hacia atrás, además tienen <strong>membranas entre los dedos que al extenderse facilitan la natación</strong>.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 3,
+      "stage": 1,
+      "commonName": "Cardenal Amarillo",
+      "scientificName": "Gubernatrix cristata",
+      "id": "cardenal",
+      "meshNames": {
+        "glitch": "cardenal_glitch",
+        "rastro": "cardenal_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/cardenal/cardenal_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/cardenal/cardenal_data.webm"
+      },
+      "text": "<p>Ave muy vistosa de unos 20 cm, con <strong>pico y patas negras</strong>. El macho se distingue por su <strong>copete y garganta negros</strong> y su <strong>pecho y rostro amarillos</strong>. Vive en <strong>parejas o pequeños grupos familiares</strong>, y fuera de la época reproductiva puede formar <strong>bandadas numerosas</strong>.</p><p>Se alimenta principalmente de <strong>insectos en el suelo</strong>, a veces junto al cardenal rojo y otras especies.</p><p>El <strong>cardenal amarillo</strong> es <strong>Monumento Natural Provincial en Entre Ríos</strong>, pero su población ha <strong>disminuido drásticamente</strong>. Hoy es una especie <strong>rara y amenazada de extinción</strong>, afectada por la <strong>captura ilegal</strong> y la <strong>pérdida de su hábitat</strong>.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 3,
+      "stage": 2,
+      "commonName": "Yateí",
+      "scientificName": "Tetragonisca angustul",
+      "id": "yatei",
+      "meshNames": {
+        "glitch": "yatei_glitch",
+        "rastro": "yatei_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/yatei/yatei_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/yatei/yatei_data.webm"
+      },
+      "text": "<p>También llamada <strong>yateí, doncella, mariola o abeja señorita</strong>, es una <strong>abeja sin aguijón</strong> de la familia <strong>Apidae</strong>, nativa de <strong>América tropical y subtropical</strong>, desde <strong>México hasta el noreste argentino</strong>.</p><p>Forma <strong>colmenas en troncos, guaduas o muros</strong>, con entradas tubulares de cera blanda. Cada colonia alberga <strong>entre 200 y 5000 abejas</strong> y se <strong>multiplica por enjambres</strong>.</p><p>Produce una <strong>miel de alta calidad</strong>, con <strong>propiedades antibióticas</strong>, reconocida en el <strong>Código Alimentario Argentino (2019)</strong> para <strong>usos alimenticios y medicinales</strong>.</p><p><em>\"Cumple un <strong>rol clave como polinizador</strong>, esencial para la <strong>salud de los ecosistemas entrerrianos\"</strong> (J. Diego Blettler - UADER).</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 3,
+      "stage": 3,
+      "commonName": "Paloma Torcaza",
+      "scientificName": "Zenadia auriculata",
+      "id": "paloma",
+      "meshNames": {
+        "glitch": "paloma_glitch",
+        "rastro": "paloma_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/paloma/paloma_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/paloma/paloma_data.webm"
+      },
+      "text": "<p>Ave <strong>nativa de Sudamérica</strong>, conocida también como <strong>tórtola o torcaza común</strong>. Habita en <strong>zonas abiertas, arboledas y áreas urbanas</strong>.</p><p>Mide entre <strong>22 y 28 cm</strong> y pesa alrededor de <strong>117 g</strong>. Presenta <strong>plumaje pardo</strong>, con <strong>manchas negras en las alas</strong> y una <strong>mancha azul auricular</strong> característica.</p><p>Es <strong>granívora</strong>, alimentándose de <strong>semillas y granos agrícolas</strong> (maíz, trigo, arroz, soja), aunque también consume <strong>insectos y grava</strong> para facilitar la digestión.</p><p>Se reproduce <strong>todo el año</strong> en nidos sencillos como <strong>plataformas de palitos, arbustos o en el suelo</strong>, pone <strong>dos huevos</strong> y los <strong>pichones vuelan a los 14 días</strong>.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 3,
+      "stage": 4,
+      "commonName": "Carpintero",
+      "scientificName": "Colaptes melanochloros",
+      "id": "carpintero",
+      "meshNames": {
+        "glitch": "carpintero_glitch",
+        "rastro": "carpintero_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/carpintero/carpintero_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/carpintero/carpintero_data.webm"
+      },
+      "text": "<p>Ave de la familia <strong>Picidae</strong>, cuyo nombre científico proviene del griego <em>melanos</em> (\"negro\") y <em>chloros</em> (\"verde pálido\"), los colores principales de su plumaje.</p><p>Presenta una gran <strong>adaptación para trepar y perforar troncos</strong>, con <strong>dos dedos hacia adelante y dos hacia atrás</strong>, y un pico fuerte con el que extrae <strong>larvas e insectos</strong>. Posee una <strong>lengua larga y retráctil</strong>, y <strong>golpea</strong> el tronco para capturar presas y comunicarse.</p><p>Habita en <strong>bosques bajos, lagunas y praderas</strong>, y <strong>nidifica en huecos</strong> que excava en los árboles.</p><p>Está catalogado como de <strong>Preocupación menor</strong> según su estado de conservación.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 3,
+      "stage": 5,
+      "commonName": "Chajá",
+      "scientificName": "Chauna torquata",
+      "id": "chaja",
+      "meshNames": {
+        "glitch": "chaja_glitch",
+        "rastro": "chaja_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/chaja/chaja_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/chaja/chaja_data.webm"
+      },
+      "text": "<p>El Chajá es un <strong>ave de gran tamaño</strong> que se destaca por un <strong>particular sonido</strong> que emite como <strong>señal de alarma</strong>. El chajá es <strong>básicamente herbívoro</strong>, ocasionalmente puede consumir <strong>pequeños insectos</strong> y crustáceos. Se alimenta en <strong>áreas abiertas</strong>, donde tiene fácil acceso a vegetación baja. Habita en <strong>zonas pantanosas, lagunas, esteros, pastizales húmedos y áreas ribereñas</strong>. Prefiere <strong>ambientes acuáticos o semiacuáticos</strong>.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 3,
+      "stage": 6,
+      "commonName": "Martín pescador",
+      "scientificName": "Megaceryle torquata",
+      "id": "martin",
+      "meshNames": {
+        "glitch": "martin_glitch",
+        "rastro": "martin_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/martin/martin_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/martin/martin_data.webm"
+      },
+      "text": "<p>Ave <strong>coraciforme de la familia Cerylidae</strong>, <strong>normalmente muy colorida</strong>, distribuida desde el <strong>sur de Texas hasta Tierra del Fuego</strong>.</p><p>Vive a <strong>orillas de arroyos</strong>, ríos, lagos, <strong>lagunas, esteros, bañados</strong>, en zonas suburbanas y urbanas. Cuando la calidad del agua no le permite capturar peces, se alimenta de <strong>insectos, reptiles o mamíferos</strong>. Tiene la <strong>costumbre de golpear la presa contra la superficie donde se posa</strong>.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 4,
+      "stage": 1,
+      "commonName": "Yaguarundí",
+      "scientificName": "Herpailurus yagouaroundi",
+      "id": "yaguarundi",
+      "meshNames": {
+        "glitch": "yaguarundi_glitch",
+        "rastro": "yaguarundi_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/yaguarundi/yaguarundi_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/yaguarundi/yaguarundi_data.webm"
+      },
+      "text": "<p>También llamado <strong>gato moro o jaguarundí</strong>, es un <strong>mamífero carnívoro</strong> de aspecto similar al puma, aunque más pequeño. Tiene <strong>cabeza alargada, orejas grandes, patas cortas</strong> y pelaje uniforme, con <strong>tonos rojizos, grises o negros</strong>.</p><p>Habita en <strong>bosques, matorrales y pastizales cercanos al agua</strong>. Es una especie <strong>rara, diurna y solitaria, de hábitos discretos y poco estudiada</strong>. <strong>Su vocalización es inusual</strong>.</p><p>La gestación dura <strong>70-75 días</strong> y las crías nacen en lugares protegidos; alcanzan la madurez sexual entre los <strong>2 y 3 años</strong>.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 4,
+      "stage": 2,
+      "commonName": "Malvavisco",
+      "scientificName": "Abutilon grandifolium",
+      "id": "malvavisco",
+      "meshNames": {
+        "glitch": "malvavisco_glitch",
+        "rastro": "malvavisco_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/malvavisco/malvavisco_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/malvavisco/malvavisco_data.webm"
+      },
+      "text": "<p>Arbusto <strong>semi-leñoso</strong>, alcanza entre <strong>2 y 3 metros de altura</strong>. Su nombre proviene del latín: <em>grandis</em> (grande) y <em>folius</em> (follaje), en referencia a sus <strong>hojas grandes, acorazonadas y pubescentes</strong>.</p><p>Florece desde la <strong>primavera hasta el otoño</strong>, con <strong>flores amarillo-anaranjadas</strong>. Sus frutos son <strong>esquizocarpos</strong>, que se abren para liberar <strong>semillas</strong>.</p><p>Es una planta <strong>rústica</strong>, común en <strong>suelos perturbados</strong> como caminos viejos o terrenos alterados. Se dispersa eficazmente por <strong>semillas</strong>.</p><p>Se encuentra en <strong>varias regiones del país</strong> y se ha <strong>naturalizado</strong> en otras partes del mundo.</p><p>Sus <strong>fibras</strong> se utilizan para hacer <strong>sogas, alfombras</strong> y otros productos. Además, en la <strong>medicina popular</strong> se usa para tratar <strong>dolores de garganta e inflamaciones</strong>.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 4,
+      "stage": 3,
+      "commonName": "Murciélago",
+      "scientificName": "Myotis dinellii",
+      "id": "murcielago",
+      "meshNames": {
+        "glitch": "murcielago_glitch",
+        "rastro": "murcielago_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/murcielago/murcielago_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/murcielago/murcielago_data.webm"
+      },
+      "text": "<p>De tamaño pequeño (<strong>34-38 mm y 6-10 g</strong>), presenta <strong>color pardo amarillento</strong>, con <strong>punta de los pelos amarillentas</strong>, <strong>orejas estrechas</strong> y <strong>uropatagio de borde pálido</strong>.</p><p>Habita en <strong>diversos ambientes</strong>, a menudo en <strong>viviendas</strong>, poco se sabe de sus <strong>refugios naturales</strong>. Es <strong>insectívoro</strong>.</p><p>Cumple un <strong>rol ecológico clave</strong> como <strong>controlador de plagas, polinizador y dispersor de semillas</strong>, ayudando a la <strong>regeneración de los bosques</strong>. Su <strong>guano</strong> enriquece el suelo como <strong>fertilizante natural</strong>.</p><p>Forma grupos de <strong>3 a 80 individuos</strong> (a veces más) y es <strong>nocturno</strong>.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 4,
+      "stage": 4,
+      "commonName": "Mburucuyá",
+      "scientificName": "Passiflora caerulea",
+      "id": "mburucuya",
+      "meshNames": {
+        "glitch": "mburucuya_glitch",
+        "rastro": "mburucuya_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/mburucuya/mburucuya_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/mburucuya/mburucuya_data.webm"
+      },
+      "text": "<p>Planta <strong>trepadora</strong> presente en <strong>América tropical</strong>, llegando en Argentina hasta <strong>Buenos Aires</strong>. Crece en <strong>bosques xerofíticos y húmedos</strong>, bordes de <strong>montes y selvas, sotobosque</strong>, y en <strong>suelos arenosos, arcillosos, rocosos o modificados</strong>. También se extiende sobre <strong>arbustos, cercos, caminos, cerros de islas</strong>, tanto en <strong>zonas urbanas</strong> como <strong>rurales</strong>.</p><p>Florece y <strong>fructifica todo el año</strong>, especialmente de <strong>septiembre a mayo</strong>. Tiene una <strong>flor vistosa</strong> y <strong>frutos comestibles</strong>, consumidos <strong>crudos, cocidos o por fauna</strong> (aves y hormigas). Puede comportarse como <strong>maleza en cultivos</strong>.</p><p>Se usa como <strong>ornamental</strong> y en <strong>medicina tradicional</strong>. <strong>Raíz</strong>: para <strong>golpes, contusiones, antiespasmódico, cardiotónico, sedante</strong>. <strong>Hojas</strong>: para la <strong>tos</strong>. Además, es <strong>astringente, antidisentérico, diurético y estimulante cardiaco</strong>. Se prepara en forma de <strong>té o mate</strong>, utilizando toda la planta.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 4,
+      "stage": 5,
+      "commonName": "Rana verde",
+      "scientificName": "Boana pulchelas",
+      "id": "rana",
+      "meshNames": {
+        "glitch": "rana_glitch",
+        "rastro": "rana_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/rana/rana_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/rana/rana_data.webm"
+      },
+      "text": "<p>Habita en <strong>praderas bajas, pastizales inundables, lagos y marismas intermitentes de agua dulce</strong>. Es una especie abundante. Su visualización es difícil por su <strong>pequeño tamaño</strong>: machos: <strong>35-45 mm</strong>, hembras: <strong>más de 50 mm</strong>) y su capacidad de <strong>mimetización</strong>. Puede cambiar de color <strong>rápidamente</strong>, variando entre <strong>verde brillante, canela y sin manchas marrones</strong>.</p><p>Según la temporada (de septiembre a noviembre), los <strong>machos</strong> pasan de <strong>marrón castaño a amarillo brillante</strong>, y las <strong>hembras</strong>, de <strong>marrón grisáceo a verde manzana</strong>, manteniendo <strong>manchas negras laterales</strong>.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 4,
+      "stage": 6,
+      "commonName": "Guazuncho",
+      "scientificName": "Mazama gouazoubira",
+      "id": "guazuncho",
+      "meshNames": {
+        "glitch": "guazuncho_glitch",
+        "rastro": "guazuncho_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/guazuncho/guazuncho_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/guazuncho/guazuncho_data.webm"
+      },
+      "text": "<p><strong>Mazama gouazoubira</strong> (guazuncho) es un <strong>cérvido de mediano tamaño</strong> nativo de <strong>Paraguay, Uruguay, noreste de Argentina, Brasil y oriente boliviano</strong>.</p><p>Habita en <strong>zonas boscosas abiertas o semiabiertas</strong> y se alimenta de <strong>brotes tiernos, hojas, hongos y frutos</strong>, además tiene cabeza <strong>pequeña y corta</strong> para <strong>marcar territorio</strong>.</p><p>Está afectado por la <strong>pérdida de hábitat</strong> debido a la <strong>tala y pastoreo</strong>, y por la <strong>caza</strong>. En Argentina está <strong>protegido en varias provincias</strong> y declarado <strong>monumento natural en Entre Ríos</strong>.</p><p>La presencia del <strong>ciervo axis</strong> en áreas compartidas genera preocupación por <strong>competencia ecológica</strong>.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 5,
+      "stage": 1,
+      "commonName": "Banderita argentina",
+      "scientificName": "Morpho epistrophus argentinus",
+      "id": "banderita",
+      "meshNames": {
+        "glitch": "banderita_glitch",
+        "rastro": "banderita_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/banderita/banderita_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/banderita/banderita_data.webm"
+      },
+      "text": "<p>La mariposa <strong>banderita argentina</strong> llama la atención por el <strong>brillo azul celeste metálico</strong> de sus alas, evocando los colores patrios. Su <strong>oruga es de color rojizo con pelos largos</strong> y se alimenta principalmente de hojas de <strong>timbó y otras leguminosas nativas</strong>. Habita en <strong>selvas en galería y montes ribereños</strong> del noreste argentino, incluyendo los márgenes del río Paraná.</p><p>Cuando descansa, muestra el reverso <strong>marrón con ocelos</strong>, que la camuflan entre las ramas. Es un <strong>símbolo de la biodiversidad entrerriana</strong> y de los ambientes ribereños del Litoral.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 5,
+      "stage": 2,
+      "commonName": "Yesquero multicolor",
+      "scientificName": "Trametes versicolor",
+      "id": "yesquero",
+      "meshNames": {
+        "glitch": "yesquero_glitch",
+        "rastro": "yesquero_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/yesquero/yesquero_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/yesquero/yesquero_data.webm"
+      },
+      "text": "<p>El <strong>yesquero multicolor</strong>, también llamado <strong>cola de pavo</strong>, es un <strong>hongo saprobio</strong> que crece sobre <strong>troncos y ramas en descomposición</strong>, ayudando a limpiar el ambiente al descomponer la madera muerta. Su forma en <strong>abanico</strong> y <strong>sus franjas multicolores</strong> —amarillos, naranjas, marrones y grises— lo hacen fácilmente reconocible. En el <strong>Bajo Delta del Paraná</strong>, en suelos arcillosos, álamos y bosques secundarios. Su tejido es <strong>dura y flexible, similar al cuero</strong>, y carece de pie. Se reproduce durante todo el año y forma <strong>grupos imbricados</strong> como tejas por eso se los conoce como hongos repisa. No son comestibles. En Asia, se lo valora por sus <strong>propiedades medicinales</strong> empleadas en terapias tradicionales.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 5,
+      "stage": 3,
+      "commonName": "Culebra verde",
+      "scientificName": "Philodyras aestiva",
+      "id": "culebra",
+      "meshNames": {
+        "glitch": "culebra_glitch",
+        "rastro": "culebra_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/culebra/culebra_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/culebra/culebra_data.webm"
+      },
+      "text": "<p><em>Philodryas aestiva</em> es una especie de serpiente de la familia <strong>Colubridae</strong>. Se la conoce comúnmente como <strong>culebra verde</strong>.</p><p>Serpiente de la familia <strong>Colubridae</strong>, conocida como <strong>culebra verde</strong>.</p><p>El nombre <em>Philodryas</em> proviene del griego y significa <strong>\"amante de los árboles\"</strong>, mientras que <em>aestiva</em> deriva del latín <strong>\"estival\"</strong> o <strong>\"del verano\"</strong>, aludiendo a su hábitat y época de actividad.</p><p>Es una especie <strong>ágil y esbelta</strong>, de <strong>grandes ojos</strong>, <strong>diurna</strong> y <strong>tanto terrestre como arborícola</strong>. Regula su temperatura buscando <strong>sitios frescos en verano y cálidos en invierno</strong>.</p><p>Se alimenta principalmente de <strong>anuros y pequeños mamíferos</strong>, aunque también consume <strong>insectos y otros vertebrados pequeños</strong>.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 5,
+      "stage": 4,
+      "commonName": "Aguará Guazú",
+      "scientificName": "Chrysocyon brachyurus",
+      "id": "aguara",
+      "meshNames": {
+        "glitch": "aguara_glitch",
+        "rastro": "aguara_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/aguara/aguara_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/aguara/aguara_data.webm"
+      },
+      "text": "<p>También llamado <strong>lobo de crin o zorro grande</strong>, es un mamífero carnívoro autóctono de Sudamérica, presente en Argentina, Brasil, Paraguay, Uruguay y Bolivia.</p><p>Es el <strong>mayor cánido sudamericano</strong> y la <strong>única especie del género <em>Chrysocyon</em></strong>, que significa <strong>\"perro de oro\"</strong>.</p><p>Mide hasta <strong>110 cm de altura</strong> y <strong>145 cm de largo</strong>, con pelaje <strong>rojizo anaranjado, crin negra, hocico y patas negras</strong>, y abdomen <strong>blanco</strong>. Sus <strong>patas largas</strong> le permiten desplazarse entre pastizales.</p><p>Es <strong>solitario y nocturno</strong>, de dieta <strong>omnívora</strong>, que incluye <strong>roedores, aves, insectos y frutos silvestres</strong>.</p><p>La gestación dura <strong>62 a 66 días</strong> y suele tener <strong>2 crías</strong> por camada.</p><p>El aguará guazú está declarado <strong>vulnerable</strong> por la UICN y protegido por <strong>leyes nacionales</strong> y provinciales.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 5,
+      "stage": 5,
+      "commonName": "Espinillo",
+      "scientificName": "Vachellia caven",
+      "id": "espinillo",
+      "meshNames": {
+        "glitch": "espinillo_glitch",
+        "rastro": "espinillo_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/espinillo/espinillo_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/espinillo/espinillo_data.webm"
+      },
+      "text": "<p>Es el <strong>Árbol Entrerriano</strong>. (Es un arbolito que abunda en la zona de Córdoba y Entre Ríos. Fue elegido como el <strong>árbol de los Ríos</strong> por ser de la iniciativa \"Un millón de árboles\" y por <strong>voto popular en el año 2020</strong> (Programa de Educación Ambiental y el Jardín Botánico Oro Verde, dependiente de la Facultad de Ciencias Agropecuarias de la Universidad Nacional de Entre Ríos. Leer más en la página oficial del C.G.E.). Originario de Sudamérica.</p><p>Es <strong>típico y espinal</strong> pero se lo encuentra <strong>asociado a ambientes de humedal</strong>. Su fruto se dispersa por el agua (<strong>flota</strong>). Tiene amplia distribución en diferentes tipos de ambientes. Es de pequeño porte y sus hojas son caducas. Sus <strong>flores tienen un perfume dulce</strong>.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "round": 5,
+      "stage": 6,
+      "commonName": "Yacaré",
+      "scientificName": "Caiman latirostris",
+      "id": "yacare",
+      "meshNames": {
+        "glitch": "yacare_glitch",
+        "rastro": "yacare_rastro"
+      },
+      "assets": {
+        "glitchVideo": "/game-assets/recorrido/criaturas/yacare/yacare_glitch.webm",
+        "dataVideo": "/game-assets/recorrido/criaturas/yacare/yacare_data.webm"
+      },
+      "text": "<p>El <strong>yacaré overo</strong> o <strong>yacaré ñato</strong> (<em>Caiman latirostris</em>) es un <strong>cocodrilo de la familia Alligatoridae</strong>, endémico de <strong>regiones tropicales y subtropicales de Sudamérica</strong>. Puede superar los <strong>2 metros de longitud</strong>, aunque el <strong>hocico es más corto y ancho</strong> que la cabeza, y por las <strong>placas del cuello más grandes</strong> que en especies similares.</p><p>Su nombre proviene de su <strong>coloración manchada</strong>, entre <strong>verde intenso y gris pálido</strong>. También se lo conoce como <strong>yacaré de hocico ancho</strong> o <strong>caimán del Brasil</strong>.</p><p>Presenta <strong>dimorfismo sexual</strong>, con <strong>hembras más pequeñas</strong>.</p>",
+      "glitchVideoSpeed": 0.25,
+      "dataVideoSpeed": 0.5
+    }
+  ]
+}

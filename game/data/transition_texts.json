@@ -1,0 +1,124 @@
+{
+  "transitions": [
+    {
+      "round": 1,
+      "stage": 2,
+      "text": "Observar atentamente puede darte sorpresas: los detalles hacen las diferencias."
+    },
+    {
+      "round": 2,
+      "stage": 2,
+      "text": "Topando los bosques y barrancos hay una gran variedad de especies que, a simple visto, parecen similares. Cada una cumple una función en el ecosistema."
+    },
+    {
+      "round": 3,
+      "stage": 2,
+      "text": "Si miramos y escuchamos atentamente, el bosque nos brinda alimentos."
+    },
+    {
+      "round": 4,
+      "stage": 2,
+      "text": "Por las noches hay muchas especies activas; de día descansan camufladas, algunas en ramas de árboles."
+    },
+    {
+      "round": 5,
+      "stage": 2,
+      "text": "Ni animales ni plantas: observá bien, hay otros habitantes de los bosques."
+    },
+    {
+      "round": 1,
+      "stage": 3,
+      "intro": "La Selva en Galería es un tipo de bosque ribereño que se desarrolla a la vera de ríos y arroyos. Al acompañar los cauces, forman corredores de biodiversidad."
+    },
+    {
+      "round": 2,
+      "stage": 3,
+      "text": "Algunas especies pensás que habitan los suelos, pero tu intuición te engaña."
+    },
+    {
+      "round": 3,
+      "stage": 3,
+      "text": "Los árboles no son solo árboles: sostienen el suelo, regulan el microclima, son hogar, alimento y estructura para otras formas de vida."
+    },
+    {
+      "round": 4,
+      "stage": 3,
+      "text": "Algunas especies de animales dejan rastros visibles de su comportamiento; prestá atención, podrás encontrar su escondite."
+    },
+    {
+      "round": 5,
+      "stage": 3,
+      "text": "\"Déjenme ser una hoja de árbol,\nacariciada por la brisa.\"\n— Emma Barrandeguy"
+    },
+    {
+      "round": 1,
+      "stage": 4,
+      "intro": "Los Bosques de Barrancos cumplen una importante función ecológica al proteger las barrancas de la erosión."
+    },
+    {
+      "round": 2,
+      "stage": 4,
+      "text": "Detenerse y escuchar es fundamental para descubrir habitantes de las alturas."
+    },
+    {
+      "round": 3,
+      "stage": 4,
+      "text": "No solo las aves tienen su hogar en los árboles: muchas otras plantas crecen sobre ellos en busca de soporte y luz."
+    },
+    {
+      "round": 4,
+      "stage": 4,
+      "text": "Vegetación característica del bosque de barrancos: está formado por árboles y arbustos adaptados a suelos bien drenados y pendientes."
+    },
+    {
+      "round": 5,
+      "stage": 4,
+      "text": "Estos bosques son refugio de aves; mamíferos y numerosos insectos y anfibios. Prestá atención y verás algunos rastros de todos ellos."
+    },
+    {
+      "round": 1,
+      "stage": 5,
+      "text": "En los llanos, los humedales albergan una gran diversidad de formas de vida, entre ellas las cantoras de los atardeceres."
+    },
+    {
+      "round": 2,
+      "stage": 5,
+      "text": "Al borde del humedal, un vigia atento estudia las presas desde su atalaya."
+    },
+    {
+      "round": 3,
+      "stage": 5,
+      "text": "Las flores aromáticas son esenciales para los ovejas nativas y la producción de miel."
+    },
+    {
+      "round": 4,
+      "stage": 5,
+      "text": "El Delta entrerriano alberga más de 350 especies de aves, incluyendo al chajá, la garza mora y el biguá."
+    },
+    {
+      "round": 5,
+      "stage": 5,
+      "text": "\"Yo tengo mis recuerdos asidos a tus hojas,\nyo te amo como se ama la sombra del hogar,\nrisueño compañero del alba de mi vida,\nseibo esplendoroso del regio Paraná.\"\n— El Ceibo, Rafael Obligado"
+    },
+    {
+      "round": 1,
+      "stage": 6,
+      "text": "\"Fui al río, y lo sentía\ncerca de mí, enfrente de mí.\"\n— Juan L. Ortiz"
+    },
+    {
+      "round": 3,
+      "stage": 6,
+      "text": "\"Sobre el remanso azul, agudo acecha\nDesde un lánguido gajo del sauzal,\nEn iminente inclinación de flecha,\nLa lentitud profunda del caudal.\"\n— El Martín Pescador, Leopoldo Lugones"
+    },
+    {
+      "round": 4,
+      "stage": 6,
+      "text": "Prestar atención a los rastros efímeros y descubrirémos un habitante de la noche."
+    },
+    {
+      "round": 5,
+      "stage": 6,
+      "text": "Nos asusta con solo mostrar sus ojos y nariz."
+    }
+  ]
+}

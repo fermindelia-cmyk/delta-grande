@@ -7,6 +7,7 @@ inventory: [], // [{id, name, whenISO}]
 achievements: [], // [{id, name, whenISO}]
 scores: { simulador: 0 },
 fishCounts: {}, // { speciesId: count }
+hasSeenIntro: false, // Track if user has seen the initial intro
 };
 
 
@@ -45,5 +46,29 @@ data.scores.simulador = score; commit(); EventBus.emit('scores:changed');
 addFish(speciesId){
 data.fishCounts[speciesId] = (data.fishCounts[speciesId]||0) + 1;
 commit(); EventBus.emit('fish:changed', { speciesId });
+},
+
+markIntroSeen(){
+data.hasSeenIntro = true;
+commit();
+},
+
+hasSeenIntro(){
+return data.hasSeenIntro === true;
+},
+
+resetAll(){
+Object.assign(data, DEFAULT);
+data.hasSeenIntro = false;
+commit();
+EventBus.emit('state:reset');
+},
+
+resetProgress(){
+// Reset everything EXCEPT hasSeenIntro (to skip full intro on "new game")
+Object.assign(data, DEFAULT);
+data.hasSeenIntro = true;
+commit();
+EventBus.emit('state:reset');
 }
 };

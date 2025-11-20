@@ -22,11 +22,13 @@
       color: var(--fg);
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
       overflow: hidden;
+      cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><circle cx="10" cy="10" r="6" fill="white" stroke="rgba(255,255,255,0.5)" stroke-width="2"/></svg>') 10 10, auto;
     }
 
     #app {
-      position: fixed;
-      inset: 0;
+      position: absolute;
+      top: 0;
+      left: 0;
       overflow: hidden;
     }
 
@@ -45,24 +47,26 @@
       display: flex;
       gap: 8px;
       align-items: center;
-      justify-content: flex-start;
+      justify-content: space-between;
       pointer-events: auto;
     }
 
-    .scene-buttons {
-      display: flex;
-      gap: 6px;
+    .pill {
+      background: #0009;
+      border: 1px solid #ffffff22;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 14px;
     }
 
     .btn {
       background: #1a2230;
       border: 1px solid #2a3547;
-      border-radius: 8px;
-      padding: 4px 8px;
+      border-radius: 10px;
+      padding: 8px 12px;
       cursor: pointer;
-      font-size: 10px;
+      font-size: 14px;
       color: var(--fg);
-      line-height: 1.1;
     }
 
     .btn:hover {
@@ -74,13 +78,14 @@
       right: 12px;
       top: 50px;
       width: 280px;
-      max-height: 60vh;
+  max-height: 648px;
       overflow: auto;
       background: var(--card);
       border: 1px solid #1f2732;
       border-radius: 12px;
       padding: 12px;
       pointer-events: auto;
+      z-index: 3500;
     }
 
     .panel h3 {
@@ -98,12 +103,79 @@
       color: var(--muted)
     }
 
+    .map-overlay {
+      position: absolute;
+      right: 0;
+      bottom: 50px;
+      width: 271px;
+      height: 165px;
+      pointer-events: none;
+      z-index: 6000;
+      display: none;
+    }
+
+    .metadata-overlay {
+      position: absolute;
+      left: 0;
+      bottom: 50px;
+      width: auto;
+      height: auto;
+      max-width: 576px;
+      pointer-events: none;
+      z-index: 4000;
+      display: none;
+    }
+
+    .metadata-overlay video {
+      display: block;
+      width: auto;
+      height: auto;
+      max-width: 100%;
+    }
+
+    .map-overlay__inner {
+      position: relative;
+      width: 271px;
+      height: 165px;
+      mask-image: url('../game-assets/recorrido/paneles/panel%20mapa.png');
+      -webkit-mask-image: url('../game-assets/recorrido/paneles/panel%20mapa.png');
+      mask-repeat: no-repeat;
+      -webkit-mask-repeat: no-repeat;
+      mask-size: 271px 165px;
+      -webkit-mask-size: 271px 165px;
+      mask-position: center;
+      -webkit-mask-position: center;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .map-overlay__map {
+      position: absolute;
+      width: 271px;
+      z-index: 4500;
+      height: 165px;
+      display: block;
+      object-fit: cover;
+      transform-origin: center center;
+    }
+
+    .map-overlay__frame {
+      position: absolute;
+      inset: 0;
+      width: 271px;
+      height: 165px;
+      display: block;
+      pointer-events: none;
+      object-fit: fill;
+      z-index: 1;
+    }
+
     /* FULLSCREEN video overlay (sin controles visibles) */
     .video-overlay {
-      position: fixed;
+      position: absolute;
       inset: 0;
       display: none;
-      background: #000;
+      background: transparent; /* permitir que se vea el 3D debajo con alpha del video */
       z-index: 9999;
       pointer-events: auto;
     }
@@ -116,16 +188,27 @@
       object-fit: cover;
       /* pantalla completa */
       display: block;
+      background: transparent; /* asegurar que las zonas alfa se vean transparentes */
     }
 
-    .video-overlay video {
-      object-fit: cover;
-      mix-blend-mode: screen;
-      /* o lighten */
+    /* Zócalo de escena - video arriba a la izquierda */
+    #zocaloVideo {
+      position: absolute;
+      top: -300px;
+      left: 0;
+      width: auto;
+      height: auto;
+      max-width: 70vw;
+      max-height: 50vh;
+      pointer-events: none;
+      z-index: 5000;
+      object-fit: contain;
+      opacity: 0;
+      transition: opacity 0.5s ease-in;
     }
 
     #hudCanvas {
-      position: fixed;
+      position: absolute;
       inset: 0;
       z-index: 3000;
       /* sobre tu three.js canvas */
@@ -154,7 +237,82 @@
       pointer-events: none;
       /* lets mouse go through to 3D */
     }
+
+    .menu-overlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 12000;
+      pointer-events: auto;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .menu-overlay.is-visible {
+      display: flex;
+    }
+
+    .menu-overlay__title {
+      font-size: 32px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .menu-overlay__options {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-width: 320px;
+    }
+
+    .menu-button {
+      padding: 14px 18px;
+      border: 1px solid #ffffff33;
+      border-radius: 10px;
+      background: rgba(28, 36, 46, 0.85);
+      color: var(--fg);
+      font-size: 18px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .menu-button:hover:not(:disabled),
+    .menu-button:focus-visible:not(:disabled) {
+      background: rgba(53, 201, 165, 0.35);
+      transform: translateY(-2px);
+      outline: none;
+    }
+
+    .menu-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.4;
+    }
+
+    .menu-overlay--main {
+      background: #000;
+    }
+
+    .menu-overlay--main .menu-overlay__title {
+      font-size: 38px;
+    }
+
+    .menu-overlay__logo {
+      position: absolute;
+      top: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: auto;
+      max-width: 800px;
+      height: auto;
+      pointer-events: none;
+    }
   </style>
+  <link rel="stylesheet" href="./styles/sub/deck-style.css">
 
   <script type="importmap">
 {
@@ -167,25 +325,51 @@
 </head>
 
 <body>
-  <div id="app"></div>
-  <canvas id="hudCanvas"></canvas>
+  <div id="app">
+    <canvas id="hudCanvas"></canvas>
   <canvas id="inventoryCanvas"></canvas>
 
-  <video id="hudVideo" src="/game-assets/recorrido/paneles/overlay mburucuya.mp4" playsinline muted loop
-    style="display:none"></video>
+    <video id="hudVideo" src="../game-assets/recorrido/paneles/overlay mburucuya.mp4" playsinline muted loop
+      style="display:none"></video>
 
+    <div class="hud" id="hud">
+      <div class="map-overlay" aria-hidden="true">
+        <div class="map-overlay__inner">
+          <img class="map-overlay__map" src="../game-assets/recorrido/mapa01.png" alt="Mapa del recorrido">
+          <img class="map-overlay__frame" src="../game-assets/recorrido/paneles/panel%20mapa.png" alt="">
+        </div>
+      </div>
+      <div class="metadata-overlay" aria-hidden="true">
+        <video src="../game-assets/recorrido/paneles/panel%20metadata.webm" playsinline muted loop autoplay></video>
+      </div>
+      <div class="video-overlay" id="videoOverlay">
+        <video id="labVideo" playsinline muted></video>
+      </div>
+      <!-- Zócalo de escena -->
+      <video id="zocaloVideo" playsinline muted preload="auto"></video>
+    </div>
 
-  <div class="hud" id="hud">
-    <div class="panel" id="inventoryPanel"></div>
-    <div class="panel" id="achievementsPanel" style="right:310px"></div>
-    <div class="video-overlay" id="videoOverlay">
-      <video id="labVideo" playsinline muted></video>
+    <div class="menu-overlay" id="pauseOverlay" aria-hidden="true">
+      <div class="menu-overlay__options">
+        <button type="button" class="menu-button" data-action="resume">Reanudar</button>
+        <button type="button" class="menu-button" data-action="restart">Reiniciar</button>
+        <button type="button" class="menu-button" data-action="exit">Salir al menú</button>
+      </div>
+    </div>
+
+    <div class="menu-overlay menu-overlay--main" id="mainMenuOverlay" aria-hidden="true">
+      <video class="menu-overlay__logo" src="../game-assets/logo_naranja_alpha.webm" playsinline muted loop autoplay></video>
+      <div class="menu-overlay__title">Menú Principal</div>
+      <div class="menu-overlay__options">
+        <button type="button" class="menu-button" data-action="continue">Continuar</button>
+        <button type="button" class="menu-button" data-action="new">Comenzar de nuevo</button>
+        <button type="button" class="menu-button" data-action="options">Opciones</button>
+        <button type="button" class="menu-button" data-action="quit">Salir</button>
+      </div>
     </div>
   </div>
-  <div id="inventoryPanelContainer"></div>
 
   <script type="module" src="./main.js"></script>
-  <script src="./ui/components/InventoryPanel.js"></script> <!-- acá cargás el HUD -->
 
 </body>
 

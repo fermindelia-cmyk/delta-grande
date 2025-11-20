@@ -1,0 +1,288 @@
+{
+  "stages": [
+    {
+      "id": "r1",
+      "photo": "/game-assets/recorrido/recorrido01.jpg",
+      "model": "/game-assets/recorrido/recorrido01.glb",
+      "marker": {
+        "src": "/game-assets/recorrido/tembetari.png",
+        "yaw": 90,
+        "pitch": 5,
+        "scale": [
+          500,
+          450
+        ]
+      },
+      "transition": "/game-assets/recorrido/transicion01.mp4",
+      "forward": {
+        "yaw": -15,
+        "pitch": 0
+      },
+      "audio": "/game-assets/recorrido/sonido/Monte la paloma parte 1.mp3",
+      "reward": {
+        "id": "obj_semilla",
+        "name": "Semilla de Timbó"
+      },
+      "viz": {
+        "nodes": [
+          {
+            "id": "A",
+            "yaw": 10,
+            "pitch": 0,
+            "w": 30,
+            "h": 14,
+            "label": "A₀"
+          },
+          {
+            "id": "B",
+            "yaw": 40,
+            "pitch": 12,
+            "w": 24,
+            "h": 18,
+            "label": "B₁"
+          },
+          {
+            "id": "C",
+            "yaw": -35,
+            "pitch": -6,
+            "w": 36,
+            "h": 14,
+            "label": "C₂"
+          },
+          {
+            "id": "D",
+            "yaw": 70,
+            "pitch": -5,
+            "w": 22,
+            "h": 22,
+            "label": "D₃"
+          },
+          {
+            "id": "E",
+            "yaw": -60,
+            "pitch": 15,
+            "w": 28,
+            "h": 16,
+            "label": "E₄"
+          }
+        ],
+        "links": [
+          [
+            "A",
+            "B"
+          ],
+          [
+            "B",
+            "C"
+          ],
+          [
+            "C",
+            "A"
+          ],
+          [
+            "A",
+            "D"
+          ],
+          [
+            "D",
+            "E"
+          ],
+          [
+            "E",
+            "B"
+          ]
+        ]
+      }
+    },
+    {
+  "id": "r2",
+  "photo": "/game-assets/recorrido/recorrido02.jpg",
+  "marker": {
+    "src": "/game-assets/recorrido/tembetari.png",
+    "yaw": 0,
+    "pitch": 0,
+    "scale": [300, 300]
+  },
+  "transition": "/game-assets/recorrido/transicion02.mp4",
+  "forward": {
+    "yaw": 180,
+    "pitch": 0
+  },
+  "audio": "/game-assets/recorrido/sonido/Monte la paloma parte 2.mp3",
+  "reward": {
+    "id": "obj_corteza",
+    "name": "Corteza de Sauce"
+  },
+  "viz": {
+    "nodes": [
+      { "id": "A", "yaw": 10, "pitch": 0, "w": 30, "h": 14, "label": "A₀" },
+      { "id": "B", "yaw": 40, "pitch": 12, "w": 24, "h": 18, "label": "B₁" },
+      { "id": "C", "yaw": -35, "pitch": -6, "w": 36, "h": 14, "label": "C₂" },
+      { "id": "D", "yaw": 65, "pitch": -10, "w": 26, "h": 16, "label": "D₃" },
+      { "id": "E", "yaw": -55, "pitch": 10, "w": 28, "h": 20, "label": "E₄" }
+    ],
+    "links": [
+      ["A", "B"],
+      ["B", "C"],
+      ["C", "A"],
+      ["A", "D"],
+      ["D", "E"],
+      ["E", "B"]
+    ]
+  }
+},
+{
+  "id": "r3",
+  "photo": "/game-assets/recorrido/recorrido03.jpg",
+  "marker": {
+    "src": "/game-assets/recorrido/tembetari.png",
+    "yaw": 90,
+    "pitch": 8,
+    "scale": [320, 280]
+  },
+  "transition": "/game-assets/recorrido/transicion02.mp4",
+  "forward": {
+    "yaw": 160,
+    "pitch": 0
+  },
+  "audio": "/game-assets/recorrido/sonido/Monte la paloma parte 3.mp3",
+  "reward": {
+    "id": "obj_hoja",
+    "name": "Hoja de Laurel"
+  },
+  "viz": {
+    "nodes": [
+      { "id": "A", "yaw": -15, "pitch": 5, "w": 28, "h": 16, "label": "A₀" },
+      { "id": "B", "yaw": 25, "pitch": -10, "w": 32, "h": 18, "label": "B₁" },
+      { "id": "C", "yaw": 60, "pitch": 12, "w": 26, "h": 14, "label": "C₂" },
+      { "id": "D", "yaw": -50, "pitch": -8, "w": 30, "h": 20, "label": "D₃" },
+      { "id": "E", "yaw": 5, "pitch": 18, "w": 34, "h": 16, "label": "E₄" }
+    ],
+    "links": [
+      ["A", "B"],
+      ["B", "C"],
+      ["C", "E"],
+      ["E", "A"],
+      ["A", "D"],
+      ["D", "B"]
+    ]
+  }
+},
+{
+  "id": "r4",
+  "photo": "/game-assets/recorrido/recorrido04.jpg",
+  "marker": {
+    "src": "/game-assets/recorrido/tembetari.png",
+    "yaw": 15,
+    "pitch": -5,
+    "scale": [280, 320]
+  },
+  "transition": "/game-assets/recorrido/transicion02.mp4",
+  "forward": {
+    "yaw": -130,
+    "pitch": 0
+  },
+  "audio": "/game-assets/recorrido/sonido/Monte la paloma parte 4.mp3",
+  "reward": {
+    "id": "obj_flor",
+    "name": "Flor de Ceibo"
+  },
+  "viz": {
+    "nodes": [
+      { "id": "A", "yaw": 20, "pitch": -12, "w": 30, "h": 18, "label": "A₀" },
+      { "id": "B", "yaw": -25, "pitch": 10, "w": 28, "h": 16, "label": "B₁" },
+      { "id": "C", "yaw": 55, "pitch": 6, "w": 26, "h": 20, "label": "C₂" },
+      { "id": "D", "yaw": -60, "pitch": -8, "w": 32, "h": 18, "label": "D₃" },
+      { "id": "E", "yaw": 0, "pitch": 18, "w": 34, "h": 16, "label": "E₄" }
+    ],
+    "links": [
+      ["A", "C"],
+      ["C", "E"],
+      ["E", "B"],
+      ["B", "D"],
+      ["D", "A"],
+      ["A", "E"]
+    ]
+  }
+},
+{
+  "id": "r5",
+  "photo": "/game-assets/recorrido/recorrido05.jpg",
+  "marker": {
+    "src": "/game-assets/recorrido/tembetari.png",
+    "yaw": -5,
+    "pitch": -10,
+    "scale": [300, 300]
+  },
+  "transition": "/game-assets/recorrido/transicion02.mp4",
+  "forward": {
+    "yaw": 95,
+    "pitch": 0
+  },
+  "audio": "/game-assets/recorrido/sonido/Monte la paloma parte 5.mp3",
+  "reward": {
+    "id": "obj_cristal",
+    "name": "Cristal de Cuarzo"
+  },
+  "viz": {
+    "nodes": [
+      { "id": "A", "yaw": -20, "pitch": 8, "w": 28, "h": 16, "label": "A₀" },
+      { "id": "B", "yaw": 30, "pitch": -15, "w": 32, "h": 18, "label": "B₁" },
+      { "id": "C", "yaw": 70, "pitch": 10, "w": 26, "h": 14, "label": "C₂" },
+      { "id": "D", "yaw": -65, "pitch": -5, "w": 30, "h": 20, "label": "D₃" },
+      { "id": "E", "yaw": 5, "pitch": 20, "w": 34, "h": 16, "label": "E₄" }
+    ],
+    "links": [
+      ["A", "B"],
+      ["B", "C"],
+      ["C", "D"],
+      ["D", "E"],
+      ["E", "A"],
+      ["B", "E"]
+    ]
+  }
+},
+{
+  "id": "r6",
+  "photo": "/game-assets/recorrido/recorrido06.jpg",
+  "marker": {
+    "src": "/game-assets/recorrido/tembetari.png",
+    "yaw": 0,
+    "pitch": 0,
+    "scale": [340, 320]
+  },
+  "transition": "/game-assets/recorrido/transicion02.mp4",
+  "forward": {
+    "yaw": -175,
+    "pitch": 0
+  },
+  "audio": "/game-assets/recorrido/sonido/Monte la paloma parte 6.mp3",
+  "reward": {
+    "id": "obj_totem",
+    "name": "Tótem Sagrado"
+  },
+  "viz": {
+    "nodes": [
+      { "id": "A", "yaw": -10, "pitch": -5, "w": 30, "h": 18, "label": "A₀" },
+      { "id": "B", "yaw": 35, "pitch": 8, "w": 28, "h": 16, "label": "B₁" },
+      { "id": "C", "yaw": -40, "pitch": 12, "w": 32, "h": 20, "label": "C₂" },
+      { "id": "D", "yaw": 60, "pitch": -12, "w": 26, "h": 14, "label": "D₃" },
+      { "id": "E", "yaw": 0, "pitch": 20, "w": 34, "h": 16, "label": "E₄" }
+    ],
+    "links": [
+      ["A", "B"],
+      ["B", "D"],
+      ["D", "E"],
+      ["E", "C"],
+      ["C", "A"],
+      ["A", "E"]
+    ]
+  }
+}
+
+
+
+
+
+  ]
+}
