@@ -1786,7 +1786,8 @@ export class SimuladorScene extends BaseScene {
     if ('colorSpace' in texture && THREE && typeof THREE.SRGBColorSpace !== 'undefined') {
       texture.colorSpace = THREE.SRGBColorSpace;
     } else if ('encoding' in texture && THREE && typeof THREE.sRGBEncoding !== 'undefined') {
-      texture.encoding = THREE.sRGBEncoding;
+      // texture.encoding = THREE.sRGBEncoding; // Deprecated in newer Three.js
+      texture.colorSpace = THREE.SRGBColorSpace;
     }
     texture.needsUpdate = true;
   }

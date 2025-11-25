@@ -1,0 +1,20 @@
+{
+  "name": "delta-grande",
+  "version": "1.0.0",
+  "description": "DELTA+ Interactive Web Experience",
+  "main": "game/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "three": "^0.181.2"
+  }
+}

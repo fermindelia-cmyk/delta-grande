@@ -4,3 +4,5 @@ game-assets/sub/environments/environment.blend
 game-assets/sub/environments/environment.blend1
 *.blend
 *.blend1
+dist/
+node_modules/
