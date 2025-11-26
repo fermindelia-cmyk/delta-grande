@@ -413,7 +413,7 @@ const DEFAULT_PARAMS = {
   /** Base model scale and tiling (floor/walls GLB) */
   overrideScale: 129.36780721031408, // explicit scale; if null, scale to modelLongestTarget
   modelLongestTarget: 129.368,
-  tiling: { countEachSide: 1, gap: -20.0 },
+  tiling: { countEachSide: 1, gap: -60.0, gapMultiplier: 0.5 },
 
   /** Fish baseline behavior (species modify around these) */
   fish: {
@@ -3328,7 +3328,8 @@ export class RioScene extends BaseScene {
 
     const right = this.tmpRight.copy(this.forward).cross(this.tmpUp).normalize();
     const baseWidth = this.widthAlongDirectionWorld(this.model, right);
-    const tileStep = baseWidth + this.params.tiling.gap;
+    const gap = (this.params.tiling.gap ?? 0) * (this.params.tiling.gapMultiplier ?? 1);
+    const tileStep = baseWidth + gap;
 
     const anchor = this.model.getWorldPosition(new THREE.Vector3());
     const n = this.params.tiling.countEachSide;
@@ -3350,7 +3351,8 @@ export class RioScene extends BaseScene {
     const right = this.tmpRight.copy(this.forward).cross(this.tmpUp).normalize();
     const baseWidthRight = this.widthAlongDirectionWorld(this.model || new THREE.Object3D(), right);
     const n = this.params.tiling.countEachSide;
-    const tileStep = baseWidthRight + this.params.tiling.gap;
+    const gap = (this.params.tiling.gap ?? 0) * (this.params.tiling.gapMultiplier ?? 1);
+    const tileStep = baseWidthRight + gap;
     const totalRightSpan = Math.max(0.01, baseWidthRight + 2 * n * tileStep);
 
     const fwd = this.forward.clone().normalize();
