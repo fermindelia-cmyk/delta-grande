@@ -11,21 +11,23 @@ export class App {
         document.body.style.margin = '0';
         document.body.style.overflow = 'hidden';
 
-        // Tamaño de referencia
+        // Tamaño de referencia (mantener por compatibilidad interna)
         this.BASE_WIDTH = 1920;
         this.BASE_HEIGHT = 1080;
 
-        // Configurar root para escalar todo su contenido
-        this.root.style.position = 'absolute';
-        this.root.style.width = this.BASE_WIDTH + 'px';
-        this.root.style.height = this.BASE_HEIGHT + 'px';
+        // Configurar root para ocupar todo el viewport
+        this.root.style.position = 'fixed';
+        this.root.style.left = '0';
+        this.root.style.top = '0';
+        this.root.style.width = '100vw';
+        this.root.style.height = '100vh';
         this.root.style.transformOrigin = 'top left';
     this.root.style.backgroundColor = '#000';
 
         // Renderer único para todas las escenas
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-        this.renderer.setSize(this.BASE_WIDTH, this.BASE_HEIGHT);
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.domElement.style.position = 'absolute';
     this.renderer.domElement.style.top = '0';
     this.renderer.domElement.style.left = '0';
@@ -159,22 +161,16 @@ export class App {
         const viewportW = window.innerWidth;
         const viewportH = window.innerHeight;
 
-        // Calcular escala para mantener proporciones
-        const scaleX = viewportW / this.BASE_WIDTH;
-        const scaleY = viewportH / this.BASE_HEIGHT;
-        const scale = Math.min(scaleX, scaleY, 1); // No escalar hacia arriba
+        this.root.style.width = viewportW + 'px';
+        this.root.style.height = viewportH + 'px';
+        this.root.style.left = '0px';
+        this.root.style.top = '0px';
+        this.root.style.transform = 'none';
 
-        // Escalar todo el root (canvas + UI HTML)
-        this.root.style.transform = `scale(${scale})`;
+        this.renderer.setSize(viewportW, viewportH);
 
-        // Centrar el contenido escalado
-        const scaledW = this.BASE_WIDTH * scale;
-        const scaledH = this.BASE_HEIGHT * scale;
-        this.root.style.left = ((viewportW - scaledW) / 2) + 'px';
-        this.root.style.top = ((viewportH - scaledH) / 2) + 'px';
-        
         if (this._currentScene && this._currentScene.onResize) {
-            this._currentScene.onResize(this.BASE_WIDTH, this.BASE_HEIGHT);
+            this._currentScene.onResize(viewportW, viewportH);
         }
     }
 }

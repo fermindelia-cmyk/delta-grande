@@ -673,6 +673,7 @@ export class SimuladorScene extends BaseScene {
     this._loadingOverlayHideTimer = null;
     this._loadingLogoUrl = null;
     this._isReady = false;
+    this._uiRectEntries = [];
 
     this._boundOnPointerDown = (e) => this._handlePointerDown(e);
     this._boundOnPointerMove = (e) => this._handlePointerMove(e);
@@ -4143,6 +4144,7 @@ export class SimuladorScene extends BaseScene {
 
     this._applyFontSettings();
 
+    this._uiRectEntries = [];
     this._uiAssetBasePath = basePath;
     this._weatherConfig = elements.weather || null;
     this._buttons = {};
@@ -4543,14 +4545,14 @@ export class SimuladorScene extends BaseScene {
     const goalVisibleTransform = 'translate(-50%, 0)';
     goalMessage.style.position = 'absolute';
     goalMessage.style.left = '50%';
-    goalMessage.style.bottom = `${(goalUi.bottomOffsetVW ?? 9)}vw`;
-    goalMessage.style.padding = `${(goalUi.paddingVW ?? 1.2)}vw`;
-    goalMessage.style.maxWidth = `${(goalUi.maxWidthVW ?? 52)}vw`;
-    goalMessage.style.fontSize = `${(goalUi.fontSizeVW ?? 1.8)}vw`;
+    goalMessage.style.bottom = '0';
+    goalMessage.style.padding = '0';
+    goalMessage.style.maxWidth = 'none';
+    goalMessage.style.fontSize = '1px';
     goalMessage.style.fontWeight = '600';
     goalMessage.style.color = colors.uiText;
     goalMessage.style.background = colors.uiBackgroundActive;
-    goalMessage.style.borderRadius = `${(goalUi.borderRadiusVW ?? 2.4)}vw`;
+    goalMessage.style.borderRadius = '0';
     goalMessage.style.boxShadow = `0 0 ${(ui.gap * 140).toFixed(3)}vh rgba(0,0,0,${ui.shadowOpacity * 0.8})`;
     goalMessage.style.pointerEvents = 'none';
     goalMessage.style.textAlign = 'center';
@@ -4569,6 +4571,13 @@ export class SimuladorScene extends BaseScene {
   this._goalMessageTransitionDurationMs = goalTransitionSeconds * 1000;
   this._goalMessageHiddenTransform = goalHiddenTransform;
   this._goalMessageVisibleTransform = goalVisibleTransform;
+  this._goalMessageDesignMetrics = {
+    bottomOffset: goalUi.bottomOffsetVW ?? 9,
+    padding: goalUi.paddingVW ?? 1.2,
+    maxWidth: goalUi.maxWidthVW ?? 52,
+    fontSize: goalUi.fontSizeVW ?? 1.8,
+    borderRadius: goalUi.borderRadiusVW ?? 2.4
+  };
 
     const cursorCfg = ui.cursor || {};
     const cursorEl = document.createElement('div');
@@ -4603,12 +4612,61 @@ export class SimuladorScene extends BaseScene {
 
     const initialState = this._indexToWeatherState(this._waterLevelIndex);
     this._setWeatherVisualInstant(initialState);
+    this._updateGoalMessageLayout();
   }
 
   _updateUILayout(width, height) {
-    // Layout uses viewport-relative units, so dynamic resizing is not required here.
     void width;
     void height;
+    if (!this._uiRectEntries?.length) {
+      this._updateGoalMessageLayout();
+      return;
+    }
+
+    const metrics = this._computeUILayoutMetrics();
+    if (!metrics) {
+      return;
+    }
+
+    for (const entry of this._uiRectEntries) {
+      if (!entry?.element || !entry.rect) continue;
+      this._applyViewportRect(entry.element, entry.rect, false, metrics);
+    }
+    this._updateGoalMessageLayout(metrics);
+  }
+
+  _computeUILayoutMetrics() {
+    const root = this.app?.root;
+    const viewportW = Math.max(1, root?.clientWidth || window.innerWidth || this.app?.BASE_WIDTH || 1920);
+    const viewportH = Math.max(1, root?.clientHeight || window.innerHeight || this.app?.BASE_HEIGHT || 1080);
+    const baseW = this.app?.BASE_WIDTH || 1920;
+    const baseH = this.app?.BASE_HEIGHT || 1080;
+    const scale = viewportH / baseH;
+
+    const scaledW = baseW * scale;
+    const scaledH = baseH * scale;
+    const offsetX = viewportW - scaledW;
+    const offsetY = 0;
+
+    return { viewportW, viewportH, baseW, baseH, scale, offsetX, offsetY };
+  }
+
+  _updateGoalMessageLayout(metrics = null) {
+    const goalEl = this._goalMessageEl;
+    const design = this._goalMessageDesignMetrics;
+    if (!goalEl || !design) return;
+
+    const data = metrics || this._computeUILayoutMetrics();
+    if (!data) return;
+    const { viewportH, baseH, scale } = data;
+
+    const toPx = (vwValue) => (vwValue / 100) * baseH * scale; // reuse height-derived scale
+
+    goalEl.style.bottom = `${toPx(design.bottomOffset)}px`;
+    goalEl.style.padding = `${toPx(design.padding)}px`;
+    goalEl.style.maxWidth = `${toPx(design.maxWidth)}px`;
+    goalEl.style.fontSize = `${toPx(design.fontSize)}px`;
+    goalEl.style.borderRadius = `${toPx(design.borderRadius)}px`;
   }
 
   _applyFontSettings() {
@@ -4671,19 +4729,53 @@ export class SimuladorScene extends BaseScene {
     }
   }
 
-  _applyViewportRect(element, rect) {
+  _applyViewportRect(element, rect, track = true, cachedMetrics = null) {
     if (!element || !rect) return;
-    if (typeof rect.leftPct === 'number') {
-      element.style.left = `${rect.leftPct}vw`;
+
+    if (track && this._uiRectEntries) {
+      this._uiRectEntries.push({ element, rect });
     }
-    if (typeof rect.topPct === 'number') {
-      element.style.top = `${rect.topPct}vh`;
+
+    const metrics = cachedMetrics || this._computeUILayoutMetrics();
+    if (!metrics) return;
+    const { baseW, baseH, scale, offsetX, offsetY } = metrics;
+
+    const toDesignW = (pct) => (pct / 100) * baseW;
+    const toDesignH = (pct) => (pct / 100) * baseH;
+
+    const designLeft = typeof rect.leftPct === 'number' ? toDesignW(rect.leftPct) : null;
+    const designTop = typeof rect.topPct === 'number' ? toDesignH(rect.topPct) : null;
+
+    if (designLeft !== null) {
+      element.style.left = `${offsetX + designLeft * scale}px`;
     }
-    if (typeof rect.widthPct === 'number') {
-      element.style.width = `${rect.widthPct}vw`;
+    if (designTop !== null) {
+      element.style.top = `${offsetY + designTop * scale}px`;
     }
-    if (typeof rect.heightPct === 'number') {
-      element.style.height = `${rect.heightPct}vh`;
+
+    const hasWidthPct = typeof rect.widthPct === 'number';
+    const hasHeightPct = typeof rect.heightPct === 'number';
+    const lockAspect = rect.lockAspect !== false;
+
+    const designWidth = hasWidthPct ? toDesignW(rect.widthPct) : null;
+    const designHeight = hasHeightPct ? toDesignH(rect.heightPct) : null;
+
+    let heightPx = null;
+    if (hasHeightPct) {
+      heightPx = (designHeight ?? 0) * scale;
+      element.style.height = `${heightPx}px`;
+    }
+
+    if (lockAspect && heightPx !== null && designWidth && designHeight && designHeight > 0) {
+      const ratio = designWidth / designHeight;
+      const widthPx = heightPx * ratio;
+      element.style.width = `${widthPx}px`;
+    } else if (!lockAspect && hasWidthPct && designWidth !== null) {
+      const widthPx = designWidth * scale;
+      element.style.width = `${widthPx}px`;
+    } else if (heightPx === null && hasWidthPct && designWidth !== null) {
+      const widthPx = designWidth * scale;
+      element.style.width = `${widthPx}px`;
     }
   }
 
@@ -5253,6 +5345,7 @@ export class SimuladorScene extends BaseScene {
     this._weatherState = 'low';
     this._uiAssetBasePath = this.params.ui?.elements?.basePath || '';
     this._removeMessageEl();
+    this._uiRectEntries = [];
   }
 
   _setWaterLevel(index) {
