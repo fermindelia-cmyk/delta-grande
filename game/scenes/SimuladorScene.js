@@ -329,8 +329,8 @@ export const DEFAULT_PARAMS = Object.freeze({
       transitionSeconds: 0.12
     }),
     goalMessage: Object.freeze({
-      bottomOffsetVW: 3.6,
-      fontSizeVW: 1.3,
+      bottomOffsetVW: 20.0,
+      fontSizeVW: 2.4,
       paddingVW: 1.1,
       maxWidthVW: 48,
       borderRadiusVW: 2.0,
