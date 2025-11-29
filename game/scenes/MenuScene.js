@@ -156,7 +156,7 @@ export class MenuScene extends BaseScene {
       video.style.cssText = `
         width: 100%;
         height: 100%;
-        object-fit: contain;
+        object-fit: cover;
         opacity: 1;
         pointer-events: none;
         z-index: 10001;
@@ -193,7 +193,7 @@ export class MenuScene extends BaseScene {
       video.style.cssText = `
         width: 100%;
         height: 100%;
-        object-fit: contain;
+        object-fit: cover;
         opacity: ${withFades ? '0' : '1'};
         pointer-events: auto;
         position: absolute;
@@ -298,7 +298,7 @@ export class MenuScene extends BaseScene {
       logoVideo.style.cssText = `
         width: 600px;
         height: auto;
-        object-fit: contain;
+        object-fit: cover;
         margin-bottom: 20px;
       `;
       logoVideo.muted = true;

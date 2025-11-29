@@ -106,7 +106,7 @@
     .map-overlay {
       position: absolute;
       right: 0;
-      bottom: 50px;
+      bottom:6vh;
       width: 14.1vw;
       /* 271px at 1920px width */
       height: 8.6vw;
@@ -120,7 +120,7 @@
     .metadata-overlay {
       position: absolute;
       left: 0;
-      bottom: 50px;
+      bottom: 6vh;
       width: 14.1vw;
       /* 271px at 1920px width */
       height: 8.6vw;
@@ -203,7 +203,7 @@
 
     /* FULLSCREEN video overlay (sin controles visibles) */
     .video-overlay {
-      position: absolute;
+      position: fixed;
       inset: 0;
       display: none;
       background: transparent;
@@ -259,6 +259,7 @@
       letter-spacing: 0.02em;
     }
 
+    /* Legacy canvas fallback (kept for compatibility) */
     #inventoryCanvas {
       position: absolute;
       top: 0;
@@ -267,24 +268,101 @@
       /* scale with window */
       height: 100%;
       pointer-events: none;
-      /* lets mouse go through to 3D */
     }
 
-    /* When viewport is narrower than 16:9, scale the inventory canvas
-   down and anchor it to the bottom center so UI doesn't overflow. */
+    /* Inventory panel: full-screen 16:9 element that always covers the viewport.
+       The parent is a fixed, overflow-hidden container; the inner box preserves
+       a 16:9 ratio and is sized so one dimension always >= viewport, producing
+       a cover effect while maintaining aspect ratio. Pointer events are disabled. */
+    #inventoryPanel {
+      position: fixed;
+      inset: 0;
+      display: none;
+      z-index: 4000;
+      pointer-events: none;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    #inventoryPanel .inventory-inner {
+      position: absolute;
+      left: 50%;
+      bottom: 0; /* anchor to bottom of viewport */
+      transform: translateX(-50%); /* center horizontally only */
+      /* default sizing: make inner preserve 16:9 and cover viewport */
+      width: calc(100vh * 16 / 9);
+      height: 100vh;
+      pointer-events: none;
+    }
+
+    #inventoryPanel img#inventoryImage {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* For tall/narrow viewports (mobile portrait), switch sizing so width fills the viewport */
     @media (max-aspect-ratio: 16/9) {
-      #inventoryCanvas {
+      #inventoryPanel .inventory-inner {
         width: 100vw;
         height: calc(100vw * 9 / 16);
-        left: 50%;
-        transform: translateX(-50%);
-        top: auto;
-        bottom: 0;
-        transform-origin: bottom center;
-        pointer-events: none;
+        bottom: 0; /* keep anchored to bottom on narrow viewports too */
       }
     }
 
+  
+
+    /* Fullscreen-fit 16:9 wrapper that acts as the root for the textbox.
+         It will always fit inside the viewport while preserving 16:9. */
+    .efedra-wrapper {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: min(100vw, calc(100vh * 16 / 9));
+      height: min(100vh, calc(100vw * 9 / 16));
+      aspect-ratio: 16 / 9;
+      max-width: 100%;
+      max-height: 100%;
+      z-index: 10002;
+      pointer-events: none;
+      /* wrapper itself should not capture clicks */
+      overflow: visible;
+      box-sizing: border-box;
+      display: block;
+    }
+
+    /* The textbox is positioned absolutely inside the wrapper so coordinates
+         like left/top are relative to the 16:9 root. */
+    #efedra-text-overlay {
+      position: absolute;
+      left: 62.5%;
+      top: 17.1%;
+      width: 18%;
+      /* Limit the visual height of the box so content beyond this is hidden
+         and can be scrolled. We set a fixed max-height relative to the 16:9
+         wrapper and ensure overflow-y provides scrolling. */
+      max-height: 27%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      /* allow the overlay to receive pointer/touch events so it can scroll */
+      pointer-events: auto;
+      touch-action: auto;
+      z-index: 10003;
+      /* Keep a reasonable fallback for small viewports */
+      height: auto;
+      box-sizing: border-box;
+      padding: 8px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.06), transparent);
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    #speciesDataVideo {
+      width: 100%;
+    }
     /* When viewport is wider than 16:9, constrain the inventory canvas
    to maintain 16:9 aspect ratio and center it horizontally */
     @media (min-aspect-ratio: 16/9) {
@@ -372,8 +450,72 @@
       height: auto;
       pointer-events: none;
     }
+    /* Sequence overlay styling (centered square, no shadow/border)
+       Kept here in the main stylesheet instead of inline on the element. */
+    #sequenceOverlay {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 30vw;
+      max-width: 30vw;
+      /* Prevent scaling down once the viewport becomes narrower than 16:9:
+         compute the equivalent width at a 16:9 breakpoint and use it as
+         a minimum width so the element doesn't shrink below that. */
+      min-width: calc(53.3333vh); /* = 0.3 * (16/9) * 100vh ≈ 53.3333vh */
+      aspect-ratio: 1 / 1;
+      pointer-events: none;
+      z-index: 10001;
+      display: none;
+    }
+
+    #sequenceOverlay video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: transparent;
+    }
   </style>
   <link rel="stylesheet" href="./styles/sub/deck-style.css">
+
+  <!-- Efedra overlay font and styles (extracted from RecorridoScene.js) -->
+  <link id="efedra-font-kit" rel="stylesheet" href="https://use.typekit.net/vmy8ypx.css">
+  <style id="efedra-text-overlay-style">
+    /* Efedra overlay styles (previously injected from JS) */
+    #efedra-text-overlay {
+      font-family: "new-science-mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      color: #FFC96A;
+      font-variant-numeric: tabular-nums lining-nums;
+      text-transform: none;
+      letter-spacing: 0.015em;
+      scrollbar-width: thin;
+      scrollbar-color: #FFC96A rgba(11, 18, 28, 0.45);
+    }
+
+    #efedra-text-overlay::-webkit-scrollbar {
+      width: 12px;
+      background: transparent;
+    }
+
+    #efedra-text-overlay::-webkit-scrollbar-track {
+      background: rgba(11, 18, 28, 0.38);
+      border-radius: 999px;
+      box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.45);
+    }
+
+    #efedra-text-overlay::-webkit-scrollbar-thumb {
+      background: #FFC96A;
+      border-radius: 999px;
+      box-shadow: 0 0 18px rgba(255, 201, 106, 0.55);
+      border: 2px solid rgba(14, 22, 33, 0.65);
+    }
+
+    #efedra-text-overlay::-webkit-scrollbar-thumb:hover {
+      background: #ffe394;
+    }
+  </style>
+  
 
   <script type="importmap">
 {
@@ -388,7 +530,12 @@
 <body>
   <div id="app">
     <canvas id="hudCanvas"></canvas>
-    <canvas id="inventoryCanvas"></canvas>
+    <!-- Inventory panel: replaced canvas with a responsive div+img for aspect-safe rendering -->
+    <div id="inventoryPanel" aria-hidden="true">
+      <div class="inventory-inner">
+        <img id="inventoryImage" src="../game-assets/recorrido/paneles/paneles_entero.png" alt="Inventory panel" />
+      </div>
+    </div>
 
     <video id="hudVideo" src="../game-assets/recorrido/paneles/overlay mburucuya.mp4" playsinline muted loop
       style="display:none"></video>
@@ -403,15 +550,24 @@
       <div class="metadata-overlay" aria-hidden="true">
         <video src="../game-assets/recorrido/paneles/panel%20metadata.webm" playsinline muted loop autoplay></video>
       </div>
-      <div id="species-data-overlay">
-        <!-- this contains the popup video and the typewriting textbox with scroll-->
-        <video src="../game-assets/recorrido/paneles/panel%20metadata.webm" playsinline muted loop autoplay></video>
-        <div class="species-data-overlay__text">
-          <p></p>
+
+      <div class="video-overlay" id="videoOverlay">
+        <video id="transition_video" playsinline muted></video>
+        <video id="labVideo" playsinline muted></video>
+        <!-- Sequence overlay (extracted from RecorridoScene.js)
+             Pre-created element so JS can show/pause/hide it. Now centered
+             as a square with styles defined in the head <style>. -->
+        <div id="sequenceOverlay" aria-hidden="true">
+          <video id="sequenceOverlayVideo" src="/game-assets/recorrido/interfaz/loading-text-box-animation.webm" muted playsinline></video>
         </div>
       </div>
-      <div class="video-overlay" id="videoOverlay">
-        <video id="labVideo" playsinline muted></video>
+
+      <!-- Efedra wrapper: moved out of #videoOverlay and now lives as a sibling
+           inside #hud so it is independent from transition/overlay video state.
+           Keeping the same class/id structure preserves existing CSS rules. -->
+      <div class="efedra-wrapper" aria-hidden="false">
+        <video id="speciesDataVideo" playsinline muted></video>
+        <div id="efedra-text-overlay"></div>
       </div>
       <!-- Zócalo de escena -->
       <video id="zocaloVideo" playsinline muted preload="auto"></video>
@@ -439,6 +595,8 @@
   </div>
 
   <script type="module" src="./main.js"></script>
+
+  <!-- efedra wrapper is now a sibling of #videoOverlay (located inside #hud) -->
 
 </body>
 

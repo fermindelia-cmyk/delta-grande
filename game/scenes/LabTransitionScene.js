@@ -369,7 +369,7 @@ export class LabTransitionScene extends BaseScene {
         left: 0;
         width: 100%;
         height: 100%;
-        object-fit: contain;
+        object-fit: cover;
         z-index: 10003;
         opacity: 1;
         pointer-events: none;
@@ -390,7 +390,7 @@ export class LabTransitionScene extends BaseScene {
         transform: translate(-50%, -50%);
         width: 100%;
         height: 100%;
-        object-fit: contain;
+        object-fit: cover;
         opacity: 0;
         pointer-events: none;
         z-index: 10002;

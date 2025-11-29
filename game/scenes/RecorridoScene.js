@@ -42,52 +42,18 @@ const EFEDRA_FONT_LINK_ID = 'efedra-font-kit';
 const EFEDRA_STYLE_ID = 'efedra-text-overlay-style';
 
 function ensureEfedraOverlayAssets() {
-  if (!document.getElementById(EFEDRA_FONT_LINK_ID)) {
-    const link = document.createElement('link');
-    link.id = EFEDRA_FONT_LINK_ID;
-    link.rel = 'stylesheet';
-    link.href = EFEDRA_OVERLAY_THEME.fontKitHref;
-    document.head.appendChild(link);
+  // Assets (font + CSS) are now provided statically in `index.html`.
+  // This helper ensures the overlay element exists and returns it.
+  const overlayId = 'efedra-text-overlay';
+  let el = document.getElementById(overlayId);
+  if (!el) {
+    el = document.createElement('div');
+    el.id = overlayId;
+    el.style.display = 'none';
+    // Do NOT append here. Caller (addTextOverlay) will append to the correct parent
+    // to avoid a brief flash at document.body's origin (top-left).
   }
-
-  if (!document.getElementById(EFEDRA_STYLE_ID)) {
-    const style = document.createElement('style');
-    style.id = EFEDRA_STYLE_ID;
-    style.textContent = `
-      #efedra-text-overlay {
-        font-family: ${EFEDRA_OVERLAY_THEME.fonts.family};
-        color: ${EFEDRA_OVERLAY_THEME.colors.speciesText};
-        font-variant-numeric: tabular-nums lining-nums;
-        text-transform: none;
-        letter-spacing: 0.015em;
-        scrollbar-width: thin;
-        scrollbar-color: ${EFEDRA_OVERLAY_THEME.colors.speciesText} rgba(11, 18, 28, 0.45);
-      }
-
-      #efedra-text-overlay::-webkit-scrollbar {
-        width: 12px;
-        background: transparent;
-      }
-
-      #efedra-text-overlay::-webkit-scrollbar-track {
-        background: rgba(11, 18, 28, 0.38);
-        border-radius: 999px;
-        box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.45);
-      }
-
-      #efedra-text-overlay::-webkit-scrollbar-thumb {
-        background: ${EFEDRA_OVERLAY_THEME.colors.speciesText};
-        border-radius: 999px;
-        box-shadow: 0 0 18px rgba(255, 201, 106, 0.55);
-        border: 2px solid rgba(14, 22, 33, 0.65);
-      }
-
-      #efedra-text-overlay::-webkit-scrollbar-thumb:hover {
-        background: #ffe394;
-      }
-    `;
-    document.head.appendChild(style);
-  }
+  return el;
 }
 
 
@@ -263,10 +229,10 @@ export class RecorridoScene extends BaseScene {
     document.documentElement.style.cursor = 'none';
     document.body.style.cursor = 'none';
 
-    // 👇 Mostrar elementos específicos de RecorridoScene (inventoryCanvas y zócalo)
-    const inventoryCanvas = document.getElementById('inventoryCanvas');
+    // 👇 Mostrar elementos específicos de RecorridoScene (inventory panel y zócalo)
+    const inventoryPanel = document.getElementById('inventoryPanel');
     const zocaloVideo = document.getElementById('zocaloVideo');
-    if (inventoryCanvas) inventoryCanvas.style.display = 'block';
+    if (inventoryPanel) inventoryPanel.style.display = 'block';
     if (zocaloVideo) zocaloVideo.style.display = 'block';
 
     // Mostrar overlays de recorrido (mapa y metadata)
@@ -497,32 +463,46 @@ export class RecorridoScene extends BaseScene {
 
 
   initInventoryCanvas() {
-    this.inventoryCanvas = document.getElementById("inventoryCanvas");
-    if (!this.inventoryCanvas) return;
-    this.inventoryCtx = this.inventoryCanvas.getContext("2d");
+    // Switch to DOM-based inventory image (div+img in index.html)
+    this.inventoryEl = document.getElementById('inventoryPanel');
+    this.inventoryImgEl = document.getElementById('inventoryImage');
 
-    this.resizeInventoryCanvas();
-    window.addEventListener("resize", () => this.resizeInventoryCanvas());
+    if (!this.inventoryEl || !this.inventoryImgEl) {
+      // Fallback to the canvas-based approach if DOM elements are missing
+      this.inventoryCanvas = document.getElementById("inventoryCanvas");
+      if (!this.inventoryCanvas) return;
+      this.inventoryCtx = this.inventoryCanvas.getContext("2d");
+      this.resizeInventoryCanvas();
+      window.addEventListener("resize", () => this.resizeInventoryCanvas());
 
-    // Se crea el objeto imagen, pero su 'src' se asignará dinámicamente
-    this.inventoryImg = new Image();
+      // Se crea el objeto imagen, pero su 'src' se asignará dinámicamente
+      this.inventoryImg = new Image();
+      // Cuando la imagen cargue, redibujar manteniendo su aspect ratio
+      this.inventoryImg.onload = () => this.drawInventoryPanel();
+      return;
+    }
+
+    // Ensure the image is not blocking pointer events and is initially visible
+    this.inventoryEl.style.pointerEvents = 'none';
+    this.inventoryImgEl.style.pointerEvents = 'none';
   }
 
   setInventoryImage() {
-    if (!this.inventoryImg) return;
-    // 👇 Use SpeciesManager for panel paths
+    // If using DOM image, update its src and ensure visibility
     const panelPath = this.speciesManager.getPanelPath();
     console.log('[RecorridoScene] Setting inventory image:', panelPath);
-    this.inventoryImg.src = panelPath;
 
-    // 👇 Force redraw when image loads
-    this.inventoryImg.onload = () => {
-      console.log('[RecorridoScene] Panel image loaded:', {
-        path: panelPath,
-        naturalWidth: this.inventoryImg.naturalWidth,
-        naturalHeight: this.inventoryImg.naturalHeight
-      });
-    };
+    if (this.inventoryImgEl) {
+      this.inventoryImgEl.src = panelPath || this.inventoryImgEl.src;
+      this.inventoryEl.style.display = panelPath ? 'block' : 'none';
+      // ensure it re-evaluates layout
+      this.inventoryImgEl.decode?.().catch(() => {});
+      return;
+    }
+
+    // Fallback to canvas flow
+    if (!this.inventoryImg) return;
+    this.inventoryImg.src = panelPath;
   }
 
 
@@ -532,11 +512,15 @@ export class RecorridoScene extends BaseScene {
     const h = this.app?.BASE_HEIGHT ?? window.innerHeight;
     this.inventoryCanvas.width = w;
     this.inventoryCanvas.height = h;
+    // If using a canvas fallback, redraw after resize
+    if (this.inventoryImg && this.inventoryImg.naturalWidth) {
+      this.drawInventoryPanel();
+    }
   }
 
   showOverlayVideo(src) {
     const overlay = document.getElementById("videoOverlay");
-    const video = document.getElementById("labVideo");
+    const video = document.getElementById("speciesDataVideo");
 
     video.src = src;
     overlay.style.display = "block";
@@ -580,17 +564,44 @@ export class RecorridoScene extends BaseScene {
     this.inventoryCtx = canvas.getContext("2d");
     this.resizeInventoryCanvas();
 
-    // dibujar contenido inicial
-    const img = new Image();
-    img.src = "/game-assets/recorrido/paneles/paneles_entero.png";
-    img.onload = () => {
-      this.inventoryCtx.clearRect(0, 0, canvas.width, canvas.height);
-      // ejemplo: centrarlo en la parte baja de la pantalla
-      const w = 400, h = 200;
-      const x = (canvas.width - w) / 2;
-      const y = canvas.height - h - 40;
-      this.inventoryCtx.drawImage(img, x, y, w, h);
-    };
+    // dibujar contenido inicial usando this.inventoryImg (mantiene aspect ratio)
+    this.inventoryImg = this.inventoryImg || new Image();
+    this.inventoryImg.onload = () => this.drawInventoryPanel();
+    this.inventoryImg.src = this.inventoryImg.src || "/game-assets/recorrido/paneles/paneles_entero.png";
+  }
+
+  drawInventoryPanel() {
+    if (!this.inventoryCanvas || !this.inventoryCtx || !this.inventoryImg || !this.inventoryImg.naturalWidth) return;
+
+    const canvas = this.inventoryCanvas;
+    const ctx = this.inventoryCtx;
+
+    // Clear previous drawing
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Compute aspect-fit dimensions within reasonable screen fraction
+    const maxW = canvas.width * 0.6; // occupy up to 60% width
+    const maxH = canvas.height * 0.25; // occupy up to 25% height
+
+    const imgW = this.inventoryImg.naturalWidth;
+    const imgH = this.inventoryImg.naturalHeight;
+    const imgAspect = imgW / imgH;
+
+    let drawW = maxW;
+    let drawH = drawW / imgAspect;
+    if (drawH > maxH) {
+      drawH = maxH;
+      drawW = drawH * imgAspect;
+    }
+
+    const x = (canvas.width - drawW) / 2;
+    const y = canvas.height - drawH - 40; // 40px margin from bottom
+
+    try {
+      ctx.drawImage(this.inventoryImg, x, y, drawW, drawH);
+    } catch (e) {
+      console.warn('[RecorridoScene] drawInventoryPanel failed:', e);
+    }
   }
 
   // limpiar/remover
@@ -660,8 +671,17 @@ export class RecorridoScene extends BaseScene {
   toggleInventory(useCanvas) {
     if (useCanvas) {
       this.loadInventoryCanvas();
+      return;
+    }
+
+    // Default: use DOM-based inventory panel if available
+    if (this.inventoryEl) {
+      this.inventoryEl.style.display = 'block';
+      // ensure image has latest src
+      this.setInventoryImage();
     } else {
-      this.removeInventoryCanvas();
+      // Fallback to canvas
+      this.loadInventoryCanvas();
     }
   }
 
@@ -911,10 +931,10 @@ export class RecorridoScene extends BaseScene {
 
   async unmount() {
     console.log('[RecorridoScene] Starting unmount...');
-    // 👇 Ocultar elementos específicos de RecorridoScene (inventoryCanvas y zócalo)
-    const inventoryCanvas = document.getElementById('inventoryCanvas');
+    // 👇 Ocultar elementos específicos de RecorridoScene (inventory panel y zócalo)
+    const inventoryPanel = document.getElementById('inventoryPanel');
     const zocaloVideo = document.getElementById('zocaloVideo');
-    if (inventoryCanvas) inventoryCanvas.style.display = 'none';
+    if (inventoryPanel) inventoryPanel.style.display = 'none';
     if (zocaloVideo) {
       zocaloVideo.style.display = 'none';
       zocaloVideo.style.opacity = '0';
@@ -927,10 +947,10 @@ export class RecorridoScene extends BaseScene {
     if (videoOverlay) {
       videoOverlay.style.display = 'none';
       // Pausar el video si está reproduciéndose
-      const labVideo = document.getElementById('labVideo');
-      if (labVideo) {
-        labVideo.pause();
-        labVideo.currentTime = 0;
+      const speciesDataVideo = document.getElementById('speciesDataVideo');
+      if (speciesDataVideo) {
+        speciesDataVideo.pause();
+        speciesDataVideo.currentTime = 0;
       }
     }
 
@@ -1046,6 +1066,17 @@ export class RecorridoScene extends BaseScene {
       this.preloadedDataVideo.src = '';
       this.preloadedDataVideo = null;
     }
+    // Disconnect efedra resize observer / listeners if any
+    try {
+      if (this._efedraResizeObserver) {
+        this._efedraResizeObserver.disconnect();
+        this._efedraResizeObserver = null;
+      }
+      if (this._efedraFallbackResize) {
+        window.removeEventListener('resize', this._efedraFallbackResize);
+        this._efedraFallbackResize = null;
+      }
+    } catch (e) { }
     console.log('[RecorridoScene] Unmount completed');
   }
 
@@ -3069,7 +3100,7 @@ export class RecorridoScene extends BaseScene {
     this.metadataOverlayAudio.play().catch(e => console.error("Audio play failed:", e));
 
     import('../core/UI.js').then(({ UI }) => {
-      const videoEl = document.getElementById('labVideo');
+      const videoEl = document.getElementById('speciesDataVideo');
       const videoOverlay = document.getElementById('videoOverlay');
 
       // 👇 OPTIMIZACIÓN: Usar directamente el video precargado sin crear nuevo src
@@ -3088,7 +3119,18 @@ export class RecorridoScene extends BaseScene {
       videoEl.muted = false;
       videoEl.playsInline = true;
       videoEl.playbackRate = this.currentSpecies.dataVideoSpeed || 0.5;
-      videoOverlay.style.display = 'block';
+      // Show only the efedra wrapper (video + text) instead of the whole #videoOverlay
+      // Prefer attaching/reading the efedra-wrapper from a top-level overlay root
+      // so it no longer depends on #videoOverlay being visible.
+      const parent = this.overlayRoot || document.body;
+      const efedraWrapper = (parent && parent.querySelector) ? parent.querySelector('.efedra-wrapper') : document.querySelector('.efedra-wrapper');
+
+      if (efedraWrapper) {
+        // Make sure the wrapper itself is visible and interactive.
+        try { efedraWrapper.style.display = 'block'; } catch (e) {}
+        try { efedraWrapper.style.pointerEvents = 'auto'; } catch (e) {}
+        try { videoEl.style.pointerEvents = 'auto'; } catch (e) {}
+      }
 
       // 🔄 Loop from second 3 when video ends
       videoEl.onended = () => {
@@ -3096,38 +3138,29 @@ export class RecorridoScene extends BaseScene {
         videoEl.play().catch(e => console.error("Video loop failed:", e));
       };
 
-      // 👇 Esperar a que el video esté completamente listo antes de reproducir
+      // Play when ready (reuse existing tryPlayVideo logic)
       const tryPlayVideo = () => {
-        if (videoEl.readyState >= 3) { // HAVE_FUTURE_DATA or higher
+        if (videoEl.readyState >= 3) {
           videoEl.play().catch(e => {
             console.error("Video autoplay failed:", e);
-            // Si falla el autoplay, intentar de nuevo en un frame
             requestAnimationFrame(() => {
               videoEl.play().catch(err => {
                 console.error("Video play retry failed:", err);
-                // Como último recurso, mostrar controles para que el usuario pueda reproducir manualmente
                 videoEl.controls = true;
               });
             });
           });
         } else {
-          // Video no está listo, esperar un poco más
           setTimeout(tryPlayVideo, 100);
         }
       };
 
-      // Intentar reproducir inmediatamente o esperar a que esté listo
-      if (videoEl.readyState >= 3) {
-        tryPlayVideo();
-      } else {
-        videoEl.addEventListener('canplay', tryPlayVideo, { once: true });
-      }
+      if (videoEl.readyState >= 3) tryPlayVideo(); else videoEl.addEventListener('canplay', tryPlayVideo, { once: true });
 
-      // 👆 Click handler para cerrar overlay al hacer click en área transparente
-      const handleOverlayClick = (e) => {
-        // Verificar si el click fue en un píxel transparente del video
+      // Click handler to close only the efedra wrapper when clicking on transparent pixels
+      const handleEfedraClick = (e) => {
+        // If click was on a transparent pixel of the species video, close efedra UI
         if (this.isVideoPixelTransparent(videoEl, e)) {
-          // Reproducir sonido de cierre
           if (this.metadataOverlayAudio) {
             this.metadataOverlayAudio.pause();
             this.metadataOverlayAudio.currentTime = 0;
@@ -3141,83 +3174,72 @@ export class RecorridoScene extends BaseScene {
             this.metadataCloseAudio.pause();
             this.metadataCloseAudio.currentTime = 0;
           }
-
           this.metadataCloseAudio.play().catch(e => console.error("Audio play failed:", e));
 
-          // Cerrar el overlay
+          // Close efedra widgets only (don't touch full video overlay or transition state)
           this.removeTextOverlay();
-          UI.hideVideo();
 
-          // Mostrar TODAS las flechas y resetear el flag de click
-          this.flechaClicked = false; // 👈 Resetear aquí cuando se muestran las flechas
-          if (this.flechaObject) {
-            this.flechaObject.visible = true;
-          }
+          // Hide efedra wrapper and stop species video
+          try { if (efedraWrapper) { efedraWrapper.style.pointerEvents = 'none'; efedraWrapper.style.display = 'none'; } } catch (err) {}
+          try { videoEl.pause(); videoEl.currentTime = 0; videoEl.src = ''; } catch (err) {}
+
+          // Restore flechas and reset click flag
+          this.flechaClicked = false;
+          if (this.flechaObject) this.flechaObject.visible = true;
           if (this.flechaObjects && this.flechaObjects.length > 0) {
             this.flechaObjects.forEach((flechaObj, index) => {
               flechaObj.visible = true;
               const action = this.flechaAnimationActions[index];
               if (action) {
                 action.reset();
-                // 2-frame offset per arrow, reversed order (assuming 30fps)
                 const reverseIndex = (this.flechaObjects.length - 1) - index;
-                const frameOffset = reverseIndex * 2; // Last arrow = 0, first arrow = most offset
-                const timeOffset = frameOffset / 30; // Convert to seconds
-                action.time = timeOffset;
+                const frameOffset = reverseIndex * 2;
+                action.time = frameOffset / 30;
                 action.play();
               }
             });
           }
 
-          // Remover el listener
-          videoOverlay.removeEventListener('click', handleOverlayClick);
+          // Remove listener
+          if (efedraWrapper) efedraWrapper.removeEventListener('click', handleEfedraClick);
         }
       };
 
-      videoOverlay.addEventListener('click', handleOverlayClick);
+      if (efedraWrapper) efedraWrapper.addEventListener('click', handleEfedraClick);
 
-      // Agregar el overlay de texto después de mostrar el video
+      // Add text overlay inside the efedra wrapper
       this.addTextOverlay();
     });
   }
 
   addTextOverlay() {
-    ensureEfedraOverlayAssets();
+    // Use the existing overlay element (styles moved to game/index.html CSS)
     const parent = this.overlayRoot || document.body;
+    let textOverlay = document.getElementById('efedra-text-overlay');
+    // Prefer placing the overlay inside the videoOverlay if present.
+    const videoOverlayEl = document.getElementById('videoOverlay');
 
-    const textOverlay = document.createElement('div');
-    textOverlay.id = 'efedra-text-overlay';
-    textOverlay.style.position = 'absolute';
-    textOverlay.style.zIndex = '10000';
-    textOverlay.style.overflowY = 'auto';
-    textOverlay.style.overflowX = 'hidden';
-    textOverlay.style.pointerEvents = 'auto';
-    textOverlay.style.paddingTop = '0px';
-    textOverlay.style.paddingLeft = '32px';
-    textOverlay.style.paddingRight = '22px';
-    textOverlay.style.paddingBottom = '0px';
-    textOverlay.style.lineHeight = '1.4';
-    textOverlay.style.textShadow = '0 0 18px rgba(0,0,0,0.45)';
-    textOverlay.style.fontFamily = EFEDRA_OVERLAY_THEME.fonts.family;
-    textOverlay.style.fontWeight = '400';
-    textOverlay.style.fontVariantNumeric = 'tabular-nums lining-nums';
-    textOverlay.style.letterSpacing = '0.015em';
-    textOverlay.style.setProperty('scrollbar-width', 'thin');
-    textOverlay.style.setProperty('-ms-overflow-style', 'auto');
-    textOverlay.style.color = EFEDRA_OVERLAY_THEME.colors.speciesText;
-    //textOverlay.style.background = 'linear-gradient(180deg, rgba(7,11,18,0.32), rgba(7,11,18,0.12))';
-    textOverlay.style.borderRadius = '18px';
+    if (!textOverlay) {
+      // ensureEfedraOverlayAssets will create the element if missing
+      textOverlay = ensureEfedraOverlayAssets();
 
-    const applyResponsiveMetrics = () => {
-      textOverlay.style.left = '1168px';
-      textOverlay.style.top = '167px';
-      textOverlay.style.width = '340px';
-      textOverlay.style.height = '320px';
-      textOverlay.style.bottom = '120px';
-      textOverlay.style.fontSize = `${EFEDRA_OVERLAY_THEME.fonts.speciesMaxPx}px`;
-    };
+      // Try to find an existing wrapper under the preferred parent first,
+      // then fallback to document. If none exists, create it under `parent`.
+      let wrapper = (parent && parent.querySelector) ? parent.querySelector('.efedra-wrapper') : null;
+      if (!wrapper) wrapper = document.querySelector('.efedra-wrapper');
+      if (!wrapper) {
+        wrapper = document.createElement('div');
+        wrapper.className = 'efedra-wrapper';
+        wrapper.setAttribute('aria-hidden', 'false');
+        parent.appendChild(wrapper);
+      }
 
-    applyResponsiveMetrics();
+      wrapper.appendChild(textOverlay);
+    }
+
+    // Reset content and make sure overlay is visible
+    textOverlay.style.display = 'block';
+    textOverlay.innerHTML = '';
 
     const textContent = document.createElement('div');
     textContent.style.minHeight = '100%';
@@ -3249,7 +3271,45 @@ export class RecorridoScene extends BaseScene {
     }
 
     textOverlay.appendChild(textContent);
-    parent.appendChild(textOverlay);
+    // Ensure the overlay lives inside the efedra wrapper (now attached to `parent`)
+    const wrapperAfter = (parent && parent.querySelector) ? parent.querySelector('.efedra-wrapper') : document.querySelector('.efedra-wrapper');
+    const appendTarget = wrapperAfter || parent;
+    if (textOverlay.parentNode !== appendTarget) {
+      appendTarget.appendChild(textOverlay);
+    }
+
+    // --- Responsive font scaling based on wrapper height ---
+    // Baseline: speciesMaxPx is font size at 1080px wrapper height
+    const baselinePx = EFEDRA_OVERLAY_THEME.fonts?.speciesMaxPx || 20;
+
+    const updateEfedraFontSize = () => {
+      try {
+        const currentWrapper = (parent && parent.querySelector) ? parent.querySelector('.efedra-wrapper') : document.querySelector('.efedra-wrapper');
+        if (!currentWrapper || !textOverlay) return;
+        const h = currentWrapper.clientHeight || currentWrapper.offsetHeight || window.innerHeight;
+        // Scale linearly: font = baselinePx * (wrapperHeight / 1080)
+        const newFont = Math.max(10, Math.round(baselinePx * (h / 1080)));
+        textOverlay.style.fontSize = newFont + 'px';
+      } catch (e) {
+        // ignore
+      }
+    };
+
+    // Use ResizeObserver when available to react to wrapper size changes
+    if (typeof ResizeObserver !== 'undefined') {
+      if (this._efedraResizeObserver) this._efedraResizeObserver.disconnect();
+      this._efedraResizeObserver = new ResizeObserver(updateEfedraFontSize);
+      const observedWrapper = (parent && parent.querySelector) ? parent.querySelector('.efedra-wrapper') : document.querySelector('.efedra-wrapper');
+      if (observedWrapper) this._efedraResizeObserver.observe(observedWrapper);
+    } else {
+      // Fallback: update on window resize
+      window.addEventListener('resize', updateEfedraFontSize);
+      this._efedraFallbackResize = updateEfedraFontSize;
+    }
+
+    // Initial update (and again next frame to catch layout)
+    updateEfedraFontSize();
+    requestAnimationFrame(updateEfedraFontSize);
 
     // 👇 Use dynamic species text
     const fullText = this.currentSpecies?.text || "Texto no disponible";
@@ -3361,13 +3421,25 @@ export class RecorridoScene extends BaseScene {
 
       this.metadataCloseAudio.play().catch(e => console.error("Audio play failed:", e));
 
+      // Remove text overlay and hide efedra wrapper + stop species video
       this.removeTextOverlay();
-      // También cerrar el video
-      import('../core/UI.js').then(({ UI }) => {
-        UI.hideVideo();
-      });
+      try {
+        const parent = this.overlayRoot || document.body;
+        const efedraWrapper = (parent && parent.querySelector) ? parent.querySelector('.efedra-wrapper') : document.querySelector('.efedra-wrapper');
+        const speciesVideo = document.getElementById('speciesDataVideo');
+        if (efedraWrapper) {
+          efedraWrapper.style.pointerEvents = 'none';
+          efedraWrapper.style.display = 'none';
+        }
+        if (speciesVideo) {
+          try { speciesVideo.pause(); } catch {};
+          try { speciesVideo.currentTime = 0; } catch {};
+          try { speciesVideo.src = ''; } catch {};
+        }
+      } catch (err) { }
+
       // Mostrar TODAS las flechas después de cerrar el overlay y resetear flag
-      this.flechaClicked = false; // 👈 Resetear aquí cuando se muestran las flechas
+      this.flechaClicked = false;
       if (this.flechaObject) {
         this.flechaObject.visible = true;
       }
@@ -3379,10 +3451,9 @@ export class RecorridoScene extends BaseScene {
           const action = this.flechaAnimationActions[index];
           if (action) {
             action.reset();
-            // 2-frame offset per arrow, reversed order (assuming 30fps)
             const reverseIndex = (this.flechaObjects.length - 1) - index;
-            const frameOffset = reverseIndex * 2; // Last arrow = 0, first arrow = most offset
-            const timeOffset = frameOffset / 30; // Convert to seconds
+            const frameOffset = reverseIndex * 2;
+            const timeOffset = frameOffset / 30;
             action.time = timeOffset;
             action.play();
           } else if (this.gltfAnimations?.length) {
@@ -3399,11 +3470,8 @@ export class RecorridoScene extends BaseScene {
     // Guardar referencia al listener para limpieza
     textOverlay._keyPressHandler = handleKeyPress;
 
-    // Manejar redimensionamiento de ventana
-    const handleResize = () => applyResponsiveMetrics();
+ 
 
-    window.addEventListener('resize', handleResize);
-    textOverlay._handleResize = handleResize;
   }
 
   removeTextOverlay() {
@@ -3415,14 +3483,61 @@ export class RecorridoScene extends BaseScene {
         this.metadataOverlayAudio = null;
       }
 
-      if (textOverlay._handleResize) {
-        window.removeEventListener('resize', textOverlay._handleResize);
-      }
       if (textOverlay._keyPressHandler) {
         document.removeEventListener('keydown', textOverlay._keyPressHandler);
       }
       textOverlay.remove();
     }
+    // Also hide efedra wrapper and stop species video. If there are no other
+    // visible/playing videos inside #videoOverlay, hide that container too
+    try {
+      const videoOverlayEl = document.getElementById('videoOverlay');
+      const efedraWrapper = (videoOverlayEl && videoOverlayEl.querySelector) ? videoOverlayEl.querySelector('.efedra-wrapper') : document.querySelector('.efedra-wrapper');
+      if (efedraWrapper) {
+        efedraWrapper.style.pointerEvents = 'none';
+        efedraWrapper.style.display = 'none';
+      }
+
+      const speciesVideo = document.getElementById('speciesDataVideo');
+      if (speciesVideo) {
+        try { speciesVideo.pause(); } catch {}
+        try { speciesVideo.currentTime = 0; } catch {}
+        try { speciesVideo.src = ''; } catch {}
+      }
+
+      // Decide whether to hide the parent overlay. Keep it visible when any
+      // other video element inside is currently playing or visible (e.g. transition).
+      if (videoOverlayEl) {
+        // Restore any sibling videos we hid when opening efedra
+        if (this._efedraHiddenVideos && Array.isArray(this._efedraHiddenVideos)) {
+          for (const item of this._efedraHiddenVideos) {
+            try {
+              if (item && item.el) {
+                item.el.style.display = item.prevDisplay || '';
+              }
+            } catch (e) { }
+          }
+          this._efedraHiddenVideos = null;
+        }
+
+        const otherVideos = Array.from(videoOverlayEl.querySelectorAll('video'))
+          .filter(v => v.id !== 'speciesDataVideo');
+
+        let anyPlaying = false;
+        for (const v of otherVideos) {
+          try {
+            if ((!v.paused && v.currentTime > 0) || (v.style && v.style.display && v.style.display !== 'none')) {
+              anyPlaying = true;
+              break;
+            }
+          } catch (e) { }
+        }
+
+        if (!anyPlaying) {
+          try { videoOverlayEl.style.display = 'none'; } catch (e) { }
+        }
+      }
+    } catch (e) { }
   }
 
   // Crea un overlay DOM con un flash "glitch" de hasta 0.5s usando la paleta dada
@@ -3617,12 +3732,18 @@ export class RecorridoScene extends BaseScene {
       if (!alphaSource) return;
 
       // Crear shader material blanco que respeta el alpha
+      // También aplicar aquí repeat/offset de la textura (por ejemplo videoTexture.repeat.set(1, -1))
+      const repeat = (alphaSource && alphaSource.repeat) ? alphaSource.repeat.clone() : new THREE.Vector2(1, 1);
+      const offset = (alphaSource && alphaSource.offset) ? alphaSource.offset.clone() : new THREE.Vector2(0, 0);
+
       const flashMaterial = new THREE.ShaderMaterial({
         transparent: true,
         depthWrite: false,
         side: THREE.DoubleSide,
         uniforms: {
-          uAlphaMap: { value: alphaSource }
+          uAlphaMap: { value: alphaSource },
+          uRepeat: { value: repeat },
+          uOffset: { value: offset }
         },
         vertexShader: `
           varying vec2 vUv;
@@ -3633,9 +3754,12 @@ export class RecorridoScene extends BaseScene {
         `,
         fragmentShader: `
           uniform sampler2D uAlphaMap;
+          uniform vec2 uRepeat;
+          uniform vec2 uOffset;
           varying vec2 vUv;
           void main() {
-            vec4 tex = texture2D(uAlphaMap, vUv);
+            vec2 uv = vUv * uRepeat + uOffset;
+            vec4 tex = texture2D(uAlphaMap, uv);
             float alpha = tex.a;
             if (alpha <= 0.0) discard;
             gl_FragColor = vec4(1.0, 1.0, 1.0, alpha); // Blanco con el alpha del texture
@@ -3960,15 +4084,14 @@ export class RecorridoScene extends BaseScene {
       console.log('[RecorridoScene] Starting transition to scene', nextSceneIndex);
 
       // Create barrida overlay (top layer with alpha)
-      const baseW = this.app?.BASE_WIDTH ?? window.innerWidth;
-      const baseH = this.app?.BASE_HEIGHT ?? window.innerHeight;
       const parent = this.overlayRoot || document.body;
       const barridaOverlay = document.createElement('div');
-      barridaOverlay.style.position = 'absolute';
+      // Use fixed positioning so barrida covers the whole viewport regardless of parent
+      barridaOverlay.style.position = 'fixed';
       barridaOverlay.style.top = '0';
       barridaOverlay.style.left = '0';
-      barridaOverlay.style.width = `${baseW}px`;
-      barridaOverlay.style.height = `${baseH}px`;
+      barridaOverlay.style.width = `100vw`;
+      barridaOverlay.style.height = `100vh`;
       barridaOverlay.style.zIndex = '10002';
       barridaOverlay.style.pointerEvents = 'none';
       barridaOverlay.style.display = 'flex';
@@ -3980,6 +4103,8 @@ export class RecorridoScene extends BaseScene {
 
       const barridaVideo = document.createElement('video');
       barridaVideo.style.cssText = `
+        position: absolute;
+        inset: 0;
         width: 100%;
         height: 100%;
         object-fit: cover;
@@ -4240,55 +4365,40 @@ export class RecorridoScene extends BaseScene {
 
             const videoOverlayEl = document.getElementById('videoOverlay');
             if (videoOverlayEl) {
-              // 🎞️ Superponer el video WebM de la secuencia sobre el video de transición
-              const baseW = this.app?.BASE_WIDTH ?? window.innerWidth;
-              const baseH = this.app?.BASE_HEIGHT ?? window.innerHeight;
+              // 🎞️ Use a pre-created sequence overlay element when possible (added to game/index.html)
+              const seqOverlayId = 'sequenceOverlay';
+              const seqVideoId = 'sequenceOverlayVideo';
 
-              const sequenceOverlay = document.createElement('div');
-              sequenceOverlay.style.cssText = `
-                position: absolute;
-                top: 0px;
-                left: 0px;
-                width: ${baseW}px;
-                height: ${baseH}px;
-                pointer-events: none;
-                z-index: 10001;
-              `;
+              // Try to find the elements inside the video overlay, then globally as fallback
+              let sequenceOverlay = videoOverlayEl.querySelector(`#${seqOverlayId}`) || document.getElementById(seqOverlayId);
+              let sequenceVideo = videoOverlayEl.querySelector(`#${seqVideoId}`) || document.getElementById(seqVideoId);
 
-              const sequenceVideo = document.createElement('video');
-              sequenceVideo.src = '/game-assets/recorrido/interfaz/loading-text-box-animation.webm';
+              // If not present (older builds), create them as a fallback and mark ownership
+              if (!sequenceOverlay || !sequenceVideo) {
+                sequenceOverlay = document.createElement('div');
+                sequenceOverlay.id = seqOverlayId;
+                sequenceOverlay.style.cssText = `position: absolute; inset: 0; pointer-events: none; z-index: 10001;`;
+
+                sequenceVideo = document.createElement('video');
+                sequenceVideo.id = seqVideoId;
+                sequenceVideo.src = '/game-assets/recorrido/interfaz/loading-text-box-animation.webm';
+                sequenceVideo.muted = true;
+                sequenceVideo.loop = false;
+                sequenceVideo.playsInline = true;
+                sequenceVideo.style.cssText = `position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;`;
+
+                sequenceOverlay.appendChild(sequenceVideo);
+                videoOverlayEl.appendChild(sequenceOverlay);
+                sequenceOverlay._createdByScript = true;
+              }
+
+              // Ensure visible and ready
+              sequenceOverlay.style.display = 'block';
+              sequenceOverlay.style.visibility = 'visible';
               sequenceVideo.muted = true;
               sequenceVideo.loop = false;
               sequenceVideo.playsInline = true;
-              sequenceVideo.style.cssText = `
-                position: absolute;
-                object-fit: contain;
-                display: block;
-              `;
-
-              sequenceOverlay.appendChild(sequenceVideo);
-              videoOverlayEl.appendChild(sequenceOverlay);
-
-              const targetVideoHeight = 600;
-              const applyVideoLayout = () => {
-                const aspect = sequenceVideo.videoWidth && sequenceVideo.videoHeight
-                  ? sequenceVideo.videoWidth / sequenceVideo.videoHeight
-                  : 1;
-                const targetWidth = Math.round(targetVideoHeight * aspect);
-                const centeredLeft = Math.max(0, Math.round((baseW - targetWidth) / 2));
-                const centeredTop = Math.max(0, Math.round((baseH - targetVideoHeight) / 2));
-
-                sequenceVideo.style.height = `${targetVideoHeight}px`;
-                sequenceVideo.style.width = `${targetWidth}px`;
-                sequenceVideo.style.left = `${centeredLeft}px`;
-                sequenceVideo.style.top = `${centeredTop}px`;
-              };
-
-              if (sequenceVideo.readyState >= 1) {
-                applyVideoLayout();
-              } else {
-                sequenceVideo.addEventListener('loadedmetadata', applyVideoLayout, { once: true });
-              }
+              if (!sequenceVideo.src) sequenceVideo.src = '/game-assets/recorrido/interfaz/loading-text-box-animation.webm';
 
               // Reproducir el video overlay y mantener en el último frame al terminar
               sequenceVideo.addEventListener('ended', () => {
@@ -4306,12 +4416,15 @@ export class RecorridoScene extends BaseScene {
               const detachOverlay = () => {
                 try {
                   sequenceVideo.pause();
-                  sequenceVideo.removeAttribute('src');
-                  sequenceVideo.load();
                 } catch { }
-                try {
-                  sequenceOverlay.remove();
-                } catch { }
+                // If we created the element here, remove it entirely to free resources.
+                if (sequenceOverlay._createdByScript) {
+                  try { sequenceVideo.removeAttribute('src'); sequenceVideo.load(); } catch { }
+                  try { sequenceOverlay.remove(); } catch { }
+                } else {
+                  // Otherwise just hide it but keep the last frame loaded in the DOM
+                  try { sequenceOverlay.style.display = 'none'; } catch { }
+                }
               };
 
               let handleVideoEnded = null;

@@ -147,7 +147,7 @@ export class RecorridoTransitionScene extends BaseScene {
       video.style.cssText = `
         width: 100%;
         height: 100%;
-        object-fit: contain;
+        object-fit: cover;
         opacity: 0;
         pointer-events: none;
         position: absolute;

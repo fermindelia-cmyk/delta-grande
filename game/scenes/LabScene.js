@@ -1095,7 +1095,7 @@ export class LabScene extends BaseScene{
       location.hash = data.goto; 
     } else if (data.video) {
       console.log('[LabScene] ✅ Playing video:', data.video);
-      import('../core/UI.js').then(({UI})=> UI.showVideo(data.video));
+      import('../core/UI.js').then(({UI})=> UI.showVideo({ src: data.video }));
     } else {
       console.log('[LabScene] ⚠️ Hit object has no goto or video action');
     }
@@ -1194,7 +1194,7 @@ export class LabScene extends BaseScene{
       video.style.cssText = `
         width: 100%;
         height: 100%;
-        object-fit: contain;
+        object-fit: cover;
         opacity: 1;
         pointer-events: none;
         z-index: 3;
@@ -1231,7 +1231,7 @@ export class LabScene extends BaseScene{
       video.style.cssText = `
         width: 100%;
         height: 100%;
-        object-fit: contain;
+        object-fit: cover;
         opacity: ${withFades ? '0' : '1'};
         pointer-events: auto;
         position: absolute;
@@ -1345,7 +1345,7 @@ export class LabScene extends BaseScene{
       labVideo.style.cssText = `
         height: 720px;
         width: auto;
-        object-fit: contain;
+        object-fit: cover;
         margin-bottom: 40px;
       `;
       labVideo.muted = true;
