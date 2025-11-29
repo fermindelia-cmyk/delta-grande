@@ -78,7 +78,7 @@
       right: 12px;
       top: 50px;
       width: 280px;
-  max-height: 648px;
+      max-height: 648px;
       overflow: auto;
       background: var(--card);
       border: 1px solid #1f2732;
@@ -107,42 +107,73 @@
       position: absolute;
       right: 0;
       bottom: 50px;
-      width: 271px;
-      height: 165px;
+      width: 14.1vw;
+      /* 271px at 1920px width */
+      height: 8.6vw;
+      /* 165px at 1920px width, maintains aspect ratio */
       pointer-events: none;
       z-index: 6000;
       display: none;
     }
 
+
     .metadata-overlay {
       position: absolute;
       left: 0;
       bottom: 50px;
-      width: auto;
-      height: auto;
-      max-width: 576px;
+      width: 14.1vw;
+      /* 271px at 1920px width */
+      height: 8.6vw;
+      /* 165px at 1920px width, maintains aspect ratio */
       pointer-events: none;
-      z-index: 4000;
+      z-index: 6000;
       display: none;
     }
 
+
+
     .metadata-overlay video {
       display: block;
-      width: auto;
+      width: 100%;
       height: auto;
-      max-width: 100%;
+      max-width: none;
     }
+
+    /* Lock overlays size when viewport is wider than 16:9 */
+    @media (min-aspect-ratio: 16/9) {
+      .map-overlay {
+        width: 271px;
+        /* Fixed size - same as original */
+        height: 165px;
+        /* Fixed size - same as original */
+      }
+
+      .metadata-overlay {
+
+        width: 271px;
+        height: 165px;
+        /* Fixed at max size */
+      }
+
+      #zocaloVideo {
+        width: 300px;
+        /* Fixed size - same as original */
+        height: 200px;
+      }
+
+    }
+
 
     .map-overlay__inner {
       position: relative;
-      width: 271px;
-      height: 165px;
+      width: 100%;
+      height: 100%;
       mask-image: url('../game-assets/recorrido/paneles/panel%20mapa.png');
       -webkit-mask-image: url('../game-assets/recorrido/paneles/panel%20mapa.png');
       mask-repeat: no-repeat;
       -webkit-mask-repeat: no-repeat;
-      mask-size: 271px 165px;
-      -webkit-mask-size: 271px 165px;
+      mask-size: 100% 100%;
+      -webkit-mask-size: 100% 100%;
       mask-position: center;
       -webkit-mask-position: center;
       overflow: hidden;
@@ -151,9 +182,9 @@
 
     .map-overlay__map {
       position: absolute;
-      width: 271px;
       z-index: 4500;
-      height: 165px;
+      width: 100%;
+      height: 100%;
       display: block;
       object-fit: cover;
       transform-origin: center center;
@@ -162,8 +193,8 @@
     .map-overlay__frame {
       position: absolute;
       inset: 0;
-      width: 271px;
-      height: 165px;
+      width: 100%;
+      height: 100%;
       display: block;
       pointer-events: none;
       object-fit: fill;
@@ -175,7 +206,8 @@
       position: absolute;
       inset: 0;
       display: none;
-      background: transparent; /* permitir que se vea el 3D debajo con alpha del video */
+      background: transparent;
+      /* permitir que se vea el 3D debajo con alpha del video */
       z-index: 9999;
       pointer-events: auto;
     }
@@ -188,18 +220,18 @@
       object-fit: cover;
       /* pantalla completa */
       display: block;
-      background: transparent; /* asegurar que las zonas alfa se vean transparentes */
+      background: transparent;
+      /* asegurar que las zonas alfa se vean transparentes */
     }
 
     /* Zócalo de escena - video arriba a la izquierda */
     #zocaloVideo {
       position: absolute;
-      top: -300px;
+      top: 70px;
+
       left: 0;
-      width: auto;
+      width: 24vw;
       height: auto;
-      max-width: 70vw;
-      max-height: 50vh;
       pointer-events: none;
       z-index: 5000;
       object-fit: contain;
@@ -236,6 +268,35 @@
       height: 100%;
       pointer-events: none;
       /* lets mouse go through to 3D */
+    }
+
+    /* When viewport is narrower than 16:9, scale the inventory canvas
+   down and anchor it to the bottom center so UI doesn't overflow. */
+    @media (max-aspect-ratio: 16/9) {
+      #inventoryCanvas {
+        width: 100vw;
+        height: calc(100vw * 9 / 16);
+        left: 50%;
+        transform: translateX(-50%);
+        top: auto;
+        bottom: 0;
+        transform-origin: bottom center;
+        pointer-events: none;
+      }
+    }
+
+    /* When viewport is wider than 16:9, constrain the inventory canvas
+   to maintain 16:9 aspect ratio and center it horizontally */
+    @media (min-aspect-ratio: 16/9) {
+      #inventoryCanvas {
+        width: calc(100vh * 16 / 9);
+        height: 100vh;
+        left: 50%;
+        transform: translateX(-50%);
+        top: 0;
+        transform-origin: center;
+        pointer-events: none;
+      }
     }
 
     .menu-overlay {
@@ -327,7 +388,7 @@
 <body>
   <div id="app">
     <canvas id="hudCanvas"></canvas>
-  <canvas id="inventoryCanvas"></canvas>
+    <canvas id="inventoryCanvas"></canvas>
 
     <video id="hudVideo" src="../game-assets/recorrido/paneles/overlay mburucuya.mp4" playsinline muted loop
       style="display:none"></video>
@@ -341,6 +402,13 @@
       </div>
       <div class="metadata-overlay" aria-hidden="true">
         <video src="../game-assets/recorrido/paneles/panel%20metadata.webm" playsinline muted loop autoplay></video>
+      </div>
+      <div id="species-data-overlay">
+        <!-- this contains the popup video and the typewriting textbox with scroll-->
+        <video src="../game-assets/recorrido/paneles/panel%20metadata.webm" playsinline muted loop autoplay></video>
+        <div class="species-data-overlay__text">
+          <p></p>
+        </div>
       </div>
       <div class="video-overlay" id="videoOverlay">
         <video id="labVideo" playsinline muted></video>
@@ -358,7 +426,8 @@
     </div>
 
     <div class="menu-overlay menu-overlay--main" id="mainMenuOverlay" aria-hidden="true">
-      <video class="menu-overlay__logo" src="../game-assets/logo_naranja_alpha.webm" playsinline muted loop autoplay></video>
+      <video class="menu-overlay__logo" src="../game-assets/logo_naranja_alpha.webm" playsinline muted loop
+        autoplay></video>
       <div class="menu-overlay__title">Menú Principal</div>
       <div class="menu-overlay__options">
         <button type="button" class="menu-button" data-action="continue">Continuar</button>

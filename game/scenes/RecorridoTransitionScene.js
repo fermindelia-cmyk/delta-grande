@@ -43,7 +43,7 @@ export class RecorridoTransitionScene extends BaseScene {
 
     // Ocultar cursor durante la transición
     document.body.style.cursor = 'none';
-    
+
     // Crear overlay para el video de transición
     const overlay = document.createElement('div');
     overlay.style.cssText = `
@@ -91,11 +91,11 @@ export class RecorridoTransitionScene extends BaseScene {
     const backgroundAudio = new Audio('/game-assets/transiciones/Video animacion carpa.mp3');
     backgroundAudio.volume = 1.0;
     backgroundAudio.loop = false;
-    backgroundAudio.play().catch(() => {});
+    backgroundAudio.play().catch(() => { });
 
     // Variable para controlar si se hace skip
     let skipped = false;
-    
+
     // Hacer click para skip
     const skipHandler = () => {
       skipped = true;
@@ -132,7 +132,7 @@ export class RecorridoTransitionScene extends BaseScene {
     overlay.style.opacity = '0';
     await new Promise(resolve => setTimeout(resolve, 500));
     document.body.removeChild(overlay);
-    
+
     // Restaurar cursor
     document.body.style.cursor = 'auto';
 
@@ -164,45 +164,46 @@ export class RecorridoTransitionScene extends BaseScene {
       let textEl = null;
       if (textContent) {
         // Calcular altura aproximada basada en el texto
-        // Asumiendo ~500px de ancho, 24px font-size, 1.6 line-height
-        // Aproximadamente 40-45 caracteres por línea
+        // Scaling values based on 1700px reference width
         const charsPerLine = 50;
         const lines = Math.ceil(textContent.length / charsPerLine);
-        const lineHeight = 24 * 1.6; // font-size * line-height
-        const estimatedHeight = lines * lineHeight + 64; // +64 para padding
-        
+
+        // CSS values using min(px, vw) for scaling from 1700px down
+        const fontSize = 'min(24px, 1.41vw)';
+        const width = 'min(450px, 28.41vw)';
+        const padding = 'min(38px, 1.60vw)';
+
         textOverlay = document.createElement('div');
         textOverlay.style.cssText = `
           position: fixed;
           top: 49%;
           left: 50%;
           transform: translate(-50%, -50%);
-          width: 500px;
-          max-width: 60vw;
-          height: ${estimatedHeight}px;
+          width: ${width};
+          height: auto;
           z-index: 10003;
           pointer-events: none;
           font-family: ${EFEDRA_OVERLAY_THEME.fonts.family};
           text-align: center;
-          padding: 32px;
+          padding: ${padding};
           opacity: 0;
           transition: opacity 1s ease-in;
           display: flex;
           align-items: flex-start;
           justify-content: center;
         `;
-        
+
         textEl = document.createElement('div');
         textEl.style.cssText = `
-          font-size: 24px;
+          font-size: ${fontSize};
           font-weight: 400;
           color: #FDFE63;
           text-shadow: 0 0 18px rgba(0,0,0,0.6);
           letter-spacing: 0.02em;
           line-height: 1.6;
-          min-height: ${lines * lineHeight}px;
+          min-height: calc(${lines} * 1.6 * ${fontSize});
         `;
-        
+
         textOverlay.appendChild(textEl);
         overlay.appendChild(textOverlay);
       }
@@ -220,35 +221,35 @@ export class RecorridoTransitionScene extends BaseScene {
         setTimeout(() => {
           // Fade in del overlay
           textOverlay.style.opacity = '1';
-          
+
           // Caracteres para el efecto glitch
           const glitchChars = "!@#$%^&*()_+-=[]{}|;':\",./<>?~`abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
           const getRandomGlitchChar = () => glitchChars[Math.floor(Math.random() * glitchChars.length)];
-          
+
           const fullText = textContent;
           let currentIndex = 0;
-          
+
           const typewriterInterval = setInterval(() => {
             if (currentIndex <= fullText.length) {
               const displayedText = fullText.substring(0, currentIndex);
-              
+
               // Agregar 3-5 caracteres glitch al final
               const glitchCount = Math.floor(Math.random() * 3) + 3;
               let glitchText = '';
               for (let i = 0; i < glitchCount; i++) {
                 glitchText += getRandomGlitchChar();
               }
-              
-              textEl.innerHTML = displayedText + 
+
+              textEl.innerHTML = displayedText +
                 `<span style="opacity: 0.3; animation: glitch-flicker 0.1s infinite;">${glitchText}</span>`;
-              
+
               currentIndex++;
             } else {
               clearInterval(typewriterInterval);
               textEl.textContent = fullText; // Mostrar solo el texto final sin glitch
             }
           }, 25); // 25ms entre cada caracter
-          
+
           // Agregar CSS para el efecto de parpadeo del glitch
           if (!document.getElementById('glitch-flicker-style')) {
             const style = document.createElement('style');
@@ -276,7 +277,7 @@ export class RecorridoTransitionScene extends BaseScene {
 
       const endVideo = () => {
         video.pause();
-        
+
         setTimeout(() => {
           if (video.parentNode) video.parentNode.removeChild(video);
           if (textOverlay && textOverlay.parentNode) textOverlay.parentNode.removeChild(textOverlay);
@@ -287,20 +288,20 @@ export class RecorridoTransitionScene extends BaseScene {
       // Monitorear el video para iniciar fade out 1 segundo antes del final
       const monitorVideoEnd = () => {
         if (video.paused || video.ended) return;
-        
+
         const timeRemaining = video.duration - video.currentTime;
-        
+
         // Iniciar fade out 1 segundo antes del final
         if (timeRemaining <= 1.0 && video.style.opacity !== '0') {
           video.style.opacity = '0';
-          
+
           // Fade out del texto también
           if (textOverlay) {
             textOverlay.style.transition = 'opacity 1s';
             textOverlay.style.opacity = '0';
           }
         }
-        
+
         if (!video.ended) {
           requestAnimationFrame(monitorVideoEnd);
         }
