@@ -15,6 +15,12 @@ export class App {
         this.BASE_WIDTH = 1920;
         this.BASE_HEIGHT = 1080;
 
+        // Render buffer maximum logical size (CSS pixels). If viewport is larger,
+        // the canvas will be upscaled via CSS, keeping the internal resolution
+        // limited to this size to save GPU/CPU.
+        this.MAX_RENDER_WIDTH = 1600;
+        this.MAX_RENDER_HEIGHT = 900;
+
         // Configurar root para ocupar todo el viewport
         this.root.style.position = 'fixed';
         this.root.style.left = '0';
@@ -26,8 +32,7 @@ export class App {
 
         // Renderer único para todas las escenas
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.domElement.style.position = 'absolute';
     this.renderer.domElement.style.top = '0';
     this.renderer.domElement.style.left = '0';
@@ -167,7 +172,27 @@ export class App {
         this.root.style.top = '0px';
         this.root.style.transform = 'none';
 
-        this.renderer.setSize(viewportW, viewportH);
+        // Compute the logical render size we will actually draw into (CSS pixels),
+        // capped at the configured maximums. If the viewport is larger, the
+        // canvas will be upscaled via CSS to fill the viewport.
+        const renderLogicalW = Math.min(viewportW, this.MAX_RENDER_WIDTH);
+        const renderLogicalH = Math.min(viewportH, this.MAX_RENDER_HEIGHT);
+
+        // Pixel ratio used for backing buffer. Limit to 2 to avoid excessive sizes.
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        this.renderer.setPixelRatio(pixelRatio);
+
+        const bufferW = Math.max(1, Math.round(renderLogicalW * pixelRatio));
+        const bufferH = Math.max(1, Math.round(renderLogicalH * pixelRatio));
+
+        // Set the internal drawing buffer size but do NOT update the canvas DOM
+        // style (third param `updateStyle` = false). We'll scale the canvas with CSS
+        // so it visually occupies the full viewport while keeping a capped resolution.
+        this.renderer.setSize(bufferW, bufferH, false);
+
+        // Ensure the canvas is visually sized to the viewport (CSS pixels)
+        this.renderer.domElement.style.width = viewportW + 'px';
+        this.renderer.domElement.style.height = viewportH + 'px';
 
         if (this._currentScene && this._currentScene.onResize) {
             this._currentScene.onResize(viewportW, viewportH);

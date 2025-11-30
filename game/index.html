@@ -107,10 +107,10 @@
       position: absolute;
       right: 0;
       bottom:6vh;
-      width: 14.1vw;
-      /* 271px at 1920px width */
-      height: 8.6vw;
-      /* 165px at 1920px width, maintains aspect ratio */
+      width: 12vw;
+      /* slightly smaller than previous (approx -15%) */
+      height: 7.3vw;
+      /* slightly smaller height to keep aspect ratio */
       pointer-events: none;
       z-index: 6000;
       display: none;
@@ -121,10 +121,10 @@
       position: absolute;
       left: 0;
       bottom: 6vh;
-      width: 14.1vw;
-      /* 271px at 1920px width */
-      height: 8.6vw;
-      /* 165px at 1920px width, maintains aspect ratio */
+      width: 12vw;
+      /* slightly smaller than previous (approx -15%) */
+      height: 7.3vw;
+      /* slightly smaller height to keep aspect ratio */
       pointer-events: none;
       z-index: 6000;
       display: none;
@@ -141,20 +141,8 @@
 
     /* Lock overlays size when viewport is wider than 16:9 */
     @media (min-aspect-ratio: 16/9) {
-      .map-overlay {
-        width: 271px;
-        /* Fixed size - same as original */
-        height: 165px;
-        /* Fixed size - same as original */
-      }
-
-      .metadata-overlay {
-
-        width: 271px;
-        height: 165px;
-        /* Fixed at max size */
-      }
-
+      /* Removed fixed overlay breakpoints for map/metadata so they
+         remain responsive (use the vw-based sizing defined above). */
       #zocaloVideo {
         width: 300px;
         /* Fixed size - same as original */
@@ -227,7 +215,7 @@
     /* Zócalo de escena - video arriba a la izquierda */
     #zocaloVideo {
       position: absolute;
-      top: 70px;
+      top: 40px;
 
       left: 0;
       width: 24vw;
@@ -476,6 +464,76 @@
       display: block;
       background: transparent;
     }
+    /* Instructions overlay: keep video top-centered on wide viewports
+       and ensure it always covers the viewport (no side bars). */
+    .efedra-instrucciones-overlay video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      z-index: 10000;
+    }
+    @media (min-aspect-ratio: 16/9) {
+      .efedra-instrucciones-overlay video {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        height: 100% !important;
+        width: auto !important;
+        /* ensure width is at least full viewport so there are no black bars */
+        min-width: 100% !important;
+        /* also guard min-height so very wide viewports are covered */
+        min-height: 100% !important;
+        transform: translateX(-50%) !important;
+        object-fit: cover !important;
+        object-position: top center !important;
+      }
+    }
+  </style>
+  <style id="recorrido-transition-overlay-style">
+    /* Styles for RecorridoTransitionScene text overlay (extracted from JS) */
+    .recorrido-transition-text-overlay {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      /* limit width so the box isn't too wide on large viewports
+        increased 50% from previous max (360px -> 540px) to make it wider */
+      width: min(540px, 51vmin);
+      max-width: 90vw;
+      aspect-ratio: 1 / 1;
+      z-index: 10003;
+      pointer-events: none;
+      text-align: center;
+      padding: clamp(10px, 2.5vmin, 28px);
+      opacity: 0;
+      transition: opacity 1s ease-in;
+      display: flex;
+      align-items: center; /* center vertically */
+      justify-content: center; /* center horizontally */
+      box-sizing: border-box;
+      font-family: "new-science-mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    }
+
+    .recorrido-transition-text-overlay[aria-hidden="false"] {
+      opacity: 1;
+    }
+
+    .recorrido-transition-text-inner {
+      /* Scale with the square overlay using vmin so text grows/shrinks with it.
+         Increase max so text can scale UP on large overlay sizes. */
+      font-size: clamp(12px, 2vmin, 28px);
+      font-weight: 400;
+      color: #FDFE63;
+      text-shadow: 0 0 18px rgba(0,0,0,0.6);
+      letter-spacing: 0.02em;
+      line-height: 1.6;
+      max-height: 100%;
+      overflow: auto; /* allow scrolling when text is long */
+    }
   </style>
   <link rel="stylesheet" href="./styles/sub/deck-style.css">
 
@@ -513,6 +571,58 @@
 
     #efedra-text-overlay::-webkit-scrollbar-thumb:hover {
       background: #ffe394;
+    }
+  </style>
+  <style id="transition-text-overlay-style">
+    /* Transition text overlay (moved from inline attributes) */
+    #transition-text-overlay {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      /* Make overlay a responsive square that scales with viewport (vmin)
+         while capping at a reasonable max width. This ensures text scales
+         consistently with aspect ratio like other overlay boxes. */
+      /* Make overlay larger but still responsive. Expose the chosen size as
+         a CSS variable so child elements (like text) can base sizes off it. */
+      --overlay-size: min(45vmin, 360px);
+      width: var(--overlay-size);
+      aspect-ratio: 1 / 1;
+      z-index: 10003;
+      pointer-events: none;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 1s ease-in;
+      box-sizing: border-box;
+      /* Use the new-science font used by Efedra overlay (fallback to system stack) */
+      font-family: "new-science-mono", system-ui, -apple-system, "Segoe UI", Roboto, Inter, Arial, sans-serif;
+    }
+
+    /* When made visible by JS, it becomes a flex container */
+    #transition-text-overlay[aria-hidden="false"] {
+      display: flex;
+    }
+
+    .transition-text-inner {
+      /* Scale font size with viewport (vmin) so it grows/shrinks with the
+         square overlay. Clamp provides sensible min/max sizes. */
+      /* Font scales with the overlay width: multiply the overlay size to
+        compute a responsive mid value, clamped between min and max. This
+        makes the font increase as the overlay grows but stops at a max. */
+      font-size: clamp(10px, calc(var(--overlay-size) * 0.045), 20px);
+      font-weight: 400;
+      color: #FDFE63;
+      text-shadow: 0 0 18px rgba(0,0,0,0.6);
+      letter-spacing: 0.02em;
+      line-height: 1.4;
+      text-align: left;
+      max-height: 100%;
+      overflow: auto;
+      box-sizing: border-box;
+      /* inherit the same font from the overlay container (keeps consistency) */
+      font-family: inherit;
     }
   </style>
   
@@ -568,6 +678,10 @@
       <div class="efedra-wrapper" aria-hidden="false">
         <video id="speciesDataVideo" playsinline muted></video>
         <div id="efedra-text-overlay"></div>
+      </div>
+      <!-- Static transition text overlay (used by RecorridoScene) -->
+      <div id="transition-text-overlay" data-static="true" aria-hidden="true">
+        <div class="transition-text-inner"></div>
       </div>
       <!-- Zócalo de escena -->
       <video id="zocaloVideo" playsinline muted preload="auto"></video>

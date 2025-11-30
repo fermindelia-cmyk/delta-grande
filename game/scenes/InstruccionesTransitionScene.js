@@ -64,6 +64,8 @@ export class InstruccionesTransitionScene extends BaseScene {
     
     // Crear overlay con video de fondo
     const overlay = document.createElement('div');
+    // clase para estilos específicos del overlay de instrucciones
+    overlay.className = 'efedra-instrucciones-overlay';
     overlay.style.cssText = `
       position: fixed;
       inset: 0;
@@ -81,20 +83,15 @@ export class InstruccionesTransitionScene extends BaseScene {
     // Video de fondo
     const bgVideo = document.createElement('video');
     bgVideo.src = '../assets/web-bgs/web-bg01.webm';
-    bgVideo.style.cssText = `
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      z-index: 10000;
-    `;
+    // Use CSS to control layout so we don't rely on inline styles here.
+    bgVideo.className = 'efedra-instrucciones-video';
     bgVideo.muted = true;
     bgVideo.playsInline = true;
     bgVideo.loop = true;
     bgVideo.autoplay = true;
     overlay.appendChild(bgVideo);
+    // Responsive behavior for wide viewports is provided via global CSS
+    // in `game/index.html` (class: .efedra-instrucciones-overlay)
     
     // Reproducir video de fondo
     bgVideo.play().catch((err) => {

@@ -60,32 +60,7 @@ export class RecorridoTransitionScene extends BaseScene {
     `;
     document.body.appendChild(overlay);
 
-    // Crear barras cinematográficas (letterbox)
-    const topBar = document.createElement('div');
-    topBar.style.cssText = `
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 12%;
-      background: black;
-      z-index: 10001;
-      pointer-events: none;
-    `;
-    overlay.appendChild(topBar);
-
-    const bottomBar = document.createElement('div');
-    bottomBar.style.cssText = `
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 12%;
-      background: black;
-      z-index: 10001;
-      pointer-events: none;
-    `;
-    overlay.appendChild(bottomBar);
+    
 
     // Iniciar música de fondo continua
     const backgroundAudio = new Audio('/game-assets/transiciones/Video animacion carpa.mp3');
@@ -168,41 +143,16 @@ export class RecorridoTransitionScene extends BaseScene {
         const charsPerLine = 50;
         const lines = Math.ceil(textContent.length / charsPerLine);
 
-        // CSS values using min(px, vw) for scaling from 1700px down
-        const fontSize = 'min(24px, 1.41vw)';
-        const width = 'min(450px, 28.41vw)';
-        const padding = 'min(38px, 1.60vw)';
-
+        // Use CSS classes defined in `game/index.html` for responsive sizing.
         textOverlay = document.createElement('div');
-        textOverlay.style.cssText = `
-          position: fixed;
-          top: 49%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          width: ${width};
-          height: auto;
-          z-index: 10003;
-          pointer-events: none;
-          font-family: ${EFEDRA_OVERLAY_THEME.fonts.family};
-          text-align: center;
-          padding: ${padding};
-          opacity: 0;
-          transition: opacity 1s ease-in;
-          display: flex;
-          align-items: flex-start;
-          justify-content: center;
-        `;
+        textOverlay.className = 'recorrido-transition-text-overlay';
+        textOverlay.setAttribute('aria-hidden', 'true');
 
         textEl = document.createElement('div');
-        textEl.style.cssText = `
-          font-size: ${fontSize};
-          font-weight: 400;
-          color: #FDFE63;
-          text-shadow: 0 0 18px rgba(0,0,0,0.6);
-          letter-spacing: 0.02em;
-          line-height: 1.6;
-          min-height: calc(${lines} * 1.6 * ${fontSize});
-        `;
+        textEl.className = 'recorrido-transition-text-inner';
+        // Keep a content-dependent min-height using the same font-size formula
+        // (match CSS: font-size uses clamp(12px, 4vmin, 28px) so use min equivalent)
+        textEl.style.minHeight = `calc(${lines} * 1.6 * min(28px, 4vmin))`;
 
         textOverlay.appendChild(textEl);
         overlay.appendChild(textOverlay);
@@ -219,7 +169,8 @@ export class RecorridoTransitionScene extends BaseScene {
       // Iniciar efecto typewriter después de 2 segundos
       if (textContent && textOverlay && textEl) {
         setTimeout(() => {
-          // Fade in del overlay
+          // Fade in del overlay (make visible via aria attribute so CSS handles opacity)
+          textOverlay.setAttribute('aria-hidden', 'false');
           textOverlay.style.opacity = '1';
 
           // Caracteres para el efecto glitch
@@ -297,8 +248,9 @@ export class RecorridoTransitionScene extends BaseScene {
 
           // Fade out del texto también
           if (textOverlay) {
-            textOverlay.style.transition = 'opacity 1s';
-            textOverlay.style.opacity = '0';
+              textOverlay.style.transition = 'opacity 1s';
+              textOverlay.setAttribute('aria-hidden', 'true');
+              textOverlay.style.opacity = '0';
           }
         }
 

@@ -209,6 +209,14 @@ export class RecorridoScene extends BaseScene {
   overlayCam = null;
   screenSize = new THREE.Vector2();
 
+  // Touch-drag joystick for camera control
+  touchActive = false;
+  touchStart = new THREE.Vector2();
+  touchCurrent = new THREE.Vector2();
+  touchMaxDistance = 200; // pixels for full input
+  touchSensitivity = 1.0;
+  touchTapThreshold = 12; // pixels: tap if drag < threshold
+
 
   async mount() {
     // 👇 Limpiar cualquier overlay del menú que haya quedado abierto
@@ -216,14 +224,14 @@ export class RecorridoScene extends BaseScene {
     menuOverlays.forEach(overlay => {
       const zIndex = window.getComputedStyle(overlay).zIndex;
       if (zIndex === '10000') {
-        console.log('[RecorridoScene] Removing leftover menu overlay');
+
         overlay.remove();
       }
     });
 
     // 👇 Ocultar el videoOverlay al inicio para evitar que bloquee clicks/cámara
     UI.hideVideo();
-    console.log('[RecorridoScene] Video overlay hidden on mount');
+
 
     // 👇 Hide system cursor immediately
     document.documentElement.style.cursor = 'none';
@@ -272,14 +280,14 @@ export class RecorridoScene extends BaseScene {
 
     // 👇 Load species data
     await this.speciesManager.load();
-    console.log('[RecorridoScene] Species data loaded:', this.speciesManager.getProgress());
+
 
     // 🎮 DEBUGGING: Exponer funciones globales para cambiar ronda/ambiente desde la consola
     window.setRonda = (round, stage) => {
       if (this.speciesManager.setRoundAndStage(round, stage)) {
         // Las 6 escenas se reciclan para todas las rondas, así que usamos módulo 6
         const sceneIndex = (stage - 1) % 6;
-        console.log(`🎬 Cambiando a Ronda ${round}, Ambiente ${stage} (escena ${sceneIndex})`);
+
         this.loadStage(sceneIndex);
       }
     };
@@ -300,7 +308,7 @@ export class RecorridoScene extends BaseScene {
     const progress = this.speciesManager.getProgress();
     // Calculate scene index: stage 1-6 within any round maps to scene 0-5
     const sceneIndex = (progress.stage - 1) % 6;
-    console.log(`[RecorridoScene] Montando escena - Round ${progress.round}, Stage ${progress.stage} (índice de escena ${sceneIndex})`);
+
 
     // Load the stage - loadStage will recalculate round/stage from sceneIndex
     // But we need to ensure SpeciesManager is already at the correct round/stage
@@ -353,6 +361,8 @@ export class RecorridoScene extends BaseScene {
 
     // 🎨 Setup post-processing
     this.setupPostProcessing();
+    // Register touch joystick handlers
+    this.setupInputHandlers();
   }
 
   setupPostProcessing() {
@@ -363,7 +373,7 @@ export class RecorridoScene extends BaseScene {
       return;
     }
 
-    console.log('[RecorridoScene] Setting up post-processing...');
+
 
     this.isLUTReady = false;
     if (this._lutReadyRaf) {
@@ -373,12 +383,12 @@ export class RecorridoScene extends BaseScene {
 
     // Crear composer
     this.composer = new EffectComposer(this.app.renderer);
-    console.log('[RecorridoScene] EffectComposer created');
+
 
     // Pass principal de renderizado
     const renderPass = new RenderPass(this.scene, this.camera);
     this.composer.addPass(renderPass);
-    console.log('[RecorridoScene] RenderPass added');
+
 
     // GamerLUTPass con valores sutiles para el Delta (al final para que pueda renderizar a pantalla)
     this.gamerLUTPass = new GamerLUTPass({
@@ -392,68 +402,68 @@ export class RecorridoScene extends BaseScene {
     this.gamerLUTPass.renderToScreen = true;
     //this.composer.addPass(this.gamerLUTPass);
 
-    console.log('[RecorridoScene] Post-processing setup complete.');
-    console.log('  - GamerLUTPass: Press "L" to toggle');
+
+
 
     // 🔍 Debug function para verificar estado del post-processing
     window.debugPostProcessing = () => {
-      console.log('═══════════════════════════════════════════════════');
-      console.log('🎨 POST-PROCESSING DEBUG');
-      console.log('═══════════════════════════════════════════════════');
-      console.log('Composer exists:', !!this.composer);
-      console.log('DiscoveryFilterPass exists:', !!this.discoveryFilterPass);
-      console.log('GamerLUTPass exists:', !!this.gamerLUTPass);
+
+
+
+
+
+
       if (this.discoveryFilterPass) {
-        console.log('DiscoveryFilterPass enabled:', this.discoveryFilterPass.enabled);
-        console.log('DiscoveryFilterPass renderToScreen:', this.discoveryFilterPass.renderToScreen);
-        console.log('DiscoveryFilterPass progress:', this.discoveryFilterPass.discoveryProgress);
+
+
+
       }
       if (this.gamerLUTPass) {
-        console.log('GamerLUTPass enabled:', this.gamerLUTPass.enabled);
-        console.log('GamerLUTPass renderToScreen:', this.gamerLUTPass.renderToScreen);
+
+
       }
-      console.log('useGamerLUT:', this.useGamerLUT);
-      console.log('═══════════════════════════════════════════════════');
+
+
     };
 
     // Exponer funciones globales para debugging y control del LUT
     window.toggleGamerLUT = () => {
       this.useGamerLUT = !this.useGamerLUT;
-      console.log(`🎨 Gamer LUT: ${this.useGamerLUT ? 'ON ✅' : 'OFF ❌'}`);
+
     };
 
     window.setLUTIntensity = (value) => {
       if (this.gamerLUTPass) {
         this.gamerLUTPass.setIntensity(value);
-        console.log(`🎨 LUT Intensity: ${value}`);
+
       }
     };
 
     window.lutPresetCyberpunk = () => {
       if (this.gamerLUTPass) {
         this.gamerLUTPass.presetCyberpunk();
-        console.log('🎨 LUT Preset: Cyberpunk 🌃');
+
       }
     };
 
     window.lutPresetCompetitive = () => {
       if (this.gamerLUTPass) {
         this.gamerLUTPass.presetCompetitive();
-        console.log('🎨 LUT Preset: Competitive 🎯');
+
       }
     };
 
     window.lutPresetCinematic = () => {
       if (this.gamerLUTPass) {
         this.gamerLUTPass.presetCinematic();
-        console.log('🎨 LUT Preset: Cinematic 🎬');
+
       }
     };
 
     window.lutReset = () => {
       if (this.gamerLUTPass) {
         this.gamerLUTPass.reset();
-        console.log('🎨 LUT Reset: Default values restored ↩️');
+
       }
     };
 
@@ -490,7 +500,7 @@ export class RecorridoScene extends BaseScene {
   setInventoryImage() {
     // If using DOM image, update its src and ensure visibility
     const panelPath = this.speciesManager.getPanelPath();
-    console.log('[RecorridoScene] Setting inventory image:', panelPath);
+
 
     if (this.inventoryImgEl) {
       this.inventoryImgEl.src = panelPath || this.inventoryImgEl.src;
@@ -697,6 +707,61 @@ export class RecorridoScene extends BaseScene {
 
     // 🎯 Create camera debug overlay
     //this.setupCameraDebugOverlay();
+  }
+
+  // --- Input handlers (touch joystick)
+  setupInputHandlers() {
+    // Bind handlers so we can add/remove listeners reliably
+    this._onTouchStart = (e) => this.onTouchStart(e);
+    this._onTouchMove = (e) => this.onTouchMove(e);
+    this._onTouchEnd = (e) => this.onTouchEnd(e);
+
+    const canvas = this.app?.canvas;
+    if (!canvas) return;
+
+    // We use passive: false so we can preventDefault and avoid page scroll
+    canvas.addEventListener('touchstart', this._onTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', this._onTouchMove, { passive: false });
+    canvas.addEventListener('touchend', this._onTouchEnd, { passive: false });
+    canvas.addEventListener('touchcancel', this._onTouchEnd, { passive: false });
+  }
+
+  onTouchStart(e) {
+    if (!e.touches || e.touches.length === 0) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    this.touchActive = true;
+    this.touchStart.set(t.clientX, t.clientY);
+    this.touchCurrent.set(t.clientX, t.clientY);
+  }
+
+  onTouchMove(e) {
+    if (!this.touchActive) return;
+    if (!e.touches || e.touches.length === 0) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    this.touchCurrent.set(t.clientX, t.clientY);
+  }
+
+  onTouchEnd(e) {
+    // End touch control; let velocities decay naturally
+    if (!this.touchActive) return;
+    // Determine if this was a tap (short move) and synthesize a click
+    const dx = this.touchCurrent.x - this.touchStart.x;
+    const dy = this.touchCurrent.y - this.touchStart.y;
+    const distSq = dx * dx + dy * dy;
+    const thr = (this.touchTapThreshold || 12);
+    if (distSq <= thr * thr) {
+      // Treat as tap -> call onClick with a minimal event-like object
+      try {
+        this.onClick({ clientX: this.touchCurrent.x, clientY: this.touchCurrent.y });
+      } catch (err) {
+        // swallow errors to avoid breaking teardown
+        console.warn('[RecorridoScene] Synthesized touch click failed:', err);
+      }
+    }
+
+    this.touchActive = false;
   }
 
   queueLUTReady() {
@@ -930,7 +995,7 @@ export class RecorridoScene extends BaseScene {
 
 
   async unmount() {
-    console.log('[RecorridoScene] Starting unmount...');
+
     // 👇 Ocultar elementos específicos de RecorridoScene (inventory panel y zócalo)
     const inventoryPanel = document.getElementById('inventoryPanel');
     const zocaloVideo = document.getElementById('zocaloVideo');
@@ -980,6 +1045,10 @@ export class RecorridoScene extends BaseScene {
     this.app.canvas.removeEventListener('mouseleave', this._onLeave);
     this.app.canvas.removeEventListener('click', this._onClick);
     this.app.canvas.removeEventListener('wheel', this._onWheel);
+    this.app.canvas.removeEventListener('touchstart', this._onTouchStart);
+    this.app.canvas.removeEventListener('touchmove', this._onTouchMove);
+    this.app.canvas.removeEventListener('touchend', this._onTouchEnd);
+    this.app.canvas.removeEventListener('touchcancel', this._onTouchEnd);
     window.removeEventListener('keydown', this._onKeyDown);
     window.removeEventListener('keyup', this._onKeyUp);
 
@@ -1077,7 +1146,7 @@ export class RecorridoScene extends BaseScene {
         this._efedraFallbackResize = null;
       }
     } catch (e) { }
-    console.log('[RecorridoScene] Unmount completed');
+
   }
 
   async loadStage(i, options = {}) {
@@ -1104,10 +1173,10 @@ export class RecorridoScene extends BaseScene {
       this.cameraLocked = true;
       this.lat = 0;
       this.velLat = 0;
-      console.log('🔒 Cámara bloqueada (Ronda 1, Ambiente ' + stage + ')');
+
     } else {
       this.cameraLocked = false;
-      console.log('🔓 Cámara desbloqueada (Ronda ' + round + ')');
+
     }
 
     // Update SpeciesManager (this will save to localStorage)
@@ -1117,25 +1186,25 @@ export class RecorridoScene extends BaseScene {
     this.currentSpecies = this.speciesManager.getCurrentSpecies();
 
     // 🔍 LOG: Información detallada de la escena y especie
-    console.log('═══════════════════════════════════════════════════');
-    console.log('🎬 CARGANDO ESCENA');
-    console.log('═══════════════════════════════════════════════════');
-    console.log('📍 Índice escena:', i);
-    console.log('📍 Ronda:', round, `(${this.speciesManager.getRoundLetter(round)})`);
-    console.log('📍 Ambiente:', stage);
-    console.log('📦 GLB cargando:', st.model || 'ninguno (usando foto)');
+
+
+
+
+
+
+
     if (this.currentSpecies) {
-      console.log('🐾 Especie a descubrir:');
-      console.log('  - ID:', this.currentSpecies.id);
-      console.log('  - Nombre común:', this.currentSpecies.commonName);
-      console.log('  - Nombre científico:', this.currentSpecies.scientificName);
-      console.log('  - Mesh glitch:', this.currentSpecies.meshNames.glitch);
-      console.log('  - Mesh rastro:', this.currentSpecies.meshNames.rastro);
-      console.log('  - animationSpeed:', this.currentSpecies.animationSpeed ?? 'no definido (default 1.0)');
+
+
+
+
+
+
+
     } else {
-      console.log('⚠️ No hay especie asignada a esta escena');
+
     }
-    console.log('═══════════════════════════════════════════════════');
+
 
     this.setInventoryImage();
 
@@ -1262,22 +1331,22 @@ export class RecorridoScene extends BaseScene {
       this.gltfAnimations = gltf.animations || [];
 
       // 🔍 LOG: Información del GLB cargado
-      console.log('───────────────────────────────────────────────────');
-      console.log('✅ GLB CARGADO EXITOSAMENTE');
-      console.log('───────────────────────────────────────────────────');
-      console.log('📦 Archivo:', st.model);
-      console.log('🎭 Meshes encontrados en el GLB:');
+
+
+
+
+
       const meshList = [];
       this.stageModel.traverse(child => {
         if (child.isMesh) {
           meshList.push(child.name);
-          console.log(`  - "${child.name}" (visible: ${child.visible})`);
+
         }
       });
-      console.log('🎬 Animaciones encontradas:', this.gltfAnimations.length);
+
       if (this.gltfAnimations.length > 0) {
         this.gltfAnimations.forEach((anim, idx) => {
-          console.log(`  ${idx + 1}. ${anim.name} (duración: ${anim.duration.toFixed(2)}s)`);
+
         });
       }
 
@@ -1288,16 +1357,16 @@ export class RecorridoScene extends BaseScene {
         const hasGlitch = meshList.includes(expectedGlitch);
         const hasRastro = meshList.includes(expectedRastro);
 
-        console.log('🔍 Buscando meshes de especie:', this.currentSpecies.commonName);
-        console.log(`  - "${expectedGlitch}": ${hasGlitch ? '✅ ENCONTRADO' : '❌ NO ENCONTRADO'}`);
-        console.log(`  - "${expectedRastro}": ${hasRastro ? '✅ ENCONTRADO' : '❌ NO ENCONTRADO'}`);
+
+
+
 
         if (!hasGlitch) {
           console.warn(`⚠️ PROBLEMA: No se encontró el mesh "${expectedGlitch}" en el GLB`);
           console.warn('   Meshes disponibles:', meshList.join(', '));
         }
       }
-      console.log('───────────────────────────────────────────────────');
+
 
       this.stageModel.traverse(child => {
         if (child.isMesh) {
@@ -1334,15 +1403,15 @@ export class RecorridoScene extends BaseScene {
               if (isCurrentSpecies) {
                 this.glitchObject = child;
 
-                console.log('🎯 MESH GLITCH DETECTADO (ESPECIE ACTUAL):', meshName);
-                console.log('  - Especie:', speciesData.commonName);
-                console.log('  - Video glitch:', speciesData.assets.glitchVideo);
-                console.log('  - Ya descubierta:', wasDiscovered);
+
+
+
+
 
                 if (wasDiscovered) {
                   // Ya fue descubierta -> ocultar glitch
                   child.visible = false;
-                  console.log('  - Estado: YA DESCUBIERTA -> glitch oculto ❌');
+
                 } else {
                   // No descubierta -> mostrar glitch con video
                   child.visible = true;
@@ -1392,22 +1461,22 @@ export class RecorridoScene extends BaseScene {
                   child.material.emissive.set(0x000000);
                   child.material.needsUpdate = true;
 
-                  console.log('  - Estado: NO DESCUBIERTA -> glitch visible con video ✅');
+
                 }
               } else {
                 // NO es la especie actual del turno
-                console.log('🔇 MESH GLITCH OTRAS ESPECIES:', meshName);
-                console.log('  - Especie:', speciesData.commonName);
-                console.log('  - Ya descubierta:', wasDiscovered);
+
+
+
 
                 if (wasDiscovered) {
                   // Ya descubierta en otro turno -> ocultar glitch
                   child.visible = false;
-                  console.log('  - Estado: YA DESCUBIERTA (otra ronda) -> glitch oculto ❌');
+
                 } else {
                   // No descubierta aún -> ocultar todo (sin glitch, sin rastro, sin sonido)
                   child.visible = false;
-                  console.log('  - Estado: AÚN NO DESCUBIERTA -> todo oculto 🚫');
+
                 }
               }
             }
@@ -1426,19 +1495,19 @@ export class RecorridoScene extends BaseScene {
                 }
               }
 
-              console.log('� MESH RASTRO DETECTADO:', meshName);
-              console.log('  - Especie:', speciesData.commonName);
-              console.log('  - Ya descubierta:', wasDiscovered);
-              console.log('  - Es especie actual:', isCurrentSpecies);
+
+
+
+
 
               if (wasDiscovered) {
                 // Ya descubierta -> mostrar rastro
                 child.visible = true;
-                console.log('  - Estado: YA DESCUBIERTA -> rastro visible ✅');
+
               } else {
                 // No descubierta -> ocultar rastro
                 child.visible = false;
-                console.log('  - Estado: AÚN NO DESCUBIERTA -> rastro oculto ❌');
+
               }
             }
 
@@ -1448,7 +1517,7 @@ export class RecorridoScene extends BaseScene {
             if (lowerName === 'flecha_empty') {
               this.flechaObject = child;
               if (child.visible) {
-                console.log('➡️ ROOT FLECHA DETECTADO: flecha_empty - visible antes:', child.visible);
+
               }
               child.visible = false;
               return;
@@ -1471,9 +1540,9 @@ export class RecorridoScene extends BaseScene {
               }
 
               // 🔍 LOG: Mesh flecha detectado
-              console.log('➡️ MESH FLECHA DETECTADO:', child.name, '- Visible antes:', child.visible);
+
               child.visible = false;
-              console.log('   Visible después:', child.visible);
+
 
               // Set up flecha animation mixer and action
               if (child.isMesh && this.gltfAnimations && this.gltfAnimations.length > 0) {
@@ -1578,7 +1647,7 @@ export class RecorridoScene extends BaseScene {
 
                     this.flechaAnimationActions.push(action);
                     const logTrack = matchedTrackNode ? ` (track: ${matchedTrackNode})` : '';
-                    console.log(`   ✅ Animación configurada: ${flechaAnimation.name}${logTrack}`);
+
                   } catch (error) {
                     console.error(`   ❌ Error al configurar animación:`, error);
                     this.flechaAnimationActions.push(null);
@@ -1598,7 +1667,7 @@ export class RecorridoScene extends BaseScene {
             this.carpaObject = child;
             child.visible = true; // 👈 La carpa siempre es visible
 
-            console.log('🐟 MESH CARPA DETECTADO:', child.name);
+
 
             // 🐟 Detectar si es carpa3d para animación de hover
             const isCarpa3D = child.name === 'carpa3d';
@@ -1607,8 +1676,8 @@ export class RecorridoScene extends BaseScene {
               this.carpa3dHover.baseY = child.position.y;
               this.carpa3dHover.enabled = true;
               this.carpa3dRotation.enabled = true;
-              console.log('🐟✨ CARPA3D DETECTADO - Hover y rotación activados');
-              console.log('   Posición inicial Y:', this.carpa3dHover.baseY);
+
+
             }
 
             // Set up carpa animation mixer and action
@@ -1637,7 +1706,7 @@ export class RecorridoScene extends BaseScene {
                   this.carpaAnimationAction.setLoop(THREE.LoopRepeat); // Loop continuo
                   this.carpaAnimationAction.clampWhenFinished = false;
                   this.carpaAnimationAction.play();
-                  console.log(`🐟 Animación de carpa iniciada en loop: ${carpaAnimation.name}`);
+
                 } catch (error) {
                   console.error('🐟 Error al iniciar animación de carpa:', error);
                   this.carpaAnimationAction = null;
@@ -1662,8 +1731,8 @@ export class RecorridoScene extends BaseScene {
 
       // 🎬 Set up animations for the entire stage model (play once and stop)
       if (this.gltfAnimations && this.gltfAnimations.length > 0 && this.stageModel) {
-        console.log('🎬 Configurando animaciones del GLB...');
-        console.log('  Total de animaciones:', this.gltfAnimations.length);
+
+
 
         // Create a single mixer for the entire stage model
         this.stageAnimationMixer = new THREE.AnimationMixer(this.stageModel);
@@ -1672,7 +1741,7 @@ export class RecorridoScene extends BaseScene {
         const animSpeed = this.currentSpecies?.animationSpeed ?? 1.0;
 
         this.gltfAnimations.forEach((anim, idx) => {
-          console.log(`  ${idx + 1}. "${anim.name}" (${anim.duration.toFixed(2)}s)`);
+
 
           // Check if this animation targets glitch or rastro objects
           const isGlitchAnim = anim.name.toLowerCase().includes('glitch');
@@ -1686,7 +1755,7 @@ export class RecorridoScene extends BaseScene {
             action.play();
 
             const realDuration = anim.duration / animSpeed;
-            console.log(`     ✅ Reproduciendo a ${animSpeed}x: ${anim.name} (duración real: ${realDuration.toFixed(2)}s)`);
+
 
             // Store action references
             if (isGlitchAnim) {
@@ -1700,7 +1769,7 @@ export class RecorridoScene extends BaseScene {
         });
 
         if (!this.glitchAnimationAction && !this.rastroAnimationAction) {
-          console.log('  ⚠️ No se encontraron animaciones de glitch o rastro');
+
           // Clean up mixer if no animations were set up
           this.stageAnimationMixer = null;
         }
@@ -1737,7 +1806,7 @@ export class RecorridoScene extends BaseScene {
           const wasVisible = child.visible;
           child.visible = false;
           if (wasVisible) {
-            console.log(`🚫 FORZANDO OCULTAR: ${child.name} (estaba visible: ${wasVisible})`);
+
           }
 
           // Asegurarnos de que esté en el array
@@ -1750,7 +1819,7 @@ export class RecorridoScene extends BaseScene {
       });
 
       if (this.flechaObjects && this.flechaObjects.length > 0) {
-        console.log(`🚫 ${this.flechaObjects.length} flechas confirmadas como ocultas`);
+
       }
 
       await this.spawnButterflyNearGlitch();
@@ -1838,7 +1907,7 @@ export class RecorridoScene extends BaseScene {
             this.gainNode.gain.value = 0;
             this.stereoPanner.pan.value = 0;
 
-            console.log(`🔊 Audio espacial cargado para ${this.currentSpecies.commonName}: ${audioPath}`);
+
 
             // Try to play the audio
             this.speciesAudio.play().catch((err) => {
@@ -1850,7 +1919,7 @@ export class RecorridoScene extends BaseScene {
           }
         }, { once: true });
       } else {
-        console.log(`🔇 Audio espacial omitido (especie ya descubierta): ${this.currentSpecies.commonName}`);
+
       }
     }
 
@@ -1875,13 +1944,13 @@ export class RecorridoScene extends BaseScene {
         this.preloadedDataVideo.preload = 'metadata'; // Cambiar a 'metadata' en lugar de 'auto' para cargar menos datos
         this.preloadedDataVideo.playsInline = true;
 
-        console.log('📺 Precargando video de data:', this.currentSpecies.assets.dataVideo);
+
 
         // Esperar a que se carguen los metadatos
         this.preloadedDataVideo.addEventListener('loadedmetadata', () => {
           // 👇 Verificar que el video sigue siendo válido antes de acceder a duration
           if (this.preloadedDataVideo && this.preloadedDataVideo.duration) {
-            console.log('✅ Video de data precargado exitosamente (duración:', this.preloadedDataVideo.duration, 's)');
+
           }
         }, { once: true });
 
@@ -1901,19 +1970,19 @@ export class RecorridoScene extends BaseScene {
     }
 
     // �🔍 LOG: Resumen de carga completada
-    console.log('───────────────────────────────────────────────────');
-    console.log('✅ CARGA DE ESCENA COMPLETADA');
-    console.log('───────────────────────────────────────────────────');
-    console.log('Estado de objetos importantes:');
-    console.log('  - glitchObject:', this.glitchObject ? `✅ ${this.glitchObject.name}` : '❌ No encontrado');
-    console.log('  - rastroObject:', this.rastroObject ? `✅ ${this.rastroObject.name}` : '❌ No encontrado');
-    console.log('  - flechaObjects:', this.flechaObjects?.length > 0 ? `✅ ${this.flechaObjects.length} flechas (${this.flechaObjects.map(f => f.name).join(', ')})` : '❌ No encontradas');
-    console.log('  - carpaObject:', this.carpaObject ? `✅ ${this.carpaObject.name}` : '❌ No encontrado');
-    console.log('  - butterfly:', this.butterfly ? '✅ Spawneada' : '❌ No spawneada');
-    console.log('  - sunObject:', this.sunObject ? `✅ ${this.sunObject.name}` : '❌ No encontrado');
-    console.log('  - lensflare:', this.lensflare ? '✅ Creado' : '❌ No creado');
-    console.log('  - preloadedDataVideo:', this.preloadedDataVideo ? '✅ Precargado' : '❌ No precargado');
-    console.log('═══════════════════════════════════════════════════');
+
+
+
+
+
+
+
+
+
+
+
+
+
   }
 
   onMouseMove(e) {
@@ -1956,7 +2025,7 @@ export class RecorridoScene extends BaseScene {
       const round = this.speciesManager.currentRound;
       if (this.speciesManager.setRoundAndStage(round, newStage)) {
         const sceneIndex = (newStage - 1) % 6; // Scenes 0-5 for stages 1-6
-        console.log(`🎬 Atajo teclado: Cambiando a Ronda ${round}, Ambiente ${newStage}`);
+
         this.loadStage(sceneIndex);
       }
     }
@@ -1969,7 +2038,7 @@ export class RecorridoScene extends BaseScene {
       const stage = this.speciesManager.currentStage;
       if (this.speciesManager.setRoundAndStage(newRound, stage)) {
         const sceneIndex = (stage - 1) % 6; // Scenes 0-5 for stages 1-6
-        console.log(`🎬 Atajo teclado: Cambiando a Ronda ${newRound}, Ambiente ${stage}`);
+
         this.loadStage(sceneIndex);
       }
     }
@@ -1984,7 +2053,7 @@ export class RecorridoScene extends BaseScene {
     if (e.code === 'KeyL') {
       e.preventDefault();
       this.useGamerLUT = !this.useGamerLUT;
-      console.log(`🎨 Gamer LUT: ${this.useGamerLUT ? 'ON ✅' : 'OFF ❌'}`);
+
     }
   }
 
@@ -2138,13 +2207,13 @@ export class RecorridoScene extends BaseScene {
       }
 
       if (clickedSpeciesData) {
-        console.log('═══════════════════════════════════════════════════');
-        console.log('👁️ CLICK EN ESPECIE YA DESCUBIERTA!');
-        console.log('═══════════════════════════════════════════════════');
-        console.log('🐾 Especie:', clickedSpeciesData.commonName);
-        console.log('🔬 Nombre científico:', clickedSpeciesData.scientificName);
-        console.log('🆔 ID:', clickedSpeciesData.id);
-        console.log('═══════════════════════════════════════════════════');
+
+
+
+
+
+
+
 
         // 👇 Desactivar clicks en especies por 3 segundos
         this.speciesClickDisabled = true;
@@ -2175,12 +2244,12 @@ export class RecorridoScene extends BaseScene {
         return;
       }
     } else if (this.stageModel && !currentSpeciesDiscovered) {
-      console.log('🔒 Clicks en rastros bloqueados hasta descubrir la especie actual:', this.currentSpecies?.commonName);
+
     }
 
     // Then check glitch object (test all points in hitbox)
     if (!this.glitchObject) {
-      console.log('🔍 DEBUG CLICK: No hay glitchObject');
+
       return;
     }
 
@@ -2226,7 +2295,7 @@ export class RecorridoScene extends BaseScene {
 
       // 👇 LOG simplificado (menos líneas = menos carga)
       if (this.currentSpecies) {
-        console.log('🎉 Especie descubierta:', this.currentSpecies.commonName, '|', this.speciesManager.getProgress());
+
       }
 
       // 👇 OPTIMIZACIÓN: Ejecutar efectos visuales de forma escalonada para evitar lag
@@ -2441,12 +2510,6 @@ export class RecorridoScene extends BaseScene {
     const st = this.stages[this.current];
     const zocaloVideo = document.getElementById('zocaloVideo');
 
-    console.log('🎬 playZocalo() llamado:', {
-      tieneZocaloVideo: !!zocaloVideo,
-      tieneStZocalo: !!st?.zocalo,
-      zocaloPath: st?.zocalo,
-      currentStage: this.current
-    });
 
     if (zocaloVideo && st.zocalo) {
       // Primero ocultar el zócalo
@@ -2460,31 +2523,23 @@ export class RecorridoScene extends BaseScene {
       zocaloVideo.src = st.zocalo;
       zocaloVideo.currentTime = 0;
 
-      console.log('🎬 Zócalo configurado:', {
-        src: zocaloVideo.src,
-        display: zocaloVideo.style.display,
-        opacity: zocaloVideo.style.opacity,
-        top: zocaloVideo.style.top
-      });
-
       // 👇 Configurar playbackRate DESPUÉS de que se carguen los metadatos
       zocaloVideo.onloadedmetadata = function () {
         this.playbackRate = 1.4; // 👈 Velocidad de reproducción 1.7x
-        console.log('🎬 Zócalo metadata cargada - playbackRate:', this.playbackRate);
+
       };
 
       zocaloVideo.load();
 
       // Play video
       zocaloVideo.play()
-        .then(() => console.log('✅ Zócalo video playing'))
         .catch(e => console.warn('❌ Zócalo video autoplay prevented:', e));
 
       // Mostrar el zócalo con fade in después de un breve delay
       setTimeout(() => {
         zocaloVideo.style.transition = 'opacity 0.5s ease-in';
         zocaloVideo.style.opacity = '1';
-        console.log('🎬 Zócalo fade-in aplicado');
+
       }, 100);
 
       // Pause at second 3 before reaching the end (ajustado por velocidad 1.7x)
@@ -2492,7 +2547,7 @@ export class RecorridoScene extends BaseScene {
         if (this.currentTime >= 3 && !this.paused) {
           this.currentTime = 3;
           this.pause();
-          console.log('⏸️ Zócalo pausado en segundo 3');
+
         }
       };
     } else {
@@ -2525,7 +2580,7 @@ export class RecorridoScene extends BaseScene {
 
   playRoundCompletionVideo() {
     return new Promise((resolve) => {
-      console.log('[RecorridoScene] Round completed, transitioning to Main Menu...');
+
 
       // 👇 NO mostrar video de la carpa, ir directo al menú principal
       location.hash = '#menu';
@@ -2540,22 +2595,22 @@ export class RecorridoScene extends BaseScene {
 
     if (!hasMoreStages) {
       // Completed round, advance to next round
-      console.log('[RecorridoScene] ⭐ RONDA COMPLETADA! Avanzando a siguiente ronda...');
+
       const progressBefore = this.speciesManager.getProgress();
-      console.log('[RecorridoScene] Progreso antes de avanzar:', progressBefore);
+
 
       const hasMoreRounds = this.speciesManager.advanceRound();
 
       const progressAfter = this.speciesManager.getProgress();
-      console.log('[RecorridoScene] Progreso después de avanzar:', progressAfter);
+
 
       if (!hasMoreRounds) {
-        console.log('[RecorridoScene] All rounds completed!');
+
         // TODO: Handle game completion
       }
 
       // 🎬 Play carpa_flota video when completing a round
-      console.log('[RecorridoScene] Round completed! Playing carpa_flota video...');
+
       // El video se encargará de navegar al laboratorio
       // La próxima vez que se vuelva al recorrido, ya estará en el round 2
       return this.playRoundCompletionVideo();
@@ -2563,7 +2618,7 @@ export class RecorridoScene extends BaseScene {
 
     // Cycle through stages array
     const next = (this.current + 1) % this.stages.length;
-    console.log('[RecorridoScene] Progress:', this.speciesManager.getProgress());
+
 
     return this.loadStage(next, options);
   }
@@ -2576,8 +2631,23 @@ export class RecorridoScene extends BaseScene {
 
     if (!this.isAutoLook) {
       const { deadzone, maxSpeed, damping } = this.config;
-      const ax = this.axis(this.mouseNDC.x, deadzone);
-      const ay = this.axis(this.mouseNDC.y, deadzone);
+
+      // Input source: touch joystick takes precedence over mouse NDC
+      let inputX = this.mouseNDC.x;
+      let inputY = this.mouseNDC.y;
+
+      if (this.touchActive) {
+        const dx = this.touchCurrent.x - this.touchStart.x;
+        const dy = this.touchCurrent.y - this.touchStart.y;
+        const max = this.touchMaxDistance || 200;
+        inputX = THREE.MathUtils.clamp((dx / max) * this.touchSensitivity, -1, 1);
+        // Invert vertical touch drag so dragging up/down feels natural
+        // (user requested inverted vertical control for touch-drag)
+        inputY = THREE.MathUtils.clamp((-dy / max) * this.touchSensitivity, -1, 1);
+      }
+
+      const ax = this.axis(inputX, deadzone);
+      const ay = this.axis(inputY, deadzone);
       const vx = ax * maxSpeed.yaw;
       const vy = this.cameraLocked ? 0 : ay * maxSpeed.pitch; // 👈 Bloquea movimiento vertical si cameraLocked
       this.velLon += (vx - this.velLon) * damping;
@@ -2589,6 +2659,7 @@ export class RecorridoScene extends BaseScene {
       // 👇 Mantener lat en 0 si la cámara está bloqueada
       if (this.cameraLocked) {
         this.lat = 0;
+        this.velLat = 0;
       }
     } else {
       // relajar
@@ -3618,7 +3689,7 @@ export class RecorridoScene extends BaseScene {
 
     if (!rastroMesh || !rastroMesh.material) return;
 
-    console.log('✨ Iniciando flash blanco total en rastro:', speciesId);
+
 
     // Guardar propiedades originales del material
     const originalMaterial = rastroMesh.material;
@@ -3638,7 +3709,7 @@ export class RecorridoScene extends BaseScene {
       originalMaterial.opacity = originalOpacity;
       originalMaterial.transparent = originalTransparent;
       originalMaterial.needsUpdate = true;
-      console.log('✨ Flash blanco completado');
+
     }, 50);
   }
 
@@ -3718,7 +3789,7 @@ export class RecorridoScene extends BaseScene {
       return Promise.resolve();
     }
 
-    console.log('✨ Iniciando flash blanco en glitch (alpha flash usando shader)');
+
 
     const flashTargets = [];
 
@@ -3778,7 +3849,7 @@ export class RecorridoScene extends BaseScene {
         child.material = originalMaterial;
         flashMaterial.dispose(); // Limpiar shader
       });
-      console.log('✨ Flash blanco en glitch completado');
+
 
       // Completar reveal después del flash
       this.completeGlitchReveal();
@@ -4060,7 +4131,7 @@ export class RecorridoScene extends BaseScene {
       const targetStage = (currentStage % 6) + 1; // Próximo stage (1-6, ciclando)
       const targetRound = (currentStage === 6) ? progress.round + 1 : progress.round; // Si completamos stage 6, avanzamos de ronda
 
-      console.log(`[RecorridoScene] Transition - Current scene: ${this.current}, Next scene: ${nextSceneIndex}, Current stage: ${currentStage}, Target stage: ${targetStage}, Target round: ${targetRound}`);
+
 
       fetch('/game/data/transition_texts.json')
         .then(res => res.json())
@@ -4071,9 +4142,24 @@ export class RecorridoScene extends BaseScene {
           );
           if (transition) {
             transitionText = transition;
-            console.log(`[RecorridoScene] Transition text loaded for Round ${targetRound}, Stage ${targetStage}:`, transition.text || transition.intro);
+
           } else {
-            console.log(`[RecorridoScene] No transition text found for Round ${targetRound}, Stage ${targetStage}`);
+
+          }
+          // Pause here for debugging when fetch completes so you can inspect values
+          try {
+         
+
+          } catch (e) { /* noop in production */ }
+          // If the overlay was requested before the fetch finished, trigger it now.
+          try {
+            if (barridaOverlay && barridaOverlay._textWanted) {
+
+              // If showTextOverlay is defined at this point it will display the text.
+              if (typeof showTextOverlay === 'function') showTextOverlay();
+            }
+          } catch (e) {
+            console.warn('[RecorridoScene] Failed to auto-show transition text after load', e);
           }
         })
         .catch(e => console.error('Failed to load transition texts:', e));
@@ -4081,7 +4167,7 @@ export class RecorridoScene extends BaseScene {
       const FRAME_RATE = 30; // 👈 ajustar si el clip usa otro framerate
       const BARRIDA_TRIGGER_FRAME = 19; // 👈 Iniciar video de transición al frame 19 (barrida solo dura ~44 frames)
 
-      console.log('[RecorridoScene] Starting transition to scene', nextSceneIndex);
+
 
       // Create barrida overlay (top layer with alpha)
       const parent = this.overlayRoot || document.body;
@@ -4116,7 +4202,7 @@ export class RecorridoScene extends BaseScene {
 
       // 🔍 Log cuando el video carga sus metadatos
       barridaVideo.addEventListener('loadedmetadata', () => {
-        console.log('[RecorridoScene] Barrida video metadata loaded - duration:', barridaVideo.duration, 's');
+
       });
 
       barridaOverlay.appendChild(barridaVideo);
@@ -4138,50 +4224,42 @@ export class RecorridoScene extends BaseScene {
       let textOverlayShown = false;
 
       // 📝 Función para mostrar el texto overlay con efecto typewriter
+      // Now backed by a static DOM element in `game/index.html` when available.
       const showTextOverlay = () => {
-        if (textOverlayShown || !transitionText) return;
+        if (textOverlayShown) return;
+        // If transition text hasn't arrived yet, mark intent and exit.
+        if (!transitionText) {
+          try { barridaOverlay._textWanted = true; } catch (e) { /* ignore */ }
+          return;
+        }
         textOverlayShown = true;
 
-        const textOverlay = document.createElement('div');
-        textOverlay.id = 'transition-text-overlay';
-        textOverlay.style.cssText = `
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          width: 420px;
-          height: 240px;
-          z-index: 10003;
-          pointer-events: none;
-          font-family: ${EFEDRA_OVERLAY_THEME.fonts.family};
-          text-align: left;
-          padding: 24px;
-          opacity: 0;
-          transition: opacity 1s ease-in;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        `;
+        const parentEl = parent || document.body;
+        let textOverlay = document.getElementById('transition-text-overlay');
+        let created = false;
 
-        const textEl = document.createElement('div');
-        textEl.style.cssText = `
-          font-size: 20px;
-          font-weight: 400;
-          color: #FDFE63;
-          text-shadow: 0 0 18px rgba(0,0,0,0.6);
-          letter-spacing: 0.02em;
-          line-height: 1.4;
-        `;
+        if (!textOverlay) {
+          // Fallback: create a minimal element if the static one is missing
+          textOverlay = document.createElement('div');
+          textOverlay.id = 'transition-text-overlay';
+          textOverlay.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:420px;height:240px;z-index:10003;pointer-events:none;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;transition:opacity 1s ease-in;';
+          const inner = document.createElement('div');
+          inner.className = 'transition-text-inner';
+          inner.style.cssText = 'font-size:20px;font-weight:400;color:#FDFE63;text-shadow:0 0 18px rgba(0,0,0,0.6);letter-spacing:0.02em;line-height:1.4;';
+          textOverlay.appendChild(inner);
+          parentEl.appendChild(textOverlay);
+          created = true;
+        }
 
-        textOverlay.appendChild(textEl);
-        parent.appendChild(textOverlay);
+        // Use the inner element when present
+        const textEl = textOverlay.querySelector('.transition-text-inner') || textOverlay;
 
-        // Fade in más lento
-        setTimeout(() => {
-          textOverlay.style.opacity = '1';
-        }, 800); // Esperar 500ms antes de empezar el fade in
+        // Ensure visible and fade in
+        textOverlay.style.display = 'flex';
+        textOverlay.setAttribute('aria-hidden', 'false');
+        setTimeout(() => { textOverlay.style.opacity = '1'; }, 800);
 
-        // 🖊️ Efecto typewriter
+        // 🖊️ Efecto typewriter (same cadence as before)
         const fullText = transitionText.text || transitionText.intro || '';
         let currentIndex = 0;
 
@@ -4192,39 +4270,41 @@ export class RecorridoScene extends BaseScene {
           } else {
             clearInterval(typewriterInterval);
           }
-        }, 20); // 5ms entre cada caracter
+        }, 20);
 
-        // Guardar referencia para remover luego y limpiar interval
+        // Store references for cleanup
         barridaOverlay._textOverlay = textOverlay;
         barridaOverlay._typewriterInterval = typewriterInterval;
         barridaOverlay._textShownTime = performance.now();
 
-        // 📅 Programar desaparición después de 10 segundos (9 segundos para transición 4->5)
+        // Auto-hide after configured duration; if element is static keep it in DOM and hide
         const textDuration = (this.current === 3 && nextSceneIndex === 4) ? 9000 : 10000;
         setTimeout(() => {
           if (barridaOverlay._textOverlay && !barridaOverlay._textRemoved) {
             barridaOverlay._textRemoved = true;
+            if (barridaOverlay._typewriterInterval) clearInterval(barridaOverlay._typewriterInterval);
 
-            // Limpiar interval de typewriter si existe
-            if (barridaOverlay._typewriterInterval) {
-              clearInterval(barridaOverlay._typewriterInterval);
-            }
-
-            // Fade out del texto
             barridaOverlay._textOverlay.style.transition = 'opacity 0.3s ease-out';
             barridaOverlay._textOverlay.style.opacity = '0';
 
             setTimeout(() => {
               try {
                 if (barridaOverlay._textOverlay) {
-                  barridaOverlay._textOverlay.remove();
+                  // If the overlay was provided statically in HTML, keep it but hide it
+                  if (barridaOverlay._textOverlay.getAttribute && barridaOverlay._textOverlay.getAttribute('data-static') === 'true') {
+                    barridaOverlay._textOverlay.style.display = 'none';
+                    barridaOverlay._textOverlay.setAttribute('aria-hidden', 'true');
+                  } else {
+                    // Otherwise remove the dynamically created node
+                    barridaOverlay._textOverlay.remove();
+                  }
                 }
               } catch (e) {
-                console.error('[RecorridoScene] Failed to remove text overlay', e);
+                console.error('[RecorridoScene] Failed to remove/hide text overlay', e);
               }
             }, 300);
           }
-        }, textDuration); // Desaparecer después de 10 segundos (9 para transición 4->5)
+        }, textDuration);
       };
 
       // 📺 Monitorear primera barrida para mostrar texto 2 segundos antes de que termine
@@ -4235,7 +4315,7 @@ export class RecorridoScene extends BaseScene {
 
         // Mostrar texto 2 segundos antes de que termine la barrida
         if (!textOverlayShown && timeRemaining <= 1.0 && timeRemaining > 0) {
-          console.log('[RecorridoScene] Showing text overlay 2 seconds before barrida ends');
+
           showTextOverlay();
         }
 
@@ -4246,8 +4326,8 @@ export class RecorridoScene extends BaseScene {
 
 
       const handleFirstBarridaEnd = () => {
-        console.log('[RecorridoScene] First barrida finished, revealing transition video');
-        console.log('[RecorridoScene] Transition video started?', transitionVideoStarted);
+
+
         hideBarridaOverlay();
 
         // Si el texto aún no se mostró (por algún error de timing), mostrarlo ahora
@@ -4257,7 +4337,7 @@ export class RecorridoScene extends BaseScene {
       };
       barridaVideo.addEventListener('ended', handleFirstBarridaEnd, { once: true });      // Handle second barrida end - only remove after it finishes
       const handleSecondBarridaEnd = async () => {
-        console.log('[RecorridoScene] Second barrida finished, cleaning up');
+
 
         if (this._stopTransitionSequence) {
           this._stopTransitionSequence();
@@ -4265,7 +4345,7 @@ export class RecorridoScene extends BaseScene {
 
         // 👉 Ocultar el video overlay para desbloquear clicks y cámara
         UI.hideVideo();
-        console.log('[RecorridoScene] Video overlay hidden - clicks and camera unlocked');
+
 
         // � Restaurar z-index del video overlay
         const videoOverlay = document.getElementById('videoOverlay');
@@ -4302,7 +4382,7 @@ export class RecorridoScene extends BaseScene {
           this.transitionAudio = null;
         }
 
-        console.log('[RecorridoScene] Next stage ready');
+
 
         // 🔊 Reproducir sonido de inicio de escenario (post barrida)
         if (this.sceneStartAudio) {
@@ -4318,7 +4398,7 @@ export class RecorridoScene extends BaseScene {
 
         // 👉 Resetear flechaClicked para permitir nuevos clicks
         this.flechaClicked = false;
-        console.log('[RecorridoScene] flechaClicked reset to false - clicks enabled');
+
       };
 
       // Monitor barrida frames
@@ -4326,18 +4406,18 @@ export class RecorridoScene extends BaseScene {
         const currentTime = barridaVideo.currentTime;
         const currentFrame = Math.floor(currentTime * FRAME_RATE);
 
-        console.log('[RecorridoScene] Barrida frame check:', currentFrame, 'time:', currentTime.toFixed(3));
+
 
         // At frame 50 (or when we pass it), start the transition video underneath
         if (!transitionVideoStarted && currentFrame >= BARRIDA_TRIGGER_FRAME) {
           transitionVideoStarted = true;
-          console.log('[RecorridoScene] Frame', currentFrame, 'reached (>= 50), starting transition video');
+
 
           // 👇 Ajustar z-index del video overlay para que esté DEBAJO de la barrida
           const videoOverlay = document.getElementById('videoOverlay');
           if (videoOverlay) {
             videoOverlay.style.zIndex = '10000'; // Debajo de barrida (10002) pero encima del texto (10003 se usa solo para transition-text-overlay)
-            console.log('[RecorridoScene] Video overlay z-index set to 10000');
+
           }
 
           if (this._stopTransitionSequence) {
@@ -4350,7 +4430,7 @@ export class RecorridoScene extends BaseScene {
             muted: false,
             immersive: false,
             onended: () => {
-              console.log('[RecorridoScene] Transition video ended - hiding video overlay');
+
               // Ocultar el video cuando termina, la segunda barrida ya está encima
               if (this._stopTransitionSequence) {
                 this._stopTransitionSequence();
@@ -4358,10 +4438,10 @@ export class RecorridoScene extends BaseScene {
               UI.hideVideo();
             }
           }).then(async (transitionVideo) => {
-            console.log('[RecorridoScene] Transition video element ready:', transitionVideo);
-            console.log('[RecorridoScene] Video duration:', transitionVideo.duration);
-            console.log('[RecorridoScene] Video display:', window.getComputedStyle(transitionVideo.parentElement).display);
-            console.log('[RecorridoScene] Video z-index:', window.getComputedStyle(transitionVideo.parentElement).zIndex);
+
+
+
+
 
             const videoOverlayEl = document.getElementById('videoOverlay');
             if (videoOverlayEl) {
@@ -4403,7 +4483,7 @@ export class RecorridoScene extends BaseScene {
               // Reproducir el video overlay y mantener en el último frame al terminar
               sequenceVideo.addEventListener('ended', () => {
                 // Mantener el último frame visible (ya que loop=false)
-                console.log('[RecorridoScene] Transition overlay video ended, keeping last frame');
+
               }, { once: true });
 
               const playPromise = sequenceVideo.play();
@@ -4470,7 +4550,7 @@ export class RecorridoScene extends BaseScene {
             // 👇 Si es la tercera sección (nextSceneIndex === 3), agregar listener para ir a InstruccionesTransitionScene
             // if (nextSceneIndex === 3) {
             //   const handleVideoClick = () => {
-            //     console.log('[RecorridoScene] Click en video de tercera sección - navegando a InstruccionesTransitionScene');
+            //
 
             //     // Limpiar todo
             //     if (this.transitionAudio) {
@@ -4498,11 +4578,11 @@ export class RecorridoScene extends BaseScene {
             //   };
 
             //   transitionVideo.addEventListener('click', handleVideoClick);
-            //   console.log('[RecorridoScene] Click listener añadido al video de transición (tercera sección)');
+            //
             // }
 
             // �👉 Precargar la siguiente escena INMEDIATAMENTE (sin pausar transitionAudio)
-            console.log('[RecorridoScene] Preloading next stage...');
+
             nextStagePromise = this.nextStage({ keepTransitionAudio: true });
 
             // Monitor transition video to trigger second barrida 19 frames before end
@@ -4515,10 +4595,10 @@ export class RecorridoScene extends BaseScene {
               // 19 frames before end, play barrida again
               if (!secondBarridaStarted && framesRemaining <= BARRIDA_TRIGGER_FRAME && framesRemaining > 0) {
                 secondBarridaStarted = true;
-                console.log('[RecorridoScene] 19 frames before end, playing barrida again. Frames remaining:', framesRemaining);
+
                 showBarridaOverlay();
                 barridaVideo.currentTime = 0;
-                console.log('[RecorridoScene] Second barrida starting');
+
 
                 // Listen for second barrida end
                 barridaVideo.addEventListener('ended', handleSecondBarridaEnd, { once: true });
@@ -4535,7 +4615,7 @@ export class RecorridoScene extends BaseScene {
                     requestAnimationFrame(monitorSecondBarrida);
                   } else {
                     // Forzar cleanup si el evento 'ended' no dispara
-                    console.log('[RecorridoScene] Second barrida reached end (forcing cleanup)');
+
                     setTimeout(handleSecondBarridaEnd, 100);
                   }
                 };
@@ -4579,7 +4659,7 @@ export class RecorridoScene extends BaseScene {
       const initialPlay = barridaVideo.play();
       if (initialPlay && typeof initialPlay.then === 'function') {
         initialPlay.then(() => {
-          console.log('[RecorridoScene] First barrida started playing');
+
           showBarridaOverlay();
           checkBarridaFrame();
           // 📺 Iniciar monitoreo para mostrar texto 1 segundo antes del final

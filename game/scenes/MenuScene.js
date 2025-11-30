@@ -279,17 +279,28 @@ export class MenuScene extends BaseScene {
       overlay.style.pointerEvents = 'auto';
       overlay.style.cursor = 'auto';
       
-      // Crear contenedor del menú
+      // Crear wrapper del menú que permitirá escalar el contenido
+      const menuWrapper = document.createElement('div');
+      menuWrapper.style.cssText = `
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: auto;
+      `;
+
+      // Contenedor interno que realmente alberga el menú (este será escalado)
       const menuContainer = document.createElement('div');
       menuContainer.style.cssText = `
-        width: 100%;
-        height: 100%;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         gap: 30px;
         position: relative;
+        transform-origin: center center;
+        transition: transform 200ms ease;
       `;
       
       // Logo naranja en loop arriba del menú
@@ -323,7 +334,9 @@ export class MenuScene extends BaseScene {
           text-transform: uppercase;
           letter-spacing: 2px;
           transition: all 0.3s ease;
-          min-width: 350px;
+          /* Responsive width: clamp(min, preferred, max) */
+          width: clamp(220px, 40vw, 420px);
+          max-width: 90vw;
         `;
         
         // Efectos hover
@@ -340,7 +353,18 @@ export class MenuScene extends BaseScene {
         // Click del botón
         button.addEventListener('click', () => {
           logoVideo.pause();
-          menuContainer.remove();
+          // Limpiar listener y wrapper para evitar fugas
+          try {
+            if (this && this._menuResizeHandler) {
+              window.removeEventListener('resize', this._menuResizeHandler);
+            }
+          } catch (e) {}
+          if (menuWrapper && menuWrapper.parentNode) menuWrapper.parentNode.removeChild(menuWrapper);
+          if (this) {
+            this._menuResizeHandler = null;
+            this._menuWrapper = null;
+            this._menuContainer = null;
+          }
           resolve(action);
         });
         
@@ -396,13 +420,47 @@ export class MenuScene extends BaseScene {
         }
       });
       
-      // Agregar logo y botones al contenedor
+      // Agregar logo y botones al contenedor escalable
       menuContainer.appendChild(logoVideo);
       menuContainer.appendChild(recorridoBtn);
       menuContainer.appendChild(subacuaticaBtn);
       menuContainer.appendChild(simuladorBtn);
-      menuContainer.appendChild(resetBtn);
-      overlay.appendChild(menuContainer);
+      // Colocar el botón de reset fuera del contenedor escalable, en el wrapper
+      // para que permanezca en la esquina del viewport y no sea afectado por el scale.
+      menuWrapper.appendChild(resetBtn);
+
+      // Insertar en el wrapper y luego en el overlay
+      menuWrapper.appendChild(menuContainer);
+      overlay.appendChild(menuWrapper);
+
+      // --- Responsive scaling logic ---
+      // Escala el menú hacia abajo cuando el aspect ratio es menor que 16:9
+      // Use a base design resolution and scale down if either width or height
+      // is smaller than the base. This avoids cropping on very wide but short screens.
+      const BASE_WIDTH = 1920;
+      const BASE_HEIGHT = 1080;
+      const MIN_SCALE = 0.5;
+
+      const updateMenuScale = () => {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        // scale factors relative to base dimensions
+        const scaleW = w / BASE_WIDTH;
+        const scaleH = h / BASE_HEIGHT;
+        // pick the smallest (so we never overflow either dimension) but never > 1
+        let scale = Math.min(1, scaleW, scaleH);
+        if (scale < MIN_SCALE) scale = MIN_SCALE;
+        menuContainer.style.transform = `scale(${scale})`;
+      };
+
+      // Guarda referencia para limpieza posterior
+      this._menuResizeHandler = updateMenuScale;
+      this._menuWrapper = menuWrapper;
+      this._menuContainer = menuContainer;
+
+      window.addEventListener('resize', this._menuResizeHandler);
+      // Ejecutar inicialmente para ajustar al tamaño actual
+      updateMenuScale();
     });
   }
 
@@ -423,7 +481,22 @@ export class MenuScene extends BaseScene {
     this.app.canvas.style.display = '';
     document.body.style.cursor = 'auto';
     
-    // Limpiar cualquier overlay del menú que pueda haber quedado
+    // Limpiar listener de resize si existe
+    if (this._menuResizeHandler) {
+      try {
+        window.removeEventListener('resize', this._menuResizeHandler);
+      } catch (e) {}
+      this._menuResizeHandler = null;
+    }
+
+    // Remover wrapper del menú si quedó en el DOM
+    if (this._menuWrapper && this._menuWrapper.parentNode) {
+      this._menuWrapper.parentNode.removeChild(this._menuWrapper);
+      this._menuWrapper = null;
+      this._menuContainer = null;
+    }
+
+    // Limpiar cualquier overlay del menú que pueda haber quedado (fallback)
     const overlays = document.querySelectorAll('body > div');
     overlays.forEach(overlay => {
       // Solo eliminar overlays con z-index 10000 que son del menú
