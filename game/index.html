@@ -678,7 +678,7 @@
       <!-- Efedra wrapper: moved out of #videoOverlay and now lives as a sibling
            inside #hud so it is independent from transition/overlay video state.
            Keeping the same class/id structure preserves existing CSS rules. -->
-      <div class="efedra-wrapper" aria-hidden="false">
+      <div class="efedra-wrapper" aria-hidden="true" style="display:none;pointer-events:none;">
         <video id="speciesDataVideo" playsinline muted></video>
         <div id="efedra-text-overlay"></div>
       </div>
