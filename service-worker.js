@@ -10,7 +10,9 @@ const PRECACHE_URLS = [
 
 // Complete list of media and other assets to cache when user requests "Guardar offline"
 // This includes all .webm files discovered in the workspace (encoded for URLs).
-const ALL_OFFLINE_URLS = [
+// NOTE: we will filter out any paths that contain '_old' or '/dist/' to avoid caching
+// backup/old files and distribution artifacts.
+const RAW_OFFLINE_URLS = [
   '/',
   '/index.html',
   '/game/index.html',
@@ -116,6 +118,9 @@ const ALL_OFFLINE_URLS = [
   '/game-assets/transiciones/hd/secuencia_inicio_recorrido2.webm'
 ];
 
+// Filter out unwanted entries (backups / dist)
+const ALL_OFFLINE_URLS = RAW_OFFLINE_URLS.filter(u => !u.includes('_old') && !u.includes('/dist/'));
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS)).then(() => self.skipWaiting())
@@ -132,9 +137,18 @@ self.addEventListener('activate', (event) => {
 
 // Helper: cache response if valid
 async function cacheResponse(request, response) {
-  if (!response || !response.ok) return response;
+  // Only cache full 200 responses. Some servers may return 206 Partial Content
+  // for range requests; Cache.put does not accept partial responses and will
+  // throw. Guard against that by only caching when status === 200.
+  if (!response || response.status !== 200) return response;
   const cache = await caches.open(CACHE_NAME);
-  cache.put(request, response.clone());
+  try {
+    await cache.put(request, response.clone());
+  } catch (err) {
+    // If cache.put fails (e.g. partial responses or storage errors), log and
+    // continue — do not crash the worker.
+    console.warn('[SW] cache.put failed for', request.url, err);
+  }
   return response;
 }
 
@@ -168,7 +182,7 @@ self.addEventListener('fetch', (event) => {
 });
 
 // Allow the page to message the SW (e.g., to trigger skipWaiting or download offline)
-self.addEventListener('message', (event) => {
+self.addEventListener('message', async (event) => {
   if (!event.data) return;
   if (event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
@@ -177,9 +191,33 @@ self.addEventListener('message', (event) => {
   if (event.data.type === 'DOWNLOAD_OFFLINE') {
     // Attempt to download and cache a list provided by the page
     const urls = Array.isArray(event.data.urls) ? event.data.urls : PRECACHE_URLS;
-    event.waitUntil(
-      caches.open(CACHE_NAME).then((cache) => Promise.all(urls.map((u) => fetch(u).then((r) => { if (r.ok) return cache.put(u, r.clone()); })).catch(() => {})))
-    );
+    // Filter out backup/old artifacts
+    const filteredUrls = Array.isArray(urls) ? urls.filter(u => !String(u).includes('_old') && !String(u).includes('/dist/')) : urls;
+    // Use an async IIFE for clarity and to avoid nested Promise/paren bugs
+    event.waitUntil((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      try {
+        for (const u of filteredUrls) {
+          try {
+            const req = new Request(u, { credentials: 'same-origin' });
+            const r = await fetch(req);
+            // Only cache full 200 responses; skip partial (206) or errors
+            if (r && r.status === 200) {
+              try {
+                await cache.put(req, r.clone());
+              } catch (err) {
+                console.warn('[SW] cache.put failed for', u, err);
+              }
+            }
+          } catch (err) {
+            // per-item fetch error - log and continue
+            console.warn('[SW] download offline fetch failed for', u, err);
+          }
+        }
+      } catch (err) {
+        console.warn('[SW] DOWNLOAD_OFFLINE overall error', err);
+      }
+    })());
   }
 
   if (event.data.type === 'CACHE_OFFLINE') {
@@ -199,6 +237,10 @@ self.addEventListener('message', (event) => {
       }
     }
     if (!urls) urls = ALL_OFFLINE_URLS;
+    // Ensure we don't cache backups or dist artifacts
+    if (Array.isArray(urls)) {
+      urls = urls.filter(u => !String(u).includes('_old') && !String(u).includes('/dist/'));
+    }
 
     event.waitUntil((async () => {
       const cache = await caches.open(CACHE_NAME);
@@ -209,8 +251,16 @@ self.addEventListener('message', (event) => {
         try {
           const req = new Request(url, { credentials: 'same-origin' });
           const resp = await fetch(req);
-          if (resp && resp.ok) {
-            await cache.put(req, resp.clone());
+          // Only cache full 200 responses; skip partial (206) or other non-200.
+          if (resp && resp.status === 200) {
+            try {
+              await cache.put(req, resp.clone());
+            } catch (err) {
+              // Might happen if response is partial or storage quota exceeded
+              const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
+              clientsList.forEach(c => c.postMessage({ type: 'CACHE_ERROR', url, error: err.message }));
+              continue;
+            }
             cachedCount++;
             const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
             clientsList.forEach(c => c.postMessage({ type: 'CACHE_PROGRESS', cached: cachedCount, total, url }));
