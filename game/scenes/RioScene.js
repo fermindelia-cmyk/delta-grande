@@ -598,6 +598,17 @@ const DEFAULT_PARAMS = {
     delayAfterSelectSec: 1.0,
     fps: 30,
     fontFamily: `"new-science-mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace`,
+    space: {
+      heightVh: 1.0,          // space height follows viewport height 1:1
+      marginLeftVh: 0.0,
+      marginTopVh: 0.0,
+      marginRightVh: 0.0,
+      marginBottomVh: 0.0,
+      designHeightPx: 1080,   // reference height for pixel-based styles
+      designWidthPx: 1920,    // used to derive width/height ratio (defaults to 16:9)
+      widthToHeight: null,    // optional override; defaults to designWidth/designHeight
+      scaleMultiplier: 1.3    // enlarges/reduces everything uniformly (clamped to viewport)
+    },
 
     speciesName: {
       dir: '/game-assets/sub/interfaz/completed-species-name',
@@ -606,7 +617,7 @@ const DEFAULT_PARAMS = {
       startIndex: 0,
       maxFramesProbe: 900,
       loopTailFrames: 30,
-      position: { xPct: 0.15, yPct: 0.18 },
+      position: { xPct: 0.1, yPct: 0.1 },
       widthPct: 0.2,
       textColor: '#FFD400',
       textShadow: '0 2px 10px rgba(0,0,0,0.75)',
@@ -1946,6 +1957,7 @@ class CompletedOverlay {
     this.fontFamily = params.fontFamily || fontFallback;
 
     this.root = null;
+    this.spaceEl = null;
     this.components = {
       name: this._makeComponentConfig('speciesName'),
       image: this._makeComponentConfig('speciesImage'),
@@ -1961,6 +1973,7 @@ class CompletedOverlay {
     this._speciesCache = new Map(); // key -> { imageSrc, infoText, displayName }
 
     this._onResize = () => this.updateLayout();
+    this._spaceMetrics = { width: 0, height: 0, left: 0, top: 0, scale: 1 };
   }
 
   prepare() {
@@ -2055,7 +2068,7 @@ class CompletedOverlay {
           -ms-user-select: none;
         }
         .completed-overlay-wrap {
-          position: fixed;
+          position: absolute;
           pointer-events: none;
           opacity: 0;
           visibility: hidden;
@@ -2063,6 +2076,10 @@ class CompletedOverlay {
           user-select: none;
           -webkit-user-select: none;
           -ms-user-select: none;
+        }
+        .completed-overlay-space {
+          position: fixed;
+          transform-origin: top left;
         }
         .completed-overlay-wrap.active {
           opacity: 1;
@@ -2120,6 +2137,11 @@ class CompletedOverlay {
     document.body.appendChild(root);
     this.root = root;
 
+    const space = document.createElement('div');
+    space.className = 'completed-overlay-space';
+    root.appendChild(space);
+    this.spaceEl = space;
+
     // Species Name component
     const nameComp = this.components.name;
     nameComp.wrap = this._makeWrapDiv('species-name');
@@ -2132,7 +2154,7 @@ class CompletedOverlay {
   nameText.style.pointerEvents = 'none';
     nameComp.wrap.appendChild(nameText);
     nameComp.contentEl = nameText;
-    root.appendChild(nameComp.wrap);
+    space.appendChild(nameComp.wrap);
 
     // Species Image component
     const imageComp = this.components.image;
@@ -2155,7 +2177,7 @@ class CompletedOverlay {
     imageInner.appendChild(speciesImg);
     imageComp.wrap.appendChild(imageInner);
     imageComp.contentEl = speciesImg;
-    root.appendChild(imageComp.wrap);
+    space.appendChild(imageComp.wrap);
 
     // Species Info component
     const infoComp = this.components.info;
@@ -2175,7 +2197,7 @@ class CompletedOverlay {
     infoInner.style.padding = '0 12px 0 0';
     infoComp.wrap.appendChild(infoInner);
     infoComp.contentEl = infoInner;
-    root.appendChild(infoComp.wrap);
+    space.appendChild(infoComp.wrap);
 
     this._applyScrollStyles();
   }
@@ -2346,7 +2368,7 @@ class CompletedOverlay {
     comp.contentEl.style.fontFamily = this.fontFamily;
     comp.contentEl.style.color = comp.cfg.textColor || '#FFD400';
     comp.contentEl.style.lineHeight = `${comp.cfg.lineHeight ?? 1.3}`;
-    const fontSize = comp.cfg.fontSizePx || 18;
+    const fontSize = (comp.cfg.fontSizePx || 18);
     comp.contentEl.style.fontSize = `${fontSize}px`;
     comp.contentEl.scrollTop = 0;
   }
@@ -2383,36 +2405,86 @@ class CompletedOverlay {
   }
 
   updateLayout() {
-    if (!this.root) return;
+    if (!this.root || !this.spaceEl) return;
 
     const vw = window.innerWidth;
-    const vh = window.innerHeight;
+    const vh = Math.max(1, window.innerHeight || 1);
+    const spaceCfg = this.params.space || {};
 
-    // Base component (species name)
+    const marginLeft = Math.max(0, (spaceCfg.marginLeftVh ?? 0.05) * vh);
+    const marginRight = Math.max(0, (spaceCfg.marginRightVh ?? 0.0) * vh);
+    const marginTop = Math.max(0, (spaceCfg.marginTopVh ?? 0.05) * vh);
+    const marginBottom = Math.max(0, (spaceCfg.marginBottomVh ?? 0.0) * vh);
+    const availableWidth = Math.max(1, vw - marginLeft - marginRight);
+    const availableHeight = Math.max(1, vh - marginTop - marginBottom);
+
+    const designHeight = spaceCfg.designHeightPx || 1080;
+    let designWidth = spaceCfg.designWidthPx;
+    if (!Number.isFinite(designWidth) || designWidth <= 0) {
+      let ratio = spaceCfg.widthToHeight;
+      if (!Number.isFinite(ratio) || ratio <= 0) {
+        ratio = 0.62;
+      }
+      designWidth = designHeight * ratio;
+    }
+
+    const targetHeight = Math.min(availableHeight, Math.max(1, (spaceCfg.heightVh ?? 1) * vh));
+    let baseScale = targetHeight / designHeight;
+    if (!Number.isFinite(baseScale) || baseScale <= 0) baseScale = 1;
+
+    let scaleMultiplier = spaceCfg.scaleMultiplier;
+    if (!Number.isFinite(scaleMultiplier) || scaleMultiplier <= 0) scaleMultiplier = 1;
+    const layoutScale = baseScale * scaleMultiplier;
+
+    const scaledWidth = designWidth * layoutScale;
+    const scaledHeight = designHeight * layoutScale;
+    const spaceLeft = Math.round(marginLeft);
+    const spaceTop = Math.round(marginTop);
+
+    Object.assign(this.spaceEl.style, {
+      left: `${spaceLeft}px`,
+      top: `${spaceTop}px`,
+      width: `${designWidth}px`,
+      height: `${designHeight}px`,
+      transform: `scale(${layoutScale})`
+    });
+
+    this._spaceMetrics = {
+      width: designWidth,
+      height: designHeight,
+      left: spaceLeft,
+      top: spaceTop,
+      scale: layoutScale,
+      scaledWidth,
+      scaledHeight
+    };
+
+    const layoutWidth = designWidth;
+    const layoutHeight = designHeight;
+
     const nameComp = this.components.name;
     if (nameComp.wrap) {
       const cfg = nameComp.cfg || {};
-      const width = Math.max(1, Math.round((cfg.widthPct ?? 0.3) * vw));
-      const height = Math.round(width / (nameComp.aspect || 1));
-      const left = Math.round((cfg.position?.xPct ?? 0.1) * vw);
-      const top = Math.round((cfg.position?.yPct ?? 0.12) * vh);
+      const width = Math.max(1, Math.round((cfg.widthPct ?? 0.3) * layoutWidth));
+      const height = Math.max(1, Math.round(width / (nameComp.aspect || 1)));
+      const left = Math.round((cfg.position?.xPct ?? 0.1) * layoutWidth);
+      const top = Math.round((cfg.position?.yPct ?? 0.12) * layoutHeight);
 
       this._applyComponentLayout(nameComp, left, top, width, height);
       this._layoutNameText(width, height);
     }
 
-    // Species image positions relative to name
     const imageComp = this.components.image;
     if (imageComp.wrap && nameComp.wrap) {
       const cfg = imageComp.cfg || {};
-      const nameRect = nameComp.wrap.getBoundingClientRect();
+      const nameRect = nameComp._layoutRect || { left: 0, top: 0 };
       const baseLeft = nameRect.left;
       const baseTop = nameRect.top;
 
-      const left = Math.round(baseLeft + (cfg.offsetPct?.x ?? 0) * vw);
-      const top = Math.round(baseTop + (cfg.offsetPct?.y ?? 0) * vh);
-      const width = Math.max(1, Math.round((cfg.widthPct ?? 0.24) * vw));
-      const height = Math.round(width / (imageComp.aspect || 1));
+      const left = Math.round(baseLeft + (cfg.offsetPct?.x ?? 0) * layoutWidth);
+      const top = Math.round(baseTop + (cfg.offsetPct?.y ?? 0) * layoutHeight);
+      const width = Math.max(1, Math.round((cfg.widthPct ?? 0.24) * layoutWidth));
+      const height = Math.max(1, Math.round(width / (imageComp.aspect || 1)));
 
       this._applyComponentLayout(imageComp, left, top, width, height);
       if (cfg.backgroundColor) {
@@ -2427,14 +2499,14 @@ class CompletedOverlay {
     const infoComp = this.components.info;
     if (infoComp.wrap && nameComp.wrap) {
       const cfg = infoComp.cfg || {};
-      const nameRect = nameComp.wrap.getBoundingClientRect();
+      const nameRect = nameComp._layoutRect || { left: 0, top: 0 };
       const baseLeft = nameRect.left;
       const baseTop = nameRect.top;
 
-      const left = Math.round(baseLeft + (cfg.offsetPct?.x ?? 0) * vw);
-      const top = Math.round(baseTop + (cfg.offsetPct?.y ?? 0) * vh);
-      const width = Math.max(1, Math.round((cfg.widthPct ?? 0.3) * vw));
-      const height = Math.round(width / (infoComp.aspect || 1));
+      const left = Math.round(baseLeft + (cfg.offsetPct?.x ?? 0) * layoutWidth);
+      const top = Math.round(baseTop + (cfg.offsetPct?.y ?? 0) * layoutHeight);
+      const width = Math.max(1, Math.round((cfg.widthPct ?? 0.3) * layoutWidth));
+      const height = Math.max(1, Math.round(width / (infoComp.aspect || 1)));
 
       this._applyComponentLayout(infoComp, left, top, width, height);
       this._layoutInfoContent(width, height);
@@ -2449,6 +2521,7 @@ class CompletedOverlay {
     wrap.style.top = `${top}px`;
     wrap.style.width = `${width}px`;
     wrap.style.height = `${height}px`;
+    comp._layoutRect = { left, top, width, height };
   }
 
   _layoutNameText(width, height) {
@@ -2481,8 +2554,8 @@ class CompletedOverlay {
       height: `${h}px`
     });
     if (comp.contentEl) {
-      const scale = Number.isFinite(cfg.imageScale) ? cfg.imageScale : 1;
-      comp.contentEl.style.transform = `scale(${scale})`;
+      const baseScale = Number.isFinite(cfg.imageScale) ? cfg.imageScale : 1;
+      comp.contentEl.style.transform = `scale(${baseScale})`;
       comp.contentEl.style.transformOrigin = '50% 50%';
     }
   }
@@ -2531,8 +2604,8 @@ class CompletedOverlay {
   _applyFixedNameStylesFromCurrentBounds() {
     const comp = this.components.name;
     if (!comp?.wrap) return;
-    const rect = comp.wrap.getBoundingClientRect();
-    if (rect.width <= 0 || rect.height <= 0) return;
+    const rect = comp._layoutRect;
+    if (!rect || rect.width <= 0 || rect.height <= 0) return;
     this._applyFixedNameStyles(rect.width, rect.height);
   }
 
@@ -2551,7 +2624,7 @@ class CompletedOverlay {
       ? Math.max(1, Math.round(heightPct * height))
       : Math.max(1, Math.round((cfg.fontSizePx ?? 48) * (cfg.lineHeight ?? 1.0)));
 
-    const fontSize = cfg.fontSizePx ?? 48;
+    const fontSize = (cfg.fontSizePx ?? 48);
     const lineHeight = cfg.lineHeight ?? 1.0;
     const textAlign = cfg.textAlign || defaultAlign || 'center';
     const verticalAlign = cfg.verticalAlign || 'center';
