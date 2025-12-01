@@ -455,9 +455,8 @@ const DEFAULT_PARAMS = {
   deckUI: {
     // placement & sizing
     visibleCount: 5,            // how many cards visible at once
-    // Margin priority: Px > Vh > Vw (Vh keeps margin steady when width changes)
+    // Margin priority: Px > Vh, keeping margin steady when width changes
     rightMarginVh: 0.035,
-    rightMarginVw: 0.02,   // legacy fallback when Vh not provided
     topMarginVh:   0.06,   // 6% of viewport height
     bottomMarginVh:0.10,   // 10% of viewport height
     verticalOverlapPct: 0.10,   // 10% of a card covered by the next one
@@ -523,10 +522,8 @@ const DEFAULT_PARAMS = {
     enabled: true,
     src: '/game-assets/sub/interfaz/ruler.png',
 
-    // horizontal margins (fraction of viewport width, like deck)
     leftMarginVw: 0.02,
     rightMarginVw: 0.02,
-
     // vertical mapping:
     // when camera is at yMax (surfaceLevel + cameraSurfaceMargin),
     // ruler's UPPER edge sits at: (vh/2 + midYOffsetPx)
@@ -543,10 +540,8 @@ const DEFAULT_PARAMS = {
     src: '/game-assets/sub/interfaz/timer.png',
     // Prefer Vh-based values so size/margin stay constant when width changes
     xMarginVh: 0.25,    // right margin as fraction of viewport HEIGHT (deck-style)
-    xMarginVw: 0.10,    // fallback if no height basis (legacy)
     yMarginVh: 0.055,   // bottom margin as fraction of viewport height
-    widthVh:   0.3,   // timer width tied to container height for consistency
-    widthVw:   0.12,    // fallback if deck/container height unavailable
+    widthVh:   0.3,     // timer width tied to container height for consistency
     zIndex:    9996,
     textColor: '#FFD400', // bright yellow (matches glow)
     // font: reuse deckUI font so we keep New Science Mono Bold everywhere
@@ -1083,13 +1078,6 @@ class Deck {
     this.silhouetteMaterialSelected = new THREE.MeshBasicMaterial({ color: colSelected, transparent: true, opacity: 1.0 });
     this.silhouetteSkinnedSelected  = new THREE.MeshBasicMaterial({ color: colSelected, skinning: true, transparent: true, opacity: 1.0 });
 
-    // discovery HUD (unchanged text)
-    this.discoveredCount = 0;
-    this.discoveryEl = document.createElement('div');
-    this.discoveryEl.id = 'species-discovery';
-    this.discoveryEl.textContent = `0/${this.speciesList.length} especies descubiertas`;
-    document.body.appendChild(this.discoveryEl);
-
     // preload base card image so we can compute aspect
     this._cardImg = new Image();
     this._cardImg.onload = () => this.updateLayout();
@@ -1273,7 +1261,6 @@ class Deck {
     // Finally, reveal the UI; intro logic still controls opacity afterwards
     this.container.style.visibility = 'visible';
     this.logoEl.style.visibility = 'visible';
-    this.discoveryEl.style.visibility = 'visible';
   }
 
   // === public API ===
@@ -1320,7 +1307,6 @@ class Deck {
   destroy() {
     if (this.container && this.container.parentNode) this.container.parentNode.removeChild(this.container);
     if (this.logoEl && this.logoEl.parentNode) this.logoEl.parentNode.removeChild(this.logoEl);
-    if (this.discoveryEl && this.discoveryEl.parentNode) this.discoveryEl.parentNode.removeChild(this.discoveryEl);
   }
 
   // === interactions with gameplay ===
@@ -1333,12 +1319,8 @@ class Deck {
     if (!card) return;
 
     if (!card.revealed) {
-      this.discoveredCount = Math.min(this.speciesList.length, this.discoveredCount + 1);
-      if (this.discoveryEl) {
-        this.discoveryEl.textContent = `${this.discoveredCount}/${this.speciesList.length} especies descubiertas`;
-      }
+      card.revealed = true;
     }
-    card.revealed = true;
   }
 
   checkMatch(speciesKey, opts = {}) {
@@ -1415,15 +1397,9 @@ class Deck {
     const vw = Math.max(1, window.innerWidth || 1);
     const vh = Math.max(1, window.innerHeight || 1);
 
-    const right = (() => {
-      if (Number.isFinite(this.cfg.rightMarginPx)) {
-        return Math.max(0, this.cfg.rightMarginPx);
-      }
-      if (Number.isFinite(this.cfg.rightMarginVh)) {
-        return Math.max(0, Math.round(this.cfg.rightMarginVh * vh));
-      }
-      return Math.max(0, Math.round((this.cfg.rightMarginVw ?? 0.02) * vw));
-    })();
+    const right = Number.isFinite(this.cfg.rightMarginPx)
+      ? Math.max(0, this.cfg.rightMarginPx)
+      : Math.max(0, Math.round((Number.isFinite(this.cfg.rightMarginVh) ? this.cfg.rightMarginVh : 0) * vh));
 
     const top    = Math.round((this.cfg.topMarginVh   ?? 0.06) * vh);
     const bottom = Math.round((this.cfg.bottomMarginVh?? 0.10) * vh);
@@ -3451,7 +3427,6 @@ export class RioScene extends BaseScene {
       zIndex: 9999,
       fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
       fontWeight: '600',
-      fontSize: '28px',
       lineHeight: '1.35',
       color: 'white',
       textShadow: '0 2px 16px rgba(0,0,0,0.6)',
@@ -3463,9 +3438,25 @@ export class RioScene extends BaseScene {
       transitionDuration: `${P.fadeIn}s`,
       willChange: 'opacity'
     });
-    el.textContent = P.text || 'Cargando...';
+    const textEl = document.createElement('div');
+    textEl.id = 'intro-overlay-text';
+    Object.assign(textEl.style, {
+      width: '100%',
+      maxWidth: '720px',
+      padding: '0 4vw',
+      textAlign: 'center',
+      whiteSpace: 'pre-line',
+      margin: '0 auto'
+    });
+    textEl.textContent = P.text || 'Cargando...';
+    el.appendChild(textEl);
     document.body.appendChild(el);
     this.introState.overlayEl = el;
+    this.introState.overlayTextEl = textEl;
+
+    this._updateIntroOverlayLayout();
+    this._onIntroResize = () => this._updateIntroOverlayLayout();
+    window.addEventListener('resize', this._onIntroResize, { passive: true });
 
     // ---- Disparo de fade-in a prueba de WebKit/Chrome ----
     // 1) Forzar reflow para que el estado "opacity:0" se fije realmente
@@ -3481,8 +3472,8 @@ export class RioScene extends BaseScene {
   }
 
   _setIntroOverlayText(msg) {
-    if (this.introState.overlayEl) {
-      this.introState.overlayEl.textContent = msg;
+    if (this.introState.overlayTextEl) {
+      this.introState.overlayTextEl.textContent = msg;
     }
   }
 
@@ -3496,8 +3487,26 @@ export class RioScene extends BaseScene {
 
   _destroyIntroOverlay() {
     const el = this.introState.overlayEl;
+    if (this._onIntroResize) {
+      window.removeEventListener('resize', this._onIntroResize);
+      this._onIntroResize = null;
+    }
     if (el && el.parentNode) el.parentNode.removeChild(el);
     this.introState.overlayEl = null;
+    this.introState.overlayTextEl = null;
+  }
+
+  _updateIntroOverlayLayout() {
+    const textEl = this.introState.overlayTextEl;
+    if (!textEl) return;
+
+    const vw = Math.max(1, window.innerWidth || 1);
+    const vh = Math.max(1, window.innerHeight || 1);
+    const base = Math.min(vw, vh);
+    const fontPx = THREE.MathUtils.clamp(base * 0.035, 18, 46);
+
+    textEl.style.fontSize = `${Math.round(fontPx)}px`;
+    textEl.style.maxWidth = `${Math.round(Math.min(vw * 0.8, 720))}px`;
   }
 
   /** Compute ruler width from vw margins and set horizontal placement. */
@@ -3657,27 +3666,22 @@ export class RioScene extends BaseScene {
     if (!this.timer?.el || !this.params.timerUI) return;
     const T = this.params.timerUI;
 
-    const vw = Math.max(1, window.innerWidth || 1);
     const vh = Math.max(1, window.innerHeight || 1);
     const deckRect = this.deck?.container?.getBoundingClientRect?.();
     const heightBasis = Math.max(1, deckRect?.height || vh);
 
-    const dispW = (() => {
-      if (Number.isFinite(T.widthPx)) return Math.max(1, T.widthPx);
-      if (Number.isFinite(T.widthVh)) return Math.max(1, Math.round(T.widthVh * heightBasis));
-      return Math.max(1, Math.round((T.widthVw ?? 0.18) * vw));
-    })();
+    const dispW = Number.isFinite(T.widthPx)
+      ? Math.max(1, T.widthPx)
+      : Math.max(1, Math.round((Number.isFinite(T.widthVh) ? T.widthVh : 0.215) * heightBasis));
 
     const aspect = (this.timer.natW > 0 && this.timer.natH > 0)
       ? (this.timer.natW / this.timer.natH)
       : (3 / 2);
     const dispH = Math.max(1, Math.round(dispW / aspect));
 
-    const rightPx = (() => {
-      if (Number.isFinite(T.xMarginPx)) return Math.max(0, T.xMarginPx);
-      if (Number.isFinite(T.xMarginVh)) return Math.max(0, Math.round(T.xMarginVh * heightBasis));
-      return Math.max(0, Math.round((T.xMarginVw ?? 0.02) * vw));
-    })();
+    const rightPx = Number.isFinite(T.xMarginPx)
+      ? Math.max(0, T.xMarginPx)
+      : Math.max(0, Math.round((Number.isFinite(T.xMarginVh) ? T.xMarginVh : 0) * heightBasis));
 
     const bottomPx = (() => {
       if (Number.isFinite(T.yMarginPx)) return Math.max(0, T.yMarginPx);
