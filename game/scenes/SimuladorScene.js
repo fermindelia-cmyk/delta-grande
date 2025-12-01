@@ -211,7 +211,7 @@ export const DEFAULT_PARAMS = Object.freeze({
     arrivalThreshold: 0.008,
     dissolveSpeed: 0.3,
     depositRadius: 0.09,
-    depositAmount: 0.003,
+    depositAmount: 0.005,
     particleSize: 0.015,
     minAlpha: 0.35
   }),

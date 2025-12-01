@@ -455,7 +455,9 @@ const DEFAULT_PARAMS = {
   deckUI: {
     // placement & sizing
     visibleCount: 5,            // how many cards visible at once
-    rightMarginVw: 0.02,   // 2% of viewport width
+    // Margin priority: Px > Vh > Vw (Vh keeps margin steady when width changes)
+    rightMarginVh: 0.035,
+    rightMarginVw: 0.02,   // legacy fallback when Vh not provided
     topMarginVh:   0.06,   // 6% of viewport height
     bottomMarginVh:0.10,   // 10% of viewport height
     verticalOverlapPct: 0.10,   // 10% of a card covered by the next one
@@ -539,9 +541,12 @@ const DEFAULT_PARAMS = {
   /** Timer overlay (bottom-right by right/bottom margins) */
   timerUI: {
     src: '/game-assets/sub/interfaz/timer.png',
-    xMarginVw: 0.10,   // right margin as fraction of viewport width
+    // Prefer Vh-based values so size/margin stay constant when width changes
+    xMarginVh: 0.25,    // right margin as fraction of viewport HEIGHT (deck-style)
+    xMarginVw: 0.10,    // fallback if no height basis (legacy)
     yMarginVh: 0.055,   // bottom margin as fraction of viewport height
-    widthVw:   0.12,   // timer image width as fraction of viewport width
+    widthVh:   0.3,   // timer width tied to container height for consistency
+    widthVw:   0.12,    // fallback if deck/container height unavailable
     zIndex:    9996,
     textColor: '#FFD400', // bright yellow (matches glow)
     // font: reuse deckUI font so we keep New Science Mono Bold everywhere
@@ -1407,10 +1412,19 @@ class Deck {
   // === layout & visuals ===
   updateLayout() {
     // Compute card size from window and params
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
+    const vw = Math.max(1, window.innerWidth || 1);
+    const vh = Math.max(1, window.innerHeight || 1);
 
-    const right  = Math.round((this.cfg.rightMarginVw ?? 0.02) * vw);
+    const right = (() => {
+      if (Number.isFinite(this.cfg.rightMarginPx)) {
+        return Math.max(0, this.cfg.rightMarginPx);
+      }
+      if (Number.isFinite(this.cfg.rightMarginVh)) {
+        return Math.max(0, Math.round(this.cfg.rightMarginVh * vh));
+      }
+      return Math.max(0, Math.round((this.cfg.rightMarginVw ?? 0.02) * vw));
+    })();
+
     const top    = Math.round((this.cfg.topMarginVh   ?? 0.06) * vh);
     const bottom = Math.round((this.cfg.bottomMarginVh?? 0.10) * vh);
 
@@ -3643,19 +3657,32 @@ export class RioScene extends BaseScene {
     if (!this.timer?.el || !this.params.timerUI) return;
     const T = this.params.timerUI;
 
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
+    const vw = Math.max(1, window.innerWidth || 1);
+    const vh = Math.max(1, window.innerHeight || 1);
+    const deckRect = this.deck?.container?.getBoundingClientRect?.();
+    const heightBasis = Math.max(1, deckRect?.height || vh);
 
-    // Dimensiones del timer.png con AR preservado
-    const dispW = Math.max(1, Math.round((T.widthVw ?? 0.18) * vw));
+    const dispW = (() => {
+      if (Number.isFinite(T.widthPx)) return Math.max(1, T.widthPx);
+      if (Number.isFinite(T.widthVh)) return Math.max(1, Math.round(T.widthVh * heightBasis));
+      return Math.max(1, Math.round((T.widthVw ?? 0.18) * vw));
+    })();
+
     const aspect = (this.timer.natW > 0 && this.timer.natH > 0)
       ? (this.timer.natW / this.timer.natH)
       : (3 / 2);
     const dispH = Math.max(1, Math.round(dispW / aspect));
 
-    // Colocación por márgenes (abajo-derecha)
-    const rightPx  = Math.round((T.xMarginVw ?? 0.02) * vw);
-    const bottomPx = Math.round((T.yMarginVh ?? 0.04) * vh);
+    const rightPx = (() => {
+      if (Number.isFinite(T.xMarginPx)) return Math.max(0, T.xMarginPx);
+      if (Number.isFinite(T.xMarginVh)) return Math.max(0, Math.round(T.xMarginVh * heightBasis));
+      return Math.max(0, Math.round((T.xMarginVw ?? 0.02) * vw));
+    })();
+
+    const bottomPx = (() => {
+      if (Number.isFinite(T.yMarginPx)) return Math.max(0, T.yMarginPx);
+      return Math.max(0, Math.round((T.yMarginVh ?? 0.04) * vh));
+    })();
     Object.assign(this.timer.el.style, {
       right: `${rightPx}px`,
       bottom: `${bottomPx}px`,
