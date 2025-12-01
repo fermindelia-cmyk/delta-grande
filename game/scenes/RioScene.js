@@ -106,7 +106,7 @@ class SpatialHash {
  * ------------------------------------------------------------- */
 const SizeScale       = { small: 1.0,  medium: 1.5,  large: 2.0 };
 const SpeedScale      = { slow: 0.3,   medium: 0.8,  fast: 1.5 };
-const AbundanceCount  = { scarce: 5,   usual: 15,    veryCommon: 30 };
+const AbundanceCount  = { scarce: 3,   usual: 8,    veryCommon: 15 };
 //const AbundanceCount  = { scarce: 1,   usual: 1,    veryCommon: 1 };
 
 /**
@@ -1045,7 +1045,6 @@ class Deck {
     
     // Game state
     this.gameWon = false;
-    this.bonusAchieved = false;
 
     // scrolling
     this.isPointerInside = false;
@@ -1057,6 +1056,9 @@ class Deck {
     // DOM
     this.container = document.createElement('div');
     this.container.id = 'deck-container';
+    this.container.style.userSelect = 'none';
+    this.container.style.webkitUserSelect = 'none';
+    this.container.style.msUserSelect = 'none';
     document.body.appendChild(this.container);
     this.container.style.visibility = 'hidden';
 
@@ -1102,6 +1104,9 @@ class Deck {
       const cardEl = document.createElement('div');
       cardEl.className = 'deck-card-vert';
       cardEl.dataset.speciesKey = speciesDef.key;
+      cardEl.style.userSelect = 'none';
+      cardEl.style.webkitUserSelect = 'none';
+      cardEl.style.msUserSelect = 'none';
 
       // three layered backgrounds for smooth state transitions
       const imgBase = document.createElement('img');
@@ -1128,20 +1133,29 @@ class Deck {
       // text overlays
       const textWrap = document.createElement('div');
       textWrap.className = 'deck-text-wrap';
+      textWrap.style.userSelect = 'none';
+      textWrap.style.webkitUserSelect = 'none';
+      textWrap.style.msUserSelect = 'none';
 
       const nameEl = document.createElement('div');
       nameEl.className = 'species-name';
       const rawName = speciesDef.displayName || '';
       const plain = rawName.split('(')[0].trim().toUpperCase();
       nameEl.textContent = plain;
+      nameEl.style.userSelect = 'none';
+      nameEl.style.webkitUserSelect = 'none';
+      nameEl.style.msUserSelect = 'none';
 
       // NEW: single numbers element (two lines: found \n total)
       const numbersEl = document.createElement('div');
       numbersEl.className = 'numbers-mono';
       // Fill after we know totals
       const totalForThisSpecies = speciesObj.count ?? 0;
-      numbersEl.textContent = `0\n${Math.ceil(totalForThisSpecies / 2)}`;
-      numbersEl.title = `Win: ${Math.ceil(totalForThisSpecies / 2)} fish\nBonus: ${totalForThisSpecies} fish`;
+      numbersEl.textContent = `0\n${totalForThisSpecies}`;
+      numbersEl.title = `Atrapa ${totalForThisSpecies} peces`;
+      numbersEl.style.userSelect = 'none';
+      numbersEl.style.webkitUserSelect = 'none';
+      numbersEl.style.msUserSelect = 'none';
 
       textWrap.appendChild(nameEl);
       textWrap.appendChild(numbersEl);
@@ -1236,10 +1250,9 @@ class Deck {
         fullDisplayName: speciesDef.displayName,
         revealed: false,
         completed: false,
-        bonusCompleted: false,
         count: 0,
         totalCount: totalForThisSpecies,
-        winCount: Math.ceil(totalForThisSpecies / 2),
+        winCount: totalForThisSpecies,
         originalMaterials,
         bgBase: imgBase,
         bgSel: imgSelected,
@@ -1333,21 +1346,11 @@ class Deck {
         if (newCount !== cur.count) {
           cur.count = newCount;
           cur.numbersEl.textContent = `${cur.count}\n${cur.winCount}`;
-          if (cur.bonusCompleted) {
-            cur.numbersEl.textContent += `\n(${cur.totalCount} BONUS!)`;
-          } else if (cur.completed) {
-            cur.numbersEl.textContent += `\n(BONUS: ${cur.totalCount})`;
-          }
         }
         if (cur.count >= cur.winCount && !cur.completed) {
           cur.completed = true;
           cur.element.classList.add('completed');
           this.checkGameWin();
-        }
-        if (cur.count >= cur.totalCount && !cur.bonusCompleted) {
-          cur.bonusCompleted = true;
-          cur.element.classList.add('bonus-completed');
-          this.checkGameBonus();
         }
       } else if (!cur.revealed) {
         this.setRevealed(this.currentIndex);
@@ -1362,20 +1365,11 @@ class Deck {
   }
 
   checkGameWin() {
-    // Check if all species have reached their win count (half)
+    // Check if all species have reached their required total count
     const allCompleted = this.cards.every(card => card.completed);
     if (allCompleted && !this.gameWon) {
       this.gameWon = true;
       this.showWinMessage();
-    }
-  }
-
-  checkGameBonus() {
-    // Check if all species have reached their total count (bonus)
-    const allBonusCompleted = this.cards.every(card => card.bonusCompleted);
-    if (allBonusCompleted && !this.bonusAchieved) {
-      this.bonusAchieved = true;
-      this.showBonusMessage();
     }
   }
 
@@ -1385,10 +1379,6 @@ class Deck {
     // For now, we'll just log to console
   }
 
-  showBonusMessage() {
-    console.log('🌟 BONUS ACHIEVED! You found ALL fish of every species! Amazing work!');
-    // You can add more visual feedback here like a special bonus popup
-  }
 
 
   // === layout & visuals ===
@@ -1846,14 +1836,23 @@ class Deck {
     const css = document.createElement('style');
     css.id = '__deck_css';
     css.textContent = `
-      #deck-container { pointer-events: auto; }
-      #species-discovery { position: fixed; left: 16px; bottom: 16px; z-index: 9998; font-weight: 700; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.6); font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-      .deck-card-vert { opacity: 1; will-change: transform, opacity; transition: opacity 200ms ease, transform 280ms cubic-bezier(.22,.61,.36,1), filter 200ms ease; }
+      #deck-container {
+        pointer-events: auto;
+        user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+      }
+      .deck-card-vert {
+        opacity: 1;
+        will-change: transform, opacity;
+        transition: opacity 200ms ease, transform 280ms cubic-bezier(.22,.61,.36,1), filter 200ms ease;
+        user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+      }
       .deck-card-vert .deck-bg { position: absolute; left:0; top:0; width:100%; height:100%; object-fit: cover; pointer-events: none; }
       .deck-card-vert .deck-bg-selected, .deck-card-vert .deck-bg-completed { opacity: 0; transition: opacity 220ms ease; }
       .deck-card-vert.completed .deck-bg-completed { opacity: 1 !important; }
-      .deck-card-vert.bonus-completed { box-shadow: 0 0 15px rgba(255, 215, 0, 0.8); border: 2px solid #FFD700; }
-      .deck-card-vert.bonus-completed .deck-bg-completed { opacity: 1 !important; filter: brightness(1.3) hue-rotate(45deg); }
       .deck-canvas { pointer-events: none; }
       .deck-text-wrap { pointer-events: none; }
       .deck-card-vert.selected .deck-canvas { will-change: filter; }
@@ -2051,6 +2050,9 @@ class CompletedOverlay {
           pointer-events: none;
           z-index: 100010;
           visibility: hidden;
+          user-select: none;
+          -webkit-user-select: none;
+          -ms-user-select: none;
         }
         .completed-overlay-wrap {
           position: fixed;
@@ -2058,6 +2060,9 @@ class CompletedOverlay {
           opacity: 0;
           visibility: hidden;
           transition: opacity 200ms ease;
+          user-select: none;
+          -webkit-user-select: none;
+          -ms-user-select: none;
         }
         .completed-overlay-wrap.active {
           opacity: 1;
@@ -2070,6 +2075,9 @@ class CompletedOverlay {
           top: 0;
           width: 100%;
           height: 100%;
+          user-select: none;
+          -webkit-user-select: none;
+          -ms-user-select: none;
         }
         .completed-overlay-text {
           color: #FFD400;
