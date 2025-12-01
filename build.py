@@ -1,5 +1,6 @@
 import os
 import shutil
+import glob
 
 def build():
     project_root = os.path.dirname(os.path.abspath(__file__))
@@ -17,6 +18,19 @@ def build():
         'game',
         'assets',
         'game-assets'
+    ]
+
+    # Additional root-level files / patterns to include in the final build
+    # (favicons, service worker, webmanifest, offline manifest, etc.)
+    extra_patterns = [
+        'service-worker.js',
+        'offline-manifest.json',
+        'manifest.webmanifest',
+        'manifest.json',
+        'favicon.ico',
+        'favicon*.png',
+        'apple-touch-icon*.png',
+        'favicon*.svg'
     ]
 
     # List of specific large files to exclude that are not used in the game
@@ -89,6 +103,18 @@ def build():
             shutil.copy2(src, dst)
 
     print(f"Build complete! Output is in {dist_dir}")
+
+    # Copy extra root files that match patterns so favicons, manifests and SW are included
+    for pattern in extra_patterns:
+        full_pattern = os.path.join(project_root, pattern)
+        matches = glob.glob(full_pattern)
+        for m in matches:
+            try:
+                dest = os.path.join(dist_dir, os.path.basename(m))
+                print(f"Copying extra file: {m} -> {dest}")
+                shutil.copy2(m, dest)
+            except Exception as e:
+                print(f"Warning: failed to copy extra file {m}: {e}")
 
 if __name__ == "__main__":
     build()
