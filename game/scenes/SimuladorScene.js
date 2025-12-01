@@ -108,6 +108,12 @@ export const DEFAULT_PARAMS = Object.freeze({
       delay: 0,
       loop: true
     }),
+    music: Object.freeze({
+      file: '../simulador_musica.mp3',
+      volume: 0.25,
+      delay: 0,
+      loop: true
+    }),
     plantTransitions: Object.freeze({
       seedToSprout: Object.freeze({
         file: 'De semilla a brote.mp3',
@@ -329,17 +335,12 @@ export const DEFAULT_PARAMS = Object.freeze({
       transitionSeconds: 0.12
     }),
     goalMessage: Object.freeze({
-      bottomOffsetVW: 20.0,
+      bottomOffsetVW: 7.0,
       fontSizeVW: 2.4,
       paddingVW: 1.1,
       maxWidthVW: 48,
       borderRadiusVW: 2.0,
       slideOffsetVW: 2.2,
-    removePlant: Object.freeze({
-      file: 'remover.mp3',
-      volume: 1,
-      delay: 0
-    }),
       transitionSeconds: 0.35
     }),
     elements: Object.freeze({
@@ -780,7 +781,9 @@ export class SimuladorScene extends BaseScene {
     this._riverbedDirty = true;
     this._updateRiverbed();
     for (let i = 0; i < this._plants.length; i++) {
-      this._refreshPlantVisual(this._plants[i]);
+      const plant = this._plants[i];
+      this._alignPlantToRiverbed(plant);
+      this._refreshPlantVisual(plant);
     }
     this._updateParticleSize(width, height);
     this._updateSeedEffectSize(width, height);
@@ -1735,6 +1738,21 @@ export class SimuladorScene extends BaseScene {
     plant.mesh.position.z = this._computePlantDepth(centerY);
   }
 
+  _alignPlantToRiverbed(plant) {
+    if (!plant) return;
+    const width = this.worldWidth;
+    if (!Number.isFinite(width) || width <= 0) return;
+    const normalized = Number.isFinite(plant.anchorX)
+      ? clamp(plant.anchorX, 0, 1)
+      : clamp((plant.x ?? 0) / width, 0, 1);
+    plant.anchorX = normalized;
+    plant.x = normalized * width;
+    if (Array.isArray(this._riverbedHeights) && this._riverbedHeights.length) {
+      const segments = Math.max(1, this.params.riverbed?.segments ?? 0);
+      plant.baseY = this._heightAt(this._riverbedHeights, segments, plant.x);
+    }
+  }
+
   _spriteStageAssetIndex(seed, stageIndex) {
     if (!seed || !Number.isInteger(stageIndex)) return null;
     const map = seed.spriteStageMap;
@@ -2488,36 +2506,43 @@ export class SimuladorScene extends BaseScene {
     }
   }
 
+  _startLoopingAudioInstance(targetKey, config) {
+    if (!targetKey || !config?.file) return;
+    const audio = this._createAudioElement(config.file);
+    if (!audio) return;
+    audio.loop = config.loop !== false;
+    audio.volume = clamp(config.volume ?? 1, 0, 1);
+    this[targetKey] = audio;
+
+    const startPlayback = () => {
+      const instance = this[targetKey];
+      if (!instance) return;
+      try {
+        instance.currentTime = 0;
+      } catch (err) {
+        // ignore reset issues
+      }
+      const promise = instance.play();
+      if (promise && typeof promise.catch === 'function') {
+        promise.catch(() => {});
+      }
+    };
+
+    const delay = Math.max(0, config.delay ?? 0);
+    if (delay > 0) {
+      this._scheduleAudioPlayback(startPlayback, delay);
+    } else {
+      startPlayback();
+    }
+  }
+
   _initAudio() {
     if (!this._audioTimers) {
       this._audioTimers = new Set();
     }
     this._disposeAudio();
-    const ambientCfg = this.params.audio?.ambient;
-    if (!ambientCfg?.file) return;
-    const ambient = this._createAudioElement(ambientCfg.file);
-    if (!ambient) return;
-    ambient.loop = ambientCfg.loop !== false;
-    ambient.volume = clamp(ambientCfg.volume ?? 1, 0, 1);
-    this._ambientAudio = ambient;
-    const start = () => {
-      if (!this._ambientAudio) return;
-      try {
-        this._ambientAudio.currentTime = 0;
-      } catch (err) {
-        // ignore reset issues
-      }
-      const promise = this._ambientAudio.play();
-      if (promise && typeof promise.catch === 'function') {
-        promise.catch(() => {});
-      }
-    };
-    const delay = Math.max(0, ambientCfg.delay ?? 0);
-    if (delay > 0) {
-      this._scheduleAudioPlayback(start, delay);
-    } else {
-      start();
-    }
+    this._startLoopingAudioInstance('_ambientAudio', this.params.audio?.ambient);
+    this._startLoopingAudioInstance('_musicAudio', this.params.audio?.music);
   }
 
   _disposeAudio() {
@@ -2547,6 +2572,15 @@ export class SimuladorScene extends BaseScene {
     this._sedimentAudio = null;
     this._sedimentSoundPlaying = false;
     this._sedimentSoundPending = false;
+    if (this._musicAudio) {
+      this._musicAudio.pause();
+      try {
+        this._musicAudio.currentTime = 0;
+      } catch (err) {
+        // ignore reset issues
+      }
+      this._musicAudio = null;
+    }
     if (this._ambientAudio) {
       this._ambientAudio.pause();
       try {
@@ -2658,11 +2692,16 @@ export class SimuladorScene extends BaseScene {
   }
 
   _resumeAmbientAudio() {
-    if (!this._ambientAudio || !this._ambientAudio.paused) return;
-    const promise = this._ambientAudio.play();
-    if (promise && typeof promise.catch === 'function') {
-      promise.catch(() => {});
-    }
+    const resume = (audio) => {
+      if (!audio || !audio.paused) return;
+      const promise = audio.play();
+      if (promise && typeof promise.catch === 'function') {
+        promise.catch(() => {});
+      }
+    };
+
+    resume(this._ambientAudio);
+    resume(this._musicAudio);
   }
 
   _getLoadingLogoUrl() {
@@ -3090,12 +3129,14 @@ export class SimuladorScene extends BaseScene {
     mesh.renderOrder = 2;
     mesh.visible = false;
     this.scene.add(mesh);
+    const anchorX = this.worldWidth > 0 ? clamp(x / this.worldWidth, 0, 1) : 0;
     const plant = {
       id: `${seed.id}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
       seed,
       mesh,
       x,
       baseY,
+      anchorX,
       stageIndex: initialStageIndex,
       stageTimer: 0,
       currentStageHeight: initialHeight,

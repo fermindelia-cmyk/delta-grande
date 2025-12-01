@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { BaseScene } from '../core/BaseScene.js';
 import { AssetLoader } from '../core/AssetLoader.js';
+import { EventBus } from '../core/EventBus.js';
 import {
   autoRigTwoBoneFishMesh,
   findTailBoneFromSkeleton,
@@ -1069,6 +1070,7 @@ class Deck {
     this.container.style.msUserSelect = 'none';
     document.body.appendChild(this.container);
     this.container.style.visibility = 'hidden';
+    this._updateDeckCursor();
 
     // fixed logo holder
     this.logoEl = document.createElement('img');
@@ -1094,8 +1096,14 @@ class Deck {
     this._cardImg.src = this.cfg.assets.base;
 
     // pointer capture
-    this.container.addEventListener('mouseenter', () => { this.isPointerInside = true; });
-    this.container.addEventListener('mouseleave', () => { this.isPointerInside = false; });
+    this.container.addEventListener('mouseenter', () => {
+      this.isPointerInside = true;
+      this._updateDeckCursor();
+    });
+    this.container.addEventListener('mouseleave', () => {
+      this.isPointerInside = false;
+      this._updateDeckCursor();
+    });
 
     window.addEventListener('resize', () => this.updateLayout(), { passive: true });
   }
@@ -1426,9 +1434,9 @@ class Deck {
       height: `${availH}px`,
       pointerEvents: 'auto',
       overflow: 'hidden',
-      zIndex: 9997,
-      cursor: 'none'
+      zIndex: 9997
     });
+    this._updateDeckCursor();
 
     // logo sizing and position
     const logoW = cardW * (this.cfg.logoWidthFactor ?? 1);
@@ -1832,6 +1840,12 @@ class Deck {
     link.rel = 'stylesheet';
     link.href = href;
     document.head.appendChild(link);
+  }
+
+
+  _updateDeckCursor() {
+    if (!this.container) return;
+    this.container.style.cursor = this.isPointerInside ? 'auto' : 'none';
   }
 
 
@@ -2761,6 +2775,26 @@ export class RioScene extends BaseScene {
 
     /* === Inside-solid DOM overlay (relleno de volumen) === */
     this._insideOverlay = null;
+    this._suppressInsideOverlay = false;
+    this._appPauseListener = null;
+    this._appResumeListener = null;
+    this._cursorEnabled = false;
+    this._cursorBlockedByDeck = false;
+    this._cursorBlockedByMenu = false;
+    this._deckMouseEnter = null;
+    this._deckMouseLeave = null;
+    this._handleAppPaused = () => {
+      this._suppressInsideOverlay = true;
+      this._cursorBlockedByMenu = true;
+      this._applyInsideOverlayState(this.isCameraInsideSolid());
+      this._updateCursorVisibility();
+    };
+    this._handleAppResumed = () => {
+      this._suppressInsideOverlay = false;
+      this._cursorBlockedByMenu = false;
+      this._applyInsideOverlayState(this.isCameraInsideSolid());
+      this._updateCursorVisibility();
+    };
 
     // CSS (una sola vez)
     if (!document.getElementById('__rio_inside_overlay_css')) {
@@ -3128,6 +3162,16 @@ export class RioScene extends BaseScene {
         if (this.deck) this.deck.onWheel(e.deltaY);
       };
       this.deck.container.addEventListener('wheel', this._onDeckWheel, { passive: false });
+      this._deckMouseEnter = () => {
+        this._cursorBlockedByDeck = true;
+        this._updateCursorVisibility();
+      };
+      this._deckMouseLeave = () => {
+        this._cursorBlockedByDeck = false;
+        this._updateCursorVisibility();
+      };
+      this.deck.container.addEventListener('mouseenter', this._deckMouseEnter);
+      this.deck.container.addEventListener('mouseleave', this._deckMouseLeave);
 
       // hide the deck during intro
       this.deck.container.style.opacity = 0;
@@ -3158,6 +3202,8 @@ export class RioScene extends BaseScene {
     this.app.canvas.addEventListener('mouseleave', this._onMouseLeave);
     this.app.canvas.addEventListener('mousedown', this._onMouseDown);
     window.addEventListener('keydown', this._onKeyDown);
+    this._appPauseListener = EventBus.on('app:paused', this._handleAppPaused);
+    this._appResumeListener = EventBus.on('app:resumed', this._handleAppResumed);
 
     this._onWheel = (e) => this.onWheel(e);
     this.app.canvas.addEventListener('wheel', this._onWheel, { passive: false });
@@ -3275,11 +3321,21 @@ export class RioScene extends BaseScene {
     if (this.deck && this._onDeckWheel) {
       this.deck.container.removeEventListener('wheel', this._onDeckWheel);
     }
+    if (this.deck && this._deckMouseEnter) {
+      this.deck.container.removeEventListener('mouseenter', this._deckMouseEnter);
+      this.deck.container.removeEventListener('mouseleave', this._deckMouseLeave);
+    }
+    this._deckMouseEnter = null;
+    this._deckMouseLeave = null;
 
     this.app.canvas.removeEventListener('mousemove', this._onMouseMove);
     this.app.canvas.removeEventListener('mouseleave', this._onMouseLeave);
     this.app.canvas.removeEventListener('mousedown', this._onMouseDown);
     window.removeEventListener('keydown', this._onKeyDown);
+    this._appPauseListener?.();
+    this._appResumeListener?.();
+    this._appPauseListener = null;
+    this._appResumeListener = null;
     this.app.canvas.removeEventListener('wheel', this._onWheel);
     if (this.deck) this.deck.destroy();
     if (this.completedOverlay) {
@@ -3818,10 +3874,14 @@ export class RioScene extends BaseScene {
     this.timer.t0 = performance.now() * 0.001;
     this.timer.running = true;
     this._updateTimerText(); // immediate paint
+    this._cursorEnabled = true;
+    this._updateCursorVisibility();
   }
 
   _stopTimer() {
     this.timer.running = false;
+    this._cursorEnabled = false;
+    this._updateCursorVisibility();
   }
 
   _updateTimerText() {
@@ -3861,8 +3921,10 @@ export class RioScene extends BaseScene {
       WebkitUserSelect: 'none',
       msUserSelect: 'none'
     });
+    img.style.visibility = 'hidden';
     document.body.appendChild(img);
     this.cursorEl = img;
+    this._updateCursorVisibility();
   }
 
     // --- NEW: Generic frame-sequence preloader ---
@@ -4931,6 +4993,18 @@ export class RioScene extends BaseScene {
     else this._stopSurfaceVideo();
   }
 
+  _applyInsideOverlayState(inside) {
+    if (!this._insideOverlay) return;
+    const visible = !!inside && !this._suppressInsideOverlay;
+    this._insideOverlay.style.opacity = visible ? '1' : '0';
+  }
+
+  _updateCursorVisibility() {
+    if (!this.cursorEl) return;
+    const shouldShow = this._cursorEnabled && !this._cursorBlockedByDeck && !this._cursorBlockedByMenu;
+    this.cursorEl.style.visibility = shouldShow ? 'visible' : 'hidden';
+  }
+
   _destroySurfaceVideoFX() {
     const fx = this.surfaceFX;
     if (!fx) return;
@@ -5621,7 +5695,7 @@ export class RioScene extends BaseScene {
         this._insideOverlayPrevInside = inside;
       }
       if (this.mistGroup) this.mistGroup.visible = !inside;  // <-- re-enable when not inside
-      this._insideOverlay.style.opacity = inside ? '1' : '0';
+      this._applyInsideOverlayState(inside);
     }
 
     if (this.skyDome) this.skyDome.position.copy(this.camera.position);
