@@ -2,14 +2,14 @@ import subprocess
 from pathlib import Path
 
 # === Paths (edit if needed) ===
-SRC_DIR = Path(r"C:\Users\Nico\Documents\GitHub\delta-grande\game-assets\simulador\plants\mp4s")
-DST_DIR = Path(r"C:\Users\Nico\Documents\GitHub\delta-grande\game-assets\simulador\plants\webp_seq")
+SRC_DIR = Path(r"C:\Users\Nico\Documents\GitHub\delta-grande\game-assets\simulador\plants\mp4s\redo")
+DST_DIR = Path(r"C:\Users\Nico\Documents\GitHub\delta-grande\game-assets\simulador\plants\webp_seq\redo")
 
 # === Chroma key settings ===
 # 'chromakey' arguments are: chroma_color:similarity:blend
 # similarity ~ tolerance (0..1). Start small; raise if near-black should also be transparent.
 CHROMA_COLOR = "0x000000"   # black
-SIMILARITY   = 0.02         # try 0.01–0.10 as needed
+SIMILARITY   = 0.004         # try 0.01–0.10 as needed
 BLEND        = 0.0          # hard key (no feather). Try 0.05–0.1 for a slight edge soften.
 
 # === FFmpeg binary name (leave as 'ffmpeg' if it's on PATH) ===
