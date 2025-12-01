@@ -429,11 +429,9 @@ export class InstruccionesTransitionScene extends BaseScene {
     // Fade out del texto
     textContainer.style.opacity = '0';
     clickIndicator.style.opacity = '0';
-    logo.style.opacity = '0';
     await new Promise(resolve => setTimeout(resolve, 800));
     textContainer.remove();
     clickIndicator.remove();
-    logo.remove();
     style.remove();
   }
 

@@ -1,3 +1,5 @@
+import { AudioManager } from './AudioManager.js';
+
 export class PreloaderUI {
     constructor() {
         this.createPreloaderDOM();
@@ -29,6 +31,7 @@ export class PreloaderUI {
                 <div class="preloader-details">
                     <span id="current-file">Iniciando carga de assets...</span>
                 </div>
+
             </div>
         `;
 
@@ -37,6 +40,8 @@ export class PreloaderUI {
         
         // Agregar al DOM
         document.body.appendChild(this.container);
+
+            // Note: audio enable button moved to index.html (global). Preloader no longer provides it.
     }
 
     addStyles() {

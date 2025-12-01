@@ -157,7 +157,16 @@ pauseButtons.restart?.addEventListener('click', async () => {
 
 pauseButtons.exit?.addEventListener('click', () => {
   hidePauseMenu({ keepPaused: false });
-  router.navigate('#menu');
+  // Navegar al menú y recargar la página para asegurar un estado limpio.
+  // Establecemos el hash y luego recargamos, de forma similar a `resetearProgreso`.
+  try {
+    location.hash = '#menu';
+    location.reload();
+  } catch (e) {
+    // Fallback: navegar con el router si reload falla
+    console.warn('Reload failed, navigating via router', e);
+    router.navigate('#menu');
+  }
 });
 
 mainButtons.continue?.addEventListener('click', () => {

@@ -508,7 +508,8 @@
       z-index: 10003;
       pointer-events: none;
       text-align: center;
-      padding: clamp(10px, 2.5vmin, 28px);
+      /* Aumentado padding para dar más espacio alrededor del texto */
+      padding: clamp(14px, 3.5vmin, 40px);
       opacity: 0;
       transition: opacity 1s ease-in;
       display: flex;
@@ -596,6 +597,8 @@
       opacity: 0;
       transition: opacity 1s ease-in;
       box-sizing: border-box;
+      /* Añadimos padding para separar el texto del borde del overlay */
+      padding: clamp(14px, 3.5vmin, 40px);
       /* Use the new-science font used by Efedra overlay (fallback to system stack) */
       font-family: "new-science-mono", system-ui, -apple-system, "Segoe UI", Roboto, Inter, Arial, sans-serif;
     }

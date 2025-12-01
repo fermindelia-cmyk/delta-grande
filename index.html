@@ -62,13 +62,17 @@
             width: 35%;
             max-width: 460px;
             z-index: 10;
-            pointer-events: none;
+            /* allow clicks on the island so it can enable audio */
+            pointer-events: auto;
+            cursor: pointer;
         }
 
         .floating-island video {
             display: block;
             width: 100%;
             height: auto;
+            pointer-events: auto;
+            cursor: pointer;
         }
 
         /* Video frame container - centered on section (for second section) */
@@ -421,6 +425,7 @@
             <span class="pwa-actions" aria-hidden="false">
                 <button id="pwaInstallBtn" class="pwa-button" hidden aria-label="Instalar aplicación">Instalar</button>
                 <button id="pwaSaveBtn" class="pwa-button" aria-label="Guardar para uso offline">Guardar offline</button>
+                    <button id="enable-audio-global" class="pwa-button" aria-label="Habilitar audio">Habilitar audio</button>
             </span>
         </div>
     </footer>
@@ -504,6 +509,113 @@
         <div class="pwa-progress" aria-hidden="true"><div class="bar"></div></div>
         <div id="pwaToastPct" class="label">0%</div>
     </div>
+
+    <!-- Simple global audio element used to play web_musica.ogg -->
+    <audio id="web-music" preload="auto"></audio>
+
+    <script type="module">
+        const enableBtn = document.getElementById('enable-audio-global');
+        const audioEl = document.getElementById('web-music');
+        const islandEl = document.querySelector('.floating-island');
+
+        // Preload background music and SFX to avoid playback delay on first click
+        const PRELOAD_BG_SRC = '/assets/web_musica.ogg';
+        const PRELOAD_SFX_SRC = '/assets/exito.mp3';
+
+        // Prepare SFX element and preload it
+        const sfxEl = new Audio(PRELOAD_SFX_SRC);
+        sfxEl.preload = 'auto';
+        sfxEl.crossOrigin = 'anonymous';
+        // Lower SFX volume to be less intrusive
+        sfxEl.volume = 0.1;
+        // Trigger load to warm cache (won't autoplay)
+        try { sfxEl.load(); } catch (e) { /* ignore load errors */ }
+
+        // Configure background audio element for preloading (don't play yet)
+        if (audioEl) {
+            audioEl.src = PRELOAD_BG_SRC;
+            audioEl.loop = true;
+            audioEl.volume = 0.4; // restored background volume (only SFX lowered)
+            audioEl.crossOrigin = 'anonymous';
+            audioEl.preload = 'auto';
+            try { audioEl.load(); } catch (e) { /* ignore load errors */ }
+        }
+
+        async function enableGlobalAudio() {
+            if (!audioEl) return;
+            if (audioEl.dataset.enabled === '1') return; // already enabled
+
+            // Debugging listeners (idempotent-ish)
+            audioEl.addEventListener('canplaythrough', () => console.log('[Audio] canplaythrough'));
+            audioEl.addEventListener('loadeddata', () => console.log('[Audio] loadeddata'));
+            audioEl.addEventListener('playing', () => console.log('[Audio] playing'));
+            audioEl.addEventListener('play', () => console.log('[Audio] play event fired'));
+            audioEl.addEventListener('error', (ev) => console.error('[Audio] error', ev, audioEl.error));
+
+            try {
+                await audioEl.play();
+                audioEl.dataset.enabled = '1';
+                if (enableBtn) {
+                    enableBtn.textContent = 'Audio habilitado';
+                    enableBtn.disabled = true;
+                }
+                console.log('[Audio] reproducción iniciada con elemento <audio>');
+            } catch (playErr) {
+                console.warn('[Audio] play() falló:', playErr);
+                try {
+                    const Ctx = window.AudioContext || window.webkitAudioContext;
+                    if (Ctx) {
+                        const ctx = new Ctx();
+                        await ctx.resume();
+                        // try again
+                        await audioEl.play();
+                        audioEl.dataset.enabled = '1';
+                        if (enableBtn) {
+                            enableBtn.textContent = 'Audio habilitado';
+                            enableBtn.disabled = true;
+                        }
+                        console.log('[Audio] reproducción iniciada tras activar AudioContext');
+                    }
+                } catch (ctxErr) {
+                    console.error('[Audio] No se pudo iniciar reproducción tras fallback:', ctxErr);
+                }
+            }
+        }
+
+        if (enableBtn) enableBtn.addEventListener('click', enableGlobalAudio);
+
+        // Also enable audio when the user clicks the floating island (first section)
+        if (islandEl) {
+            islandEl.addEventListener('click', async (ev) => {
+                try {
+                    await enableGlobalAudio();
+
+                    // Play preloaded success SFX once on island click
+                    try {
+                        if (sfxEl) {
+                            // restart from start
+                            try { sfxEl.currentTime = 0; } catch (e) { /* ignore */ }
+                            sfxEl.play().catch((err) => console.warn('[SFX] play error', err));
+                        } else {
+                            // fallback to dynamic Audio if needed
+                            const fallback = new Audio(PRELOAD_SFX_SRC);
+                            fallback.volume = 0.9;
+                            fallback.crossOrigin = 'anonymous';
+                            fallback.play().catch(() => {});
+                        }
+                    } catch (sfxErr) {
+                        console.warn('No se pudo reproducir SFX de exito:', sfxErr);
+                    }
+
+                    // Optional: give visual feedback on click by briefly toggling a class
+                    islandEl.classList.add('clicked-audio');
+                    setTimeout(() => islandEl.classList.remove('clicked-audio'), 600);
+                } catch (e) {
+                    console.warn('Error al manejar click en la isla:', e);
+                }
+            });
+        }
+    </script>
 
     <script>
         // Handle messages from service worker to update progress UI

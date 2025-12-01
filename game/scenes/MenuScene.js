@@ -49,12 +49,8 @@ export class MenuScene extends BaseScene {
     `;
     document.body.appendChild(overlay);
 
-    // Mostrar botón de inicio solo en la primera carga de la sesión
-    const hasInteracted = sessionStorage.getItem('hasInteracted');
-    if (!hasInteracted) {
-      await this.showStartButton(overlay);
-      sessionStorage.setItem('hasInteracted', 'true');
-    }
+    // Mostrar botón de inicio cada vez que se entra a la página del menú
+    await this.showStartButton(overlay);
 
     // Delay inicial de medio segundo
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -217,12 +213,12 @@ export class MenuScene extends BaseScene {
       const skipVideo = (e) => {
         if (skippeable) {
           e.stopPropagation();
-          if (audio) {
-            audio.pause();
-            audio.currentTime = 0;
-          }
-          video.pause();
-          video.currentTime = 0;
+          // Al saltar el video, conservar la reproducción del audio.
+          // Solo detener y remover el video.
+          try {
+            video.pause();
+            video.currentTime = 0;
+          } catch (err) {}
           if (video.parentNode) video.parentNode.removeChild(video);
           video.removeEventListener('click', skipVideo);
           resolve(true); // Indica que fue skipped
@@ -261,8 +257,9 @@ export class MenuScene extends BaseScene {
 
       // Cuando termine el video, limpiar
       video.addEventListener('ended', () => {
-        if (audio) audio.pause();
-        // Remover después de un breve delay
+        // No pausar el audio aquí para que la canción pueda continuar
+        // hasta su final independiente de la duración del video.
+        // Remover el video después de un breve delay
         setTimeout(() => {
           if (video.parentNode) video.parentNode.removeChild(video);
         }, 50);
