@@ -3,6 +3,12 @@ import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { BaseScene } from '../core/BaseScene.js';
 import { AssetLoader } from '../core/AssetLoader.js';
 import { EventBus } from '../core/EventBus.js';
+
+const PUBLIC_BASE_URL = import.meta.env.BASE_URL ?? '/';
+const resolvePublicAsset = (path) => {
+  const trimmed = path.replace(/^\/+/, '');
+  return `${PUBLIC_BASE_URL}${trimmed}`;
+};
 import {
   autoRigTwoBoneFishMesh,
   findTailBoneFromSkeleton,
@@ -582,7 +588,7 @@ const DEFAULT_PARAMS = {
     scale: 0.22,
     // sequence: "D+_subacuatico_pre RADAR_V1_00001.png", ...
     anim: {
-      dir: '/game-assets/sub/interfaz/radar_animation',
+      dir: resolvePublicAsset('game-assets/sub/interfaz/radar_animation'),
       prefix: 'D+_subacuatico_pre RADAR_V1_',
       pad: 5,
       startIndex: 1,
