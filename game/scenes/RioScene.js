@@ -523,11 +523,8 @@ const DEFAULT_PARAMS = {
     src: '/game-assets/sub/interfaz/ruler.png',
 
     leftMarginVw: 0.02,
-    rightMarginVw: 0.02,
-    // vertical mapping:
-    // when camera is at yMax (surfaceLevel + cameraSurfaceMargin),
-    // ruler's UPPER edge sits at: (vh/2 + midYOffsetPx)
-    midYOffsetPx: -90,    // tweak if you want that midpoint “anchor” nudged
+    visiblePortionAtBottom: 0.5, // fraction of image that should fill viewport height at max depth
+    topAnchorVh: 0.4,            // when camera highest, ruler top sits at 40% viewport height
 
     // z-order: should be behind deck (deck is ~9997)
     zIndex: 9995,
@@ -3595,28 +3592,28 @@ export class RioScene extends BaseScene {
     if (!this.ruler?.el || !this.params.rulerUI?.enabled) return;
     const R = this.params.rulerUI;
 
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
+    const vw = Math.max(1, window.innerWidth || 1);
+    const vh = Math.max(1, window.innerHeight || 1);
 
-    const leftPx  = Math.round((R.leftMarginVw  ?? 0.02) * vw);
-    const rightPx = Math.round((R.rightMarginVw ?? 0.02) * vw);
-    const availW  = Math.max(1, vw - leftPx - rightPx);
+    const leftPx  = Math.round((R.leftMarginVw ?? 0.02) * vw);
 
-    // size by width (keep aspect)
     const natW = Math.max(1, this.ruler.naturalW || 1);
     const natH = Math.max(1, this.ruler.naturalH || 1);
     const aspect = natW / natH;
-    const displayH = Math.round(availW / aspect);
+    const visiblePortion = THREE.MathUtils.clamp(R.visiblePortionAtBottom ?? 0.5, 0.05, 1);
+    const displayH = Math.round(vh / visiblePortion);
+    const displayW = Math.round(displayH * aspect);
 
     // pin horizontally
     Object.assign(this.ruler.el.style, {
       left: `${leftPx}px`,
-      width: `${availW}px`,
-      height: `${displayH}px` // explicit height for easy math later
+      width: `${displayW}px`,
+      height: `${displayH}px`
     });
 
     // cache current computed height for vertical mapping
     this.ruler.displayH = displayH;
+    this.ruler.visiblePortion = visiblePortion;
     this.ruler.el.style.opacity = String(this.params.rulerUI.opacity ?? 1);
   }
 
@@ -3624,7 +3621,7 @@ export class RioScene extends BaseScene {
   _updateRulerPosition() {
     if (!this.ruler?.el || !this.params.rulerUI?.enabled) return;
 
-    const vh = window.innerHeight;
+    const vh = Math.max(1, window.innerHeight || 1);
     const imgH = Math.max(1, this.ruler.displayH || this.ruler.el.getBoundingClientRect().height || 1);
 
     // camera Y normalization (0 = highest, 1 = lowest)
@@ -3633,11 +3630,8 @@ export class RioScene extends BaseScene {
     const cy   = this.camera.position.y;
     const t = THREE.MathUtils.clamp((yMax - cy) / Math.max(1e-6, (yMax - yMin)), 0, 1);
 
-    // constraints:
-    // at top (t=0): upper edge at mid + offset
-    // at bottom (t=1): lower edge at bottom -> top = vh - imgH
-    const midOffset = this.params.rulerUI.midYOffsetPx ?? 0;
-    const topAtTop    = Math.round(vh * 0.5 + midOffset);
+    const topAnchorVh = THREE.MathUtils.clamp(this.params.rulerUI.topAnchorVh ?? 0.4, 0, 1.2);
+    const topAtTop = Math.round(vh * topAnchorVh);
     const topAtBottom = Math.round(vh - imgH);
 
     const topPx = Math.round(THREE.MathUtils.lerp(topAtTop, topAtBottom, t));
