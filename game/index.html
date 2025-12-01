@@ -709,8 +709,22 @@
   </div>
 
   <script type="module" src="./main.js"></script>
-
   <!-- efedra wrapper is now a sibling of #videoOverlay (located inside #hud) -->
+
+  <script>
+    // Register service worker to enable offline caching of game assets.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+          .then((reg) => {
+            console.log('ServiceWorker registered with scope:', reg.scope);
+          })
+          .catch((err) => {
+            console.warn('ServiceWorker registration failed:', err);
+          });
+      });
+    }
+  </script>
 
 </body>
 

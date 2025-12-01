@@ -273,6 +273,68 @@
             border: 1px solid rgba(255,255,255,0.06);
         }
 
+        /* PWA action buttons */
+        .pwa-actions {
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+            margin-left: 12px;
+        }
+
+        .pwa-button {
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #000;
+            background: linear-gradient(135deg, #DDDC31 0%, #FFE55C 100%);
+            border: 2px solid #fff;
+            border-radius: 24px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+        }
+
+        .pwa-button[hidden] { display: none; }
+
+        /* Toast / progress UI */
+        .pwa-toast {
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            transform: translateX(-50%);
+            min-width: 280px;
+            max-width: 90%;
+            background: rgba(0,0,0,0.85);
+            color: #fff;
+            padding: 12px 14px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            z-index: 20000;
+        }
+
+        .pwa-toast[hidden] { display: none; }
+
+        .pwa-progress {
+            flex: 1 1 auto;
+            height: 10px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .pwa-progress > .bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg,#DDDC31,#FFE55C);
+            transition: width 260ms linear;
+        }
+
+        .pwa-toast .label { font-size: 13px; white-space: nowrap; }
+
         .site-footer__inner strong {
             display: inline-block;
             font-weight: 700;
@@ -356,9 +418,137 @@
     <footer class="site-footer" aria-label="Pie de página">
         <div class="site-footer__inner">
             <strong>© Delta Grande 2025</strong> Todos los derechos reservados
+            <span class="pwa-actions" aria-hidden="false">
+                <button id="pwaInstallBtn" class="pwa-button" hidden aria-label="Instalar aplicación">Instalar</button>
+                <button id="pwaSaveBtn" class="pwa-button" aria-label="Guardar para uso offline">Guardar offline</button>
+            </span>
         </div>
     </footer>
     
+    <script>
+        // Basic PWA install + offline helpers
+        (function(){
+            let deferredPrompt = null;
+            const installBtn = document.getElementById('pwaInstallBtn');
+            const saveBtn = document.getElementById('pwaSaveBtn');
+
+            // Listen for the beforeinstallprompt event
+            window.addEventListener('beforeinstallprompt', (e) => {
+                // Prevent the mini-infobar from appearing on mobile
+                e.preventDefault();
+                deferredPrompt = e;
+                // Show the install button
+                if (installBtn) installBtn.hidden = false;
+            });
+
+            // Register service worker (if available)
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/service-worker.js').then((reg) => {
+                    console.log('ServiceWorker registrado:', reg);
+                }).catch((err) => {
+                    console.warn('ServiceWorker registro fallido:', err);
+                });
+            }
+
+            // Install button action
+            if (installBtn) {
+                installBtn.addEventListener('click', async () => {
+                    if (!deferredPrompt) return;
+                    deferredPrompt.prompt();
+                    const choice = await deferredPrompt.userChoice;
+                    if (choice && choice.outcome) {
+                        console.log('Install choice:', choice.outcome);
+                    }
+                    // Hide the install button after attempt
+                    deferredPrompt = null;
+                    installBtn.hidden = true;
+                });
+            }
+
+            // Save offline action: send a message to the service worker to cache resources
+            if (saveBtn) {
+                saveBtn.addEventListener('click', async () => {
+                    if (!('serviceWorker' in navigator)) {
+                        alert('Service Worker no soportado en este navegador.');
+                        return;
+                    }
+
+                    try {
+                        const reg = await navigator.serviceWorker.ready;
+                        if (reg && reg.active) {
+                            // Show toast UI and kick off caching
+                            showPwaToast('Guardando recursos...', 0);
+                            reg.active.postMessage({ type: 'CACHE_OFFLINE' });
+                            // The service worker will post progress messages back
+                        } else {
+                            alert('Service Worker aún no está activo. Intenta de nuevo en unos segundos.');
+                        }
+                    } catch (err) {
+                        console.warn('Error al pedir cache offline:', err);
+                        alert('No se pudo iniciar el guardado offline.');
+                    }
+                });
+            }
+
+            // When the app is installed, hide install button
+            window.addEventListener('appinstalled', () => {
+                if (installBtn) installBtn.hidden = true;
+                console.log('App instalada');
+            });
+        })();
+    </script>
+
+    <!-- PWA progress toast -->
+    <div id="pwaToast" class="pwa-toast" hidden role="status" aria-live="polite">
+        <div class="label">Guardando para uso offline...</div>
+        <div class="pwa-progress" aria-hidden="true"><div class="bar"></div></div>
+        <div id="pwaToastPct" class="label">0%</div>
+    </div>
+
+    <script>
+        // Handle messages from service worker to update progress UI
+        (function(){
+            const toast = document.getElementById('pwaToast');
+            const bar = toast ? toast.querySelector('.pwa-progress > .bar') : null;
+            const pct = document.getElementById('pwaToastPct');
+
+            function showPwaToast(message, percent) {
+                if (!toast) return;
+                toast.querySelector('.label').textContent = message;
+                if (bar) bar.style.width = (percent || 0) + '%';
+                if (pct) pct.textContent = Math.round(percent || 0) + '%';
+                toast.hidden = false;
+            }
+
+            function hidePwaToast() {
+                if (!toast) return;
+                toast.hidden = true;
+            }
+
+            // Expose a show function used by the other inline script
+            window.showPwaToast = showPwaToast;
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.addEventListener('message', (event) => {
+                    const data = event.data || {};
+                    if (data.type === 'CACHE_PROGRESS') {
+                        const { cached, total, url } = data;
+                        const pctVal = total ? Math.round((cached / total) * 100) : 0;
+                        showPwaToast(`Guardando recursos... (${cached}/${total})`, pctVal);
+                    } else if (data.type === 'CACHE_ERROR') {
+                        // show an error briefly
+                        showPwaToast('Error guardando recursos: ' + (data.url || ''), 0);
+                        setTimeout(hidePwaToast, 4000);
+                    } else if (data.type === 'CACHE_COMPLETE') {
+                        const { cached, total } = data;
+                        showPwaToast(`Listo: ${cached}/${total} recursos guardados`, 100);
+                        setTimeout(hidePwaToast, 3000);
+                    }
+                });
+            }
+        })();
+    </script>
+
 </body>
 
 </html>

@@ -144,33 +144,7 @@ export class InstruccionesTransitionScene extends BaseScene {
     `;
     overlay.appendChild(textContainer);
 
-    // Logo arriba
-    const logo = document.createElement('video');
-    this.logo = logo;
-    logo.src = '../game-assets/recorrido/interfaz/logo_naranja_alpha.webm';
-    logo.style.cssText = `
-      position: absolute;
-      top: 8%;
-      left: 50%;
-      transform: translateX(-50%) scale(${this.scale});
-      transform-origin: center center;
-      width: 200px;
-      height: auto;
-      z-index: 10003;
-      opacity: 0;
-      transition: opacity 0.8s ease-in-out;
-    `;
-    logo.muted = true;
-    logo.playsInline = true;
-    logo.loop = true;
-    overlay.appendChild(logo);
-
-    // Reproducir logo
-    logo.play().catch(() => {});
-    requestAnimationFrame(() => {
-      logo.style.opacity = '1';
-    });
-
+    
     // Botón de saltear
     const skipButton = document.createElement('button');
     this.skipButton = skipButton;

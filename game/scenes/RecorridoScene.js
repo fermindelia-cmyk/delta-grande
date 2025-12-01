@@ -1131,8 +1131,13 @@ export class RecorridoScene extends BaseScene {
 
     // Clean up preloaded data video
     if (this.preloadedDataVideo) {
-      this.preloadedDataVideo.pause();
-      this.preloadedDataVideo.src = '';
+      try {
+        this.preloadedDataVideo.pause();
+        try { this.preloadedDataVideo.removeAttribute('src'); } catch (err) {}
+        try { this.preloadedDataVideo.load(); } catch (err) {}
+      } catch (e) {
+        console.warn('Error limpiando video precargado en unmount:', e);
+      }
       this.preloadedDataVideo = null;
     }
     // Disconnect efedra resize observer / listeners if any
@@ -1929,7 +1934,9 @@ export class RecorridoScene extends BaseScene {
       if (this.preloadedDataVideo) {
         try {
           this.preloadedDataVideo.pause();
-          this.preloadedDataVideo.src = '';
+          // Explicitly remove src and call load() to reliably abort network fetch
+          try { this.preloadedDataVideo.removeAttribute('src'); } catch (err) {}
+          try { this.preloadedDataVideo.load(); } catch (err) {}
         } catch (e) {
           console.warn('Error limpiando video precargado:', e);
         }
@@ -1938,31 +1945,36 @@ export class RecorridoScene extends BaseScene {
 
       // Crear nuevo video y precargarlo (modo silencioso - no bloquear si falla)
       try {
-        this.preloadedDataVideo = document.createElement('video');
-        this.preloadedDataVideo.src = this.currentSpecies.assets.dataVideo;
-        this.preloadedDataVideo.muted = true; // Muted para permitir precarga sin interacción del usuario
-        this.preloadedDataVideo.preload = 'metadata'; // Cambiar a 'metadata' en lugar de 'auto' para cargar menos datos
-        this.preloadedDataVideo.playsInline = true;
-
-
+        // Create element and capture it in a local const to avoid races with
+        // subsequent calls that may replace `this.preloadedDataVideo`.
+        const v = document.createElement('video');
+        v.src = this.currentSpecies.assets.dataVideo;
+        v.muted = true; // Muted para permitir precarga sin interacción del usuario
+        v.preload = 'metadata'; // Cambiar a 'metadata' en lugar de 'auto' para cargar menos datos
+        v.playsInline = true;
 
         // Esperar a que se carguen los metadatos
-        this.preloadedDataVideo.addEventListener('loadedmetadata', () => {
+        v.addEventListener('loadedmetadata', () => {
           // 👇 Verificar que el video sigue siendo válido antes de acceder a duration
-          if (this.preloadedDataVideo && this.preloadedDataVideo.duration) {
-
+          if (v && v.duration) {
+            // metadata available; nothing else required here
           }
         }, { once: true });
 
         // Manejar errores de carga - NO BLOQUEAR la funcionalidad
-        this.preloadedDataVideo.addEventListener('error', (e) => {
-          console.warn('⚠️ No se pudo precargar video de data (se cargará bajo demanda):', this.currentSpecies.assets.dataVideo);
-          // 👇 Limpiar referencias pero NO lanzar error
-          if (this.preloadedDataVideo) {
-            this.preloadedDataVideo.src = '';
-            this.preloadedDataVideo = null;
+        const self = this;
+        v.addEventListener('error', function onErr(e) {
+          console.warn('⚠️ No se pudo precargar video de data (se cargará bajo demanda):', self.currentSpecies?.assets?.dataVideo);
+          // Limpieza segura del elemento local
+          try { v.removeAttribute('src'); } catch (err) {}
+          try { v.load(); } catch (err) {}
+          // If the currently stored preloadedDataVideo points to this element, clear it
+          if (self.preloadedDataVideo === v) {
+            self.preloadedDataVideo = null;
           }
         }, { once: true });
+
+        this.preloadedDataVideo = v;
       } catch (e) {
         console.warn('⚠️ Error creando elemento de precarga de video (se ignorará):', e);
         this.preloadedDataVideo = null;

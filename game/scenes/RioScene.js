@@ -1848,54 +1848,26 @@ class Deck {
 
 
   _injectCSS() {
+    // If an external deck stylesheet exists, prefer that (avoids duplication)
     if (document.getElementById('__deck_css')) return;
+    if (document.querySelector('link[href$="deck-style.css"], link[href*="deck-style.css"]')) return;
+
+    // Fallback: inject minimal runtime CSS if external file isn't present
     const css = document.createElement('style');
     css.id = '__deck_css';
     css.textContent = `
-      #deck-container {
-        pointer-events: auto;
-      }
-      #species-discovery {
-        position: fixed;
-        left: 16px; bottom: 16px;
-        z-index: 9998;
-        font-weight: 700;
-        color: #fff;
-        text-shadow: 0 2px 8px rgba(0,0,0,0.6);
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      }
-
-      .deck-card-vert {
-        opacity: 1;
-        will-change: transform, opacity;
-        transition: opacity 200ms ease, transform 280ms cubic-bezier(.22,.61,.36,1), filter 200ms ease;
-      }
-      .deck-card-vert .deck-bg {
-        position: absolute; left:0; top:0; width:100%; height:100%; object-fit: cover; pointer-events: none;
-      }
-      .deck-card-vert .deck-bg-selected,
-      .deck-card-vert .deck-bg-completed { opacity: 0; transition: opacity 220ms ease; }
-
+      #deck-container { pointer-events: auto; }
+      #species-discovery { position: fixed; left: 16px; bottom: 16px; z-index: 9998; font-weight: 700; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.6); font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+      .deck-card-vert { opacity: 1; will-change: transform, opacity; transition: opacity 200ms ease, transform 280ms cubic-bezier(.22,.61,.36,1), filter 200ms ease; }
+      .deck-card-vert .deck-bg { position: absolute; left:0; top:0; width:100%; height:100%; object-fit: cover; pointer-events: none; }
+      .deck-card-vert .deck-bg-selected, .deck-card-vert .deck-bg-completed { opacity: 0; transition: opacity 220ms ease; }
       .deck-card-vert.completed .deck-bg-completed { opacity: 1 !important; }
-      
-      .deck-card-vert.bonus-completed { 
-        box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
-        border: 2px solid #FFD700;
-      }
-      
-      .deck-card-vert.bonus-completed .deck-bg-completed { 
-        opacity: 1 !important;
-        filter: brightness(1.3) hue-rotate(45deg);
-      }
-
+      .deck-card-vert.bonus-completed { box-shadow: 0 0 15px rgba(255, 215, 0, 0.8); border: 2px solid #FFD700; }
+      .deck-card-vert.bonus-completed .deck-bg-completed { opacity: 1 !important; filter: brightness(1.3) hue-rotate(45deg); }
       .deck-canvas { pointer-events: none; }
-
       .deck-text-wrap { pointer-events: none; }
-
-      .deck-card-vert.selected .deck-canvas {
-        will-change: filter;
-      }
-      `;
+      .deck-card-vert.selected .deck-canvas { will-change: filter; }
+    `;
     document.head.appendChild(css);
   }
 
