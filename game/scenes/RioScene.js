@@ -3291,7 +3291,6 @@ export class RioScene extends BaseScene {
     this.disposeMistLayer();
     this._destroyRuler();
     this._destroyIntroOverlay();
-    this._destroyAudioGateOverlay();
     this._destroyTimerOverlay();
     this._destroyCursorOverlay();
   this._destroySurfaceVideoFX();
