@@ -4,7 +4,20 @@ import { BaseScene } from '../core/BaseScene.js';
 import { AssetLoader } from '../core/AssetLoader.js';
 import { EventBus } from '../core/EventBus.js';
 
-const PUBLIC_BASE_URL = import.meta.env.BASE_URL ?? '/';
+const ensureTrailingSlash = (value = '') => (value.endsWith('/') ? value : `${value}/`);
+const computePublicBaseUrl = () => {
+  const envBase = import.meta?.env?.BASE_URL;
+  if (envBase) {
+    return ensureTrailingSlash(envBase);
+  }
+  if (typeof window !== 'undefined' && window.location) {
+    // When served from /game/, step one level up so shared assets resolve both locally and online.
+    return ensureTrailingSlash(new URL('../', window.location.href).href);
+  }
+  return '/';
+};
+
+const PUBLIC_BASE_URL = computePublicBaseUrl();
 const resolvePublicAsset = (path) => {
   const trimmed = path.replace(/^\/+/, '');
   return `${PUBLIC_BASE_URL}${trimmed}`;
