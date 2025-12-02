@@ -92,8 +92,9 @@ export class MenuScene extends BaseScene {
       const button = document.createElement('button');
       button.textContent = 'INICIAR';
       button.style.cssText = `
-        padding: 30px 100px;
-        font-size: 36px;
+        /* Responsive sizing: font and width adapt to viewport */
+        padding: 18px 24px;
+        font-size: clamp(20px, 6vw, 36px);
         font-weight: bold;
         font-family: "new-science-mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
         background: transparent;
@@ -105,6 +106,12 @@ export class MenuScene extends BaseScene {
         letter-spacing: 3px;
         transition: all 0.3s ease;
         animation: pulse 2s infinite;
+        /* Make sure the button never overflows on small screens */
+        width: clamp(180px, 70vw, 520px);
+        max-width: 90vw;
+        box-sizing: border-box;
+        white-space: normal; /* allow text to wrap if needed */
+        text-align: center;
       `;
       
       // Animación de pulso
