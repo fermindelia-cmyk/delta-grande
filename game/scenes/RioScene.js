@@ -598,14 +598,13 @@ const DEFAULT_PARAMS = {
     enabled: true,
     zIndex: 100001,
     // scaling factor separate from cursor
-    scale: 0.22,
-    // sequence: "D+_subacuatico_pre RADAR_V1_00001.png", ...
+    scale: 1,
     anim: {
-      dir: resolvePublicAsset('game-assets/sub/interfaz/radar_animation'),
-      prefix: 'D+_subacuatico_pre RADAR_V1_',
-      pad: 5,
-      startIndex: 1,
-      maxFramesProbe: 1200
+      sheetSrc: resolvePublicAsset('game-assets/sub/interfaz/radar_animation/radar.webp'),
+      columns: 7,
+      rows: 7,
+      frameCount: 46,
+      fps: 30
     }
   },
 
@@ -2875,8 +2874,8 @@ export class RioScene extends BaseScene {
       y: 0
     };
 
-
-    this._radars = []; // each: { frames, idx, x, y, el }
+    this._radarAnim = null; // resolved animation data (frame sequence or sheet)
+    this._radars = [];      // active DOM instances
 
 
 
@@ -3172,7 +3171,16 @@ export class RioScene extends BaseScene {
         this._cursorAnim.frames = await this._preloadFrameSequence(C.dir, C.prefix, C.pad, C.startIndex, C.maxFramesProbe);
       }
       if (this.params.radarUI?.enabled && R) {
-        this._radarFrames = await this._preloadFrameSequence(R.dir, R.prefix, R.pad, R.startIndex, R.maxFramesProbe);
+        const fps = Math.max(1, Number(R.fps) || 30);
+        const frameDuration = 1 / fps;
+        if (R.sheetSrc) {
+          this._radarAnim = await this._loadSpriteSheet({ ...R, frameDuration });
+        } else {
+          const frames = await this._preloadFrameSequence(R.dir, R.prefix, R.pad, R.startIndex, R.maxFramesProbe);
+          this._radarAnim = frames?.length ? { kind: 'frames', frames, totalFrames: frames.length, frameDuration } : null;
+        }
+      } else {
+        this._radarAnim = null;
       }
 
 
@@ -3996,6 +4004,58 @@ export class RioScene extends BaseScene {
     return frames;
   }
 
+  async _loadSpriteSheet(config = {}) {
+    const {
+      sheetSrc,
+      columns = 1,
+      rows = 1,
+      frameCount,
+      frameDuration,
+      fps
+    } = config;
+
+    if (!sheetSrc) return null;
+
+    const image = await new Promise((resolve, reject) => {
+      const im = new Image();
+      im.decoding = 'async';
+      im.onload = () => resolve(im);
+      im.onerror = (err) => reject(err);
+      im.src = sheetSrc;
+    }).catch((err) => {
+      console.warn('Failed to load radar spritesheet', sheetSrc, err);
+      return null;
+    });
+
+    if (!image) return null;
+
+    const cols = Math.max(1, Number(columns) || 1);
+    const rowsSafe = Math.max(1, Number(rows) || 1);
+    const frameW = Math.round(image.naturalWidth / cols);
+    const frameH = Math.round(image.naturalHeight / rowsSafe);
+    const maxFrames = cols * rowsSafe;
+    const totalFrames = Math.min(
+      Math.max(1, Number(frameCount) || maxFrames),
+      maxFrames
+    );
+    const fpsSafe = Math.max(1, Number(fps) || 30);
+    const duration = (Number(frameDuration) > 0) ? frameDuration : (1 / fpsSafe);
+
+    return {
+      kind: 'sheet',
+      sheetSrc,
+      image,
+      columns: cols,
+      rows: rowsSafe,
+      frameWidth: frameW,
+      frameHeight: frameH,
+      sheetWidth: image.naturalWidth,
+      sheetHeight: image.naturalHeight,
+      totalFrames,
+      frameDuration: duration
+    };
+  }
+
   // --- NEW: start cursor click anim at a given screen position (clientX, clientY) ---
   _startCursorClick(clientX, clientY) {
     if (!this.cursorEl || !this._cursorAnim.frames?.length) return;
@@ -4050,9 +4110,10 @@ export class RioScene extends BaseScene {
   // --- NEW: create a DOM <img> for one radar animation instance ---
   _createRadarElement(x, y) {
     const R = this.params.radarUI;
-    const el = document.createElement('img');
-    // start with first frame; will be replaced on update
-    el.src = (this._radarFrames && this._radarFrames[0]) ? this._radarFrames[0].src : '';
+    const anim = this._radarAnim;
+    if (!anim) return null;
+
+    const el = document.createElement(anim.kind === 'sheet' ? 'div' : 'img');
     Object.assign(el.style, {
       position: 'fixed',
       left: `${x}px`,
@@ -4061,8 +4122,23 @@ export class RioScene extends BaseScene {
       transformOrigin: '50% 50%',
       pointerEvents: 'none',
       zIndex: String(R.zIndex ?? 100001),
-      userSelect: 'none'
+      userSelect: 'none',
+      display: 'block'
     });
+
+    if (anim.kind === 'sheet') {
+      Object.assign(el.style, {
+        width: `${anim.frameWidth}px`,
+        height: `${anim.frameHeight}px`,
+        backgroundImage: `url(${anim.sheetSrc})`,
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: '0px 0px',
+        backgroundSize: `${anim.sheetWidth}px ${anim.sheetHeight}px`
+      });
+    } else {
+      el.src = (anim.frames && anim.frames[0]) ? anim.frames[0].src : '';
+    }
+
     document.body.appendChild(el);
     return el;
   }
@@ -4070,35 +4146,63 @@ export class RioScene extends BaseScene {
   // --- NEW: public trigger ---
   _playRadarAtScreen(clientX, clientY) {
     if (!this.params.radarUI?.enabled) return;
-    if (!this._radarFrames?.length) return;
+    if (!this._radarAnim?.totalFrames) return;
 
     const el = this._createRadarElement(clientX, clientY);
-    this._radars.push({
-      frames: this._radarFrames,
+    if (!el) return;
+
+    const instance = {
       idx: 0,
       x: clientX,
       y: clientY,
-      el
-    });
+      el,
+      totalFrames: this._radarAnim.totalFrames,
+      timeAccum: 0
+    };
+    this._radars.push(instance);
 
-    // ensure first frame painted now
-    el.src = this._radarFrames[0].src;
+    this._applyRadarFrame(instance, 0);
+  }
+
+  _applyRadarFrame(radarInstance, frameIndex) {
+    const anim = this._radarAnim;
+    if (!anim || !radarInstance?.el) return;
+
+    if (anim.kind === 'sheet') {
+      const idx = Math.min(frameIndex, anim.totalFrames - 1);
+      const col = idx % anim.columns;
+      const row = Math.floor(idx / anim.columns);
+      const offsetX = -col * anim.frameWidth;
+      const offsetY = -row * anim.frameHeight;
+      radarInstance.el.style.backgroundPosition = `${offsetX}px ${offsetY}px`;
+    } else if (anim.kind === 'frames') {
+      const frame = anim.frames?.[frameIndex];
+      if (frame) {
+        radarInstance.el.src = frame.src;
+      }
+    }
   }
 
   // --- NEW: step all active radars one frame per update; remove when done ---
-  _updateRadars() {
-    if (!this._radars?.length) return;
+  _updateRadars(dt = 0) {
+    if (!this._radars?.length || !this._radarAnim) return;
+    const frameDuration = this._radarAnim.frameDuration || (1 / 30);
     for (let i = this._radars.length - 1; i >= 0; i--) {
       const r = this._radars[i];
-      r.idx += 1;
-      if (r.idx >= r.frames.length) {
-        // done: remove DOM node
-        r.el?.parentNode?.removeChild(r.el);
-        this._radars.splice(i, 1);
-        continue;
+      r.timeAccum = (r.timeAccum ?? 0) + (dt || 0);
+
+      if (r.timeAccum < frameDuration) continue;
+
+      while (r.timeAccum >= frameDuration) {
+        r.timeAccum -= frameDuration;
+        r.idx += 1;
+        if (r.idx >= r.totalFrames) {
+          r.el?.parentNode?.removeChild(r.el);
+          this._radars.splice(i, 1);
+          break;
+        }
+        this._applyRadarFrame(r, r.idx);
       }
-      const im = r.frames[r.idx];
-      if (im) r.el.src = im.src;
     }
   }
 
@@ -5747,7 +5851,7 @@ export class RioScene extends BaseScene {
     if (this.params.rulerUI?.enabled) this._updateRulerPosition();
 
     this._updateCursorAnim();
-    this._updateRadars();
+    this._updateRadars(dt);
 
     // Keep haze aligned if params change, or if surfaceLevel moves
     if (this.shoreHazeMesh && this.params.shoreHaze?.enabled) {
