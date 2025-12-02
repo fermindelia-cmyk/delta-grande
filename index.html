@@ -74,15 +74,23 @@
             cursor: pointer;
         }
 
-        /* Zoom toggle when clicking the island */
-        body {
+        /* Zoom toggle when clicking the island: scale only the island element */
+        .floating-island,
+        .floating-island video {
             transition: transform 320ms ease;
-            transform-origin: 50% 50%;
+            transform-origin: center center;
+            will-change: transform;
         }
 
-        body.zoomed {
-            transform: scale(1.5);
-            overflow: hidden;
+        .floating-island.zoomed {
+            /* Keep the island centered in the viewport while scaling:
+               - use fixed positioning so it stays in the center even if the page scrolls
+               - preserve the translate centering and apply scale after it */
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(1.5);
+            z-index: 9999;
         }
 
         .floating-island video {
@@ -543,10 +551,12 @@
         const audioEl = document.getElementById('web-music');
         const islandEl = document.querySelector('.floating-island');
 
-        // Zoom configuration: toggle a class on <body> to scale the page to 150%
+        // Zoom configuration: toggle a class on the floating island to scale it up
         const ZOOM_CLASS = 'zoomed';
         function toggleZoom() {
-            document.body.classList.toggle(ZOOM_CLASS);
+            if (islandEl) {
+                islandEl.classList.toggle(ZOOM_CLASS);
+            }
         }
 
         // Find the actual <video> element inside the floating island so
