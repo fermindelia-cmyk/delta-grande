@@ -31,19 +31,28 @@
             font-family: 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
             background-color: #000;
             background-image: url('assets/web-bgs/web_bg.jpg');
-            background-position: top center;
+            /* Make the background cover the full viewport and stay centered */
+            background-position: center center;
             background-repeat: no-repeat;
-            background-size: auto;
-            background-attachment: scroll;
+            background-size: cover;
+            background-attachment: fixed;
+            min-height: 100vh;
             overflow-x: hidden;
         }
 
-        /* Video sections - full viewport height */
+          /* Video sections - full viewport height and centered content
+              Sections are separate blocks and their inner frames occupy 60vw */
         .video-section {
             width: 100%;
-            height: 100vh;
+            min-height: 100vh;
             position: relative;
-            overflow: hidden;
+            overflow: visible;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 40px 0;
+            box-sizing: border-box;
         }
 
         .video-section video {
@@ -65,53 +74,67 @@
             cursor: pointer;
         }
 
+        /* Zoom toggle when clicking the island */
+        body {
+            transition: transform 320ms ease;
+            transform-origin: 50% 50%;
+        }
+
+        body.zoomed {
+            transform: scale(1.5);
+            overflow: hidden;
+        }
+
         .floating-island video {
             display: block;
-            width: 100%;
+            width: 60vw;
+            max-width: 60vw;
             height: auto;
             pointer-events: auto;
             cursor: pointer;
         }
 
-        /* Video frame container - centered on section (for second section) */
+        /* Video frame container - flow layout and centered
+           (no absolute positioning so sections don't overlap/crop) */
         .video-frame-container {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 70%;
-            max-width: 700px;
+            position: relative;
+            width: 100%;
+            max-width: none;
             z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            padding: 8px 0;
         }
 
         /* Content container for third section */
         .content-container {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 70%;
-            max-width: 700px;
+            position: relative;
+            width: 100%;
+            max-width: none;
             z-index: 10;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 24px;
+            box-sizing: border-box;
+            padding: 8px 0;
         }
 
         .content-container .video-frame-container {
             position: relative;
-            top: auto;
-            left: auto;
-            transform: none;
             width: 100%;
+            box-sizing: border-box;
         }
 
         /* Frame image as background */
         .video-frame {
             position: relative;
-            width: 100%;
+            width: 60vw;
+            max-width: 60vw;
             aspect-ratio: 16/9;
+            margin: 0 auto;
             padding: calc(5% - 31px) calc(5% - 23px);
         }
 
@@ -160,9 +183,13 @@
         .map-link { display: block; width: 100%; text-decoration: none; color: inherit; }
         .map-link .video-wrapper { cursor: pointer; }
 
-        /* News section below video frame */
+        /* News section below video frame - contained to same width as frames */
         .news-section {
-            width: 100%;
+            width: 60vw;
+            max-width: 60vw;
+            margin: 0 auto;
+            box-sizing: border-box;
+            padding: 8px 0;
         }
 
         .news-line {
@@ -516,6 +543,16 @@
         const audioEl = document.getElementById('web-music');
         const islandEl = document.querySelector('.floating-island');
 
+        // Zoom configuration: toggle a class on <body> to scale the page to 150%
+        const ZOOM_CLASS = 'zoomed';
+        function toggleZoom() {
+            document.body.classList.toggle(ZOOM_CLASS);
+        }
+
+        // Find the actual <video> element inside the floating island so
+        // the zoom only toggles when that video element is clicked.
+        const islandVideoEl = islandEl ? islandEl.querySelector('video') : null;
+
         // Preload background music and SFX to avoid playback delay on first click
         const PRELOAD_BG_SRC = '/assets/web_musica.ogg';
         const PRELOAD_SFX_SRC = '/assets/exito.mp3';
@@ -608,8 +645,20 @@
                     // Optional: give visual feedback on click by briefly toggling a class
                     islandEl.classList.add('clicked-audio');
                     setTimeout(() => islandEl.classList.remove('clicked-audio'), 600);
+                    // NOTE: zoom is handled separately on the <video> element
                 } catch (e) {
                     console.warn('Error al manejar click en la isla:', e);
+                }
+            });
+        }
+
+        // Attach zoom toggle only to the video element inside the island.
+        if (islandVideoEl) {
+            islandVideoEl.addEventListener('click', (ev) => {
+                try {
+                    toggleZoom();
+                } catch (zErr) {
+                    console.warn('toggleZoom error', zErr);
                 }
             });
         }
