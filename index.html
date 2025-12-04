@@ -30,7 +30,7 @@
             margin: 0;
             font-family: 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
             background-color: #000;
-            background-image: url('assets/web-bgs/web_bg.jpg');
+            background-image: url('assets/web-bgs/D+fondo%20para%20web_01.webp');
             /* Make the background cover the full viewport and move with the page scroll */
             background-position: top center;
             background-repeat: no-repeat;
@@ -38,6 +38,28 @@
             background-attachment: scroll;
             min-height: 100vh;
             overflow-x: hidden;
+        }
+
+        #bg-transition-root {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-transition-layer {
+            position: absolute;
+            inset: 0;
+            background-position: top center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+            will-change: opacity;
+        }
+
+        .bg-transition-layer.is-visible {
+            opacity: 1;
         }
 
           /* Video sections - full viewport height and centered content
@@ -464,6 +486,7 @@
 </head>
 
 <body>
+    <div id="bg-transition-root" aria-hidden="true"></div>
     <!-- First video section with floating island (background video removed to show body image) -->
     <section class="video-section hero">
         <!-- Floating island centered on top: draw video into a canvas (preserves alpha and allows extra compositing) -->
@@ -560,6 +583,68 @@
         </div>
     </footer>
     
+    <script>
+        // Background image cycle: fade between hero textures after the page loads (ping-pong order)
+        (function(){
+            const root = document.getElementById('bg-transition-root');
+            const BG_IMAGES = [
+                'assets/web-bgs/D+fondo%20para%20web_01.webp',
+                'assets/web-bgs/D+fondo%20para%20web_02.webp',
+                'assets/web-bgs/D+fondo%20para%20web_03.webp'
+            ];
+            const DISPLAY_MS = 2000;
+            const FADE_MS = 2000;
+
+            if (!root || BG_IMAGES.length < 2) return;
+
+            const layers = [document.createElement('div'), document.createElement('div')];
+            let activeLayer = 0;
+            let currentIndex = 0;
+            let direction = 1;
+
+            layers.forEach((layer) => {
+                layer.className = 'bg-transition-layer';
+                layer.style.transitionDuration = FADE_MS + 'ms';
+                root.appendChild(layer);
+            });
+
+            // Preload to avoid flashing when swapping images
+            BG_IMAGES.forEach((src) => {
+                const img = new Image();
+                img.decoding = 'async';
+                img.src = src;
+            });
+
+            function nextIndex(){
+                if (currentIndex === BG_IMAGES.length - 1) direction = -1;
+                else if (currentIndex === 0) direction = 1;
+                return currentIndex + direction;
+            }
+
+            function crossfade(toIdx){
+                const nextLayer = layers[activeLayer ^ 1];
+                nextLayer.style.backgroundImage = `url('${BG_IMAGES[toIdx]}')`;
+                void nextLayer.offsetWidth; // force reflow so the transition always triggers
+                nextLayer.classList.add('is-visible');
+                layers[activeLayer].classList.remove('is-visible');
+                activeLayer ^= 1;
+                currentIndex = toIdx;
+            }
+
+            function startCycle(){
+                layers[activeLayer].style.backgroundImage = `url('${BG_IMAGES[currentIndex]}')`;
+                layers[activeLayer].classList.add('is-visible');
+
+                window.setInterval(() => {
+                    const target = nextIndex();
+                    crossfade(target);
+                }, DISPLAY_MS);
+            }
+
+            window.addEventListener('load', startCycle, { once: true });
+        })();
+    </script>
+
     <script>
         // Basic PWA install + offline helpers
         (function(){
