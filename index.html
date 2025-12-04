@@ -31,11 +31,11 @@
             font-family: 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
             background-color: #000;
             background-image: url('assets/web-bgs/web_bg.jpg');
-            /* Make the background cover the full viewport and stay centered */
-            background-position: center center;
+            /* Make the background cover the full viewport and move with the page scroll */
+            background-position: top center;
             background-repeat: no-repeat;
             background-size: cover;
-            background-attachment: fixed;
+            background-attachment: scroll;
             min-height: 100vh;
             overflow-x: hidden;
         }
@@ -76,24 +76,25 @@
 
         /* Zoom toggle when clicking the island: scale only the island element */
         .floating-island,
-        .floating-island video {
+        .floating-island canvas {
             transition: transform 320ms ease;
             transform-origin: center center;
             will-change: transform;
         }
 
         .floating-island.zoomed {
-            /* Keep the island centered in the viewport while scaling:
-               - use fixed positioning so it stays in the center even if the page scrolls
-               - preserve the translate centering and apply scale after it */
+            /* Keep the island centered in the viewport when zoomed.
+               NOTE: visual scaling is handled in the canvas draw routine so
+               we avoid changing the DOM transform scale which caused layout
+               / sizing issues on resize. */
             position: fixed;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%) scale(1.5);
+            transform: translate(-50%, -50%);
             z-index: 9999;
         }
 
-        .floating-island video {
+        .floating-island canvas {
             display: block;
             width: 60vw;
             max-width: 60vw;
@@ -201,10 +202,11 @@
         }
 
         .news-line {
-            width: 100%;
+            width: 60vw; /* match video-frame width */
+            max-width: 60vw;
             display: block;
-            margin-top: 0px;
-            margin-bottom: 20px;
+            margin: 0 auto 20px;
+            box-sizing: border-box;
         }
 
         /* News items row */
@@ -253,6 +255,54 @@
             text-overflow: ellipsis;
         }
 
+        /* Manifiesto item: same background and font as .news-item,
+           positioned top-left in the hero and vertically scrollable */
+        .manifiesto-item {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 50;
+            width: 300px;
+            height: 300px;
+            background-image: url('assets/ui/oblea1.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            padding: 38px 38px;
+            color: #DDDC31;
+            font-family: 'New Science', sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .manifiesto-item p {
+            margin: 0;
+        }
+
+        /* Small visible scrollbar for desktop, unobtrusive on mobile */
+        .manifiesto-item::-webkit-scrollbar { width: 8px; }
+        .manifiesto-item::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 6px; }
+
+        /* Logo arriba centrado en el hero */
+        .logo-naranja {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 60;
+            width: 300px;
+            max-width: 60vw;
+            pointer-events: none;
+        }
+
+        .logo-naranja video {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
         /* Jugar button */
         .jugar-button {
             position: absolute;
@@ -288,6 +338,38 @@
             transform: translateX(-50%) translateY(-2px);
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.6);
         }
+        /* Sound selector (hero section bottom centered) */
+        .video-section.hero .sound-selector {
+            position: absolute;
+            bottom: 6%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 21;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            pointer-events: auto;
+        }
+
+        .video-section.hero .sound-selector img {
+            display: block;
+            cursor: pointer;
+        }
+        /* Hotspots are invisible (image contains UI). Keep focus-visible outline for accessibility. */
+        .video-section.hero .sound-hotspot {
+            background: transparent !important;
+            border: none !important;
+            opacity: 0 !important;
+            box-shadow: none !important;
+        }
+
+        .video-section.hero .sound-hotspot:focus-visible {
+            opacity: 1 !important;
+            outline: 2px solid #FFE55C;
+            outline-offset: 4px;
+            background: rgba(0,0,0,0.18);
+        }
+        /* Debug panel removed in production */
         /* Footer styles */
         .site-footer {
             width: 100%;
@@ -383,15 +465,30 @@
 
 <body>
     <!-- First video section with floating island (background video removed to show body image) -->
-    <section class="video-section">
-        <!-- Floating island centered on top -->
+    <section class="video-section hero">
+        <!-- Floating island centered on top: draw video into a canvas (preserves alpha and allows extra compositing) -->
         <div class="floating-island">
-            <video autoplay loop muted playsinline>
+            <canvas id="island-canvas" role="img" aria-label="Isla flotante"></canvas>
+            <!-- Hidden source video used as the frame source for the canvas. Keep muted so autoplay may succeed. -->
+            <video id="island-video" muted playsinline loop crossorigin="anonymous" style="display:none">
                 <source src="assets/island.webm" type="video/webm">
             </video>
         </div>
 
+        <div class="logo-naranja" aria-hidden="false">
+            <video autoplay loop muted playsinline aria-hidden="true">
+                <source src="assets/logo_naranja_alpha.webm" type="video/webm">
+            </video>
+        </div>
+
+        <div class="manifiesto-item" role="region" aria-label="Manifiesto Delta Grande">
+            <p>Delta Grande existe gracias al trabajo conjunto de científicas y científicos, docentes, artistas, programadores, diseñadores, productores,  pobladoras  y pobladores del Delta que, con orgullo y compromiso, hacen posible esta obra colectiva. Las muchas voces a las que atravesaron los ríos.</p>
+        </div>
+
         <!-- 'Jugar' button removed from landing (kept in-game menu link removed) -->
+        <div class="sound-selector" aria-hidden="false" role="group" aria-label="Selector de sonido">
+            <img src="assets/selectores/selector-sonido-off.png" alt="Selector de sonido" id="sound-toggle">
+        </div>
     </section>
 
     <!-- Second video section with framed YouTube video (background video removed to show body image) -->
@@ -536,6 +633,186 @@
         })();
     </script>
 
+    <script>
+        // Sound selector hotspots: positions are given relative to the image's natural size.
+        (function(){
+            const coords = {
+                dialog: { x: 798, y: 71 },
+                music: { x: 872, y: 40 },
+                ambient: { x: 948, y: 71 }
+            };
+            const RADIUS = 25; // px radius as requested
+
+            const selectorImg = document.querySelector('.sound-selector img#sound-toggle');
+            if (!selectorImg) return;
+
+            // Create container for hotspots (absolute positioned over the image)
+            const container = document.createElement('div');
+            container.className = 'sound-hotspots-container';
+            container.setAttribute('aria-hidden', 'false');
+            container.style.position = 'absolute';
+            container.style.top = '0';
+            container.style.left = '0';
+            container.style.width = '100%';
+            container.style.height = '100%';
+            container.style.pointerEvents = 'none';
+            container.style.zIndex = '22';
+
+            // Ensure the parent (.sound-selector) is positioned relatively
+            const selParent = selectorImg.parentElement;
+
+            // Helper to create a hotspot element
+            function makeHotspot(name){
+                const el = document.createElement('button');
+                el.type = 'button';
+                el.className = 'sound-hotspot';
+                el.dataset.channel = name;
+                el.setAttribute('aria-pressed', 'false');
+                el.setAttribute('aria-label', `Alternar ${name}`);
+                el.style.position = 'absolute';
+                el.style.width = (RADIUS*2) + 'px';
+                el.style.height = (RADIUS*2) + 'px';
+                el.style.borderRadius = '50%';
+                el.style.boxSizing = 'border-box';
+                el.style.pointerEvents = 'auto';
+                el.style.transition = 'transform 180ms ease, background 180ms ease, opacity 180ms ease';
+                el.style.display = 'flex';
+                el.style.alignItems = 'center';
+                el.style.justifyContent = 'center';
+                el.style.cursor = 'pointer';
+                return el;
+            }
+
+            const hotspots = {
+                dialog: makeHotspot('dialog'),
+                music: makeHotspot('music'),
+                ambient: makeHotspot('ambient')
+            };
+
+            // Add to container
+            Object.values(hotspots).forEach(h => container.appendChild(h));
+            if (selParent) selParent.appendChild(container);
+
+            // Debug panel removed in production build
+            const debugContent = null;
+
+            // Positioning function: scale coords from natural image size to displayed size
+            function positionHotspots(){
+                const naturalW = selectorImg.naturalWidth || selectorImg.width;
+                const naturalH = selectorImg.naturalHeight || selectorImg.height;
+                const rect = selectorImg.getBoundingClientRect();
+                const scaleX = rect.width / naturalW;
+                const scaleY = rect.height / naturalH;
+
+                const positions = {};
+                Object.keys(coords).forEach((k) => {
+                    const c = coords[k];
+                    const hx = Math.round(c.x * scaleX - RADIUS);
+                    const hy = Math.round(c.y * scaleY - RADIUS);
+                    const el = hotspots[k];
+                    el.style.left = hx + 'px';
+                    el.style.top = hy + 'px';
+                    positions[k] = { left: hx, top: hy, rawX: c.x, rawY: c.y };
+                });
+
+                // Log positions for debugging
+                console.log('[sound-hotspots] positioned', positions, 'imageRect=', {
+                    x: Math.round(rect.left), y: Math.round(rect.top), w: Math.round(rect.width), h: Math.round(rect.height)
+                });
+                // debugContent was removed; skip debug updates
+            }
+
+            // Toggle state storage (start all OFF)
+            const state = { dialog: false, music: false, ambient: false };
+
+            function updateHotspotUI(name){
+                const el = hotspots[name];
+                if (!el) return;
+                const on = !!state[name];
+                el.dataset.on = on ? '1' : '0';
+                el.setAttribute('aria-pressed', on ? 'true' : 'false');
+                el.style.background = on ? 'rgba(255,229,92,0)' : 'rgba(0,0,0,0)';
+                el.style.transform = on ? 'scale(1.07)' : 'scale(1)';
+            }
+
+            // map channel -> image filename
+            const channelImage = {
+                dialog: 'assets/selectores/selector-sonido-dialogo.png',
+                music: 'assets/selectores/selector-sonido-musica.png',
+                ambient: 'assets/selectores/selector-sonido-ambiente.png',
+                off: 'assets/selectores/selector-sonido-off.png'
+            };
+
+            // helper to update selector image based on current state
+            function refreshSelectorImage(lastToggled) {
+                // If none enabled, show off image
+                const enabled = Object.keys(state).filter(k => state[k]);
+                if (enabled.length === 0) {
+                    selectorImg.src = channelImage.off;
+                    return;
+                }
+                // Prefer the last toggled channel if it's enabled, otherwise pick the first enabled
+                if (lastToggled && state[lastToggled]) {
+                    selectorImg.src = channelImage[lastToggled] || channelImage.off;
+                    return;
+                }
+                selectorImg.src = channelImage[enabled[0]] || channelImage.off;
+            }
+
+            // Wire click handlers
+            Object.keys(hotspots).forEach((k) => {
+                const el = hotspots[k];
+                el.addEventListener('click', async (ev) => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+
+                    // Switch behavior: activate clicked channel exclusively
+                    Object.keys(state).forEach(s => { state[s] = false; updateHotspotUI(s); });
+                    state[k] = true;
+                    updateHotspotUI(k);
+
+                    console.log('[sound-hotspot] switch', { channel: k, state: JSON.parse(JSON.stringify(state)) });
+
+                    // Specific behavior: music toggles the global background audio element
+                    if (k === 'music'){
+                        try {
+                            if (!audioEl) return;
+                            // enable playback (ensure allowed)
+                            if (audioEl.dataset.enabled !== '1'){
+                                if (typeof enableGlobalAudio === 'function') {
+                                    await enableGlobalAudio();
+                                }
+                            }
+                            audioEl.muted = false;
+                        } catch(e){ console.warn('music switch error', e); }
+                    } else {
+                        // For dialog/ambient we dispatch events so other code can react
+                        window.dispatchEvent(new CustomEvent('audio-channel-switch', { detail: { channel: k, enabled: true } }));
+                    }
+
+                    // Update selector image to reflect the selected channel
+                    try { refreshSelectorImage(k); } catch (e) { console.warn('refreshSelectorImage error', e); }
+
+                    // Log which image is currently active
+                    try { console.log('[sound-hotspot] selector image now ->', selectorImg.src); } catch(e){}
+
+                    // Debugging removed: no UI update
+                });
+            });
+
+            // Init after image loaded
+            if (selectorImg.complete) positionHotspots();
+            selectorImg.addEventListener('load', positionHotspots);
+            window.addEventListener('resize', positionHotspots);
+
+            // initialize UI
+            Object.keys(hotspots).forEach(k => updateHotspotUI(k));
+            // Ensure selector image and debug reflect initial OFF state
+            try { refreshSelectorImage(); } catch (e) { /* ignore */ }
+            // Debugging removed: no initial debug state
+        })();
+    </script>
+
     <!-- PWA progress toast -->
     <div id="pwaToast" class="pwa-toast" hidden role="status" aria-live="polite">
         <div class="label">Guardando para uso offline...</div>
@@ -554,14 +831,108 @@
         // Zoom configuration: toggle a class on the floating island to scale it up
         const ZOOM_CLASS = 'zoomed';
         function toggleZoom() {
-            if (islandEl) {
-                islandEl.classList.toggle(ZOOM_CLASS);
+            if (!islandEl) return;
+            // Toggle the zoom class which only affects positioning/z-index now.
+            // Visual scaling is handled by the canvas draw routine which reads
+            // the presence of the class and scales the drawn video accordingly.
+            islandEl.classList.toggle(ZOOM_CLASS);
+            // No resizing of the canvas element; just ensure a frame is rendered
+            // immediately so the user sees the scaled island.
+            requestAnimationFrame(() => {
+                try { renderIsland(); } catch (e) {}
+            });
+        }
+
+        // Canvas-backed island: use an offscreen/hidden <video> as source and draw into the canvas.
+        // This preserves alpha and lets us composite/draw additional effects later.
+        const islandCanvas = islandEl ? islandEl.querySelector('#island-canvas') : null;
+        const islandVideoEl = document.getElementById('island-video');
+
+        // Rendering state
+        let _islandCtx = null;
+        let _islandRaf = null;
+
+        function resizeIslandCanvas() {
+            if (!islandCanvas) return;
+            const rect = islandCanvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            const w = Math.max(1, Math.floor(rect.width * dpr));
+            const h = Math.max(1, Math.floor(rect.height * dpr));
+            if (islandCanvas.width !== w || islandCanvas.height !== h) {
+                islandCanvas.width = w;
+                islandCanvas.height = h;
+                islandCanvas.style.width = rect.width + 'px';
+                islandCanvas.style.height = rect.height + 'px';
+                _islandCtx = islandCanvas.getContext('2d');
+                // Set transform so we can draw in CSS pixels
+                _islandCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
             }
         }
 
-        // Find the actual <video> element inside the floating island so
-        // the zoom only toggles when that video element is clicked.
-        const islandVideoEl = islandEl ? islandEl.querySelector('video') : null;
+        // Canvas zoom factor used to visually scale the island drawing when the container
+        // has the zoom class. This matches the CSS `.floating-island.zoomed` scale.
+        // Set the canvas zoom scale used to draw the enlarged island.
+        // Tune this value to change how much the island visually enlarges on click.
+        const CANVAS_ZOOM_SCALE = 1.15;
+
+        function renderIsland() {
+            if (!islandCanvas || !islandVideoEl) return;
+            if (!_islandCtx) resizeIslandCanvas();
+            try {
+                const rect = islandCanvas.getBoundingClientRect();
+                // clear using transparent so alpha from the source is preserved
+                _islandCtx.clearRect(0, 0, rect.width, rect.height);
+
+                if (islandVideoEl.readyState >= 2 && !islandVideoEl.paused) {
+                    // Determine drawing scale: if container is zoomed, scale the island drawing
+                    // inside the canvas instead of resizing the canvas element itself.
+                    const isZoomed = islandEl && islandEl.classList.contains(ZOOM_CLASS);
+                    const scale = isZoomed ? CANVAS_ZOOM_SCALE : 1;
+
+                    // Destination size in CSS pixels
+                    const dstW = Math.round(rect.width * scale);
+                    const dstH = Math.round(rect.height * scale);
+
+                    // Center the scaled island inside the canvas
+                    const dx = Math.round((rect.width - dstW) / 2);
+                    const dy = Math.round((rect.height - dstH) / 2);
+
+                    // Draw the video into the canvas, scaled and centered. We draw into CSS pixels
+                    // because the context transform already accounts for devicePixelRatio.
+                    _islandCtx.drawImage(islandVideoEl, 0, 0, islandVideoEl.videoWidth || islandVideoEl.width, islandVideoEl.videoHeight || islandVideoEl.height, dx, dy, dstW, dstH);
+                }
+            } catch (err) {
+                // drawing can occasionally fail if video not ready or cross-origin issues
+            }
+            _islandRaf = requestAnimationFrame(renderIsland);
+        }
+
+        function startIslandRendering() {
+            if (_islandRaf) return; // already running
+            resizeIslandCanvas();
+            _islandRaf = requestAnimationFrame(renderIsland);
+        }
+
+        // Keep canvas sized on resize/zoom
+        window.addEventListener('resize', () => {
+            resizeIslandCanvas();
+        });
+
+        // Try to autoplay the hidden source; browsers may block until user interacts.
+        if (islandVideoEl) {
+            islandVideoEl.crossOrigin = 'anonymous';
+            islandVideoEl.muted = true;
+            islandVideoEl.playsInline = true;
+            islandVideoEl.loop = true;
+            islandVideoEl.addEventListener('play', () => startIslandRendering());
+            islandVideoEl.addEventListener('loadeddata', () => {
+                // start if already playing
+                if (!islandVideoEl.paused) startIslandRendering();
+            });
+            islandVideoEl.play().catch(() => {
+                // autoplay blocked; rendering will start after user interaction triggers play
+            });
+        }
 
         // Preload background music and SFX to avoid playback delay on first click
         const PRELOAD_BG_SRC = '/assets/web_musica.ogg';
@@ -662,10 +1033,14 @@
             });
         }
 
-        // Attach zoom toggle only to the video element inside the island.
-        if (islandVideoEl) {
-            islandVideoEl.addEventListener('click', (ev) => {
+        // Attach zoom toggle to the canvas element (clicking canvas will also bubble to islandEl)
+        if (islandCanvas) {
+            islandCanvas.addEventListener('click', (ev) => {
                 try {
+                    // ensure the source video is playing so the canvas shows content
+                    if (islandVideoEl && islandVideoEl.paused) {
+                        islandVideoEl.play().catch(() => {});
+                    }
                     toggleZoom();
                 } catch (zErr) {
                     console.warn('toggleZoom error', zErr);
