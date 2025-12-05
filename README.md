@@ -62,3 +62,12 @@ To update the live version with fixes:
 4. Click on the **"Deploys"** tab.
 5. Drag and drop the *new* `dist` folder onto the upload area.
 6. The site will update instantly.
+
+## Debug Mode (skip loader)
+
+During development you can bypass the homepage video loader:
+
+- Append `?debug=1` (or `#debug=1`) to the site URL, e.g. `http://localhost:8000/?debug=1`.
+- To keep the loader disabled across reloads run `localStorage.setItem('dgSkipLoader','1')` in the browser console. Remove it later with `localStorage.removeItem('dgSkipLoader')`.
+
+With the debug flag active the loader overlay is hidden immediately so you land straight on the interactive homepage.

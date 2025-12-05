@@ -6,6 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>DELTA+</title>
     <style>
+        :root {
+            --video-frame-radius: 41px;
+            --video-frame-corner-length: 34px;
+            --video-frame-outline-offset: 10px;
+            --video-frame-outline-inner-offset: -4px;
+            --video-frame-padding: clamp(6px, 0px, 6px);
+        }
+
         @font-face {
             font-family: 'New Science';
             src: url('game/styles/NewScience-Regular.otf') format('opentype');
@@ -38,13 +46,18 @@
             background-attachment: scroll;
             min-height: 100vh;
             overflow-x: hidden;
+            position: relative;
+        }
+
+        body.is-loading {
+            overflow: hidden;
         }
 
         #bg-transition-root {
-            position: fixed;
+            position: absolute;
             inset: 0;
             pointer-events: none;
-            z-index: 0;
+            z-index: -1;
         }
 
         .bg-transition-layer {
@@ -63,7 +76,7 @@
         }
 
           /* Video sections - full viewport height and centered content
-              Sections are separate blocks and their inner frames occupy 60vw */
+              Sections are separate blocks and their inner frames occupy 95vw */
         .video-section {
             width: 100%;
             min-height: 100vh;
@@ -84,10 +97,67 @@
             object-fit: cover;
         }
 
+        /* Loader overlay appears before the homepage renders */
+        #page-loader {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at center, rgba(0,0,0,0.94), #000 65%);
+            z-index: 100000;
+            transition: opacity 500ms ease, visibility 500ms ease;
+            overflow: hidden;
+        }
+
+        #page-loader::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: #000;
+            border-radius: var(--video-frame-radius);
+            opacity: 0;
+            transition: opacity 800ms ease;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        #page-loader.is-blackout::after {
+            opacity: 1;
+        }
+
+        #page-loader.is-blackout video {
+            opacity: 0;
+        }
+
+        #page-loader.is-hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        #page-loader video {
+            width: clamp(220px, 32vw, 520px);
+            height: auto;
+            position: relative;
+            z-index: 1;
+            transition: opacity 400ms ease;
+        }
+
+        /* Video wrapper with rounded corners and overflow hidden */
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: var(--video-frame-radius);
+            overflow: hidden;
+            z-index: 1;
+        }
+
         /* Floating island - centered on first section with higher z-index */
         .floating-island {
             position: absolute;
-            top: 50%;
+            top: 60%;
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 10;
@@ -96,7 +166,7 @@
             cursor: pointer;
         }
 
-        /* Zoom toggle when clicking the island: scale only the island element */
+        /* Floating island transitions */
         .floating-island,
         .floating-island canvas {
             transition: transform 320ms ease;
@@ -104,22 +174,10 @@
             will-change: transform;
         }
 
-        .floating-island.zoomed {
-            /* Keep the island centered in the viewport when zoomed.
-               NOTE: visual scaling is handled in the canvas draw routine so
-               we avoid changing the DOM transform scale which caused layout
-               / sizing issues on resize. */
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 9999;
-        }
-
         .floating-island canvas {
             display: block;
-            width: 60vw;
-            max-width: 60vw;
+            width: 72vw;
+            max-width: 72vw;
             height: auto;
             pointer-events: auto;
             cursor: pointer;
@@ -162,21 +220,66 @@
         /* Frame image as background */
         .video-frame {
             position: relative;
-            width: 60vw;
-            max-width: 60vw;
+            width: 95vw;
+            max-width: 95vw;
             aspect-ratio: 16/9;
             margin: 0 auto;
-            padding: calc(5% - 31px) calc(5% - 23px);
+            padding: var(--video-frame-padding);
+            overflow: hidden;
+            box-sizing: border-box;
         }
 
-        .video-frame img {
+        .video-frame::before {
+            content: '';
             position: absolute;
+            inset: 0;
+            border-radius: var(--video-frame-radius);
+            pointer-events: none;
+            z-index: 2;
+            outline: 1px solid #FBFE5E;
+            outline-offset: var(--video-frame-outline-offset);
+        }
+
+        .video-frame .frame-corner {
+            position: absolute;
+            width: var(--video-frame-corner-length);
+            height: var(--video-frame-corner-length);
+            border: 10px solid transparent;
+            box-sizing: border-box;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .video-frame .frame-corner.top-left {
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 2;
-            pointer-events: none;
+            border-top-color: #FBFE5E;
+            border-left-color: #FBFE5E;
+            border-top-left-radius: var(--video-frame-radius);
+        }
+
+        .video-frame .frame-corner.top-right {
+            top: 0;
+            right: 0;
+            border-top-color: #FBFE5E;
+            border-right-color: #FBFE5E;
+            border-top-right-radius: var(--video-frame-radius);
+        }
+
+        .video-frame .frame-corner.bottom-left {
+            bottom: 0;
+            left: 0;
+            border-bottom-color: #FBFE5E;
+            border-left-color: #FBFE5E;
+            border-bottom-left-radius: var(--video-frame-radius);
+        }
+
+        .video-frame .frame-corner.bottom-right {
+            bottom: 0;
+            right: 0;
+            border-bottom-color: #FBFE5E;
+            border-right-color: #FBFE5E;
+            border-bottom-right-radius: var(--video-frame-radius);
         }
 
         /* Video wrapper with rounded corners and overflow hidden */
@@ -184,9 +287,41 @@
             position: relative;
             width: 100%;
             height: 100%;
-            border-radius: 20px;
+            border-radius: var(--video-frame-radius);
             overflow: hidden;
             z-index: 1;
+        }
+
+        .video-shell {
+            position: absolute;
+            inset: 0;
+            border-radius: var(--video-frame-radius);
+            outline: 1px solid #FBFE5E;
+            outline-offset: var(--video-frame-outline-inner-offset);
+            overflow: hidden;
+        }
+
+        /* Clean frame modifier - removes outlines and borders */
+        .video-frame.clean-frame::before {
+            display: none;
+        }
+        
+        .video-frame.clean-frame .video-shell {
+            outline: none;
+        }
+        
+        .video-frame.clean-frame .video-shell iframe,
+        .video-frame.clean-frame .video-shell video {
+            border: none;
+        }
+
+        .video-shell iframe,
+        .video-shell video {
+            position: absolute;
+            inset: 0;
+            border-radius: var(--video-frame-radius);
+            box-sizing: border-box;
+            border: 1px solid #FBFE5E;
         }
 
         /* YouTube iframe */
@@ -197,6 +332,7 @@
             width: 100%;
             height: 100%;
             border: 0;
+            border-radius: var(--video-frame-radius);
         }
 
         /* Local video element */
@@ -207,7 +343,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: 20px;
+            border-radius: var(--video-frame-radius);
         }
 
         /* Make the giant map clickable and show pointer */
@@ -216,20 +352,14 @@
 
         /* News section below video frame - contained to same width as frames */
         .news-section {
-            width: 60vw;
-            max-width: 60vw;
+            width: 95vw;
+            max-width: 95vw;
             margin: 0 auto;
             box-sizing: border-box;
             padding: 8px 0;
         }
 
-        .news-line {
-            width: 60vw; /* match video-frame width */
-            max-width: 60vw;
-            display: block;
-            margin: 0 auto 20px;
-            box-sizing: border-box;
-        }
+        /* .news-line removed - visual divider image was deleted from the markup */
 
         /* News items row */
         .news-items {
@@ -363,9 +493,9 @@
         /* Sound selector (hero section bottom centered) */
         .video-section.hero .sound-selector {
             position: absolute;
-            bottom: 6%;
+            bottom: 14%;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translate(-50%, 0);
             z-index: 21;
             display: flex;
             align-items: center;
@@ -485,7 +615,12 @@
     </style>
 </head>
 
-<body>
+<body class="is-loading">
+    <div id="page-loader" aria-live="polite" aria-label="Cargando Delta+">
+        <video autoplay muted playsinline preload="auto">
+            <source src="assets/D+_loader04.webm" type="video/webm">
+        </video>
+    </div>
     <div id="bg-transition-root" aria-hidden="true"></div>
     <!-- First video section with floating island (background video removed to show body image) -->
     <section class="video-section hero">
@@ -518,16 +653,17 @@
     <section class="video-section">
         <!-- Video frame container -->
         <div class="video-frame-container">
-            <div class="video-frame">
+            <div class="video-frame clean-frame">
                 <div class="video-wrapper">
-                    <iframe 
-                        src="https://www.youtube.com/embed/ANyR_fuIF-g?rel=0&modestbranding=1&playsinline=1"
-                        title="Video"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowfullscreen>
-                    </iframe>
+                    <div class="video-shell">
+                        <iframe 
+                            src="https://www.youtube.com/embed/ANyR_fuIF-g?rel=0&modestbranding=1&playsinline=1"
+                            title="Video"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowfullscreen>
+                        </iframe>
+                    </div>
                 </div>
-                <img src="assets/ui/marco_videos_web.png" alt="">
             </div>
         </div>
     </section>
@@ -541,18 +677,23 @@
                 <a href="game/index.html#menu" class="map-link" aria-label="Ir al juego">
                 <div class="video-frame">
                     <div class="video-wrapper">
-                        <video autoplay loop muted playsinline>
-                            <source src="assets/mapa_gigante.webm" type="video/webm">
-                        </video>
+                        <div class="video-shell">
+                            <video autoplay loop muted playsinline>
+                                <source src="assets/mapa_gigante.webm" type="video/webm">
+                            </video>
+                        </div>
                     </div>
-                    <img src="assets/ui/marco_videos_web.png" alt="">
+                    <span class="frame-corner top-left"></span>
+                    <span class="frame-corner top-right"></span>
+                    <span class="frame-corner bottom-left"></span>
+                    <span class="frame-corner bottom-right"></span>
                 </div>
                 </a>
             </div>
 
             <!-- News section -->
             <div class="news-section">
-                <img src="assets/ui/linea news.png" alt="" class="news-line">
+                <!-- news-line removed -->
                 <div class="news-items">
                     <div class="news-item">
                         <h3>Contenidos para el aula</h3>
@@ -582,6 +723,91 @@
             </span>
         </div>
     </footer>
+
+    <script>
+        // Display the loader for 4 seconds, fade to black, hold 2 seconds, then reveal the page
+        (function(){
+            const loader = document.getElementById('page-loader');
+            const loaderVideo = loader ? loader.querySelector('video') : null;
+            const body = document.body;
+            const MIN_DISPLAY_MS = 4000;
+            const BLACKOUT_FADE_MS = 800;
+            const BLACKOUT_HOLD_MS = 2000;
+            const FALLBACK_REVEAL_MS = MIN_DISPLAY_MS + BLACKOUT_FADE_MS + BLACKOUT_HOLD_MS + 2000;
+            let loaderHidden = false;
+            let revealStarted = false;
+
+            function shouldSkipLoader(){
+                const DEBUG_KEYS = ['debug','dgDebug','skipLoader'];
+                const truthyValues = new Set(['1','true','yes','on','skip','loader']);
+                const sources = [
+                    new URLSearchParams(window.location.search),
+                    new URLSearchParams(window.location.hash ? window.location.hash.substring(1) : '')
+                ];
+                const hasDebugParam = sources.some((params) => {
+                    return DEBUG_KEYS.some((key) => {
+                        if (!params.has(key)) return false;
+                        const value = params.get(key);
+                        if (!value) return true;
+                        return truthyValues.has(value.toLowerCase());
+                    });
+                });
+                if (hasDebugParam) return true;
+                try {
+                    const stored = localStorage.getItem('dgSkipLoader');
+                    if (!stored) return false;
+                    return truthyValues.has(stored.toLowerCase());
+                } catch (err) {
+                    return false;
+                }
+            }
+
+            const skipLoader = shouldSkipLoader();
+
+            function hideLoader(){
+                if (!loader || loaderHidden) return;
+                loaderHidden = true;
+                loader.classList.add('is-hidden');
+                body && body.classList.remove('is-loading');
+            }
+
+            function startReveal(){
+                if (!loader || revealStarted) return;
+                revealStarted = true;
+                loader.classList.add('is-blackout');
+                setTimeout(hideLoader, BLACKOUT_FADE_MS + BLACKOUT_HOLD_MS);
+            }
+
+            if (skipLoader) {
+                hideLoader();
+                return; // Debug flag short-circuits the rest of the loader choreography
+            }
+
+            if (loaderVideo) {
+                loaderVideo.addEventListener('loadedmetadata', () => {
+                    if (!loaderVideo.duration) return;
+                    const desiredSeconds = MIN_DISPLAY_MS / 1000;
+                    const adjustedRate = loaderVideo.duration / desiredSeconds;
+                    if (adjustedRate > 0) {
+                        loaderVideo.playbackRate = adjustedRate;
+                    }
+                });
+            }
+
+            const loadPromise = new Promise((resolve) => {
+                if (document.readyState === 'complete') resolve();
+                else window.addEventListener('load', resolve, { once: true });
+            });
+            const minDisplayPromise = new Promise((resolve) => setTimeout(resolve, MIN_DISPLAY_MS));
+
+            Promise.all([loadPromise, minDisplayPromise]).then(() => {
+                requestAnimationFrame(startReveal);
+            });
+
+            // Safety timeout in case load event never fires
+            setTimeout(startReveal, FALLBACK_REVEAL_MS);
+        })();
+    </script>
     
     <script>
         // Background image cycle: fade between hero textures after the page loads (ping-pong order)
@@ -913,21 +1139,6 @@
         const audioEl = document.getElementById('web-music');
         const islandEl = document.querySelector('.floating-island');
 
-        // Zoom configuration: toggle a class on the floating island to scale it up
-        const ZOOM_CLASS = 'zoomed';
-        function toggleZoom() {
-            if (!islandEl) return;
-            // Toggle the zoom class which only affects positioning/z-index now.
-            // Visual scaling is handled by the canvas draw routine which reads
-            // the presence of the class and scales the drawn video accordingly.
-            islandEl.classList.toggle(ZOOM_CLASS);
-            // No resizing of the canvas element; just ensure a frame is rendered
-            // immediately so the user sees the scaled island.
-            requestAnimationFrame(() => {
-                try { renderIsland(); } catch (e) {}
-            });
-        }
-
         // Canvas-backed island: use an offscreen/hidden <video> as source and draw into the canvas.
         // This preserves alpha and lets us composite/draw additional effects later.
         const islandCanvas = islandEl ? islandEl.querySelector('#island-canvas') : null;
@@ -954,11 +1165,9 @@
             }
         }
 
-        // Canvas zoom factor used to visually scale the island drawing when the container
-        // has the zoom class. This matches the CSS `.floating-island.zoomed` scale.
-        // Set the canvas zoom scale used to draw the enlarged island.
-        // Tune this value to change how much the island visually enlarges on click.
-        const CANVAS_ZOOM_SCALE = 1.15;
+        // Base scale fattens the drawn island slightly for better composition.
+        const CANVAS_BASE_SCALE = 1.32;
+        const CANVAS_VERTICAL_OFFSET_RATIO = 0;
 
         function renderIsland() {
             if (!islandCanvas || !islandVideoEl) return;
@@ -969,10 +1178,8 @@
                 _islandCtx.clearRect(0, 0, rect.width, rect.height);
 
                 if (islandVideoEl.readyState >= 2 && !islandVideoEl.paused) {
-                    // Determine drawing scale: if container is zoomed, scale the island drawing
-                    // inside the canvas instead of resizing the canvas element itself.
-                    const isZoomed = islandEl && islandEl.classList.contains(ZOOM_CLASS);
-                    const scale = isZoomed ? CANVAS_ZOOM_SCALE : 1;
+                    // Determine drawing scale (fixed now that zoom is removed)
+                    const scale = CANVAS_BASE_SCALE;
 
                     // Destination size in CSS pixels
                     const dstW = Math.round(rect.width * scale);
@@ -980,7 +1187,7 @@
 
                     // Center the scaled island inside the canvas
                     const dx = Math.round((rect.width - dstW) / 2);
-                    const dy = Math.round((rect.height - dstH) / 2);
+                    const dy = Math.round((rect.height - dstH) / 2 + dstH * CANVAS_VERTICAL_OFFSET_RATIO);
 
                     // Draw the video into the canvas, scaled and centered. We draw into CSS pixels
                     // because the context transform already accounts for devicePixelRatio.
@@ -1111,24 +1318,13 @@
                     // Optional: give visual feedback on click by briefly toggling a class
                     islandEl.classList.add('clicked-audio');
                     setTimeout(() => islandEl.classList.remove('clicked-audio'), 600);
-                    // NOTE: zoom is handled separately on the <video> element
-                } catch (e) {
-                    console.warn('Error al manejar click en la isla:', e);
-                }
-            });
-        }
 
-        // Attach zoom toggle to the canvas element (clicking canvas will also bubble to islandEl)
-        if (islandCanvas) {
-            islandCanvas.addEventListener('click', (ev) => {
-                try {
-                    // ensure the source video is playing so the canvas shows content
+                    // Ensure the source video starts playing after user interaction
                     if (islandVideoEl && islandVideoEl.paused) {
                         islandVideoEl.play().catch(() => {});
                     }
-                    toggleZoom();
-                } catch (zErr) {
-                    console.warn('toggleZoom error', zErr);
+                } catch (e) {
+                    console.warn('Error al manejar click en la isla:', e);
                 }
             });
         }
@@ -1174,6 +1370,39 @@
                         setTimeout(hidePwaToast, 3000);
                     }
                 });
+            }
+        })();
+    </script>
+
+    <script>
+        (function(){
+            const MIN_RADIUS = 42;
+            const MAX_RADIUS = 42;
+            const RATIO = 0.017;
+            const MIN_CORNER = 24;
+            const MAX_CORNER = 90;
+            const CORNER_RATIO = 0.1;
+            const frame = document.querySelector('.video-frame');
+            const root = document.documentElement;
+            if (!frame || !root) return;
+
+            function updateRadius(){
+                const rect = frame.getBoundingClientRect();
+                if (!rect.width || !rect.height) return;
+                const calculated = Math.round(rect.width * RATIO);
+                const value = Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, calculated));
+                root.style.setProperty('--video-frame-radius', value + 'px');
+                const diag = Math.min(rect.width, rect.height);
+                const scaledCorner = Math.round(diag * CORNER_RATIO);
+                const cornerLength = Math.max(MIN_CORNER, Math.min(MAX_CORNER, scaledCorner));
+                root.style.setProperty('--video-frame-corner-length', cornerLength + 'px');
+            }
+
+            updateRadius();
+            window.addEventListener('resize', updateRadius);
+            if (typeof ResizeObserver !== 'undefined') {
+                const observer = new ResizeObserver(updateRadius);
+                observer.observe(frame);
             }
         })();
     </script>
