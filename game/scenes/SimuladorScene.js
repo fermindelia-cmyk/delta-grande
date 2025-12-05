@@ -435,6 +435,13 @@ export const DEFAULT_PARAMS = Object.freeze({
           framePrefix: 'weather_bottom_',
           frameDigits: 5,
           frameExtension: '.png',
+          sheet: Object.freeze({
+            file: 'weather_bottom/weather_bottom.webp',
+            columns: 14,
+            rows: 14,
+            frameCount: 184,
+            frameOffset: 50
+          }),
           area: Object.freeze({
             leftPct: 87.3,
             topPct: 5,
@@ -2382,6 +2389,11 @@ export class SimuladorScene extends BaseScene {
       if (url) urls.add(url);
     }
 
+    if (weather?.bottom?.sheet?.file) {
+      const sheetUrl = this._normalizeAssetPath(basePath, weather.bottom.sheet.file);
+      if (sheetUrl) urls.add(sheetUrl);
+    }
+
     if (!urls.size) return;
 
     const promises = [];
@@ -4218,6 +4230,9 @@ export class SimuladorScene extends BaseScene {
     }
 
     const weatherCfg = this._weatherConfig;
+    const bottomSheetMeta = weatherCfg?.bottom
+      ? this._createWeatherSheetMeta(weatherCfg.bottom, basePath)
+      : null;
     let topImage = null;
     let bottomImage = null;
     let lowerBtn = null;
@@ -4260,14 +4275,31 @@ export class SimuladorScene extends BaseScene {
         bottomContainer.style.zIndex = String(weatherCfg.bottom.area.zIndex);
       }
 
-      bottomImage = document.createElement('img');
-      bottomImage.src = this._weatherFrameToUrl('bottom', weatherCfg.bottom.frames?.low);
-      bottomImage.style.width = '100%';
-      bottomImage.style.height = '100%';
-      bottomImage.style.objectFit = 'contain';
-      bottomImage.style.pointerEvents = 'none';
-      bottomImage.draggable = false;
-      bottomContainer.appendChild(bottomImage);
+      const useSheet = !!bottomSheetMeta;
+      if (useSheet) {
+        bottomImage = document.createElement('div');
+        bottomImage.style.position = 'absolute';
+        bottomImage.style.left = '0';
+        bottomImage.style.top = '0';
+        bottomImage.style.width = '100%';
+        bottomImage.style.height = '100%';
+        bottomImage.style.pointerEvents = 'none';
+        bottomImage.style.backgroundImage = `url(${bottomSheetMeta.src})`;
+        bottomImage.style.backgroundRepeat = 'no-repeat';
+        bottomImage.style.backgroundSize = `${bottomSheetMeta.columns * 100}% ${bottomSheetMeta.rows * 100}%`;
+        bottomImage.style.backgroundPosition = '0% 0%';
+        bottomImage.style.imageRendering = 'auto';
+        bottomContainer.appendChild(bottomImage);
+      } else {
+        bottomImage = document.createElement('img');
+        bottomImage.src = this._weatherFrameToUrl('bottom', weatherCfg.bottom.frames?.low);
+        bottomImage.style.width = '100%';
+        bottomImage.style.height = '100%';
+        bottomImage.style.objectFit = 'contain';
+        bottomImage.style.pointerEvents = 'none';
+        bottomImage.draggable = false;
+        bottomContainer.appendChild(bottomImage);
+      }
 
       lowerBtn = document.createElement('div');
       lowerBtn.style.position = 'absolute';
@@ -4335,8 +4367,16 @@ export class SimuladorScene extends BaseScene {
     if (bottomImage && weatherCfg?.bottom) {
       this._weatherChannels.bottom = {
         image: bottomImage,
-        config: weatherCfg.bottom
+        config: weatherCfg.bottom,
+        sheet: bottomSheetMeta || null
       };
+    }
+
+    if (this._weatherChannels.top && weatherCfg?.top?.frames?.low !== undefined) {
+      this._setWeatherFrame('top', weatherCfg.top.frames.low);
+    }
+    if (this._weatherChannels.bottom && weatherCfg?.bottom?.frames?.low !== undefined) {
+      this._setWeatherFrame('bottom', weatherCfg.bottom.frames.low);
     }
 
     if (elements.sedimentButton?.image) {
@@ -5202,6 +5242,25 @@ export class SimuladorScene extends BaseScene {
     }
   }
 
+  _createWeatherSheetMeta(channelCfg, basePath = this._uiAssetBasePath || '') {
+    const sheetCfg = channelCfg?.sheet;
+    if (!sheetCfg?.file) return null;
+    const columns = Math.max(1, Math.round(sheetCfg.columns ?? 1));
+    const rows = Math.max(1, Math.round(sheetCfg.rows ?? 1));
+    const maxFrames = columns * rows;
+    const requestedFrames = Math.round(sheetCfg.frameCount ?? maxFrames);
+    const totalFrames = clamp(requestedFrames, 1, maxFrames);
+    const frameOffset = Math.max(0, Math.round(sheetCfg.frameOffset ?? 0));
+    const src = this._normalizeAssetPath(basePath, sheetCfg.file);
+    return {
+      src,
+      columns,
+      rows,
+      totalFrames,
+      frameOffset
+    };
+  }
+
   _weatherFrameToUrl(channelKey, frame) {
     if (!Number.isFinite(frame)) return '';
     const cfg = this._weatherChannels?.[channelKey]?.config || this._weatherConfig?.[channelKey];
@@ -5228,10 +5287,29 @@ export class SimuladorScene extends BaseScene {
     if (this._weatherCurrentFrame[channelKey] === rounded) {
       return;
     }
+    this._weatherCurrentFrame[channelKey] = rounded;
+
+    if (channel.sheet) {
+      this._applyWeatherSheetFrame(channel, rounded);
+      return;
+    }
+
     const url = this._weatherFrameToUrl(channelKey, rounded);
     if (!url) return;
     channel.image.src = url;
-    this._weatherCurrentFrame[channelKey] = rounded;
+  }
+
+  _applyWeatherSheetFrame(channel, frameNumber) {
+    if (!channel?.sheet || !channel?.image?.style) return;
+    const sheet = channel.sheet;
+    const total = Math.max(1, sheet.totalFrames ?? (sheet.columns * sheet.rows));
+    const offset = Math.max(0, sheet.frameOffset ?? 0);
+    let idx = Math.round((Number.isFinite(frameNumber) ? frameNumber : 0) - offset);
+    if (!Number.isFinite(idx)) idx = 0;
+    idx = clamp(idx, 0, total - 1);
+    const col = idx % sheet.columns;
+    const row = Math.floor(idx / sheet.columns);
+    channel.image.style.backgroundPosition = `${-col * 100}% ${-row * 100}%`;
   }
 
   _syncToolButtons() {
