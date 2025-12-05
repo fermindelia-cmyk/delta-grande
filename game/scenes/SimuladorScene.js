@@ -415,6 +415,13 @@ export const DEFAULT_PARAMS = Object.freeze({
           framePrefix: 'weather_top_',
           frameDigits: 5,
           frameExtension: '.png',
+          sheet: Object.freeze({
+            file: 'weather_top/weather_top.webp',
+            columns: 24,
+            rows: 24,
+            frameCount: 553,
+            frameOffset: 50
+          }),
           area: Object.freeze({
             leftPct: 87.3,
             topPct: 5,
@@ -439,7 +446,7 @@ export const DEFAULT_PARAMS = Object.freeze({
             file: 'weather_bottom/weather_bottom.webp',
             columns: 14,
             rows: 14,
-            frameCount: 184,
+            frameCount: 185,
             frameOffset: 50
           }),
           area: Object.freeze({
@@ -544,7 +551,7 @@ export const DEFAULT_PARAMS = Object.freeze({
     }),
     visuals: Object.freeze({
       enableSprites: true,
-      basePath: '/game-assets/simulador/plants/webp_seq',
+      basePath: '/game-assets/simulador/plants/sheets',
       spriteWidthRatio: 0.15,
       bottomMargin: 0.15,
       transitionFps: 12,
@@ -2172,40 +2179,57 @@ export class SimuladorScene extends BaseScene {
   }
 
   async _loadPlantSequence(entry, descriptor) {
-    const { basePath, candidates, extension, frameDigits, maxFrames } = descriptor;
+    const { basePath, candidates } = descriptor;
 
     for (let c = 0; c < candidates.length; c++) {
       const candidate = candidates[c];
-      const folderPath = this._normalizeAssetPath(basePath, candidate.folderName);
-      const frames = [];
-      entry.frames = frames;
-      entry.firstFrameReady = false;
+      const jsonUrl = this._normalizeAssetPath(basePath, `${candidate.folderName}.json`);
+      const webpUrl = this._normalizeAssetPath(basePath, `${candidate.folderName}.webp`);
 
-      for (let index = 0; index < maxFrames; index++) {
-        const suffix = index.toString().padStart(frameDigits, '0');
-        const filename = `${candidate.filenamePrefix}_${suffix}${extension}`;
-        const url = this._normalizeAssetPath(folderPath, filename);
-        try {
-          const texture = await this._loadTexture(url);
-          if (!texture) {
-            break;
-          }
-          this._prepareTexture(texture);
-          frames.push(this._createFrameRecord(texture));
-          this._notifySequenceFirstFrame(entry);
-        } catch (err) {
-          if (index === 0) {
-            frames.length = 0;
-          }
-          break;
+      try {
+        const metaResponse = await fetch(jsonUrl);
+        if (!metaResponse.ok) continue;
+        const meta = await metaResponse.json();
+
+        const texture = await this._loadTexture(webpUrl);
+        if (!texture) continue;
+
+        this._prepareTexture(texture);
+
+        const frames = [];
+        const cols = Math.max(1, meta.columns || 1);
+        const rows = Math.max(1, meta.rows || 1);
+        const frameCount = meta.frameCount || (cols * rows);
+        const frameWidth = meta.frameWidth || (texture.image.width / cols);
+        const frameHeight = meta.frameHeight || (texture.image.height / rows);
+
+        for (let i = 0; i < frameCount; i++) {
+          const col = i % cols;
+          const row = Math.floor(i / cols);
+          
+          const frameTexture = texture.clone();
+          frameTexture.repeat.set(1 / cols, 1 / rows);
+          // UV origin is bottom-left, image origin is top-left
+          frameTexture.offset.set(col / cols, 1 - (row + 1) / rows);
+          
+          frames.push({
+            texture: frameTexture,
+            width: frameWidth,
+            height: frameHeight,
+            canvas: null,
+            imageData: null
+          });
         }
-      }
 
-      if (frames.length > 0) {
-        entry.frames = frames;
-        entry.status = 'ready';
-        entry.activeCandidate = candidate;
-        return entry;
+        if (frames.length > 0) {
+          entry.frames = frames;
+          entry.status = 'ready';
+          entry.activeCandidate = candidate;
+          this._notifySequenceFirstFrame(entry);
+          return entry;
+        }
+      } catch (err) {
+        // Try next candidate
       }
     }
 
@@ -4230,6 +4254,9 @@ export class SimuladorScene extends BaseScene {
     }
 
     const weatherCfg = this._weatherConfig;
+    const topSheetMeta = weatherCfg?.top
+      ? this._createWeatherSheetMeta(weatherCfg.top, basePath)
+      : null;
     const bottomSheetMeta = weatherCfg?.bottom
       ? this._createWeatherSheetMeta(weatherCfg.bottom, basePath)
       : null;
@@ -4252,14 +4279,30 @@ export class SimuladorScene extends BaseScene {
         topContainer.style.zIndex = String(weatherCfg.top.area.zIndex);
       }
 
-      topImage = document.createElement('img');
-      topImage.src = this._weatherFrameToUrl('top', weatherCfg.top.frames?.low);
-      topImage.style.width = '100%';
-      topImage.style.height = '100%';
-      topImage.style.objectFit = 'contain';
-      topImage.style.pointerEvents = 'none';
-      topImage.draggable = false;
-      topContainer.appendChild(topImage);
+      if (topSheetMeta) {
+        topImage = document.createElement('div');
+        topImage.style.position = 'absolute';
+        topImage.style.left = '0';
+        topImage.style.top = '0';
+        topImage.style.width = '100%';
+        topImage.style.height = '100%';
+        topImage.style.pointerEvents = 'none';
+        topImage.style.backgroundImage = `url(${topSheetMeta.src})`;
+        topImage.style.backgroundRepeat = 'no-repeat';
+        topImage.style.backgroundSize = `${topSheetMeta.columns * 100}% ${topSheetMeta.rows * 100}%`;
+        topImage.style.backgroundPosition = '0% 0%';
+        topImage.style.imageRendering = 'auto';
+        topContainer.appendChild(topImage);
+      } else {
+        topImage = document.createElement('img');
+        topImage.src = this._weatherFrameToUrl('top', weatherCfg.top.frames?.low);
+        topImage.style.width = '100%';
+        topImage.style.height = '100%';
+        topImage.style.objectFit = 'contain';
+        topImage.style.pointerEvents = 'none';
+        topImage.draggable = false;
+        topContainer.appendChild(topImage);
+      }
     }
 
     if (weatherCfg?.bottom?.area) {
@@ -4361,7 +4404,8 @@ export class SimuladorScene extends BaseScene {
     if (topImage && weatherCfg?.top) {
       this._weatherChannels.top = {
         image: topImage,
-        config: weatherCfg.top
+        config: weatherCfg.top,
+        sheet: topSheetMeta || null
       };
     }
     if (bottomImage && weatherCfg?.bottom) {
@@ -5309,7 +5353,9 @@ export class SimuladorScene extends BaseScene {
     idx = clamp(idx, 0, total - 1);
     const col = idx % sheet.columns;
     const row = Math.floor(idx / sheet.columns);
-    channel.image.style.backgroundPosition = `${-col * 100}% ${-row * 100}%`;
+    const x = sheet.columns > 1 ? (col / (sheet.columns - 1)) * 100 : 0;
+    const y = sheet.rows > 1 ? (row / (sheet.rows - 1)) * 100 : 0;
+    channel.image.style.backgroundPosition = `${x}% ${y}%`;
   }
 
   _syncToolButtons() {

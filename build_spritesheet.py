@@ -19,6 +19,7 @@ import os
 import math
 import argparse
 import re
+import json
 from PIL import Image
 
 SUPPORTED_EXTENSIONS = (".webp", ".png")
@@ -132,6 +133,22 @@ def make_sprite_sheet(input_folder, output_path, cols=None, max_dim=16000, targe
 
     sheet.save(output_path, "WEBP")
     print(f"Saved WebP sprite sheet to: {output_path}")
+
+    # Save metadata
+    meta_path = os.path.splitext(output_path)[0] + ".json"
+    meta = {
+        "file": os.path.basename(output_path),
+        "columns": cols,
+        "rows": rows,
+        "frameCount": num_frames,
+        "frameWidth": new_frame_w,
+        "frameHeight": new_frame_h,
+        "sheetWidth": sheet_w,
+        "sheetHeight": sheet_h
+    }
+    with open(meta_path, "w") as f:
+        json.dump(meta, f, indent=2)
+    print(f"Saved metadata to: {meta_path}")
 
 
 def main():
