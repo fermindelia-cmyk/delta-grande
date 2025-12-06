@@ -14,19 +14,6 @@
             --video-frame-padding: clamp(6px, 0px, 6px);
         }
 
-        @font-face {
-            font-family: 'New Science';
-            src: url('game/styles/NewScience-Regular.otf') format('opentype');
-            font-weight: normal;
-            font-style: normal;
-        }
-
-        @font-face {
-            font-family: 'New Science';
-            src: url('game/styles/NewScience-Bold.otf') format('opentype');
-            font-weight: bold;
-            font-style: normal;
-        }
 
         * {
             box-sizing: border-box;
@@ -157,13 +144,14 @@
         /* Floating island - centered on first section with higher z-index */
         .floating-island {
             position: absolute;
-            top: 60%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             z-index: 10;
             /* allow clicks on the island so it can enable audio */
             pointer-events: auto;
-            cursor: pointer;
+            /* cursor: pointer; */
         }
 
         /* Floating island transitions */
@@ -176,9 +164,8 @@
 
         .floating-island canvas {
             display: block;
-            width: 72vw;
-            max-width: 72vw;
-            height: auto;
+            width: 100%;
+            height: 100%;
             pointer-events: auto;
             cursor: pointer;
         }
@@ -622,15 +609,15 @@
         </video>
     </div>
     <div id="bg-transition-root" aria-hidden="true"></div>
+    <div id="bg-dark-overlay" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: -1; pointer-events: none;" aria-hidden="true"></div>
     <!-- First video section with floating island (background video removed to show body image) -->
     <section class="video-section hero">
         <!-- Floating island centered on top: draw video into a canvas (preserves alpha and allows extra compositing) -->
         <div class="floating-island">
             <canvas id="island-canvas" role="img" aria-label="Isla flotante"></canvas>
-            <!-- Hidden source video used as the frame source for the canvas. Keep muted so autoplay may succeed. -->
-            <video id="island-video" muted playsinline loop crossorigin="anonymous" style="display:none">
-                <source src="assets/island.webm" type="video/webm">
-            </video>
+            <div id="island-loader" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden; pointer-events: none;">
+                <div id="island-loader-bar" style="width: 0%; height: 100%; background: #DDDC31; transition: width 0.1s linear;"></div>
+            </div>
         </div>
 
         <div class="logo-naranja" aria-hidden="false">
@@ -1026,11 +1013,6 @@
                     positions[k] = { left: hx, top: hy, rawX: c.x, rawY: c.y };
                 });
 
-                // Log positions for debugging
-                console.log('[sound-hotspots] positioned', positions, 'imageRect=', {
-                    x: Math.round(rect.left), y: Math.round(rect.top), w: Math.round(rect.width), h: Math.round(rect.height)
-                });
-                // debugContent was removed; skip debug updates
             }
 
             // Toggle state storage (start all OFF)
@@ -1070,6 +1052,17 @@
                 selectorImg.src = channelImage[enabled[0]] || channelImage.off;
             }
 
+            const relatosFiles = [
+                'guia-monte-paloma.mp3',
+                'gustavo-andino.mp3',
+                'nino-2-pesca.mp3',
+                'nino-3.mp3',
+                'nino-pesca.mp3',
+                'norma-isabel-alarcon.mp3',
+                'pamela.mp3',
+                'ruben-angel-alarcon.mp3'
+            ];
+
             // Wire click handlers
             Object.keys(hotspots).forEach((k) => {
                 const el = hotspots[k];
@@ -1077,37 +1070,59 @@
                     ev.preventDefault();
                     ev.stopPropagation();
 
-                    // Switch behavior: activate clicked channel exclusively
+                    const audioEl = document.getElementById('web-music');
+                    if (!audioEl) return;
+
+                    // Toggle logic: if clicking the active one, turn it off.
+                    const wasActive = state[k];
+                    
+                    // Turn all off in UI state
                     Object.keys(state).forEach(s => { state[s] = false; updateHotspotUI(s); });
-                    state[k] = true;
-                    updateHotspotUI(k);
 
-                    console.log('[sound-hotspot] switch', { channel: k, state: JSON.parse(JSON.stringify(state)) });
-
-                    // Specific behavior: music toggles the global background audio element
-                    if (k === 'music'){
-                        try {
-                            if (!audioEl) return;
-                            // enable playback (ensure allowed)
-                            if (audioEl.dataset.enabled !== '1'){
-                                if (typeof enableGlobalAudio === 'function') {
-                                    await enableGlobalAudio();
-                                }
-                            }
-                            audioEl.muted = false;
-                        } catch(e){ console.warn('music switch error', e); }
-                    } else {
-                        // For dialog/ambient we dispatch events so other code can react
-                        window.dispatchEvent(new CustomEvent('audio-channel-switch', { detail: { channel: k, enabled: true } }));
+                    if (wasActive) {
+                        // Turning off
+                        audioEl.pause();
+                        refreshSelectorImage(); // will show off
+                        return;
                     }
 
-                    // Update selector image to reflect the selected channel
-                    try { refreshSelectorImage(k); } catch (e) { console.warn('refreshSelectorImage error', e); }
+                    // Turning on
+                    state[k] = true;
+                    updateHotspotUI(k);
+                    refreshSelectorImage(k);
 
-                    // Log which image is currently active
-                    try { console.log('[sound-hotspot] selector image now ->', selectorImg.src); } catch(e){}
+                    // Ensure audio is unlocked
+                    if (audioEl.dataset.enabled !== '1'){
+                        if (typeof window.enableGlobalAudio === 'function') {
+                            await window.enableGlobalAudio();
+                        }
+                    }
 
-                    // Debugging removed: no UI update
+                    // Set source and play
+                    let src = '';
+                    let loop = false;
+
+                    if (k === 'dialog') {
+                        const randomFile = relatosFiles[Math.floor(Math.random() * relatosFiles.length)];
+                        src = `assets/relatos/${randomFile}`;
+                        loop = false;
+                    } else if (k === 'ambient') {
+                        src = 'assets/delta-web-ambiente.mp3';
+                        loop = true;
+                    } else if (k === 'music') {
+                        src = 'assets/web_musica.ogg';
+                        loop = true;
+                    }
+
+                    if (src) {
+                        audioEl.src = src;
+                        audioEl.loop = loop;
+                        try {
+                            await audioEl.play();
+                        } catch(e) {
+                            console.warn('Audio play error', e);
+                        }
+                    }
                 });
             });
 
@@ -1134,97 +1149,157 @@
     <!-- Simple global audio element used to play web_musica.ogg -->
     <audio id="web-music" preload="auto"></audio>
 
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.164.1/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.164.1/examples/jsm/"
+            }
+        }
+    </script>
+
     <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
         const enableBtn = document.getElementById('enable-audio-global');
         const audioEl = document.getElementById('web-music');
         const islandEl = document.querySelector('.floating-island');
 
-        // Canvas-backed island: use an offscreen/hidden <video> as source and draw into the canvas.
-        // This preserves alpha and lets us composite/draw additional effects later.
-        const islandCanvas = islandEl ? islandEl.querySelector('#island-canvas') : null;
-        const islandVideoEl = document.getElementById('island-video');
+        // Three.js setup for the floating island
+        const islandCanvas = document.getElementById('island-canvas');
+        let renderer, scene, camera, model, pivot, mixer;
+        let isDragging = false;
+        let previousMouseX = 0;
+        const clock = new THREE.Clock();
 
-        // Rendering state
-        let _islandCtx = null;
-        let _islandRaf = null;
-
-        function resizeIslandCanvas() {
+        function initThree() {
             if (!islandCanvas) return;
-            const rect = islandCanvas.getBoundingClientRect();
-            const dpr = window.devicePixelRatio || 1;
-            const w = Math.max(1, Math.floor(rect.width * dpr));
-            const h = Math.max(1, Math.floor(rect.height * dpr));
-            if (islandCanvas.width !== w || islandCanvas.height !== h) {
-                islandCanvas.width = w;
-                islandCanvas.height = h;
-                islandCanvas.style.width = rect.width + 'px';
-                islandCanvas.style.height = rect.height + 'px';
-                _islandCtx = islandCanvas.getContext('2d');
-                // Set transform so we can draw in CSS pixels
-                _islandCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            }
-        }
 
-        // Base scale fattens the drawn island slightly for better composition.
-        const CANVAS_BASE_SCALE = 1.32;
-        const CANVAS_VERTICAL_OFFSET_RATIO = 0;
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ 
+                canvas: islandCanvas, 
+                alpha: true, 
+                antialias: true 
+            });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(islandCanvas.clientWidth, islandCanvas.clientHeight, false);
 
-        function renderIsland() {
-            if (!islandCanvas || !islandVideoEl) return;
-            if (!_islandCtx) resizeIslandCanvas();
-            try {
-                const rect = islandCanvas.getBoundingClientRect();
-                // clear using transparent so alpha from the source is preserved
-                _islandCtx.clearRect(0, 0, rect.width, rect.height);
+            // Scene
+            scene = new THREE.Scene();
 
-                if (islandVideoEl.readyState >= 2 && !islandVideoEl.paused) {
-                    // Determine drawing scale (fixed now that zoom is removed)
-                    const scale = CANVAS_BASE_SCALE;
+            // Camera
+            camera = new THREE.PerspectiveCamera(45, islandCanvas.clientWidth / islandCanvas.clientHeight, 0.1, 1000);
+            camera.position.set(0, 0, 14); // Adjusted distance for better view
 
-                    // Destination size in CSS pixels
-                    const dstW = Math.round(rect.width * scale);
-                    const dstH = Math.round(rect.height * scale);
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xaa00ff, 1.5); // Purple ambient
+            scene.add(ambientLight);
 
-                    // Center the scaled island inside the canvas
-                    const dx = Math.round((rect.width - dstW) / 2);
-                    const dy = Math.round((rect.height - dstH) / 2 + dstH * CANVAS_VERTICAL_OFFSET_RATIO);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+            directionalLight.position.set(5, 5, 5);
+            scene.add(directionalLight);
 
-                    // Draw the video into the canvas, scaled and centered. We draw into CSS pixels
-                    // because the context transform already accounts for devicePixelRatio.
-                    _islandCtx.drawImage(islandVideoEl, 0, 0, islandVideoEl.videoWidth || islandVideoEl.width, islandVideoEl.videoHeight || islandVideoEl.height, dx, dy, dstW, dstH);
+            const backLight = new THREE.DirectionalLight(0x800080, 3); // Purple back light
+            backLight.position.set(-5, 5, -10);
+            scene.add(backLight);
+
+            // Pivot Group
+            pivot = new THREE.Group();
+            pivot.rotation.x = 25 * (Math.PI / 180); // 25 degrees CCW
+            scene.add(pivot);
+
+            // Load Model
+            const loader = new GLTFLoader();
+            const dracoLoader = new DRACOLoader();
+            dracoLoader.setDecoderPath('https://unpkg.com/three@0.164.1/examples/jsm/libs/draco/');
+            loader.setDRACOLoader(dracoLoader);
+
+            loader.load('assets/isla_3d.glb', (gltf) => {
+                model = gltf.scene;
+                // Center the model if needed, or adjust scale
+                model.scale.set(3, 3,3); 
+                // Adjust position to center it
+                model.position.y = 0;
+                pivot.add(model);
+
+                // Setup Animations
+                if (gltf.animations && gltf.animations.length > 0) {
+                    mixer = new THREE.AnimationMixer(model);
+                    gltf.animations.forEach((clip) => {
+                        mixer.clipAction(clip).play();
+                    });
                 }
-            } catch (err) {
-                // drawing can occasionally fail if video not ready or cross-origin issues
+
+                // Hide loader
+                const loaderEl = document.getElementById('island-loader');
+                if (loaderEl) loaderEl.style.display = 'none';
+
+            }, (xhr) => {
+                if (xhr.lengthComputable) {
+                    const percentComplete = (xhr.loaded / xhr.total) * 100;
+                    const bar = document.getElementById('island-loader-bar');
+                    if (bar) bar.style.width = percentComplete + '%';
+                }
+            }, (error) => {
+                console.error('An error occurred loading the island model:', error);
+                // Hide loader on error
+                const loaderEl = document.getElementById('island-loader');
+                if (loaderEl) loaderEl.style.display = 'none';
+            });
+
+            // Handle Resize
+            window.addEventListener('resize', onWindowResize);
+
+            // Mouse Controls
+            islandCanvas.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                previousMouseX = e.clientX;
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (isDragging && model) {
+                    const deltaX = e.clientX - previousMouseX;
+                    model.rotation.y += deltaX * 0.005;
+                    previousMouseX = e.clientX;
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+            
+            // Start Animation
+            animate();
+        }
+
+        function onWindowResize() {
+            if (!camera || !renderer || !islandCanvas) return;
+            const width = islandCanvas.clientWidth;
+            const height = islandCanvas.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height, false);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const delta = clock.getDelta();
+            if (mixer) {
+                mixer.update(delta);
             }
-            _islandRaf = requestAnimationFrame(renderIsland);
+
+            if (model && !isDragging) {
+                model.rotation.y += 0.005; // Rotate the island
+            }
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
         }
 
-        function startIslandRendering() {
-            if (_islandRaf) return; // already running
-            resizeIslandCanvas();
-            _islandRaf = requestAnimationFrame(renderIsland);
-        }
-
-        // Keep canvas sized on resize/zoom
-        window.addEventListener('resize', () => {
-            resizeIslandCanvas();
-        });
-
-        // Try to autoplay the hidden source; browsers may block until user interacts.
-        if (islandVideoEl) {
-            islandVideoEl.crossOrigin = 'anonymous';
-            islandVideoEl.muted = true;
-            islandVideoEl.playsInline = true;
-            islandVideoEl.loop = true;
-            islandVideoEl.addEventListener('play', () => startIslandRendering());
-            islandVideoEl.addEventListener('loadeddata', () => {
-                // start if already playing
-                if (!islandVideoEl.paused) startIslandRendering();
-            });
-            islandVideoEl.play().catch(() => {
-                // autoplay blocked; rendering will start after user interaction triggers play
-            });
-        }
+        initThree();
 
         // Preload background music and SFX to avoid playback delay on first click
         const PRELOAD_BG_SRC = '/assets/web_musica.ogg';
@@ -1289,45 +1364,11 @@
                 }
             }
         }
+        window.enableGlobalAudio = enableGlobalAudio;
 
         if (enableBtn) enableBtn.addEventListener('click', enableGlobalAudio);
 
-        // Also enable audio when the user clicks the floating island (first section)
-        if (islandEl) {
-            islandEl.addEventListener('click', async (ev) => {
-                try {
-                    await enableGlobalAudio();
-
-                    // Play preloaded success SFX once on island click
-                    try {
-                        if (sfxEl) {
-                            // restart from start
-                            try { sfxEl.currentTime = 0; } catch (e) { /* ignore */ }
-                            sfxEl.play().catch((err) => console.warn('[SFX] play error', err));
-                        } else {
-                            // fallback to dynamic Audio if needed
-                            const fallback = new Audio(PRELOAD_SFX_SRC);
-                            fallback.volume = 0.9;
-                            fallback.crossOrigin = 'anonymous';
-                            fallback.play().catch(() => {});
-                        }
-                    } catch (sfxErr) {
-                        console.warn('No se pudo reproducir SFX de exito:', sfxErr);
-                    }
-
-                    // Optional: give visual feedback on click by briefly toggling a class
-                    islandEl.classList.add('clicked-audio');
-                    setTimeout(() => islandEl.classList.remove('clicked-audio'), 600);
-
-                    // Ensure the source video starts playing after user interaction
-                    if (islandVideoEl && islandVideoEl.paused) {
-                        islandVideoEl.play().catch(() => {});
-                    }
-                } catch (e) {
-                    console.warn('Error al manejar click en la isla:', e);
-                }
-            });
-        }
+       
     </script>
 
     <script>
