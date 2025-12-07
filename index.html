@@ -659,7 +659,7 @@
         <!-- Floating island centered on top: draw video into a canvas (preserves alpha and allows extra compositing) -->
         <div class="floating-island">
             <canvas id="island-canvas" role="img" aria-label="Isla flotante"></canvas>
-            <div id="splat-container" style="display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; transform: translateY(-10%);">
+            <div id="splat-container" style="display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; transform: translateY(-10%);z-index: 3;">
                 <iframe id="splat-iframe" src="isla%20splat/isla_splat.html" style="width: 100%; height: 100%; border: none; background: transparent;" allowtransparency="true"></iframe>
                 <div id="splat-overlay" style="position: absolute; inset: 0; z-index: 10;"></div>
             </div>
@@ -668,6 +668,9 @@
                 <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden;">
                     <div id="island-loader-bar" style="width: 0%; height: 100%; background: #DDDC31; transition: width 0.1s linear;"></div>
                 </div>
+            </div>
+            <div id="splat-loader" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 14px 20px; background: rgba(0,0,0,0.55); border-radius: 8px; pointer-events: none; text-align: center; color: #fff; font-size: 13px; letter-spacing: 0.04em; z-index: 0;">
+                Cargando isla...
             </div>
         </div>
 
@@ -1472,11 +1475,13 @@
         function setRenderMode(mode) {
             const enableSplat = mode === 'splat';
             isSplatMode = enableSplat;
+            const splatLoader = document.getElementById('splat-loader');
 
             if (enableSplat) {
                 // Switch to Splat
                 if (islandCanvas) islandCanvas.style.display = 'none';
                 if (splatContainer) splatContainer.style.display = 'block';
+                if (splatLoader) splatLoader.style.display = 'block';
                 if (splatOverlay) {
                     splatOverlay.style.pointerEvents = 'none';
                 }
@@ -1484,6 +1489,7 @@
                 // Switch to GLB
                 if (islandCanvas) islandCanvas.style.display = 'block';
                 if (splatContainer) splatContainer.style.display = 'none';
+                if (splatLoader) splatLoader.style.display = 'none';
                 if (splatOverlay) {
                     splatOverlay.style.pointerEvents = 'auto';
                 }
