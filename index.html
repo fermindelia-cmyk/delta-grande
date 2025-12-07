@@ -154,6 +154,11 @@
             /* cursor: pointer; */
         }
 
+        #splat-overlay {
+            cursor: pointer;
+            pointer-events: auto;
+        }
+
         /* Floating island transitions */
         .floating-island,
         .floating-island canvas {
@@ -480,7 +485,7 @@
         /* Sound selector (hero section bottom centered) */
         .video-section.hero .sound-selector {
             position: absolute;
-            bottom: 14%;
+            bottom: 8%;
             left: 50%;
             transform: translate(-50%, 0);
             z-index: 21;
@@ -591,6 +596,45 @@
             transition: width 260ms linear;
         }
 
+        /* Render mode toggle (polygons vs splat) */
+        .render-toggle {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 30;
+            padding: 8px 10px;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(6px);
+            border-radius: 999px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+        }
+
+        .render-toggle .toggle-btn {
+            border: 1px solid rgba(255,255,255,0.18);
+            background: rgba(255,255,255,0.08);
+            color: #f7f7f7;
+            font-size: 14px;
+            letter-spacing: 0.2px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all 140ms ease;
+        }
+
+        .render-toggle .toggle-btn:hover {
+            background: rgba(255,255,255,0.14);
+        }
+
+        .render-toggle .toggle-btn.active {
+            background: linear-gradient(90deg, #DDDC31, #FFE55C);
+            color: #1a1a1a;
+            border-color: rgba(255,255,255,0.35);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        }
+
         .pwa-toast .label { font-size: 13px; white-space: nowrap; }
 
         .site-footer__inner strong {
@@ -615,8 +659,15 @@
         <!-- Floating island centered on top: draw video into a canvas (preserves alpha and allows extra compositing) -->
         <div class="floating-island">
             <canvas id="island-canvas" role="img" aria-label="Isla flotante"></canvas>
-            <div id="island-loader" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden; pointer-events: none;">
-                <div id="island-loader-bar" style="width: 0%; height: 100%; background: #DDDC31; transition: width 0.1s linear;"></div>
+            <div id="splat-container" style="display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; transform: translateY(-10%);">
+                <iframe id="splat-iframe" src="isla%20splat/isla_splat.html" style="width: 100%; height: 100%; border: none; background: transparent;" allowtransparency="true"></iframe>
+                <div id="splat-overlay" style="position: absolute; inset: 0; z-index: 10;"></div>
+            </div>
+            <div id="island-loader" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 140px; padding: 10px 10px 8px; background: rgba(0,0,0,0.55); border-radius: 8px; overflow: hidden; pointer-events: none; text-align: center; color: #fff; font-size: 13px; letter-spacing: 0.04em;">
+                <div style="margin-bottom: 6px;">Cargando isla...</div>
+                <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden;">
+                    <div id="island-loader-bar" style="width: 0%; height: 100%; background: #DDDC31; transition: width 0.1s linear;"></div>
+                </div>
             </div>
         </div>
 
@@ -635,6 +686,12 @@
             <img src="assets/selectores/selector-sonido-off.png" alt="Selector de sonido" id="sound-toggle">
         </div>
     </section>
+
+    <!-- Render mode selector (anchored at bottom) -->
+    <div id="render-mode-toggle" class="render-toggle" role="group" aria-label="Selector de modo de render">
+        <button id="btn-poly" class="toggle-btn active" type="button">Polígonos</button>
+        <button id="btn-splat" class="toggle-btn" type="button">Gaussian Splatting</button>
+    </div>
 
     <!-- Second video section with framed YouTube video (background video removed to show body image) -->
     <section class="video-section">
@@ -1158,10 +1215,20 @@
         }
     </script>
 
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.164.1/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.164.1/examples/jsm/",
+            "@mkkellogg/gaussian-splats-3d": "https://unpkg.com/@mkkellogg/gaussian-splats-3d@0.4.1/build/gaussian-splats-3d.module.js"
+        }
+    }
+    </script>
+
     <script type="module">
-        import * as THREE from 'three';
-        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-        import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+        import * as THREE from 'https://unpkg.com/three@0.164.1/build/three.module.js';
+        import { GLTFLoader } from 'https://unpkg.com/three@0.164.1/examples/jsm/loaders/GLTFLoader.js';
+        import { DRACOLoader } from 'https://unpkg.com/three@0.164.1/examples/jsm/loaders/DRACOLoader.js';
 
         const enableBtn = document.getElementById('enable-audio-global');
         const audioEl = document.getElementById('web-music');
@@ -1169,10 +1236,25 @@
 
         // Three.js setup for the floating island
         const islandCanvas = document.getElementById('island-canvas');
+        const splatContainer = document.getElementById('splat-container');
+        const splatIframe = document.getElementById('splat-iframe');
+        let splatOverlay = null;
+        let splatCamera = null;
+        const btnPoly = document.getElementById('btn-poly');
+        const btnSplat = document.getElementById('btn-splat');
+        
         let renderer, scene, camera, model, pivot, mixer;
         let isDragging = false;
         let previousMouseX = 0;
+        let dragMoved = false;
         const clock = new THREE.Clock();
+
+        // Splat Viewer variables
+        let isSplatMode = false;
+
+        // Click detection
+        let mouseDownTime = 0;
+        let mouseDownPos = { x: 0, y: 0 };
 
         function initThree() {
             if (!islandCanvas) return;
@@ -1221,7 +1303,7 @@
                 // Center the model if needed, or adjust scale
                 model.scale.set(3, 3,3); 
                 // Adjust position to center it
-                model.position.y = 0;
+                model.position.y = -1.4;
                 pivot.add(model);
 
                 // Setup Animations
@@ -1252,26 +1334,164 @@
             // Handle Resize
             window.addEventListener('resize', onWindowResize);
 
-            // Mouse Controls
-            islandCanvas.addEventListener('mousedown', (e) => {
-                isDragging = true;
-                previousMouseX = e.clientX;
-            });
-
-            window.addEventListener('mousemove', (e) => {
-                if (isDragging && model) {
-                    const deltaX = e.clientX - previousMouseX;
-                    model.rotation.y += deltaX * 0.005;
-                    previousMouseX = e.clientX;
+            // Helper to capture PlayCanvas camera once the iframe is ready
+            const attachSplatCamera = () => {
+                if (!splatIframe) return;
+                try {
+                    const iframeWin = splatIframe.contentWindow;
+                    if (!iframeWin || !iframeWin.document) return;
+                    const appEl = iframeWin.document.querySelector('pc-app');
+                    if (appEl && appEl.app) {
+                        const cam = appEl.app.root.findByName('camera');
+                        if (cam) {
+                            splatCamera = cam;
+                            return; // success, stop polling
+                        }
+                    }
+                } catch (err) {
+                    // Ignore CORS / timing issues; will retry
                 }
-            });
+                // Retry a few times until it appears
+                setTimeout(attachSplatCamera, 150);
+            };
 
-            window.addEventListener('mouseup', () => {
-                isDragging = false;
-            });
+            // Mouse Controls for GLB and Splat
+            const getClientX = (ev) => (ev.touches && ev.touches[0] ? ev.touches[0].clientX : ev.clientX);
+
+            const handleMouseDown = (e) => {
+                mouseDownTime = Date.now();
+                mouseDownPos = { x: getClientX(e), y: e.clientY };
+                isDragging = true;
+                previousMouseX = getClientX(e);
+                dragMoved = false;
+            };
+
+            islandCanvas.addEventListener('mousedown', handleMouseDown);
+            islandCanvas.addEventListener('touchstart', handleMouseDown, { passive: true });
+            if (islandEl) {
+                islandEl.addEventListener('mousedown', handleMouseDown);
+                islandEl.addEventListener('touchstart', handleMouseDown, { passive: true });
+            }
             
+            // Add listener to splat container overlay
+            // We need to wait for the element to be available or use event delegation
+            // Since this script runs after DOM is parsed (module), it should be fine if element exists
+            splatOverlay = document.getElementById('splat-overlay');
+            if (splatOverlay) {
+                splatOverlay.addEventListener('mousedown', handleMouseDown);
+                splatOverlay.addEventListener('touchstart', handleMouseDown, { passive: true });
+            } else {
+                // Fallback if element not found immediately (though it should be)
+                document.addEventListener('mousedown', (e) => {
+                    if (e.target.id === 'splat-overlay') {
+                        handleMouseDown(e);
+                    }
+                });
+            }
+            
+            const handleMove = (e) => {
+                if (isDragging) {
+                    const clientX = getClientX(e);
+                    const deltaX = clientX - previousMouseX;
+                    if (Math.abs(deltaX) > 1) dragMoved = true;
+                    
+                    if (!isSplatMode && model) {
+                        model.rotation.y += deltaX * 0.003;
+                    } else if (isSplatMode && splatIframe) {
+                        // Rotate Splat Camera
+                        try {
+                            const iframeWin = splatIframe.contentWindow;
+                                    if (iframeWin && iframeWin.document && splatCamera) {
+                                        // Get current position and rotation
+                                        const pos = splatCamera.getPosition();
+                                        const currentRot = splatCamera.getEulerAngles();
+                                        const radius = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
+                                        let theta = Math.atan2(pos.x, pos.z);
+
+                                        theta -= deltaX * 0.0025; // rotate around Y (50% slower)
+
+                                        const newX = radius * Math.sin(theta);
+                                        const newZ = radius * Math.cos(theta);
+
+                                        splatCamera.setPosition(newX, pos.y, newZ);
+                                        // Maintain the pitch (x rotation) while rotating to look at center
+                                        const targetY = 0;
+                                        const dx = 0 - newX;
+                                        const dz = 0 - newZ;
+                                        const yaw = Math.atan2(dx, dz) * (180 / Math.PI);
+                                        splatCamera.setEulerAngles(currentRot.x, yaw, 0);
+                                    }
+                                } catch (err) {
+                                    // Ignore cross-origin errors if any
+                                }
+                    }
+                    
+                            previousMouseX = clientX;
+                }
+                    };
+
+                    window.addEventListener('mousemove', handleMove);
+                    window.addEventListener('touchmove', handleMove, { passive: true });
+
+            const handleUp = (e) => {
+                isDragging = false;
+                // Clicks are handled by the bottom selector buttons; no toggle here
+            };
+
+            window.addEventListener('mouseup', handleUp);
+            window.addEventListener('touchend', handleUp, { passive: true });
+
+            // Bottom selector buttons
+            if (btnSplat) {
+                btnSplat.addEventListener('click', () => setRenderMode('splat'));
+            }
+            if (btnPoly) {
+                btnPoly.addEventListener('click', () => setRenderMode('poly'));
+            }
+            
+            // Setup Iframe Click Listener
+            if (splatIframe) {
+                splatIframe.onload = () => {
+                    try {
+                        attachSplatCamera();
+                    } catch (e) {
+                        console.warn('Cannot access iframe content (likely CORS issue if not local):', e);
+                    }
+                };
+                // If it was already loaded before this script executed, attempt immediately
+                attachSplatCamera();
+            }
+
+            // Initial mode: polygons (GLB)
+            setRenderMode('poly');
+
             // Start Animation
             animate();
+        }
+
+        function setRenderMode(mode) {
+            const enableSplat = mode === 'splat';
+            isSplatMode = enableSplat;
+
+            if (enableSplat) {
+                // Switch to Splat
+                if (islandCanvas) islandCanvas.style.display = 'none';
+                if (splatContainer) splatContainer.style.display = 'block';
+                if (splatOverlay) {
+                    splatOverlay.style.pointerEvents = 'none';
+                }
+            } else {
+                // Switch to GLB
+                if (islandCanvas) islandCanvas.style.display = 'block';
+                if (splatContainer) splatContainer.style.display = 'none';
+                if (splatOverlay) {
+                    splatOverlay.style.pointerEvents = 'auto';
+                }
+            }
+
+            // Update toggle UI state
+            if (btnPoly) btnPoly.classList[enableSplat ? 'remove' : 'add']('active');
+            if (btnSplat) btnSplat.classList[enableSplat ? 'add' : 'remove']('active');
         }
 
         function onWindowResize() {
@@ -1286,20 +1506,23 @@
         function animate() {
             requestAnimationFrame(animate);
             
-            const delta = clock.getDelta();
-            if (mixer) {
-                mixer.update(delta);
-            }
+            if (!isSplatMode) {
+                const delta = clock.getDelta();
+                if (mixer) {
+                    mixer.update(delta);
+                }
 
-            if (model && !isDragging) {
-                model.rotation.y += 0.005; // Rotate the island
-            }
-            if (renderer && scene && camera) {
-                renderer.render(scene, camera);
+                if (model && !isDragging) {
+                    model.rotation.y += 0.005; // Rotate the island
+                }
+                if (renderer && scene && camera) {
+                    renderer.render(scene, camera);
+                }
             }
         }
 
         initThree();
+
 
         // Preload background music and SFX to avoid playback delay on first click
         const PRELOAD_BG_SRC = '/assets/web_musica.ogg';

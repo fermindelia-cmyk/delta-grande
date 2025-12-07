@@ -2,6 +2,7 @@
   "name": "delta-grande",
   "version": "1.0.0",
   "description": "DELTA+ Interactive Web Experience",
+  "type": "module",
   "main": "game/main.js",
   "scripts": {
     "dev": "vite",
@@ -12,7 +13,8 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "vite": "^5.0.0"
+    "vite": "^5.0.0",
+    "vite-plugin-static-copy": "^1.0.0"
   },
   "dependencies": {
     "three": "^0.181.2"
