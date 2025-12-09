@@ -690,6 +690,16 @@ export class SimuladorScene extends BaseScene {
     this._isReady = false;
     this._uiRectEntries = [];
 
+    this._tutorial = { active: false, paused: false, queue: [], current: null };
+    this._tutorialCompleted = new Set();
+    this._tutorialOverlay = null;
+    this._tutorialDimmer = null;
+    this._tutorialSpotlight = null;
+    this._tutorialCard = null;
+    this._tutorialText = null;
+    this._tutorialButton = null;
+    this._pendingStageIntroText = '';
+
     this._boundOnPointerDown = (e) => this._handlePointerDown(e);
     this._boundOnPointerMove = (e) => this._handlePointerMove(e);
     this._boundOnPointerUp = () => { this._pointerDown = false; };
@@ -751,6 +761,9 @@ export class SimuladorScene extends BaseScene {
   update(dt) {
     this._elapsed += dt;
     if (!this._isReady) return;
+    if (this._tutorial?.paused) {
+      return;
+    }
 
     const smoothing = this.params.water.smoothing;
     this._currentWaterLevel = THREE.MathUtils.damp(
@@ -3638,6 +3651,8 @@ export class SimuladorScene extends BaseScene {
     }
     this._syncToolButtons();
     this._restartStageHints();
+
+    this._onStageChanged(stage?.id);
   }
 
   _getStageHints(stage) {
@@ -3791,6 +3806,20 @@ export class SimuladorScene extends BaseScene {
     const title = stage.name ? `${stage.name}` : 'Nueva etapa';
     const message = stage.introMessage ? `${stage.introMessage}` : '';
     const text = message ? `${title}: ${message}` : title;
+    this._queueStageIntro(text);
+  }
+
+  _queueStageIntro(text) {
+    this._pendingStageIntroText = text || '';
+    this._flushStageIntroIfReady();
+  }
+
+  _flushStageIntroIfReady() {
+    if (!this._pendingStageIntroText) return;
+    const tutorialActive = this._tutorial?.active || this._tutorial?.paused || (this._tutorial?.queue?.length ?? 0) > 0;
+    if (tutorialActive) return;
+    const text = this._pendingStageIntroText;
+    this._pendingStageIntroText = '';
     this._showMessage(text);
   }
 
@@ -4723,6 +4752,8 @@ export class SimuladorScene extends BaseScene {
     root.appendChild(cursorEl);
     this._cursorEl = cursorEl;
 
+    this._ensureTutorialOverlay(root);
+
     this.app.root.appendChild(root);
     this._uiRoot = root;
 
@@ -4734,6 +4765,9 @@ export class SimuladorScene extends BaseScene {
     this._syncWaterButtons();
     this._syncToolButtons();
   this._restartStageHints();
+
+    this._initTutorialSystem();
+    this._startInitialTutorial();
 
     const initialState = this._indexToWeatherState(this._waterLevelIndex);
     this._setWeatherVisualInstant(initialState);
@@ -4758,6 +4792,7 @@ export class SimuladorScene extends BaseScene {
       this._applyViewportRect(entry.element, entry.rect, false, metrics);
     }
     this._updateGoalMessageLayout(metrics);
+    this._updateTutorialLayout();
   }
 
   _computeUILayoutMetrics() {
@@ -4792,6 +4827,274 @@ export class SimuladorScene extends BaseScene {
     goalEl.style.maxWidth = `${toPx(design.maxWidth)}px`;
     goalEl.style.fontSize = `${toPx(design.fontSize)}px`;
     goalEl.style.borderRadius = `${toPx(design.borderRadius)}px`;
+  }
+
+  _ensureTutorialOverlay(root) {
+    if (this._tutorialOverlay || !root) return;
+    const { colors, ui } = this.params;
+
+    const overlay = document.createElement('div');
+    overlay.style.position = 'absolute';
+    overlay.style.inset = '0';
+    overlay.style.display = 'none';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.zIndex = '30';
+    overlay.style.pointerEvents = 'auto';
+    overlay.style.padding = '4vw';
+
+    const dimmer = document.createElement('div');
+    dimmer.style.position = 'absolute';
+    dimmer.style.inset = '0';
+    dimmer.style.background = 'rgba(0, 0, 0, 0.68)';
+    dimmer.style.backdropFilter = 'blur(0.6vmin)';
+    dimmer.style.pointerEvents = 'auto';
+    overlay.appendChild(dimmer);
+
+    const spotlight = document.createElement('div');
+    spotlight.style.position = 'absolute';
+    spotlight.style.left = '0';
+    spotlight.style.top = '0';
+    spotlight.style.width = '0';
+    spotlight.style.height = '0';
+    spotlight.style.boxShadow = '0 0 0 9999px rgba(0,0,0,0.68)';
+    spotlight.style.borderRadius = '1.4vw';
+    spotlight.style.transition = 'all 0.2s ease';
+    spotlight.style.pointerEvents = 'none';
+    spotlight.style.background = 'rgba(255,255,255,0.08)';
+    spotlight.style.mixBlendMode = 'screen';
+    overlay.appendChild(spotlight);
+
+    const card = document.createElement('div');
+    card.style.position = 'relative';
+    card.style.maxWidth = 'min(92vw, 720px)';
+    card.style.width = 'min(92vw, 720px)';
+    card.style.padding = '2.2vh 2.4vw';
+    card.style.background = colors.uiBackgroundActive || 'rgba(10,34,61,0.85)';
+    card.style.borderRadius = `${(ui.borderRadius * 110).toFixed(3)}vmin`;
+    card.style.boxShadow = `0 0 ${(ui.gap * 180).toFixed(3)}vh rgba(0,0,0,${ui.shadowOpacity ?? 0.4})`;
+    card.style.color = colors.uiText || '#f8fafc';
+    card.style.backdropFilter = 'blur(0.8vmin)';
+    card.style.pointerEvents = 'auto';
+    card.style.display = 'flex';
+    card.style.flexDirection = 'column';
+    card.style.gap = '1.4vh';
+    card.style.alignItems = 'center';
+    card.style.textAlign = 'center';
+    overlay.appendChild(card);
+
+    const text = document.createElement('div');
+    text.style.fontSize = `${(ui.fontScale * 120).toFixed(3)}vmin`;
+    text.style.lineHeight = '1.35';
+    text.style.fontWeight = '600';
+    if (this._uiFontFamily) {
+      text.style.fontFamily = this._uiFontFamily;
+    }
+    card.appendChild(text);
+
+    const button = document.createElement('button');
+    button.textContent = 'Click para continuar';
+    button.style.fontSize = `${(ui.fontScale * 105).toFixed(3)}vmin`;
+    button.style.fontWeight = '700';
+    button.style.padding = '1.1vh 2.2vw';
+    button.style.border = 'none';
+    button.style.borderRadius = `${(ui.borderRadius * 90).toFixed(3)}vmin`;
+    button.style.background = colors.uiAccent || '#ffd166';
+    button.style.color = '#1a1f2c';
+    button.style.cursor = 'pointer';
+    button.style.marginTop = `${(ui.gap * 120).toFixed(3)}vh`;
+    button.style.boxShadow = `0 0 ${(ui.gap * 140).toFixed(3)}vh rgba(0,0,0,${ui.shadowOpacity ?? 0.4})`;
+    button.style.transition = 'transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease';
+    button.addEventListener('mouseenter', () => {
+      button.style.transform = 'translateY(-2px) scale(1.01)';
+      button.style.boxShadow = `0 0 ${(ui.gap * 180).toFixed(3)}vh rgba(0,0,0,${ui.shadowOpacity ?? 0.55})`;
+      button.style.filter = 'brightness(1.03)';
+    });
+    button.addEventListener('mouseleave', () => {
+      button.style.transform = 'translateY(0) scale(1)';
+      button.style.boxShadow = `0 0 ${(ui.gap * 140).toFixed(3)}vh rgba(0,0,0,${ui.shadowOpacity ?? 0.4})`;
+      button.style.filter = 'none';
+    });
+    button.addEventListener('click', () => this._handleTutorialAdvance());
+    card.appendChild(button);
+
+    root.appendChild(overlay);
+    this._tutorialOverlay = overlay;
+    this._tutorialDimmer = dimmer;
+    this._tutorialSpotlight = spotlight;
+    this._tutorialCard = card;
+    this._tutorialText = text;
+    this._tutorialButton = button;
+  }
+
+  _initTutorialSystem() {
+    if (!this._tutorial) {
+      this._tutorial = { active: false, paused: false, queue: [], current: null };
+    }
+    this._tutorial.queue = [];
+    this._tutorial.current = null;
+    this._tutorial.active = false;
+    this._tutorial.paused = false;
+    // Reset completion so each fresh mount shows tutorials again.
+    this._tutorialCompleted = new Set();
+    this._updateTutorialLayout();
+  }
+
+  _startInitialTutorial() {
+    const steps = [
+      { type: 'modal', text: '¡Bienvenido al Simulador Delta+! El objetivo de este juego es crear una isla como las que pueden encontrarse en el Delta del Paraná.' },
+      { type: 'modal', text: 'Las islas del Delta del Paraná, aunque suene increíble, empiezan así: tan solo un banco de arena en el fondo del río.' },
+      { type: 'modal', text: 'A medida que se deposita sedimento, ese banco va creciendo hasta emerger sobre el nivel del agua, permitiendo que algunas especies vegetales colonicen esa tierra y la fijen...' },
+      { type: 'modal', text: '¿Te animás a probar?' },
+      { type: 'highlight', target: 'sediment', text: 'Cuando la herramienta Sedimento está activa, podés presionar bajo el agua para hacer crecer el banco de arena.' },
+      { type: 'highlight', target: 'weather', text: 'Podés subir o bajar el nivel del agua si lo necesitás.' }
+    ];
+    this._startTutorialSequence('intro', steps);
+  }
+
+  _startStageTutorial(stageId) {
+    if (!stageId) return;
+    if (stageId === 'colonization') {
+      const steps = [
+        { type: 'modal', text: 'Lograste llevar el banco de arena por sobre el nivel promedio del agua. ¡Buen trabajo! Eso permite que algunas especies vegetales empiecen a colonizar el suelo.' },
+        { type: 'modal', text: 'Las semillas solo pueden sembrarse y crecer cuando la isla está sobre el agua, pero necesitan agua para sobrevivir.' },
+        { type: 'modal', text: 'Hacé crecer completamente a todas las especies disponibles para avanzar.' },
+        { type: 'highlight', target: 'seeder', text: 'Elegí las semillas que quieras sembrar y tocá el suelo para sembrar.' },
+        { type: 'highlight', target: 'remove', text: 'Si querés eliminar semillas o plantas ya crecidas, podés hacerlo utilizando la herramienta Pala.' }
+      ];
+      this._startTutorialSequence('colonization', steps);
+    }
+
+    if (stageId === 'expansion') {
+      const steps = [
+        { type: 'modal', text: 'Ahora podés sembrar las semillas no colonizadoras. Completá el ecosistema de la isla.' }
+      ];
+      this._startTutorialSequence('expansion', steps);
+    }
+  }
+
+  _onStageChanged(stageId) {
+    this._startStageTutorial(stageId);
+  }
+
+  _startTutorialSequence(id, steps) {
+    if (!steps || !steps.length) return;
+    if (!this._tutorialCompleted) {
+      this._tutorialCompleted = new Set();
+    }
+    if (this._tutorialCompleted.has(id)) return;
+    this._tutorialCompleted.add(id);
+
+    this._tutorial.active = true;
+    for (let i = 0; i < steps.length; i++) {
+      const step = { ...steps[i], _sequenceId: id };
+      this._tutorial.queue.push(step);
+    }
+    if (!this._tutorial.current) {
+      this._showNextTutorialStep();
+    }
+  }
+
+  _handleTutorialAdvance() {
+    this._showNextTutorialStep();
+  }
+
+  _showNextTutorialStep() {
+    const next = this._tutorial.queue.shift();
+    if (!next) {
+      this._tutorial.current = null;
+      this._tutorial.paused = false;
+      this._tutorial.active = false;
+      if (this._tutorialOverlay) {
+        this._tutorialOverlay.style.display = 'none';
+        this._tutorialOverlay.style.pointerEvents = 'none';
+      }
+      this._flushStageIntroIfReady();
+      return;
+    }
+
+    this._tutorial.current = next;
+    this._tutorial.paused = true;
+    this._pointerDown = false;
+    if (!this._tutorialOverlay || !this._tutorialText || !this._tutorialButton) return;
+
+    this._tutorialOverlay.style.display = 'flex';
+    this._tutorialOverlay.style.pointerEvents = 'auto';
+    this._tutorialText.textContent = next.text || '';
+
+    if (next.type === 'highlight' && next.target) {
+      if (this._tutorialSpotlight) {
+        this._tutorialSpotlight.style.display = 'block';
+      }
+    } else if (this._tutorialSpotlight) {
+      this._tutorialSpotlight.style.display = 'none';
+    }
+
+    this._updateTutorialLayout();
+  }
+
+  _resolveTutorialTargets(step) {
+    if (!step) return [];
+    if (!this._buttons) return [];
+    switch (step.target) {
+      case 'sediment':
+        return [this._buttons.sediment].filter(Boolean);
+      case 'weather': {
+        const weather = this._buttons.weather || {};
+        return [weather.topContainer, weather.bottomContainer].filter(Boolean);
+      }
+      case 'seeder':
+        return [this._buttons.seeder].filter(Boolean);
+      case 'remove':
+        return [this._buttons.remove].filter(Boolean);
+      default:
+        return [];
+    }
+  }
+
+  _updateTutorialLayout() {
+    if (!this._tutorial?.current || !this._tutorialOverlay) return;
+    const overlayRect = this.app?.root?.getBoundingClientRect();
+    if (!overlayRect) return;
+
+    const step = this._tutorial.current;
+    const targets = this._resolveTutorialTargets(step);
+    const spotlight = this._tutorialSpotlight;
+    if (!spotlight) return;
+
+    const padding = 12; // px
+    const rect = this._computeUnionRect(targets, overlayRect);
+    if (!rect) {
+      spotlight.style.display = 'none';
+    } else {
+      spotlight.style.display = 'block';
+      spotlight.style.left = `${rect.left - padding - overlayRect.left}px`;
+      spotlight.style.top = `${rect.top - padding - overlayRect.top}px`;
+      spotlight.style.width = `${rect.width + padding * 2}px`;
+      spotlight.style.height = `${rect.height + padding * 2}px`;
+    }
+  }
+
+  _computeUnionRect(elements, fallbackRect = null) {
+    if (!elements || !elements.length) return null;
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    let found = false;
+    for (let i = 0; i < elements.length; i++) {
+      const el = elements[i];
+      if (!el || !el.getBoundingClientRect) continue;
+      const r = el.getBoundingClientRect();
+      if (!r || !Number.isFinite(r.left) || !Number.isFinite(r.width)) continue;
+      minX = Math.min(minX, r.left);
+      minY = Math.min(minY, r.top);
+      maxX = Math.max(maxX, r.right);
+      maxY = Math.max(maxY, r.bottom);
+      found = true;
+    }
+    if (!found) return fallbackRect ? { left: fallbackRect.left, top: fallbackRect.top, width: fallbackRect.width, height: fallbackRect.height, right: fallbackRect.right, bottom: fallbackRect.bottom } : null;
+    return { left: minX, top: minY, right: maxX, bottom: maxY, width: maxX - minX, height: maxY - minY };
   }
 
   _applyFontSettings() {
@@ -5511,6 +5814,19 @@ export class SimuladorScene extends BaseScene {
     this._uiAssetBasePath = this.params.ui?.elements?.basePath || '';
     this._removeMessageEl();
     this._uiRectEntries = [];
+
+    this._tutorialOverlay = null;
+    this._tutorialDimmer = null;
+    this._tutorialSpotlight = null;
+    this._tutorialCard = null;
+    this._tutorialText = null;
+    this._tutorialButton = null;
+    if (this._tutorial) {
+      this._tutorial.active = false;
+      this._tutorial.paused = false;
+      this._tutorial.queue = [];
+      this._tutorial.current = null;
+    }
   }
 
   _setWaterLevel(index) {
@@ -5551,6 +5867,7 @@ export class SimuladorScene extends BaseScene {
   }
 
   _handlePointerDown(event) {
+    if (this._tutorial?.paused) return;
     if (event.button !== 0) return;
     const tool = this._activeTool;
     if (!tool) return;
@@ -5574,6 +5891,7 @@ export class SimuladorScene extends BaseScene {
   }
 
   _handlePointerMove(event) {
+    if (this._tutorial?.paused) return;
     const point = this._recordPointerPosition(event);
     if (!point) return;
     if (!this._pointerDown || this._activeTool !== 'sediment' || event.buttons === 0) {
