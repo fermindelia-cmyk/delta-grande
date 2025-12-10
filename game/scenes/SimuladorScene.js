@@ -45,7 +45,7 @@ export const DEFAULT_PARAMS = Object.freeze({
       verticalRange: Object.freeze([0.7, 0.95]),
       depth: -1.6,
       despawnMargin: 0.2,
-      spawnOffset: 0.25
+      spawnOffset: 0.05
     })
   }),
   colors: Object.freeze({
@@ -160,7 +160,7 @@ export const DEFAULT_PARAMS = Object.freeze({
       noiseSpeed: 0.16
     }),
     averageLine: Object.freeze({
-      color: '#f5d06d',
+      color: '#ffaa00',
       opacity: 1,
       dashSize: 0.035,
       gapSize: 0.02,
@@ -525,6 +525,10 @@ export const DEFAULT_PARAMS = Object.freeze({
         goal: Object.freeze({
           type: 'plantCounts',
           species: Object.freeze({
+            aliso: 1,
+            sauce: 1,
+            ambigua: 1,
+            distichlis: 1,
             ceibo: 1,
             drago: 1,
             acacia: 1
@@ -541,22 +545,23 @@ export const DEFAULT_PARAMS = Object.freeze({
   }),
   plantGrowth: Object.freeze({
     transitionDuration: 2.0,
+    waterIntakeDuration: 5.0,
     geometrySegments: 20,
     stageScales: Object.freeze({
-      seedRadius: 0.45,
-      germWidth: 0.38,
-      germHeight: 0.35,
-      smallWidth: 0.55,
-      smallHeight: 0.55,
-      mediumWidth: 0.75,
-      mediumHeight: 0.78,
-      largeWidth: 1.0,
-      largeHeight: 1.0
+      seedRadius: 0.189,
+      germWidth: 0.161,
+      germHeight: 0.147,
+      smallWidth: 0.231,
+      smallHeight: 0.231,
+      mediumWidth: 0.315,
+      mediumHeight: 0.329,
+      largeWidth: 0.42,
+      largeHeight: 0.42
     }),
     visuals: Object.freeze({
       enableSprites: true,
       basePath: '/game-assets/simulador/plants/sheets',
-      spriteWidthRatio: 0.15,
+      spriteWidthRatio: 0.105,
       bottomMargin: 0.15,
       transitionFps: 12,
       stageFps: 12,
@@ -567,7 +572,8 @@ export const DEFAULT_PARAMS = Object.freeze({
   }),
   plantCompetition: Object.freeze({
     neighborRadius: 0.02,
-    minNeighbors: 2
+    minNeighbors: 2,
+    minPlantDistance: 0.016
   })
 });
 
@@ -781,6 +787,15 @@ export class SimuladorScene extends BaseScene {
     this._updateWater();
   this._updateAverageLine();
     this._updateClouds(dt);
+    this._updateRain(dt);
+
+    // Sky Color Lerp
+    if (this._background && this._skyTargetTopColor) {
+        const lerpFactor = dt * 0.5;
+        this._skyCurrentTopColor.lerp(this._skyTargetTopColor, lerpFactor);
+        this._skyCurrentBottomColor.lerp(this._skyTargetBottomColor, lerpFactor);
+    }
+
     this._updateRiverbed();
     this._updateSediment(dt);
     this._updateSeedBursts(dt);
@@ -827,11 +842,22 @@ export class SimuladorScene extends BaseScene {
     const topColor = sky?.gradientTopColor || colors.skyTop || '#8ecae6';
     const bottomColor = sky?.gradientBottomColor || colors.skyBottom || '#e3f1ff';
 
+    this._skyBaseTopColor = new THREE.Color(topColor);
+    this._skyBaseBottomColor = new THREE.Color(bottomColor);
+    this._skyGrayTopColor = new THREE.Color('#a0aab5'); 
+    this._skyGrayBottomColor = new THREE.Color('#d0d5d9');
+
+    this._skyTargetTopColor = this._skyBaseTopColor.clone();
+    this._skyTargetBottomColor = this._skyBaseBottomColor.clone();
+    
+    this._skyCurrentTopColor = this._skyBaseTopColor.clone();
+    this._skyCurrentBottomColor = this._skyBaseBottomColor.clone();
+
     const geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
     const material = new THREE.ShaderMaterial({
       uniforms: {
-        topColor: { value: new THREE.Color(topColor) },
-        bottomColor: { value: new THREE.Color(bottomColor) }
+        topColor: { value: this._skyCurrentTopColor },
+        bottomColor: { value: this._skyCurrentBottomColor }
       },
       vertexShader: `
         varying vec2 vUv;
@@ -863,6 +889,7 @@ export class SimuladorScene extends BaseScene {
 
     this._layoutBackground();
     this._createCloudSystem();
+    this._createRainSystem();
   }
 
   _layoutBackground() {
@@ -909,13 +936,66 @@ export class SimuladorScene extends BaseScene {
       this.scene.add(this._cloudGroup);
     }
     this._clouds = [];
-    this._cloudSpawnTimer = 0;
+    this._cloudTargetCount = 3; // Baseline count
+    this._cloudTargetColor = new THREE.Color(1, 1, 1);
+
+    // Pre-spawn initial clouds
+    if (this._cloudTextures.size > 0) {
+        for (let i = 0; i < this._cloudTargetCount; i++) {
+            this._spawnCloud({ position: 'random', opacity: 1 });
+        }
+    }
+  }
+
+  _createRainSystem() {
+    const dropCount = 1000;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(dropCount * 2 * 3); // 2 vertices per drop
+    
+    this._rainVelocities = [];
+    const angle = 0.15; // Slight angle
+    const len = 0.08; // Length of the drop
+
+    for (let i = 0; i < dropCount; i++) {
+      const x = (Math.random() - 0.5) * this.worldWidth * 2.5; // Wider area to cover angled fall
+      const y = (Math.random() - 0.5) * this.worldHeight * 2;
+      const z = 0.5;
+      
+      const speed = 2.5 + Math.random() * 1.0;
+      const vx = Math.sin(angle) * speed;
+      const vy = -Math.cos(angle) * speed;
+      
+      this._rainVelocities.push({ x: vx, y: vy });
+
+      // Vertex 1 (Head)
+      positions[i * 6 + 0] = x;
+      positions[i * 6 + 1] = y;
+      positions[i * 6 + 2] = z;
+
+      // Vertex 2 (Tail) - behind the head
+      positions[i * 6 + 3] = x - Math.sin(angle) * len;
+      positions[i * 6 + 4] = y + Math.cos(angle) * len;
+      positions[i * 6 + 5] = z;
+    }
+
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+    const material = new THREE.LineBasicMaterial({
+      color: 0xaaccff,
+      transparent: true,
+      opacity: 0.5,
+      depthWrite: false
+    });
+
+    this._rainSystem = new THREE.LineSegments(geometry, material);
+    this._rainSystem.visible = false;
+    this.scene.add(this._rainSystem);
   }
 
   _resetCloudSpawnTimer() {
     const config = this.params.sky?.clouds;
     if (!config) return;
-    const base = Math.max(0.1, config.spawnInterval ?? 12);
+    const base = Math.max(0.1, this._currentCloudSpawnInterval);
     const jitter = Math.max(0, config.spawnIntervalJitter ?? 0);
     const offset = jitter > 0 ? (Math.random() - 0.5) * jitter : 0;
     this._cloudSpawnTimer = Math.max(0.1, base + offset);
@@ -929,7 +1009,8 @@ export class SimuladorScene extends BaseScene {
     return textures[index] || null;
   }
 
-  _spawnCloud() {
+  _spawnCloud(options = {}) {
+    const { position = 'edge', opacity = 1, fadeIn = false } = options;
     const config = this.params.sky?.clouds;
     if (!config?.enabled || !this._cloudGroup || !this._cloudUnitPlane) return false;
     if (!this._cloudTextures.size) return false;
@@ -941,7 +1022,9 @@ export class SimuladorScene extends BaseScene {
       transparent: true,
       depthWrite: false,
       depthTest: false,
-      toneMapped: false
+      toneMapped: false,
+      color: this._cloudTargetColor ? this._cloudTargetColor.clone() : new THREE.Color(1, 1, 1),
+      opacity: opacity
     });
 
     const mesh = new THREE.Mesh(this._cloudUnitPlane, material);
@@ -963,9 +1046,15 @@ export class SimuladorScene extends BaseScene {
     const marginNorm = config.despawnMargin ?? 0.2;
     const offset = spawnOffsetNorm * this.worldWidth;
     const halfWidth = width * 0.5;
-    const startX = direction > 0
-      ? -offset - halfWidth
-      : this.worldWidth + offset + halfWidth;
+    
+    let startX;
+    if (position === 'random') {
+        startX = (Math.random() * 1.2 - 0.1) * this.worldWidth;
+    } else {
+        startX = direction > 0
+          ? -offset - halfWidth
+          : this.worldWidth + offset + halfWidth;
+    }
 
     const range = Array.isArray(config.verticalRange) && config.verticalRange.length >= 2
       ? config.verticalRange
@@ -988,7 +1077,10 @@ export class SimuladorScene extends BaseScene {
       widthNorm: width / this.worldWidth,
       positionNorm: startX / this.worldWidth,
       marginNorm,
-      aspect: aspect || 0.5
+      aspect: aspect || 0.5,
+      dying: false,
+      fadeIn: fadeIn,
+      targetOpacity: 1
     };
 
     this._cloudGroup.add(mesh);
@@ -1010,22 +1102,30 @@ export class SimuladorScene extends BaseScene {
   }
 
   _updateClouds(dt) {
+    if (!this._clouds) return;
+    
+    // Animate color
+    if (this._cloudTargetColor) {
+        const lerpFactor = dt * 2.0;
+        for (let i = 0; i < this._clouds.length; i++) {
+            const cloud = this._clouds[i];
+            if (cloud.mesh && cloud.mesh.material) {
+                cloud.mesh.material.color.lerp(this._cloudTargetColor, lerpFactor);
+            }
+        }
+    }
+
     const config = this.params.sky?.clouds;
     if (!config?.enabled || !this._cloudGroup) return;
 
-    if (this._cloudSpawnTimer > 0) {
-      this._cloudSpawnTimer -= dt;
-    }
-
-    if (this._clouds.length < (config.maxConcurrent ?? 0)) {
-      if (this._cloudSpawnTimer <= 0) {
-        const spawned = this._spawnCloud();
-        this._resetCloudSpawnTimer();
-        if (!spawned) {
-          // Avoid tight loops if textures are missing.
-          this._cloudSpawnTimer = Math.max(this._cloudSpawnTimer, 2);
+    // Maintenance: Ensure we have enough active clouds
+    const activeClouds = this._clouds.filter(c => !c.dying);
+    if (activeClouds.length < this._cloudTargetCount) {
+        const diff = this._cloudTargetCount - activeClouds.length;
+        for (let i = 0; i < diff; i++) {
+            // Replacement clouds spawn at edge, fully opaque
+            this._spawnCloud({ position: 'edge', opacity: 1 });
         }
-      }
     }
 
     if (!this._clouds.length) return;
@@ -1039,6 +1139,21 @@ export class SimuladorScene extends BaseScene {
       if (!mesh) {
         removals.push(i);
         continue;
+      }
+
+      // Opacity Animation
+      if (cloud.dying) {
+          mesh.material.opacity -= dt; // Fade out over ~1s
+          if (mesh.material.opacity <= 0) {
+              removals.push(i);
+              continue;
+          }
+      } else if (cloud.fadeIn) {
+          mesh.material.opacity += dt; // Fade in over ~1s
+          if (mesh.material.opacity >= 1) {
+              mesh.material.opacity = 1;
+              cloud.fadeIn = false;
+          }
       }
 
       const delta = cloud.speedNorm * worldWidth * dt * cloud.direction;
@@ -1060,11 +1175,54 @@ export class SimuladorScene extends BaseScene {
       }
     }
 
-    if (removals.length) {
-      for (let i = removals.length - 1; i >= 0; i--) {
-        this._removeCloud(removals[i]);
+    // Sort removals descending to avoid index shifting issues
+    removals.sort((a, b) => b - a);
+    // Remove duplicates
+    const uniqueRemovals = [...new Set(removals)];
+
+    if (uniqueRemovals.length) {
+      for (let i = 0; i < uniqueRemovals.length; i++) {
+        this._removeCloud(uniqueRemovals[i]);
       }
     }
+  }
+
+  _updateRain(dt) {
+    if (!this._rainSystem || !this._rainSystem.visible) return;
+
+    const positions = this._rainSystem.geometry.attributes.position.array;
+    const count = this._rainVelocities.length;
+    const bottomLimit = this.worldBottom - 0.5;
+    const topReset = this.worldTop + 0.5;
+    const widthReset = this.worldWidth * 2.5;
+    const angle = 0.15;
+    const len = 0.08;
+
+    for (let i = 0; i < count; i++) {
+      const vel = this._rainVelocities[i];
+      
+      // Update Head
+      positions[i * 6 + 0] += vel.x * dt;
+      positions[i * 6 + 1] += vel.y * dt;
+      
+      // Update Tail
+      positions[i * 6 + 3] += vel.x * dt;
+      positions[i * 6 + 4] += vel.y * dt;
+
+      // Reset if below screen
+      if (positions[i * 6 + 1] < bottomLimit) {
+        const newX = (Math.random() - 0.5) * widthReset;
+        const newY = topReset + Math.random() * 0.5;
+        
+        positions[i * 6 + 0] = newX;
+        positions[i * 6 + 1] = newY;
+        
+        positions[i * 6 + 3] = newX - Math.sin(angle) * len;
+        positions[i * 6 + 4] = newY + Math.cos(angle) * len;
+      }
+    }
+
+    this._rainSystem.geometry.attributes.position.needsUpdate = true;
   }
 
   _resizeClouds(prevWidth) {
@@ -2967,6 +3125,24 @@ export class SimuladorScene extends BaseScene {
         depthTest: false,
         alphaTest: 0.01
       });
+      
+      // Inject glow logic into MeshBasicMaterial
+      material.userData.glowColor = { value: new THREE.Color(0, 0, 0) };
+      material.onBeforeCompile = (shader) => {
+        shader.uniforms.glowColor = material.userData.glowColor;
+        shader.fragmentShader = `
+          uniform vec3 glowColor;
+        ` + shader.fragmentShader;
+        
+        shader.fragmentShader = shader.fragmentShader.replace(
+          '#include <dithering_fragment>',
+          `
+          #include <dithering_fragment>
+          gl_FragColor.rgb += glowColor;
+          `
+        );
+      };
+      
       plant.imageMaterial = material;
       this._plantMaterialCache.set(plant.id, material);
     }
@@ -3029,6 +3205,10 @@ export class SimuladorScene extends BaseScene {
     if (material.map !== frame.texture) {
       material.map = frame.texture || null;
       material.needsUpdate = true; // Only happens once per species load
+    }
+    // Reset glow by default
+    if (material.userData.glowColor) {
+        material.userData.glowColor.value.set(0, 0, 0);
     }
     material.color.setHex(0xffffff);
     material.opacity = 1;
@@ -3196,6 +3376,8 @@ export class SimuladorScene extends BaseScene {
     if (this._lastPointerInfo) {
       this._refreshCursor();
     }
+    this._checkStageGoal();
+    this._updateSeedLabels();
   }
 
   _refreshPlantVisual(plant) {
@@ -3273,11 +3455,24 @@ export class SimuladorScene extends BaseScene {
     const burstOffset = Math.max(0.005, interactions.seedBurstHeightOffset ?? 0.06);
     const desiredBurstY = state.riverbedHeight + burstOffset;
     const burstY = Math.min(this.worldTop, Math.max(worldY, desiredBurstY));
+    
+    // Check minimum distance
+    const minDistance = this.params.plantCompetition?.minPlantDistance ?? 0.05;
+    const minDistanceWorld = minDistance * this.worldWidth;
+    
+    for (const plant of this._plants) {
+        if (Math.abs(plant.x - clampedX) < minDistanceWorld) {
+            this._showGoalMessage('¡Demasiado cerca de otra planta!');
+            return false;
+        }
+    }
+
     this._emitSeedBurst(clampedX, burstY);
 
     this._spawnPlant(seed, clampedX, state.riverbedHeight);
     this._playSeedPlantSound();
     this._refreshCursor();
+    this._updateSeedLabels();
     return true;
   }
 
@@ -3300,16 +3495,58 @@ export class SimuladorScene extends BaseScene {
     mesh.renderOrder = 2;
     mesh.visible = false;
     this.scene.add(mesh);
+    
+    // Create loader mesh
+    const loaderGeometry = new THREE.PlaneGeometry(1, 1);
+    const loaderMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            progress: { value: 0.0 },
+            color: { value: new THREE.Color(0x4fc3f7) }
+        },
+        vertexShader: `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            varying vec2 vUv;
+            uniform float progress;
+            uniform vec3 color;
+            void main() {
+                vec2 center = vec2(0.5);
+                vec2 diff = vUv - center;
+                float dist = length(diff);
+                float angle = atan(diff.y, diff.x);
+                float a = (angle + 3.14159) / (2.0 * 3.14159);
+                float ring = smoothstep(0.3, 0.35, dist) * (1.0 - smoothstep(0.45, 0.5, dist));
+                if (a > progress) discard;
+                gl_FragColor = vec4(color, ring);
+            }
+        `,
+        transparent: true,
+        depthTest: false,
+        depthWrite: false
+    });
+    const loaderMesh = new THREE.Mesh(loaderGeometry, loaderMaterial);
+    loaderMesh.visible = false;
+    loaderMesh.renderOrder = 10;
+    this.scene.add(loaderMesh);
+
     const anchorX = this.worldWidth > 0 ? clamp(x / this.worldWidth, 0, 1) : 0;
     const plant = {
       id: `${seed.id}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
       seed,
       mesh,
+      loaderMesh,
       x,
       baseY,
       anchorX,
       stageIndex: initialStageIndex,
       stageTimer: 0,
+      waterIntakeTimer: 0,
+      readyToGrow: false,
       currentStageHeight: initialHeight,
       currentStageHalfWidth: Math.max(initialWidth * 0.5, stageInfo?.radius || 0.01),
       competitionBlocked: false,
@@ -3544,11 +3781,61 @@ export class SimuladorScene extends BaseScene {
   const plantBase = plant.baseY;
   const isSubmerged = waterHeight >= plantBase + subOffset;
   const isAboveWater = waterHeight <= plantBase - emerOffset;
+  const isMaxStage = plant.stageIndex >= this._plantStages.length - 1;
+
+      // Water Intake Logic
+      const intakeDuration = this.params.plantGrowth?.waterIntakeDuration ?? 5.0;
+      
+      if (isSubmerged && !isMaxStage) {
+        // While submerged, accumulate water intake
+        if (!plant.readyToGrow) {
+            plant.waterIntakeTimer += dt;
+            if (plant.waterIntakeTimer >= intakeDuration) {
+                plant.waterIntakeTimer = intakeDuration;
+                plant.readyToGrow = true;
+            }
+        }
+        
+        // Show loader if not fully charged
+        if (plant.loaderMesh && !plant.readyToGrow) {
+            plant.loaderMesh.visible = true;
+            plant.loaderMesh.material.uniforms.progress.value = plant.waterIntakeTimer / intakeDuration;
+            
+            // Position loader: User requested fixed distance BELOW plant base.
+            const centerY = plant.baseY - 0.09;
+            plant.loaderMesh.position.set(plant.mesh.position.x, centerY, 0.1);
+            
+            // Fixed size loader (independent of plant size)
+            const loaderScale = 0.035; 
+            plant.loaderMesh.scale.set(loaderScale, loaderScale, 1);
+            
+        } else if (plant.loaderMesh) {
+            plant.loaderMesh.visible = false;
+        }
+      } else {
+        // Above water or Max Stage
+        if (plant.loaderMesh) plant.loaderMesh.visible = false;
+      }
+
+      // Glow Logic (Visible whenever ready to grow)
+      if (plant.imageMaterial && plant.imageMaterial.userData.glowColor) {
+        if (plant.readyToGrow && !isMaxStage) {
+            const pulse = 0.3 + 0.2 * Math.sin(this._elapsed * 5.0);
+            plant.imageMaterial.userData.glowColor.value.set(pulse, pulse, 0); // Yellowish glow
+        } else {
+            plant.imageMaterial.userData.glowColor.value.set(0, 0, 0);
+        }
+      }
 
       const stageData = this._plantStages[plant.stageIndex];
       if (!stageData) continue;
-      const requirement = stageData.nextRequiresSubmerged;
-      if (requirement === null || plant.stageIndex >= this._plantStages.length - 1) {
+      
+      // Check if we can grow
+      // New Logic: Must be above water AND ready to grow (charged)
+      // We ignore stageData.nextRequiresSubmerged for the growth condition itself,
+      // assuming all stages follow the "Charge -> Grow" cycle.
+      
+      if (isMaxStage) {
         plant.stageTimer = 0;
         continue;
       }
@@ -3558,24 +3845,22 @@ export class SimuladorScene extends BaseScene {
         continue;
       }
 
-      let conditionMet = false;
-      if (requirement === true) {
-        conditionMet = isSubmerged;
-      } else if (requirement === false) {
-        conditionMet = isAboveWater;
-      }
-
-      if (conditionMet) {
+      // Growth Condition: Above Water AND Ready
+      if (isAboveWater && plant.readyToGrow) {
         plant.stageTimer += dt;
         if (plant.stageTimer >= transitionDuration) {
           this._advancePlantStage(plant, plant.stageIndex + 1);
+          // Reset cycle
+          plant.readyToGrow = false;
+          plant.waterIntakeTimer = 0;
+          if (plant.imageMaterial && plant.imageMaterial.userData.glowColor) {
+            plant.imageMaterial.userData.glowColor.value.set(0, 0, 0);
+          }
         }
       } else {
         plant.stageTimer = 0;
       }
     }
-
-    this._checkStageGoal();
   }
 
   _evaluatePlantCompetition() {
@@ -3671,6 +3956,16 @@ export class SimuladorScene extends BaseScene {
     if (plant.mesh) {
       this.scene.remove(plant.mesh);
     }
+    if (plant.loaderMesh) {
+      this.scene.remove(plant.loaderMesh);
+      if (plant.loaderMesh.geometry) plant.loaderMesh.geometry.dispose();
+      if (plant.loaderMesh.material) plant.loaderMesh.material.dispose();
+    }
+    if (plant.glowMesh) {
+      this.scene.remove(plant.glowMesh);
+      if (plant.glowMesh.geometry) plant.glowMesh.geometry.dispose();
+      if (plant.glowMesh.material) plant.glowMesh.material.dispose();
+    }
     if (plant.imageMaterial) {
       plant.imageMaterial.dispose?.();
       this._plantMaterialCache.delete(plant.id);
@@ -3681,34 +3976,11 @@ export class SimuladorScene extends BaseScene {
     this._plants.splice(index, 1);
     this._checkStageGoal();
     this._refreshCursor();
+    this._updateSeedLabels();
   }
 
   _checkStageGoal() {
-    const stage = this._stages[this._currentStageIndex];
-    if (!stage || this._stageComplete) return;
-    const goal = stage.goal;
-    if (!goal) return;
-    if (goal.type === 'plantCounts') {
-      const species = goal.species || {};
-      const ids = Object.keys(species);
-      if (!ids.length) return;
-      const lastStageIndex = this._plantStages.length - 1;
-      const counts = {};
-      for (let i = 0; i < this._plants.length; i++) {
-        const plant = this._plants[i];
-        if (plant.stageIndex !== lastStageIndex) continue;
-        const id = plant.seed?.id;
-        if (!id) continue;
-        counts[id] = (counts[id] || 0) + 1;
-      }
-      for (let i = 0; i < ids.length; i++) {
-        const id = ids[i];
-        if ((counts[id] || 0) < species[id]) {
-          return;
-        }
-      }
-      this._onStageGoalReached();
-    }
+    this._updateProgressBar();
   }
 
   _onStageGoalReached() {
@@ -3758,6 +4030,7 @@ export class SimuladorScene extends BaseScene {
     this._stageComplete = false;
     this._currentStageIndex = 0;
     this._configureStageTools();
+    this._updateSeedLabels();
     this._showStageIntro();
   }
 
@@ -3782,8 +4055,43 @@ export class SimuladorScene extends BaseScene {
     }
     this._syncToolButtons();
     this._restartStageHints();
+    this._updateProgressBar();
 
+    this._updateSeedLabels();
     this._onStageChanged(stage?.id);
+  }
+
+  _updateSeedLabels() {
+    const stage = this._stages[this._currentStageIndex];
+    // If not plantCounts, we might still want to show counts if we want to be consistent, 
+    // but the requirement was "target amount". If there is no target, maybe just show name?
+    // Or maybe we should look at the cumulative goal if we are in stage 3?
+    // The user said "current amount of planted plants from that species and the target amount".
+    
+    // Let's try to find the goal for this species in the current stage.
+    let speciesGoals = {};
+    if (stage && stage.goal && stage.goal.type === 'plantCounts') {
+        speciesGoals = stage.goal.species || {};
+    }
+
+    for (const [seedId, buttonData] of Object.entries(this._seedButtons)) {
+        if (!buttonData.label) continue;
+        
+        const seedDef = buttonData.seed;
+        const baseLabel = seedDef.label || seedId;
+        
+        if (speciesGoals[seedId] !== undefined) {
+            const target = speciesGoals[seedId];
+            // Count planted plants of this species (any stage)
+            const current = this._plants.filter(p => 
+                p.seed?.id === seedId
+            ).length;
+            
+            buttonData.label.textContent = `${baseLabel} (${current}/${target})`;
+        } else {
+            buttonData.label.textContent = baseLabel;
+        }
+    }
   }
 
   _getStageHints(stage) {
@@ -4240,26 +4548,7 @@ export class SimuladorScene extends BaseScene {
   }
 
   _checkEmergence() {
-    const heights = this._riverbedHeights;
-    if (!heights?.length) return;
-    const stage = this._stages[this._currentStageIndex];
-    if (!stage || this._stageComplete) return;
-    const goal = stage.goal;
-    if (!goal || goal.type !== 'riverbedCoverage') return;
-    const threshold = Math.max(0, goal.coverage ?? 0.1);
-    const level = this._waterLevels.medium;
-    if (threshold === 0) {
-      this._onStageGoalReached();
-      return;
-    }
-    let elevated = 0;
-    for (let i = 0; i < heights.length; i++) {
-      if (heights[i] >= level + (goal.minElevationAboveWater || 0)) elevated += 1;
-    }
-    const coverage = elevated / heights.length;
-    if (coverage >= threshold) {
-      this._onStageGoalReached();
-    }
+    this._updateProgressBar();
   }
 
   _emitSediment(worldX, worldY, stateOverride) {
@@ -4899,6 +5188,8 @@ export class SimuladorScene extends BaseScene {
 
     this._ensureTutorialOverlay(root);
 
+    this._createProgressBar(root);
+
     this.app.root.appendChild(root);
     this._uiRoot = root;
 
@@ -4916,6 +5207,7 @@ export class SimuladorScene extends BaseScene {
 
     const initialState = this._indexToWeatherState(this._waterLevelIndex);
     this._setWeatherVisualInstant(initialState);
+    this._updateSeedLabels();
     this._updateGoalMessageLayout();
   }
 
@@ -5063,6 +5355,27 @@ export class SimuladorScene extends BaseScene {
     button.addEventListener('click', () => this._handleTutorialAdvance());
     card.appendChild(button);
 
+    const skipButton = document.createElement('button');
+    skipButton.textContent = 'Saltar tutorial';
+    skipButton.style.fontSize = `${(ui.fontScale * 85).toFixed(3)}vmin`;
+    skipButton.style.fontWeight = '600';
+    skipButton.style.padding = '0.8vh 1.6vw';
+    skipButton.style.border = 'none';
+    skipButton.style.background = 'transparent';
+    skipButton.style.color = 'rgba(255, 255, 255, 0.6)';
+    skipButton.style.cursor = 'pointer';
+    skipButton.style.marginTop = '1vh';
+    skipButton.style.textDecoration = 'underline';
+    skipButton.style.transition = 'color 0.15s ease';
+    skipButton.addEventListener('mouseenter', () => {
+      skipButton.style.color = 'rgba(255, 255, 255, 0.9)';
+    });
+    skipButton.addEventListener('mouseleave', () => {
+      skipButton.style.color = 'rgba(255, 255, 255, 0.6)';
+    });
+    skipButton.addEventListener('click', () => this._skipTutorial());
+    card.appendChild(skipButton);
+
     root.appendChild(overlay);
     this._tutorialOverlay = overlay;
     this._tutorialDimmer = dimmer;
@@ -5070,6 +5383,18 @@ export class SimuladorScene extends BaseScene {
     this._tutorialCard = card;
     this._tutorialText = text;
     this._tutorialButton = button;
+  }
+
+  _skipTutorial() {
+    if (!this._tutorial) return;
+    this._tutorial.queue = [];
+    this._tutorial.current = null;
+    this._tutorial.active = false;
+    this._tutorial.paused = false;
+    if (this._tutorialOverlay) {
+      this._tutorialOverlay.style.display = 'none';
+    }
+    this._setCursorVisible(true);
   }
 
   _initTutorialSystem() {
@@ -5959,6 +6284,11 @@ export class SimuladorScene extends BaseScene {
     this._weatherAnimations = {};
     this._weatherCurrentFrame = { top: null, bottom: null };
     this._weatherConfig = null;
+    
+    this._progressBarFill = null;
+    this._progressBarLabel = null;
+    this._progressBarContainer = null;
+
     this._weatherTransitionPromise = Promise.resolve();
     this._weatherState = 'low';
     this._uiAssetBasePath = this.params.ui?.elements?.basePath || '';
@@ -5992,6 +6322,76 @@ export class SimuladorScene extends BaseScene {
       this._indexToWeatherState(previousIndex),
       this._indexToWeatherState(clamped)
     );
+    this._updateCloudSettings(clamped);
+  }
+
+  _updateCloudSettings(waterLevelIndex) {
+    const config = this.params.sky?.clouds;
+    if (!config) return;
+    
+    let targetCount = 3;
+    let brightness = 1;
+    let rainEnabled = false;
+    
+    if (waterLevelIndex === 1) { // Medium
+        targetCount = 9;
+    } else if (waterLevelIndex === 2) { // High
+        targetCount = 30;
+        brightness = 0.5;
+        rainEnabled = true;
+    }
+    
+    this._cloudTargetCount = targetCount;
+
+    // Sky Color Transition
+    if (waterLevelIndex === 2) {
+        this._skyTargetTopColor.copy(this._skyGrayTopColor);
+        this._skyTargetBottomColor.copy(this._skyGrayBottomColor);
+    } else {
+        this._skyTargetTopColor.copy(this._skyBaseTopColor);
+        this._skyTargetBottomColor.copy(this._skyBaseBottomColor);
+    }
+
+    // Rain
+    if (this._rainSystem) {
+        this._rainSystem.visible = rainEnabled;
+    }
+    
+    // Animate brightness
+    const targetColor = new THREE.Color(brightness, brightness, brightness);
+    if (this._clouds) {
+        this._clouds.forEach(cloud => {
+            if (cloud.mesh && cloud.mesh.material) {
+                cloud.targetColor = targetColor;
+            }
+        });
+    }
+    this._cloudTargetColor = targetColor;
+
+    // Handle count changes immediately
+    const activeClouds = this._clouds.filter(c => !c.dying);
+    const diff = targetCount - activeClouds.length;
+
+    if (diff > 0) {
+        // Spawn new clouds randomly on screen with fade in
+        for (let i = 0; i < diff; i++) {
+            this._spawnCloud({ position: 'random', opacity: 0, fadeIn: true });
+        }
+    } else if (diff < 0) {
+        // Mark excess clouds as dying
+        const toRemove = -diff;
+        // Pick random active clouds to remove
+        const candidates = activeClouds.filter(c => !c.dying);
+        // Shuffle candidates
+        for (let i = candidates.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+        }
+        
+        for (let i = 0; i < toRemove && i < candidates.length; i++) {
+            candidates[i].dying = true;
+        }
+    }
   }
 
   _bindEvents() {
@@ -6213,6 +6613,16 @@ export class SimuladorScene extends BaseScene {
       if (plant.mesh) {
         this.scene.remove(plant.mesh);
       }
+      if (plant.loaderMesh) {
+        this.scene.remove(plant.loaderMesh);
+        if (plant.loaderMesh.geometry) plant.loaderMesh.geometry.dispose();
+        if (plant.loaderMesh.material) plant.loaderMesh.material.dispose();
+      }
+      if (plant.glowMesh) {
+        this.scene.remove(plant.glowMesh);
+        if (plant.glowMesh.geometry) plant.glowMesh.geometry.dispose();
+        if (plant.glowMesh.material) plant.glowMesh.material.dispose();
+      }
     }
 
     this._plantGeometryCache.forEach((geo) => geo.dispose?.());
@@ -6296,5 +6706,135 @@ export class SimuladorScene extends BaseScene {
     geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
     geometry.setIndex(new THREE.BufferAttribute(indices, 1));
     return { geometry, topIndices, bottomIndices };
+  }
+
+  _createProgressBar(root) {
+    const { ui, colors } = this.params;
+    
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.left = '40px';
+    container.style.top = '40px';
+    container.style.width = '300px';
+    container.style.padding = '15px 20px';
+    container.style.background = colors.uiBackground || 'rgba(10, 34, 61, 0.6)';
+    container.style.borderRadius = '12px';
+    container.style.backdropFilter = 'blur(4px)';
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.gap = '10px';
+    container.style.pointerEvents = 'none';
+    container.style.zIndex = '10';
+    
+    const label = document.createElement('div');
+    label.textContent = 'Progreso';
+    label.style.color = colors.uiText || '#f8fafc';
+    label.style.fontSize = '16px';
+    label.style.fontWeight = '600';
+    if (this._uiFontFamily) {
+      label.style.fontFamily = this._uiFontFamily;
+    }
+    container.appendChild(label);
+
+    const barContainer = document.createElement('div');
+    barContainer.style.width = '100%';
+    barContainer.style.height = '12px';
+    barContainer.style.background = 'rgba(0, 0, 0, 0.4)';
+    barContainer.style.borderRadius = '6px';
+    barContainer.style.overflow = 'hidden';
+    container.appendChild(barContainer);
+
+    const barFill = document.createElement('div');
+    barFill.style.width = '0%';
+    barFill.style.height = '100%';
+    barFill.style.background = colors.uiAccent || '#ffd166';
+    barFill.style.transition = 'width 0.3s ease-out';
+    barContainer.appendChild(barFill);
+
+    root.appendChild(container);
+    
+    this._progressBarFill = barFill;
+    this._progressBarLabel = label;
+    this._progressBarContainer = container;
+  }
+
+  _updateProgressBar() {
+    if (!this._progressBarFill) return;
+    
+    const stage = this._stages[this._currentStageIndex];
+    if (stage && this._progressBarLabel) {
+        this._progressBarLabel.textContent = stage.name || 'Progreso de etapa';
+    }
+
+    const progress = this._calculateStageProgress();
+    const pct = Math.min(100, Math.max(0, progress * 100));
+    this._progressBarFill.style.width = `${pct}%`;
+    
+    if (progress >= 1.0 && !this._stageComplete) {
+        this._onStageGoalReached();
+    }
+  }
+
+  _calculateStageProgress() {
+    const stage = this._stages[this._currentStageIndex];
+    if (!stage || !stage.goal) return 0;
+
+    const goal = stage.goal;
+    
+    if (goal.type === 'riverbedCoverage') {
+        return this._calculateLandCoverage(goal);
+    } else if (goal.type === 'plantCounts') {
+        return this._calculatePlantProgress(goal);
+    }
+    
+    return 0;
+  }
+
+  _calculateLandCoverage(goal) {
+    const heights = this._riverbedHeights;
+    if (!heights?.length) return 0;
+    
+    const threshold = Math.max(0, goal.coverage ?? 0.1);
+    if (threshold === 0) return 1;
+
+    const level = this._waterLevels.medium;
+    let elevated = 0;
+    for (let i = 0; i < heights.length; i++) {
+      if (heights[i] >= level + (goal.minElevationAboveWater || 0)) elevated += 1;
+    }
+    
+    const coverage = elevated / heights.length;
+    return coverage / threshold;
+  }
+
+  _calculatePlantProgress(goal) {
+    const species = goal.species || {};
+    const ids = Object.keys(species);
+    if (!ids.length) return 1;
+
+    let totalPoints = 0;
+    let maxTotalPoints = 0;
+    const pointsPerPlant = this._plantStages.length; 
+
+    for (const id of ids) {
+        const requiredCount = species[id];
+        const maxSpeciesPoints = requiredCount * pointsPerPlant;
+        maxTotalPoints += maxSpeciesPoints;
+
+        const plantsOfSpecies = this._plants.filter(p => p.seed?.id === id);
+        
+        const plantPoints = plantsOfSpecies.map(p => p.stageIndex + 1)
+            .sort((a, b) => b - a);
+        
+        let speciesPoints = 0;
+        for (let i = 0; i < Math.min(requiredCount, plantPoints.length); i++) {
+            speciesPoints += plantPoints[i];
+        }
+        
+        totalPoints += speciesPoints;
+    }
+
+    if (maxTotalPoints === 0) return 1;
+    return totalPoints / maxTotalPoints;
   }
 }

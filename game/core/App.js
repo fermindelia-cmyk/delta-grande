@@ -39,6 +39,18 @@ export class App {
     this.renderer.domElement.style.width = '100%';
     this.renderer.domElement.style.height = '100%';
         this.renderer.domElement.style.zIndex = '0';
+        
+        this.renderer.domElement.addEventListener('webglcontextlost', (event) => {
+            event.preventDefault();
+            console.warn('WebGL Context Lost');
+        });
+
+        this.renderer.domElement.addEventListener('webglcontextrestored', () => {
+            console.log('WebGL Context Restored');
+            // Reloading the page is often the safest way to recover state
+            window.location.reload();
+        });
+
         if (this.root.firstChild) {
             this.root.insertBefore(this.renderer.domElement, this.root.firstChild);
         } else {
