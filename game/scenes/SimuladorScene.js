@@ -216,8 +216,8 @@ export const DEFAULT_PARAMS = Object.freeze({
     approachLead: 0.22,
     arrivalThreshold: 0.008,
     dissolveSpeed: 0.3,
-    depositRadius: 0.09,
-    depositAmount: 0.01,
+    depositRadius: 0.06,
+    depositAmount: 0.007,
     particleSize: 0.015,
     minAlpha: 0.35
   }),
@@ -504,10 +504,10 @@ export const DEFAULT_PARAMS = Object.freeze({
         goal: Object.freeze({
           type: 'plantCounts',
           species: Object.freeze({
-            aliso: 1,
-            sauce: 1,
-            ambigua: 1,
-            distichlis: 1
+            aliso: 2,
+            sauce: 2,
+            ambigua: 2,
+            distichlis: 2
           })
         }),
         allowedSeedGroups: Object.freeze(['colonizers']),
@@ -525,13 +525,13 @@ export const DEFAULT_PARAMS = Object.freeze({
         goal: Object.freeze({
           type: 'plantCounts',
           species: Object.freeze({
-            aliso: 1,
-            sauce: 1,
-            ambigua: 1,
-            distichlis: 1,
-            ceibo: 1,
-            drago: 1,
-            acacia: 1
+            aliso: 2,
+            sauce: 2,
+            ambigua: 2,
+            distichlis: 2,
+            ceibo: 2,
+            drago: 2,
+            acacia: 2
           })
         }),
         allowedSeedGroups: Object.freeze(['colonizers', 'nonColonizers']),
@@ -6334,9 +6334,9 @@ export class SimuladorScene extends BaseScene {
     let rainEnabled = false;
     
     if (waterLevelIndex === 1) { // Medium
-        targetCount = 9;
+      targetCount = 20;
     } else if (waterLevelIndex === 2) { // High
-        targetCount = 30;
+      targetCount = 60;
         brightness = 0.5;
         rainEnabled = true;
     }
