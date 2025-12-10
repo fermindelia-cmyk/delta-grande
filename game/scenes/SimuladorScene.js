@@ -217,7 +217,7 @@ export const DEFAULT_PARAMS = Object.freeze({
     arrivalThreshold: 0.008,
     dissolveSpeed: 0.3,
     depositRadius: 0.09,
-    depositAmount: 0.005,
+    depositAmount: 0.01,
     particleSize: 0.015,
     minAlpha: 0.35
   }),
@@ -645,6 +645,7 @@ export class SimuladorScene extends BaseScene {
     this._clouds = [];
     this._cloudTextures = new Map();
     this._cloudSpawnTimer = 0;
+    this._competitionTimer = 0;
     this._sandTexture = null;
     this._sandTileRatio = this.params.riverbed?.texture?.tileWidthRatio ?? 0.1;
 
@@ -1824,7 +1825,15 @@ export class SimuladorScene extends BaseScene {
       }
       this._textureLoader.load(
         url,
-        (texture) => resolve(texture),
+        (texture) => {
+            // Ensure clean state for UV animation
+            texture.matrixAutoUpdate = false;
+            texture.repeat.set(1, 1);
+            texture.offset.set(0, 0);
+            texture.center.set(0, 0);
+            texture.rotation = 0;
+            resolve(texture);
+        },
         undefined,
         () => reject(new Error(`Failed to load texture: ${url}`))
       );
@@ -2205,10 +2214,16 @@ export class SimuladorScene extends BaseScene {
 
       try {
         const metaResponse = await fetch(jsonUrl);
+        if (entry.disposed) return;
         if (!metaResponse.ok) continue;
         const meta = await metaResponse.json();
+        if (entry.disposed) return;
 
         const texture = await this._loadTexture(webpUrl);
+        if (entry.disposed) {
+          if (texture) texture.dispose();
+          return;
+        }
         if (!texture) continue;
 
         this._prepareTexture(texture);
@@ -2220,21 +2235,48 @@ export class SimuladorScene extends BaseScene {
         const frameWidth = meta.frameWidth || (texture.image.width / cols);
         const frameHeight = meta.frameHeight || (texture.image.height / rows);
 
+        // Extract image data ONCE for the whole sheet for hit detection
+        let masterImageData = null;
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = texture.image.width;
+            canvas.height = texture.image.height;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(texture.image, 0, 0);
+            masterImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        } catch(e) { /* ignore CORS issues */ }
+
         for (let i = 0; i < frameCount; i++) {
           const col = i % cols;
           const row = Math.floor(i / cols);
           
-          const frameTexture = texture.clone();
-          frameTexture.repeat.set(1 / cols, 1 / rows);
-          // UV origin is bottom-left, image origin is top-left
-          frameTexture.offset.set(col / cols, 1 - (row + 1) / rows);
+          // Calculate UV coordinates for this frame
+          // Three.js UV origin (0,0) is Bottom-Left. Images are Top-Left.
+          const uMin = col / cols;
+          const uMax = (col + 1) / cols;
+          const vMax = 1 - (row / rows); // Top of frame
+          const vMin = 1 - ((row + 1) / rows); // Bottom of frame
           
+          // Shrink UVs slightly to avoid bleeding from adjacent frames
+          // 0.5 pixel inset
+          const uInset = (0.5 / texture.image.width);
+          const vInset = (0.5 / texture.image.height);
+
           frames.push({
-            texture: frameTexture,
+            texture: texture, // Share the SAME texture object
             width: frameWidth,
             height: frameHeight,
-            canvas: null,
-            imageData: null
+            imageData: masterImageData, // Reference master data
+            // Pre-calculate UV array for PlaneGeometry [TL, TR, BL, BR]
+            // Standard PlaneGeometry vertices: 0:TL, 1:TR, 2:BL, 3:BR
+            uvs: new Float32Array([
+                uMin + uInset, vMax - vInset, // 0: Top-Left
+                uMax - uInset, vMax - vInset, // 1: Top-Right
+                uMin + uInset, vMin + vInset, // 2: Bottom-Left
+                uMax - uInset, vMin + vInset  // 3: Bottom-Right
+            ]),
+            // Store bounds for hit detection logic
+            uvBounds: { uMin, uMax, vMin, vMax }
           });
         }
 
@@ -2334,6 +2376,7 @@ export class SimuladorScene extends BaseScene {
 
     pending.push(this._preloadUiImages());
     pending.push(this._preloadCloudTextures());
+    pending.push(this._preloadPlantAssets());
 
     const tasks = pending.filter(Boolean);
     if (!tasks.length) return;
@@ -2343,6 +2386,31 @@ export class SimuladorScene extends BaseScene {
       if (results[i].status === 'rejected') {
         console.warn('[SimuladorScene] Asset preload failed:', results[i].reason);
       }
+    }
+  }
+
+  async _preloadPlantAssets() {
+    const seeds = [];
+    const groups = ['colonizers', 'nonColonizers'];
+    groups.forEach(g => {
+      if (this.params.seeds?.[g]) {
+        seeds.push(...this.params.seeds[g]);
+      }
+    });
+
+    const promises = [];
+    
+    for (const seed of seeds) {
+      if (!seed.id) continue;
+      // Preload stage 0 for all seeds to avoid lag on first plant
+      const entry = this._getPlantStageSequence(seed, 0);
+      if (entry && entry.status === 'loading' && entry.promise) {
+        promises.push(entry.promise);
+      }
+    }
+    
+    if (promises.length > 0) {
+      await Promise.allSettled(promises);
     }
   }
 
@@ -2907,9 +2975,19 @@ export class SimuladorScene extends BaseScene {
 
   _playPlantAnimation(plant, entry, options = {}) {
     if (!plant || !entry || entry.status !== 'ready' || !entry.frames.length) return;
-    if (!this._unitPlantPlane) {
-      this._unitPlantPlane = new THREE.PlaneGeometry(1, 1);
+    
+    // Ensure plant has its own PlaneGeometry for UV manipulation
+    // Must replace if it's a Circle (seed) or shared geometry
+    if (!plant.mesh.geometry || 
+        plant.mesh.geometry === this._unitPlantPlane || 
+        (plant.mesh.geometry.type && plant.mesh.geometry.type !== 'PlaneGeometry')) {
+        
+        if (plant.mesh.geometry && plant.mesh.geometry !== this._unitPlantPlane) {
+            plant.mesh.geometry.dispose();
+        }
+        plant.mesh.geometry = new THREE.PlaneGeometry(1, 1);
     }
+
     const reuseExistingEntry = plant.animation?.entry === entry;
     const keepPreview = plant.previewSequenceEntry === entry;
     if (!reuseExistingEntry) {
@@ -2935,7 +3013,7 @@ export class SimuladorScene extends BaseScene {
     };
     plant.pendingTransition = null;
     plant.visualMode = 'image';
-    plant.mesh.geometry = this._unitPlantPlane;
+    // plant.mesh.geometry is already unique
     plant.mesh.material = this._ensurePlantMaterial(plant);
     this._applyFrameToPlant(plant, entry.frames[startFrame]);
   }
@@ -2945,22 +3023,32 @@ export class SimuladorScene extends BaseScene {
     const visuals = this._getPlantVisualConfig();
     if (!visuals) return;
     const material = this._ensurePlantMaterial(plant);
+    
+    // 1. Only update texture if it fundamentally changed (e.g. diff species)
+    // We DO NOT set material.needsUpdate = true here anymore.
     if (material.map !== frame.texture) {
       material.map = frame.texture || null;
-      material.needsUpdate = true;
-      if (material.map) {
-        material.map.needsUpdate = true;
-      }
+      material.needsUpdate = true; // Only happens once per species load
     }
     material.color.setHex(0xffffff);
     material.opacity = 1;
+
+    // 2. Update Geometry UVs to show the specific frame
+    // We use the unique geometry clone we created in _spawnPlant
+    if (plant.mesh.geometry && frame.uvs) {
+        const uvAttribute = plant.mesh.geometry.attributes.uv;
+        if (uvAttribute) {
+            uvAttribute.set(frame.uvs);
+            uvAttribute.needsUpdate = true; // Cheap GPU update
+        }
+    }
 
     const widthRatio = this._getSeedSpriteWidthRatio(plant.seed);
     const widthWorld = Math.max(1e-5, this.worldWidth * widthRatio);
     const aspect = frame.height && frame.width ? frame.height / frame.width : 1;
     const heightWorld = Math.max(1e-5, widthWorld * aspect);
 
-    plant.mesh.geometry = this._unitPlantPlane;
+    plant.mesh.geometry = plant.mesh.geometry; // Ensure we keep the clone
     plant.mesh.material = material;
     plant.mesh.scale.set(widthWorld, heightWorld, 1);
     plant.mesh.rotation.set(0, 0, 0);
@@ -2987,6 +3075,18 @@ export class SimuladorScene extends BaseScene {
       this._retainSequence(entry);
       plant.previewSequenceEntry = entry;
     }
+
+    // Ensure plant has its own PlaneGeometry for UV manipulation
+    if (!plant.mesh.geometry || 
+        plant.mesh.geometry === this._unitPlantPlane || 
+        (plant.mesh.geometry.type && plant.mesh.geometry.type !== 'PlaneGeometry')) {
+        
+        if (plant.mesh.geometry && plant.mesh.geometry !== this._unitPlantPlane) {
+            plant.mesh.geometry.dispose();
+        }
+        plant.mesh.geometry = new THREE.PlaneGeometry(1, 1);
+    }
+
     const frame = entry.frames[0];
     this._applyFrameToPlant(plant, frame);
     plant.visualMode = 'image';
@@ -3131,16 +3231,31 @@ export class SimuladorScene extends BaseScene {
   }
 
   _sampleFrameAlpha(frame, u, v) {
-    if (!frame?.imageData) return 1;
+    if (!frame || !frame.imageData || !frame.uvBounds) return 1;
+    
     const data = frame.imageData;
-    const width = data.width || frame.width || 1;
-    const height = data.height || frame.height || 1;
-    if (!width || !height) return 1;
-    const uu = clamp(u, 0, 1);
-    const vv = clamp(v, 0, 1);
-    const px = Math.min(width - 1, Math.max(0, Math.round(uu * (width - 1))));
-    const py = Math.min(height - 1, Math.max(0, Math.round((1 - vv) * (height - 1))));
-    const idx = (py * width + px) * 4 + 3;
+    const texWidth = data.width;
+    const texHeight = data.height;
+
+    // Map local plant UV (0 to 1) to global Spritesheet UV
+    const { uMin, uMax, vMin, vMax } = frame.uvBounds;
+    
+    // Note: v is 0 at bottom in 3D, but image data is 0 at top. 
+    // frame.uvBounds are in ThreeJS coordinates (0 at bottom).
+    
+    // Interpolate local U to Global U
+    const globalU = lerp(uMin, uMax, clamp(u, 0, 1));
+    
+    // Interpolate local V to Global V
+    const globalV = lerp(vMin, vMax, clamp(v, 0, 1));
+
+    // Convert Global UV to Pixel Coordinates
+    // Image data Y origin is Top-Left, UV Y origin is Bottom-Left.
+    // We simply use (1 - globalV) to flip it for pixel lookup.
+    const px = Math.floor(globalU * texWidth);
+    const py = Math.floor((1 - globalV) * texHeight);
+
+    const idx = (py * texWidth + px) * 4 + 3;
     const alpha = data.data?.[idx] ?? 255;
     return alpha / 255;
   }
@@ -3171,7 +3286,10 @@ export class SimuladorScene extends BaseScene {
     const initialStageIndex = 0;
     const stageId = this._plantStages[initialStageIndex]?.id || 'seed';
     const stageInfo = this._getPlantStageInfo(seed, stageId);
-    const geometry = this._getPlantGeometry(seed, stageId, stageInfo);
+    
+    const baseGeometry = this._getPlantGeometry(seed, stageId, stageInfo);
+    const geometry = baseGeometry.clone();
+    
     const mesh = new THREE.Mesh(geometry, material);
 
     const initialWidth = stageInfo?.width || (stageInfo?.radius ? stageInfo.radius * 2 : 0.02);
@@ -3220,10 +3338,14 @@ export class SimuladorScene extends BaseScene {
     const stageData = this._plantStages[plant.stageIndex];
     const stageId = stageData?.id || 'seed';
     const info = providedInfo || this._getPlantStageInfo(plant.seed, stageId);
-    const geometry = this._getPlantGeometry(plant.seed, stageId, info);
-    if (plant.mesh.geometry !== geometry) {
-      plant.mesh.geometry = geometry;
-    }
+    
+    // Get base geometry
+    const baseGeometry = this._getPlantGeometry(plant.seed, stageId, info);
+    
+    // IMPORTANT: Ensure we are using a CLONE so UVs don't conflict
+    if (plant.mesh.geometry) plant.mesh.geometry.dispose();
+    plant.mesh.geometry = baseGeometry.clone();
+
     const material = plant.colorMaterial || this._getSeedMaterial(plant.seed);
     if (plant.mesh.material !== material) {
       plant.mesh.material = material;
@@ -3394,7 +3516,12 @@ export class SimuladorScene extends BaseScene {
     const subOffset = Math.max(0, interactions.plantSubmergeOffset ?? 0.004);
     const emerOffset = Math.max(0, interactions.plantEmergenceOffset ?? subOffset);
     const waterSegments = this.params.water.surfaceSegments;
-    this._evaluatePlantCompetition();
+    
+    this._competitionTimer = (this._competitionTimer || 0) + dt;
+    if (this._competitionTimer >= 0.5) {
+      this._evaluatePlantCompetition();
+      this._competitionTimer = 0;
+    }
 
     for (let i = 0; i < this._plants.length; i++) {
       const plant = this._plants[i];
