@@ -21,6 +21,10 @@
             padding: 0;
         }
 
+        html {
+            overflow-x: hidden;
+        }
+
         body {
             margin: 0;
             font-family: 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
@@ -34,6 +38,7 @@
             min-height: 100vh;
             overflow-x: hidden;
             position: relative;
+            width: 100%;
         }
 
         body.is-loading {
@@ -68,7 +73,8 @@
             width: 100%;
             min-height: 100vh;
             position: relative;
-            overflow: visible;
+            overflow-x: hidden;
+            overflow-y: visible;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -149,9 +155,70 @@
             width: 100%;
             height: 100%;
             z-index: 10;
+            isolation: isolate; /* keep blend modes local so black pixels can lighten instead of showing solid */
             /* allow clicks on the island so it can enable audio */
             pointer-events: auto;
             /* cursor: pointer; */
+            overflow: hidden;
+        }
+
+        .floating-island::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url('assets/nube.png') center center / contain no-repeat;
+            mix-blend-mode: lighten;
+            opacity: 0.3;
+            filter: hue-rotate(-8deg) saturate(1.05) brightness(1.06);
+            animation: cloudTintCycle 20s ease-in-out infinite alternate, cloudDrift 32s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .floating-island::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url('assets/nube.png') center center / contain no-repeat;
+            mix-blend-mode: lighten;
+            opacity: 0.26;
+            filter: hue-rotate(-8deg) saturate(1.05) brightness(1.04);
+            animation: cloudTintCycle 20s ease-in-out infinite alternate, cloudDriftFlip 32s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        @keyframes cloudTintCycle {
+            0% {
+                opacity: 0.2;
+                filter: hue-rotate(-12deg) sa   turate(0.95) brightness(1.02);
+            }
+            50% {
+                opacity: 0.42;
+                filter: hue-rotate(24deg) saturate(1.25) brightness(1.12);
+            }
+            100% {
+                opacity: 0.26;
+                filter: hue-rotate(-18deg) saturate(1.05) brightness(1.08);
+            }
+        }
+
+        @keyframes cloudDrift {
+            0% {
+                transform: translateX(-14%) scale(2);
+            }
+            100% {
+                transform: translateX(14%) scale(2);
+            }
+        }
+
+        @keyframes cloudDriftFlip {
+            0% {
+                transform: translateX(14%) scale(2) scaleY(-1);
+            }
+            100% {
+                transform: translateX(-14%) scale(2) scaleY(-1);
+            }
         }
 
         #splat-overlay {
@@ -173,6 +240,8 @@
             height: 100%;
             pointer-events: auto;
             cursor: pointer;
+            position: relative;
+            z-index: 2;
         }
 
         /* Video frame container - flow layout and centered
@@ -342,61 +411,36 @@
         .map-link { display: block; width: 100%; text-decoration: none; color: inherit; }
         .map-link .video-wrapper { cursor: pointer; }
 
-        /* News section below video frame - contained to same width as frames */
-        .news-section {
-            width: 95vw;
-            max-width: 95vw;
+        /* Cards strip below video frame */
+        .cards-section {
+            width: 100%;
             margin: 0 auto;
             box-sizing: border-box;
-            padding: 8px 0;
+            padding: 12px 10px 22px;
         }
 
-        /* .news-line removed - visual divider image was deleted from the markup */
-
-        /* News items row */
-        .news-items {
+        .cards-row {
+            width: 100%;
             display: flex;
-            overflow-x: auto;
-            padding: 10px 0;
-            scrollbar-width: none;
+            gap: 16px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
         }
 
-        .news-items::-webkit-scrollbar {
-            display: none;
-        }
-
-        .news-item {
-            flex: 0 0 auto;
-            position: relative;
-            background-image: url('assets/ui/oblea1.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            width: 240px;
-            height: 238px;
-            padding: 28px 22px;
-            color: #DDDC31;
-            font-family: 'New Science', sans-serif;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-        }
-
-        .news-item h3 {
-            margin: 0 0 12px 0;
-            font-size: 18px;
-            font-weight: bold;
-            color: #DDDC31;
-            text-transform: uppercase;
-        }
-
-        .news-item p {
-            margin: 0;
-            font-size: 14px;
-            color: #DDDC31;
-            line-height: 1.4;
+        .card-item {
+            flex: 1 1 clamp(160px, 22vw, 230px);
+            aspect-ratio: 2 / 3;
             overflow: hidden;
-            text-overflow: ellipsis;
+            position: relative;
+            background: transparent;
+        }
+
+        .card-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
         }
 
         /* Manifiesto item: same background and font as .news-item,
@@ -419,6 +463,16 @@
             line-height: 1.6;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
+            cursor: move;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+
+        .manifiesto-item.dragging {
+            opacity: 0.8;
+            cursor: grabbing;
+            z-index: 100;
         }
 
         .manifiesto-item p {
@@ -485,7 +539,7 @@
         /* Sound selector (hero section bottom centered) */
         .video-section.hero .sound-selector {
             position: absolute;
-            bottom: 8%;
+            bottom: 2.5%;
             left: 50%;
             transform: translate(-50%, 0);
             z-index: 21;
@@ -498,6 +552,28 @@
         .video-section.hero .sound-selector img {
             display: block;
             cursor: pointer;
+        }
+
+        .sound-tooltip {
+            position: absolute;
+            padding: 6px 10px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            font-size: 12px;
+            letter-spacing: 0.04em;
+            border: 1px solid rgba(255, 229, 92, 0.7);
+            pointer-events: none;
+            transform: translate(-50%, -10px);
+            opacity: 0;
+            transition: opacity 120ms ease, transform 120ms ease;
+            white-space: nowrap;
+            z-index: 23;
+        }
+
+        .sound-tooltip.is-visible {
+            opacity: 1;
+            transform: translate(-50%, -14px);
         }
         /* Hotspots are invisible (image contains UI). Keep focus-visible outline for accessibility. */
         .video-section.hero .sound-hotspot {
@@ -596,45 +672,6 @@
             transition: width 260ms linear;
         }
 
-        /* Render mode toggle (polygons vs splat) */
-        .render-toggle {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 10px;
-            z-index: 30;
-            padding: 8px 10px;
-            background: rgba(0, 0, 0, 0.55);
-            backdrop-filter: blur(6px);
-            border-radius: 999px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-        }
-
-        .render-toggle .toggle-btn {
-            border: 1px solid rgba(255,255,255,0.18);
-            background: rgba(255,255,255,0.08);
-            color: #f7f7f7;
-            font-size: 14px;
-            letter-spacing: 0.2px;
-            padding: 10px 16px;
-            border-radius: 999px;
-            cursor: pointer;
-            transition: all 140ms ease;
-        }
-
-        .render-toggle .toggle-btn:hover {
-            background: rgba(255,255,255,0.14);
-        }
-
-        .render-toggle .toggle-btn.active {
-            background: linear-gradient(90deg, #DDDC31, #FFE55C);
-            color: #1a1a1a;
-            border-color: rgba(255,255,255,0.35);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-        }
-
         .pwa-toast .label { font-size: 13px; white-space: nowrap; }
 
         .site-footer__inner strong {
@@ -642,6 +679,32 @@
             font-weight: 700;
             color: #FFE55C;
             margin-right: 8px;
+        }
+
+        /* Floating transition texts between sections */
+        .floating-text {
+            width: 100%;
+            padding: 60px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            z-index: 5;
+        }
+
+        .floating-text p {
+            font-family: 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
+            color: #FBFE5E;
+            font-size: clamp(18px, 3vw, 28px);
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 0 1.2em 0;
+            letter-spacing: 0.02em;
+        }
+
+        .floating-text p:last-child {
+            margin-bottom: 0;
         }
     </style>
 </head>
@@ -658,12 +721,12 @@
     <section class="video-section hero">
         <!-- Floating island centered on top: draw video into a canvas (preserves alpha and allows extra compositing) -->
         <div class="floating-island">
-            <canvas id="island-canvas" role="img" aria-label="Isla flotante"></canvas>
-            <div id="splat-container" style="display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; transform: translateY(-10%);z-index: 3;">
+            <canvas id="island-canvas" role="img" aria-label="Isla flotante" style="display: none;"></canvas>
+            <div id="splat-container" style="display: block; width: 100%; height: 100%; position: absolute; top: 0; left: 0; transform: translateY(-10%);z-index: 3;">
                 <iframe id="splat-iframe" src="isla%20splat/isla_splat.html" style="width: 100%; height: 100%; border: none; background: transparent;" allowtransparency="true"></iframe>
                 <div id="splat-overlay" style="position: absolute; inset: 0; z-index: 10;"></div>
             </div>
-            <div id="island-loader" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 140px; padding: 10px 10px 8px; background: rgba(0,0,0,0.55); border-radius: 8px; overflow: hidden; pointer-events: none; text-align: center; color: #fff; font-size: 13px; letter-spacing: 0.04em;">
+            <div id="island-loader" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 140px; padding: 10px 10px 8px; background: rgba(0,0,0,0.55); border-radius: 8px; overflow: hidden; pointer-events: none; text-align: center; color: #fff; font-size: 13px; letter-spacing: 0.04em;">
                 <div style="margin-bottom: 6px;">Cargando isla...</div>
                 <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden;">
                     <div id="island-loader-bar" style="width: 0%; height: 100%; background: #DDDC31; transition: width 0.1s linear;"></div>
@@ -671,6 +734,9 @@
             </div>
             <div id="splat-loader" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 14px 20px; background: rgba(0,0,0,0.55); border-radius: 8px; pointer-events: none; text-align: center; color: #fff; font-size: 13px; letter-spacing: 0.04em; z-index: 0;">
                 Cargando isla...
+            </div>
+            <div class="sound-selector" aria-hidden="false" role="group" aria-label="Selector de sonido">
+                <img src="assets/selectores/selector-sonido-off.png" alt="Selector de sonido" id="sound-toggle">
             </div>
         </div>
 
@@ -685,15 +751,11 @@
         </div>
 
         <!-- 'Jugar' button removed from landing (kept in-game menu link removed) -->
-        <div class="sound-selector" aria-hidden="false" role="group" aria-label="Selector de sonido">
-            <img src="assets/selectores/selector-sonido-off.png" alt="Selector de sonido" id="sound-toggle">
-        </div>
     </section>
 
-    <!-- Render mode selector (anchored at bottom) -->
-    <div id="render-mode-toggle" class="render-toggle" role="group" aria-label="Selector de modo de render">
-        <button id="btn-poly" class="toggle-btn active" type="button">Polígonos</button>
-        <button id="btn-splat" class="toggle-btn" type="button">Gaussian Splatting</button>
+    <!-- Floating text between section 1 and 2 -->
+    <div class="floating-text">
+        <p>El Delta es una historia evolutiva, una historia geológica, geomorfológica de la parte Centro Este de América del Sur.</p>
     </div>
 
     <!-- Second video section with framed YouTube video (background video removed to show body image) -->
@@ -714,6 +776,15 @@
             </div>
         </div>
     </section>
+
+    <!-- Floating text between section 2 and 3 -->
+    <div class="floating-text">
+        <div>
+            <p>Esta historia empezó hace diez mil años.</p>
+            <p>Y es tanto el tiempo, que el colibrí vuela en cámara lenta.</p>
+            <p>¿Cuántas cosas ocurren a la vez? ¿Cuánto podemos ver en lo que miramos?</p>
+        </div>
+    </div>
 
     <!-- Third video section with framed local video (background video removed to show body image) -->
     <section class="video-section">
@@ -738,26 +809,91 @@
                 </a>
             </div>
 
-            <!-- News section -->
-            <div class="news-section">
-                <!-- news-line removed -->
-                <div class="news-items">
-                    <div class="news-item">
-                        <h3>Contenidos para el aula</h3>
-                        <p>Entrá acá para descargar fichas, manuales, guías y consejos.</p>
-                    </div>
-                    <div class="news-item">
-                        <h3>Historias de vida</h3>
-                        <p>Conocé a las personas detrás del Delta.</p>
-                    </div>
-                    <div class="news-item">
-                        <h3>Material extra</h3>
-                        <p>Informate más.</p>
-                    </div>  
-                </div>
+            <!-- Cards strip -->
+            <div class="cards-section">
+                <div class="cards-row" id="cards-row"></div>
             </div>
         </div>
     </section>
+
+    <script>
+        (function(){
+            const cardImages = [
+                'assets/cards_webp/aguara.webp',
+                'assets/cards_webp/armado.webp',
+                'assets/cards_webp/banderita.webp',
+                'assets/cards_webp/camalote.webp',
+                'assets/cards_webp/carancho.webp',
+                'assets/cards_webp/cardenal.webp',
+                'assets/cards_webp/carpintero.webp',
+                'assets/cards_webp/ceibo.webp',
+                'assets/cards_webp/chaja.webp',
+                'assets/cards_webp/clavel.webp',
+                'assets/cards_webp/culebra.webp',
+                'assets/cards_webp/dorado.webp',
+                'assets/cards_webp/efedra.webp',
+                'assets/cards_webp/espinillo.webp',
+                'assets/cards_webp/guazuncho.webp',
+                'assets/cards_webp/malvavisco.webp',
+                'assets/cards_webp/martin.webp',
+                'assets/cards_webp/mburucuya.webp',
+                'assets/cards_webp/murcielago.webp',
+                'assets/cards_webp/ombu.webp',
+                'assets/cards_webp/pacu.webp',
+                'assets/cards_webp/paloma.webp',
+                'assets/cards_webp/palometa.webp',
+                'assets/cards_webp/rana.webp',
+                'assets/cards_webp/raya.webp',
+                'assets/cards_webp/salvia.webp',
+                'assets/cards_webp/suelda.webp',
+                'assets/cards_webp/surubi.webp',
+                'assets/cards_webp/tembetari.webp',
+                'assets/cards_webp/tortuga.webp',
+                'assets/cards_webp/vieja.webp',
+                'assets/cards_webp/viraro.webp',
+                'assets/cards_webp/yacare.webp',
+                'assets/cards_webp/yaguarundi.webp',
+                'assets/cards_webp/yarara.webp',
+                'assets/cards_webp/yatei.webp',
+                'assets/cards_webp/yesquero.webp'
+            ];
+
+            function shuffle(arr) {
+                const a = arr.slice();
+                for (let i = a.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [a[i], a[j]] = [a[j], a[i]];
+                }
+                return a;
+            }
+
+            function renderCards() {
+                const row = document.getElementById('cards-row');
+                if (!row || !cardImages.length) return;
+                const picks = shuffle(cardImages).slice(0, 4);
+                row.innerHTML = '';
+                picks.forEach((src) => {
+                    const card = document.createElement('div');
+                    card.className = 'card-item';
+
+                    const img = document.createElement('img');
+                    img.src = src;
+                    img.alt = 'Carta del Delta';
+                    img.loading = 'lazy';
+
+                    card.appendChild(img);
+                    row.appendChild(card);
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', renderCards);
+        })();
+    </script>
+
+    <!-- Floating text between section 3 and footer -->
+    <div class="floating-text">
+        <p>El Delta entrerriano, un largo abrazo de ríos que envuelven nuestra llanura, nuestros humedales, nuestros hombres y mujeres y niños. Nuestro equilibrio anfibio: la tierra camina en el agua, el agua camina en la tierra.</p>
+    </div>
     
     <!-- Site footer -->
     <footer class="site-footer" aria-label="Pie de página">
@@ -1019,6 +1155,51 @@
             // Ensure the parent (.sound-selector) is positioned relatively
             const selParent = selectorImg.parentElement;
 
+            const tooltip = document.createElement('div');
+            tooltip.className = 'sound-tooltip';
+            tooltip.setAttribute('role', 'tooltip');
+            tooltip.hidden = true;
+            if (selParent) selParent.appendChild(tooltip);
+
+            let tooltipTarget = null;
+            let hideTooltipTimer = null;
+
+            const tooltipLabels = {
+                dialog: 'Relatos',
+                music: 'Música',
+                ambient: 'Ambiente'
+            };
+
+            function positionTooltip(target){
+                if (!tooltip || !selParent || tooltip.hidden) return;
+                const rect = target.getBoundingClientRect();
+                const parentRect = selParent.getBoundingClientRect();
+                const centerX = rect.left - parentRect.left + rect.width / 2;
+                const top = rect.top - parentRect.top;
+                tooltip.style.left = centerX + 'px';
+                tooltip.style.top = (top - 6) + 'px';
+            }
+
+            function showTooltip(name, target){
+                if (!tooltip) return;
+                if (hideTooltipTimer) {
+                    clearTimeout(hideTooltipTimer);
+                    hideTooltipTimer = null;
+                }
+                tooltip.textContent = tooltipLabels[name] || name;
+                tooltipTarget = target;
+                tooltip.hidden = false;
+                positionTooltip(target);
+                requestAnimationFrame(() => tooltip.classList.add('is-visible'));
+            }
+
+            function hideTooltip(){
+                if (!tooltip) return;
+                tooltip.classList.remove('is-visible');
+                tooltipTarget = null;
+                hideTooltipTimer = setTimeout(() => { tooltip.hidden = true; }, 160);
+            }
+
             // Helper to create a hotspot element
             function makeHotspot(name){
                 const el = document.createElement('button');
@@ -1047,6 +1228,21 @@
                 ambient: makeHotspot('ambient')
             };
 
+            Object.keys(hotspots).forEach((name) => {
+                const el = hotspots[name];
+                const show = () => showTooltip(name, el);
+                const hide = () => hideTooltip();
+                el.addEventListener('mouseenter', show);
+                el.addEventListener('focus', show);
+                el.addEventListener('mouseleave', hide);
+                el.addEventListener('blur', hide);
+                el.addEventListener('pointermove', () => {
+                    if (tooltipTarget === el && !tooltip.hidden) {
+                        positionTooltip(el);
+                    }
+                });
+            });
+
             // Add to container
             Object.values(hotspots).forEach(h => container.appendChild(h));
             if (selParent) selParent.appendChild(container);
@@ -1072,6 +1268,10 @@
                     el.style.top = hy + 'px';
                     positions[k] = { left: hx, top: hy, rawX: c.x, rawY: c.y };
                 });
+
+                if (tooltipTarget && !tooltip.hidden) {
+                    positionTooltip(tooltipTarget);
+                }
 
             }
 
@@ -1253,7 +1453,7 @@
         const clock = new THREE.Clock();
 
         // Splat Viewer variables
-        let isSplatMode = false;
+        let isSplatMode = true;
 
         // Click detection
         let mouseDownTime = 0;
@@ -1292,7 +1492,7 @@
 
             // Pivot Group
             pivot = new THREE.Group();
-            pivot.rotation.x = 25 * (Math.PI / 180); // 25 degrees CCW
+            pivot.rotation.x = 12 * (Math.PI / 180); // slightly lower camera tilt for polygons
             scene.add(pivot);
 
             // Load Model
@@ -1444,13 +1644,7 @@
             window.addEventListener('mouseup', handleUp);
             window.addEventListener('touchend', handleUp, { passive: true });
 
-            // Bottom selector buttons
-            if (btnSplat) {
-                btnSplat.addEventListener('click', () => setRenderMode('splat'));
-            }
-            if (btnPoly) {
-                btnPoly.addEventListener('click', () => setRenderMode('poly'));
-            }
+            // Bottom selector buttons (removed)
             
             // Setup Iframe Click Listener
             if (splatIframe) {
@@ -1465,8 +1659,8 @@
                 attachSplatCamera();
             }
 
-            // Initial mode: polygons (GLB)
-            setRenderMode('poly');
+            // Initial mode: Gaussian Splatting
+            setRenderMode('splat');
 
             // Start Animation
             animate();
@@ -1674,6 +1868,90 @@
                 const observer = new ResizeObserver(updateRadius);
                 observer.observe(frame);
             }
+        })();
+    </script>
+
+    <script>
+        // Drag and drop functionality for manifesto item
+        (function() {
+            const manifestoItem = document.querySelector('.manifiesto-item');
+            if (!manifestoItem) return;
+
+            let isDragging = false;
+            let currentX;
+            let currentY;
+            let initialX;
+            let initialY;
+            let xOffset = 0;
+            let yOffset = 0;
+
+            // Get initial position from computed style
+            const style = window.getComputedStyle(manifestoItem);
+            xOffset = parseInt(style.left) || 20;
+            yOffset = parseInt(style.top) || 20;
+
+            function dragStart(e) {
+                if (e.type === "touchstart") {
+                    initialX = e.touches[0].clientX - xOffset;
+                    initialY = e.touches[0].clientY - yOffset;
+                } else {
+                    initialX = e.clientX - xOffset;
+                    initialY = e.clientY - yOffset;
+                }
+
+                // Only start drag if clicking on the element itself, not scrollbar
+                if (e.target === manifestoItem || manifestoItem.contains(e.target)) {
+                    isDragging = true;
+                    manifestoItem.classList.add('dragging');
+                }
+            }
+
+            function dragEnd(e) {
+                if (isDragging) {
+                    initialX = currentX;
+                    initialY = currentY;
+                    isDragging = false;
+                    manifestoItem.classList.remove('dragging');
+                }
+            }
+
+            function drag(e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    
+                    if (e.type === "touchmove") {
+                        currentX = e.touches[0].clientX - initialX;
+                        currentY = e.touches[0].clientY - initialY;
+                    } else {
+                        currentX = e.clientX - initialX;
+                        currentY = e.clientY - initialY;
+                    }
+
+                    xOffset = currentX;
+                    yOffset = currentY;
+
+                    // Keep element within viewport bounds
+                    const rect = manifestoItem.getBoundingClientRect();
+                    const maxX = window.innerWidth - rect.width;
+                    const maxY = window.innerHeight - rect.height;
+                    
+                    xOffset = Math.max(0, Math.min(xOffset, maxX));
+                    yOffset = Math.max(0, Math.min(yOffset, maxY));
+
+                    manifestoItem.style.left = xOffset + 'px';
+                    manifestoItem.style.top = yOffset + 'px';
+                }
+            }
+
+            // Mouse events
+            manifestoItem.addEventListener('mousedown', dragStart, false);
+            document.addEventListener('mouseup', dragEnd, false);
+            document.addEventListener('mousemove', drag, false);
+
+            // Touch events
+            manifestoItem.addEventListener('touchstart', dragStart, false);
+            document.addEventListener('touchend', dragEnd, false);
+            document.addEventListener('touchmove', drag, { passive: false });
         })();
     </script>
 
