@@ -3,8 +3,8 @@
   "columns": 24,
   "rows": 24,
   "frameCount": 553,
-  "frameWidth": 512,
-  "frameHeight": 288,
-  "sheetWidth": 12288,
-  "sheetHeight": 6912
+  "frameWidth": 256,
+  "frameHeight": 144,
+  "sheetWidth": 6144,
+  "sheetHeight": 3456
 }
