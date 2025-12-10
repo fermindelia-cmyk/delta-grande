@@ -55,7 +55,7 @@
       "transition": "/game-assets/recorrido/transicion02.mp4",
       "zocalo": "/game-assets/recorrido/zocalos/escena05_zocalo_humedal.webm",
       "forward": {
-        "yaw": 337.73,
+        "yaw": 50.73,
         "pitch": -1.79
       },
       "audio": "/game-assets/recorrido/sonido/Monte la paloma parte 5.mp3"
