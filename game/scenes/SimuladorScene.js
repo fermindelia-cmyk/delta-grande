@@ -420,7 +420,9 @@ export const DEFAULT_PARAMS = Object.freeze({
             columns: 24,
             rows: 24,
             frameCount: 553,
-            frameOffset: 50
+            frameOffset: 50,
+            frameWidth: 256,
+            frameHeight: 144
           }),
           area: Object.freeze({
             leftPct: 87.3,
@@ -447,7 +449,9 @@ export const DEFAULT_PARAMS = Object.freeze({
             columns: 14,
             rows: 14,
             frameCount: 185,
-            frameOffset: 50
+            frameOffset: 50,
+            frameWidth: 256,
+            frameHeight: 144
           }),
           area: Object.freeze({
             leftPct: 87.3,
@@ -459,7 +463,7 @@ export const DEFAULT_PARAMS = Object.freeze({
           frames: Object.freeze({
             low: 233,
             medium: 154,
-            high: 50
+            high: 51
           })
         })
       })
@@ -4309,13 +4313,20 @@ export class SimuladorScene extends BaseScene {
       }
 
       if (topSheetMeta) {
-        topImage = document.createElement('div');
-        topImage.style.position = 'absolute';
-        topImage.style.left = '0';
-        topImage.style.top = '0';
-        topImage.style.width = '100%';
-        topImage.style.height = '100%';
+        topContainer.style.display = 'flex';
+        topContainer.style.justifyContent = 'center';
+        topContainer.style.alignItems = 'center';
+
+        topImage = document.createElement('img');
+        topImage.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${topSheetMeta.frameWidth}' height='${topSheetMeta.frameHeight}'%3E%3C/svg%3E`;
+        topImage.style.display = 'block';
+        topImage.style.width = 'auto';
+        topImage.style.height = 'auto';
+        topImage.style.maxWidth = '100%';
+        topImage.style.maxHeight = '100%';
+        topImage.style.objectFit = 'contain';
         topImage.style.pointerEvents = 'none';
+        
         topImage.style.backgroundImage = `url(${topSheetMeta.src})`;
         topImage.style.backgroundRepeat = 'no-repeat';
         topImage.style.backgroundSize = `${topSheetMeta.columns * 100}% ${topSheetMeta.rows * 100}%`;
@@ -4349,13 +4360,20 @@ export class SimuladorScene extends BaseScene {
 
       const useSheet = !!bottomSheetMeta;
       if (useSheet) {
-        bottomImage = document.createElement('div');
-        bottomImage.style.position = 'absolute';
-        bottomImage.style.left = '0';
-        bottomImage.style.top = '0';
-        bottomImage.style.width = '100%';
-        bottomImage.style.height = '100%';
+        bottomContainer.style.display = 'flex';
+        bottomContainer.style.justifyContent = 'center';
+        bottomContainer.style.alignItems = 'center';
+
+        bottomImage = document.createElement('img');
+        bottomImage.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${bottomSheetMeta.frameWidth}' height='${bottomSheetMeta.frameHeight}'%3E%3C/svg%3E`;
+        bottomImage.style.display = 'block';
+        bottomImage.style.width = 'auto';
+        bottomImage.style.height = 'auto';
+        bottomImage.style.maxWidth = '100%';
+        bottomImage.style.maxHeight = '100%';
+        bottomImage.style.objectFit = 'contain';
         bottomImage.style.pointerEvents = 'none';
+
         bottomImage.style.backgroundImage = `url(${bottomSheetMeta.src})`;
         bottomImage.style.backgroundRepeat = 'no-repeat';
         bottomImage.style.backgroundSize = `${bottomSheetMeta.columns * 100}% ${bottomSheetMeta.rows * 100}%`;
@@ -5598,13 +5616,17 @@ export class SimuladorScene extends BaseScene {
     const requestedFrames = Math.round(sheetCfg.frameCount ?? maxFrames);
     const totalFrames = clamp(requestedFrames, 1, maxFrames);
     const frameOffset = Math.max(0, Math.round(sheetCfg.frameOffset ?? 0));
+    const frameWidth = sheetCfg.frameWidth || 512;
+    const frameHeight = sheetCfg.frameHeight || 288;
     const src = this._normalizeAssetPath(basePath, sheetCfg.file);
     return {
       src,
       columns,
       rows,
       totalFrames,
-      frameOffset
+      frameOffset,
+      frameWidth,
+      frameHeight
     };
   }
 
@@ -5658,6 +5680,7 @@ export class SimuladorScene extends BaseScene {
     const row = Math.floor(idx / sheet.columns);
     const x = sheet.columns > 1 ? (col / (sheet.columns - 1)) * 100 : 0;
     const y = sheet.rows > 1 ? (row / (sheet.rows - 1)) * 100 : 0;
+    channel.image.style.backgroundSize = `${sheet.columns * 100}% ${sheet.rows * 100}%`;
     channel.image.style.backgroundPosition = `${x}% ${y}%`;
   }
 
