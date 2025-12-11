@@ -189,6 +189,19 @@
             z-index: 1;
         }
 
+        @media (max-width: 768px) {
+            .floating-island::before,
+            .floating-island::after {
+                background-size: 180%;
+            }
+
+            .cards-row {
+                grid-template-columns: 1fr; /* Stack cards vertically on mobile */
+                max-width: 280px; /* Limit width for better look */
+                margin: 0 auto;
+            }
+        }
+
         @keyframes cloudTintCycle {
             0% {
                 opacity: 0.2;
@@ -503,6 +516,12 @@
             user-select: none;
             -webkit-user-select: none;
             touch-action: none;
+            opacity: 0;
+            transition: opacity 1.5s ease;
+        }
+
+        .manifiesto-item.is-visible {
+            opacity: 1;
         }
 
         .manifiesto-item.dragging {
@@ -518,6 +537,12 @@
         /* Small visible scrollbar for desktop, unobtrusive on mobile */
         .manifiesto-item::-webkit-scrollbar { width: 8px; }
         .manifiesto-item::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 6px; }
+
+        @media (max-width: 768px) {
+            .manifiesto-item {
+                display: none;
+            }
+        }
 
         /* Logo arriba centrado en el hero */
         .logo-naranja {
@@ -583,6 +608,12 @@
             align-items: center;
             gap: 12px;
             pointer-events: auto;
+            opacity: 0;
+            transition: opacity 1.5s ease;
+        }
+
+        .video-section.hero .sound-selector.is-visible {
+            opacity: 1;
         }
 
         .video-section.hero .sound-selector img {
@@ -738,7 +769,7 @@
         }
         .video-overlay.is-visible { display: flex; }
         
-        .video-frame {
+        .video-overlay .video-frame {
             position: relative;
             width: 100%;
             max-width: 177.78vh; /* 16/9 aspect ratio constraint based on height */
@@ -749,7 +780,7 @@
             justify-content: center;
         }
 
-        .video-frame video {
+        .video-overlay .video-frame video {
             width: 100%;
             height: 100%;
             object-fit: contain;
@@ -1232,39 +1263,69 @@
 
                 if (!rows.length || !cardImages.length) return;
 
-                const picks = shuffle(cardImages).slice(0, 8);
+                const isMobile = window.innerWidth <= 768;
+                const count = isMobile ? 3 : 8;
+                const picks = shuffle(cardImages).slice(0, count);
 
-                rows.forEach((row, rowIndex) => {
-                    row.innerHTML = '';
-                    const start = rowIndex * 4;
-                    const end = start + 4;
+                // Clear existing
+                rows.forEach(row => row.innerHTML = '');
 
-                    picks.slice(start, end).forEach((src) => {
-                        const card = document.createElement('div');
-                        card.className = 'card-item';
-                        card.style.cursor = 'pointer';
-
-                        const img = document.createElement('img');
-                        img.src = src;
-                        img.alt = 'Carta del Delta';
-                        img.loading = 'lazy';
-
-                        card.appendChild(img);
-                        
-                        card.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            const filename = src.split('/').pop();
-                            const species = filename.split('.')[0];
-                            const videoPath = `game-assets/recorrido/criaturas/${species}/${species}_data.webm`;
-                            openVideoOverlay(videoPath, species);
-                        });
-
+                if (isMobile) {
+                    // Mobile: all 3 in the first row
+                    const row = rows[0];
+                    picks.forEach(src => {
+                        const card = createCardElement(src, true);
                         row.appendChild(card);
                     });
-                });
+                } else {
+                    // Desktop: 4 per row
+                    rows.forEach((row, rowIndex) => {
+                        const start = rowIndex * 4;
+                        const end = start + 4;
+                        picks.slice(start, end).forEach((src) => {
+                            const card = createCardElement(src, false);
+                            row.appendChild(card);
+                        });
+                    });
+                }
+            }
+
+            function createCardElement(src, disableClick) {
+                const card = document.createElement('div');
+                card.className = 'card-item';
+                card.style.cursor = disableClick ? 'default' : 'pointer';
+
+                const img = document.createElement('img');
+                img.src = src;
+                img.alt = 'Carta del Delta';
+                img.loading = 'lazy';
+
+                card.appendChild(img);
+                
+                if (!disableClick) {
+                    card.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const filename = src.split('/').pop();
+                        const species = filename.split('.')[0];
+                        const videoPath = `game-assets/recorrido/criaturas/${species}/${species}_data.webm`;
+                        openVideoOverlay(videoPath, species);
+                    });
+                }
+
+                return card;
             }
 
             document.addEventListener('DOMContentLoaded', renderCards);
+            
+            // Re-render on resize if crossing breakpoint
+            let wasMobile = window.innerWidth <= 768;
+            window.addEventListener('resize', () => {
+                const isMobile = window.innerWidth <= 768;
+                if (isMobile !== wasMobile) {
+                    wasMobile = isMobile;
+                    renderCards();
+                }
+            });
         })();
     </script>
 
@@ -1330,6 +1391,385 @@
     </div>
 
     <script>
+        const WELCOME_THEME = {
+            fontKitHref: 'https://use.typekit.net/vmy8ypx.css',
+            fonts: {
+                family: `"new-science-mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace`
+            },
+            colors: {
+                text: '#FFC96A',
+                textShadow: 'rgba(0, 0, 0, 0.45)'
+            }
+        };
+
+        window.showWelcomeSequence = async function(onComplete) {
+            // Load font
+            if (!document.getElementById('efedra-transition-font')) {
+                const link = document.createElement('link');
+                link.id = 'efedra-transition-font';
+                link.rel = 'stylesheet';
+                link.href = WELCOME_THEME.fontKitHref;
+                document.head.appendChild(link);
+            }
+
+            // Create overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'welcome-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                inset: 0;
+                z-index: 100001;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                pointer-events: auto;
+                opacity: 0;
+                transition: opacity 0.5s ease;
+                background: #000;
+            `;
+            document.body.appendChild(overlay);
+
+            // Background video
+            const bgVideo = document.createElement('video');
+            bgVideo.src = 'assets/web-bgs/web-bg01.webm'; 
+            bgVideo.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                opacity: 0.6;
+            `;
+            bgVideo.muted = true;
+            bgVideo.playsInline = true;
+            bgVideo.loop = true;
+            bgVideo.autoplay = true;
+            
+            bgVideo.onerror = () => {
+                console.warn('Video failed to load, falling back to image');
+                bgVideo.style.display = 'none';
+                overlay.style.backgroundImage = "url('assets/web-bgs/D+fondo_para_web_01.webp')";
+                overlay.style.backgroundSize = 'cover';
+                overlay.style.backgroundPosition = 'center';
+            };
+
+            overlay.appendChild(bgVideo);
+            
+            try {
+                await bgVideo.play();
+            } catch(e) {
+                console.warn('Video play failed', e);
+            }
+
+            // Scale logic - Simplified for better mobile readability
+            // We won't scale the text container, but we will use responsive units
+            const updateScale = () => {
+                // No-op for text container to allow responsive CSS to work
+                // We might want to scale other elements if needed, but for now let's rely on CSS
+            };
+            window.addEventListener('resize', updateScale);
+
+            // Text Container
+            const textContainer = document.createElement('div');
+            textContainer.style.cssText = `
+                position: absolute;
+                inset: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 0 20px;
+                z-index: 10002;
+            `;
+            overlay.appendChild(textContainer);
+
+            // Skip Button
+            const skipButton = document.createElement('button');
+            skipButton.textContent = 'SALTEAR';
+            skipButton.style.cssText = `
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                padding: 12px 24px;
+                background: rgba(255, 201, 106, 0.15);
+                border: 2px solid ${WELCOME_THEME.colors.text};
+                color: ${WELCOME_THEME.colors.text};
+                font-family: ${WELCOME_THEME.fonts.family};
+                font-size: 14px;
+                font-weight: bold;
+                letter-spacing: 0.08em;
+                cursor: pointer;
+                z-index: 10004;
+                pointer-events: auto;
+                text-shadow: 0 0 14px ${WELCOME_THEME.colors.textShadow};
+                transition: all 0.3s ease;
+            `;
+            
+            skipButton.addEventListener('mouseenter', () => {
+                skipButton.style.background = `rgba(255, 201, 106, 0.35)`;
+                skipButton.style.transform = `scale(1.05)`;
+            });
+            skipButton.addEventListener('mouseleave', () => {
+                skipButton.style.background = `rgba(255, 201, 106, 0.15)`;
+                skipButton.style.transform = `scale(1)`;
+            });
+
+            let skipRequested = false;
+            skipButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                skipRequested = true;
+            });
+            overlay.appendChild(skipButton);
+
+            // Click Indicator
+            const clickIndicator = document.createElement('div');
+            clickIndicator.className = 'welcome-click-indicator';
+            clickIndicator.style.cssText = `
+                position: absolute;
+                bottom: 10%;
+                left: 50%;
+                transform: translateX(-50%);
+                color: ${WELCOME_THEME.colors.text};
+                font-family: ${WELCOME_THEME.fonts.family};
+                font-size: 0.95em;
+                text-align: center;
+                text-shadow: 0 0 14px ${WELCOME_THEME.colors.textShadow};
+                z-index: 10003;
+                opacity: 0;
+                transition: opacity 0.5s ease;
+                pointer-events: none;
+                width: 100%;
+            `;
+            clickIndicator.innerHTML = `
+                <span style="display:inline-block; letter-spacing:0.04em;">Click para continuar</span>
+            `;
+            overlay.appendChild(clickIndicator);
+
+            // Add styles for animations
+            if (!document.getElementById('welcome-anim-style')) {
+                const style = document.createElement('style');
+                style.id = 'welcome-anim-style';
+                style.textContent = `
+                    @keyframes clickFloat {
+                        0%,100% { transform: translate(-50%, 0); }
+                        50% { transform: translate(-50%, -6px); }
+                    }
+                    @keyframes rippleGrow {
+                        0% { transform: translate(-50%, 0) scale(0.7); opacity: 0.35; }
+                        70% { opacity: 0.08; }
+                        100% { transform: translate(-50%, 0) scale(1.25); opacity: 0; }
+                    }
+                    .welcome-click-indicator { animation: clickFloat 2.8s ease-in-out infinite; }
+                    .welcome-click-indicator .efedra-ripple.r1 { animation: rippleGrow 2.8s ease-in-out infinite; animation-delay: .0s; }
+                    .welcome-click-indicator .efedra-ripple.r2 { animation: rippleGrow 2.8s ease-in-out infinite; animation-delay: 1.4s; }
+
+                    /* Entrada/salida más suave */
+                    @keyframes fadeWaveIn {
+                        from { opacity: 0; transform: translateY(24px); filter: blur(4px); }
+                        to { opacity: 0.98; transform: translateY(0); filter: blur(0); }
+                    }
+                    @keyframes fadeWaveOut {
+                        from { opacity: 1; transform: translateY(0); }
+                        to { opacity: 0; transform: translateY(-26px); }
+                    }
+
+                    /* Ondas por carácter */
+                    @keyframes charWave {
+                        0%, 100% { transform: translateY(0); }
+                        50% { transform: translateY(var(--waveAmp, 6px)); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            // Initial scale update
+            updateScale();
+
+            // Show overlay
+            requestAnimationFrame(() => {
+                overlay.style.opacity = '1';
+            });
+
+            const lines = [
+                "Bienvenidx a Delta Grande, un ecosistema digital donde podés explorar el Delta del Paraná a través de juegos, recorridos interactivos, microdocumentales, paisajes 3D, voces y sonidos del territorio.",
+                "Acá vas a descubrir la vida del Delta desde una experiencia que combina arte, ciencia y tecnología, y que te permitirá recorrerlo sin dejar huella: jugar, aprender y sumergirte en uno de los ecosistemas más singulares de Sudamérica."
+            ];
+
+            const currentLineContainer = document.createElement('div');
+            currentLineContainer.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 90%;
+                max-width: 1200px;
+                text-align: center;
+            `;
+            textContainer.appendChild(currentLineContainer);
+
+            for (let i = 0; i < lines.length; i++) {
+                if (skipRequested) break;
+                const line = lines[i];
+
+                currentLineContainer.innerHTML = '';
+                currentLineContainer.style.opacity = '1';
+                
+                const lineElement = document.createElement('div');
+                lineElement.style.cssText = `
+                    color: ${WELCOME_THEME.colors.text};
+                    font-family: ${WELCOME_THEME.fonts.family};
+                    font-size: clamp(24px, 5vw, 42px);
+                    line-height: 1.5;
+                    text-shadow: 0 0 14px ${WELCOME_THEME.colors.textShadow};
+                    animation: fadeWaveIn 0.6s ease-out forwards;
+                `;
+                currentLineContainer.appendChild(lineElement);
+
+                // Build spans per word for wave animation
+                const spans = [];
+                const parts = line.split(/(\n)/);
+
+                for (const part of parts) {
+                    if (part === '\n') {
+                        lineElement.appendChild(document.createElement('br'));
+                    } else {
+                        const words = part.split(' ');
+                        for (let w = 0; w < words.length; w++) {
+                            const wordText = words[w];
+                            if (!wordText) continue;
+
+                            const s = document.createElement('span');
+                            s.textContent = wordText;
+                            s.style.display = 'inline-block';
+                            s.style.opacity = '0';
+                            s.style.transform = 'translateY(10px)';
+                            s.style.filter = 'blur(3px)';
+                            s.style.transition = 'opacity 220ms ease-out, transform 360ms ease-out, filter 480ms ease-out';
+                            s.style.willChange = 'transform, opacity, filter';
+                            
+                            // Continuous wave animation once revealed
+                            s.style.setProperty('--waveAmp', '5px');
+                            s.style.animation = `charWave 2800ms ease-in-out ${spans.length * 150}ms infinite`;
+                            
+                            lineElement.appendChild(s);
+                            spans.push(s);
+
+                            // Add space after word
+                            if (w < words.length - 1) {
+                                lineElement.appendChild(document.createTextNode(' '));
+                            }
+                        }
+                    }
+                }
+
+                let isTyping = true;
+                let skipTyping = false;
+                let advanceToNext = false;
+
+                // Show click indicator
+                clickIndicator.style.opacity = '1';
+
+                const clickHandler = () => {
+                    if (isTyping) {
+                        skipTyping = true;
+                    } else {
+                        advanceToNext = true;
+                    }
+                };
+                overlay.addEventListener('click', clickHandler);
+
+                // Typewriter effect
+                for (let j = 0; j < spans.length; j++) {
+                    if (skipRequested) {
+                        skipTyping = true;
+                    }
+
+                    if (skipTyping) {
+                        for (let k = 0; k < spans.length; k++) {
+                            const el = spans[k];
+                            el.style.opacity = '1';
+                            el.style.transform = 'translateY(0)';
+                            el.style.filter = 'blur(0)';
+                        }
+                        break;
+                    }
+
+                    const el = spans[j];
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                    el.style.filter = 'blur(0)';
+
+                    let delay = 100;
+                    const wordText = el.textContent;
+                    const lastChar = wordText[wordText.length - 1];
+                    
+                    if (lastChar === ',' || lastChar === ';') delay = 300;
+                    else if (lastChar === '.' || lastChar === ':') delay = 500;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+
+                isTyping = false;
+
+                if (skipRequested) {
+                    advanceToNext = true;
+                }
+
+                if (!skipRequested) {
+                    await new Promise(resolve => setTimeout(resolve, 400));
+                }
+
+                if (!advanceToNext && !skipRequested) {
+                    await new Promise(resolve => {
+                        const checkAdvance = setInterval(() => {
+                            if (advanceToNext || skipRequested) {
+                                clearInterval(checkAdvance);
+                                resolve();
+                            }
+                        }, 50);
+                    });
+                }
+
+                overlay.removeEventListener('click', clickHandler);
+
+                if (i < lines.length - 1) {
+                    clickIndicator.style.opacity = '0';
+                    currentLineContainer.style.transition = 'opacity 0.3s ease';
+                    currentLineContainer.style.opacity = '0';
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                } else {
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                }
+            }
+
+            // Cleanup
+            if (onComplete) onComplete();
+            
+            // Small delay to ensure loader is hidden behind the overlay before fading out overlay
+            await new Promise(r => setTimeout(r, 100));
+            
+            overlay.style.transition = 'opacity 2s ease'; // Slower fade out
+            overlay.style.opacity = '0';
+            
+            // Trigger fade-in of selector and manifesto after 3 seconds
+            setTimeout(() => {
+                const selector = document.querySelector('.sound-selector');
+                const manifesto = document.querySelector('.manifiesto-item');
+                if (selector) selector.classList.add('is-visible');
+                if (manifesto) manifesto.classList.add('is-visible');
+            }, 3000);
+
+            setTimeout(() => {
+                if (document.body.contains(overlay)) {
+                    document.body.removeChild(overlay);
+                }
+                window.removeEventListener('resize', updateScale);
+            }, 2000); // Wait for the 2s transition
+        };
+    </script>
+
+    <script>
         // Display the loader for 4 seconds, fade to black, hold 2 seconds, then reveal the page
         (function(){
             const loader = document.getElementById('page-loader');
@@ -1380,7 +1820,13 @@
                 if (!loader || revealStarted) return;
                 revealStarted = true;
                 loader.classList.add('is-blackout');
-                setTimeout(hideLoader, BLACKOUT_FADE_MS + BLACKOUT_HOLD_MS);
+                setTimeout(() => {
+                    if (typeof window.showWelcomeSequence === 'function') {
+                        window.showWelcomeSequence(hideLoader);
+                    } else {
+                        hideLoader();
+                    }
+                }, BLACKOUT_FADE_MS + BLACKOUT_HOLD_MS);
             }
 
             if (skipLoader) {
