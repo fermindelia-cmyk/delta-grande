@@ -2949,6 +2949,7 @@ export class RioScene extends BaseScene {
 
   async mount() {
     this._createLoadingOverlay();
+    this._setLoadingText('Preparando escena principal...');
     if (this.app?.canvas) {
       this.app.canvas.style.visibility = 'hidden';
       this._originalCanvasCursor = this.app.canvas.style.cursor;
@@ -2984,6 +2985,7 @@ export class RioScene extends BaseScene {
 
     
     // Load environment model (floor/walls)
+    this._setLoadingText('Cargando modelo environment.glb (entorno)');
     try {
       const gltf = await AssetLoader.gltf('/game-assets/sub/environment.glb');
       this.model = gltf.scene || gltf.scenes?.[0];
@@ -3087,11 +3089,13 @@ export class RioScene extends BaseScene {
 
     // --- Mist layer (cheap steam above water) ---
     if (this.params.mist?.enabled) {
+      this._setLoadingText('Generando capa de niebla y vapor');
       this.buildMistLayer();
     }
 
     // Shoreline haze (simple PNG card)
     if (this.params.shoreHaze?.enabled) {
+      this._setLoadingText('Construyendo shore haze y detalle costero');
       await this.buildOrUpdateShoreHaze();
     }
 
@@ -3100,6 +3104,7 @@ export class RioScene extends BaseScene {
 
     // Vegetation
     if (this.params.vegetation?.enabled) {
+      this._setLoadingText('Inicializando vegetación dinámica');
       await this.initVegetation();    // loads GLBs & spawns instances
     }
 
@@ -3111,6 +3116,7 @@ export class RioScene extends BaseScene {
     // Build the Deck UI (hidden until intro ends)
     if (this.params.debug.deck) {
       this.deck = new Deck(SPECIES, this.speciesObjs, this.params.deckUI);
+      this._setLoadingText('Cargando UI del deck y sprites asociados');
       await this.deck.build();
 
       // ---- Depth Ruler Overlay (DOM) ----
@@ -3168,14 +3174,17 @@ export class RioScene extends BaseScene {
       const R = this.params.radarUI?.anim;
 
       if (C) {
+        this._setLoadingText('Cargando animación del cursor');
         this._cursorAnim.frames = await this._preloadFrameSequence(C.dir, C.prefix, C.pad, C.startIndex, C.maxFramesProbe);
       }
       if (this.params.radarUI?.enabled && R) {
         const fps = Math.max(1, Number(R.fps) || 30);
         const frameDuration = 1 / fps;
         if (R.sheetSrc) {
+          this._setLoadingText('Cargando animación del radar (spritesheet)');
           this._radarAnim = await this._loadSpriteSheet({ ...R, frameDuration });
         } else {
+          this._setLoadingText('Cargando animación del radar (frames)');
           const frames = await this._preloadFrameSequence(R.dir, R.prefix, R.pad, R.startIndex, R.maxFramesProbe);
           this._radarAnim = frames?.length ? { kind: 'frames', frames, totalFrames: frames.length, frameDuration } : null;
         }
@@ -3248,14 +3257,11 @@ export class RioScene extends BaseScene {
       lanchas: '/game-assets/sub/sonido/lanchas.mp3'
     };
 
-    const audioBuffers = {
-      surface: await AssetLoader.audioBuffer(soundPaths.surface),
-      underwater: await AssetLoader.audioBuffer(soundPaths.underwater),
-      music: await AssetLoader.audioBuffer(soundPaths.music),
-      lanchas: await AssetLoader.audioBuffer(soundPaths.lanchas),
-      sfxCatch: await AssetLoader.audioBuffer(soundPaths.sfxCatch),
-      sfxWrong: await AssetLoader.audioBuffer(soundPaths.sfxWrong)
-    };
+    const audioBuffers = {};
+    for (const [key, path] of Object.entries(soundPaths)) {
+      this._setLoadingText(`Cargando audio ${key} (${path})`);
+      audioBuffers[key] = await AssetLoader.audioBuffer(path);
+    }
 
     // Ambientes (loops)
     this.sounds.surface = new THREE.Audio(this.audioListener);
@@ -3307,6 +3313,7 @@ export class RioScene extends BaseScene {
     this.audioState.eqUnderPrev  = undefined;
 
     // === Todo cargado: cambiar overlay a texto real y arrancar intro + audio ===
+    this._setLoadingText('Finalizando carga y preparando intro/audio');
     if (this.app?.canvas) this.app.canvas.style.visibility = 'visible';
     this._hideLoadingOverlay();
 
@@ -4687,13 +4694,19 @@ export class RioScene extends BaseScene {
 
     const txt = document.createElement('div');
     txt.id = 'rio-loading-text';
-    txt.textContent = 'Cargando';
+    this._loadingTextEl = txt;
+    this._setLoadingText('Cargando');
 
     wrap.appendChild(img);
     wrap.appendChild(txt);
     document.body.appendChild(wrap);
 
     this._loadingEl = wrap;
+  }
+
+  _setLoadingText(message) {
+    if (!this._loadingTextEl) return;
+    this._loadingTextEl.textContent = message || 'Cargando';
   }
 
   _hideLoadingOverlay() {
