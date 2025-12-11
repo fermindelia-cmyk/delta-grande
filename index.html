@@ -5,6 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>DELTA+</title>
+    <link rel="stylesheet" href="https://use.typekit.net/tas7aat.css">
     <style>
         :root {
             --video-frame-radius: 36px;
@@ -27,7 +28,7 @@
 
         body {
             margin: 0;
-            font-family: 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
+            font-family: "new-science", 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
             background-color: #000;
             background-image: url('assets/web-bgs/D+fondo_para_web_01.webp');
             /* Make the background cover the full viewport and move with the page scroll */
@@ -493,7 +494,7 @@
             background-position: center;
             padding: 38px 38px;
             color: #DDDC31;
-            font-family: 'New Science', sans-serif;
+            font-family: "new-science", 'New Science', sans-serif;
             font-size: 14px;
             line-height: 1.6;
             overflow-y: auto;
@@ -546,7 +547,7 @@
             padding: 12px 40px;
             font-size: 24px;
             font-weight: bold;
-            font-family: 'New Science', sans-serif;
+            font-family: "new-science", 'New Science', sans-serif;
             color: #000;
             background: linear-gradient(135deg, #DDDC31 0%, #FFE55C 100%);
             border: 3px solid #fff;
@@ -632,7 +633,7 @@
             box-sizing: border-box;
             text-align: center;
             color: #FFF;
-            font-family: 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
+            font-family: "new-science", 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
             font-size: 14px;
             letter-spacing: 0.08em;
             background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,0.55));
@@ -696,7 +697,7 @@
             box-shadow: 0 20px 60px rgba(0,0,0,0.55);
             color: #f7f7f7;
             padding: 22px 24px;
-            font-family: 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
+            font-family: "new-science", 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
             display: grid;
             gap: 16px;
             overflow: hidden;
@@ -725,6 +726,68 @@
         }
 
         .credits-body strong { color: #FFE55C; }
+
+        /* Video Overlay */
+        .video-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 130000;
+        }
+        .video-overlay.is-visible { display: flex; }
+        
+        .video-frame {
+            position: relative;
+            width: 100%;
+            max-width: 177.78vh; /* 16/9 aspect ratio constraint based on height */
+            aspect-ratio: 16/9;
+            max-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-frame video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            outline: none;
+        }
+
+        .overlay-text {
+            position: absolute;
+            left: 62.5%;
+            top: 17.1%;
+            width: 18%;
+            max-height: 27%;
+            overflow-y: auto;
+            font-family: "new-science-mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+            color: #FFC96A;
+            font-size: 14px;
+            line-height: 1.5;
+            padding: 10px;
+            pointer-events: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #FFC96A rgba(11, 18, 28, 0.45);
+            display: none;
+            z-index: 130001;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+        .overlay-text.is-visible { display: block; }
+        
+        .overlay-text::-webkit-scrollbar { width: 8px; background: transparent; }
+        .overlay-text::-webkit-scrollbar-track { background: rgba(11, 18, 28, 0.38); border-radius: 4px; }
+        .overlay-text::-webkit-scrollbar-thumb { background: #FFC96A; border-radius: 4px; }
+        .overlay-text strong { color: #FFE55C; font-weight: 700; }
+        .overlay-text p { margin-bottom: 1em; }
+
+        @keyframes glitch-flicker {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 0.2; }
+        }
 
         /* Toast / progress UI */
         .pwa-toast {
@@ -784,7 +847,7 @@
         }
 
         .floating-text p {
-            font-family: 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
+            font-family: "new-science", 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
             color: #FBFE5E;
             font-size: clamp(18px, 3vw, 28px);
             line-height: 1.6;
@@ -966,6 +1029,202 @@
                 return a;
             }
 
+            let speciesData = [];
+            const audioOpen = new Audio('game-assets/recorrido/sonido/metadata_popup.mp3');
+            const audioClose = new Audio('game-assets/recorrido/sonido/metadata_cierre.mp3');
+            audioOpen.volume = 0.4;
+            audioClose.volume = 0.5;
+
+            // Glitch animation variables
+            let typeWriterTimeout = null;
+            let typeWriterInterval = null;
+            const glitchChars = "!@#$%^&*()_+-=[]{}|;':\",./<>?~`abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            
+            const getRandomGlitchChar = () => glitchChars[Math.floor(Math.random() * glitchChars.length)];
+
+            const getPlainTextLength = (html) => {
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                return temp.textContent.length;
+            };
+
+            const getPartialHTML = (html, charCount) => {
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                let count = 0;
+                
+                const walk = (node, maxChars) => {
+                    if (count >= maxChars) return '';
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        const remaining = maxChars - count;
+                        const text = node.textContent.substring(0, remaining);
+                        count += text.length;
+                        return text;
+                    } else if (node.nodeType === Node.ELEMENT_NODE) {
+                        const tagName = node.tagName.toLowerCase();
+                        let result = `<${tagName}>`;
+                        for (let child of node.childNodes) {
+                            if (count >= maxChars) break;
+                            result += walk(child, maxChars);
+                        }
+                        result += `</${tagName}>`;
+                        return result;
+                    }
+                    return '';
+                };
+
+                let result = '';
+                for (let child of temp.childNodes) {
+                    if (count >= charCount) break;
+                    result += walk(child, charCount);
+                }
+                return result;
+            };
+
+            const isVideoPixelTransparent = (videoElement, event) => {
+                if (!videoElement || videoElement.readyState < 2) return false;
+
+                const rect = videoElement.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = videoElement.videoWidth;
+                canvas.height = videoElement.videoHeight;
+
+                context.drawImage(videoElement, 0, 0);
+
+                const scaleX = videoElement.videoWidth / rect.width;
+                const scaleY = videoElement.videoHeight / rect.height;
+                const pixelX = Math.floor(x * scaleX);
+                const pixelY = Math.floor(y * scaleY);
+
+                const pixelData = context.getImageData(pixelX, pixelY, 1, 1).data;
+                const alpha = pixelData[3];
+
+                return alpha < 128;
+            };
+
+            // Fetch species data
+            fetch('game/data/especies.json')
+                .then(response => response.json())
+                .then(data => {
+                    speciesData = data.species;
+                })
+                .catch(err => console.error('Error loading species data:', err));
+
+            function openVideoOverlay(src, speciesId) {
+                const overlay = document.getElementById('video-overlay');
+                const video = document.getElementById('overlay-video');
+                const textOverlay = document.getElementById('overlay-text');
+                
+                if (!overlay || !video) return;
+                
+                // Clear any existing animations
+                if (typeWriterTimeout) clearTimeout(typeWriterTimeout);
+                if (typeWriterInterval) clearInterval(typeWriterInterval);
+                
+                video.src = src;
+                video.play().catch(e => console.error("Video play failed:", e));
+                
+                overlay.classList.add('is-visible');
+                overlay.setAttribute('aria-hidden', 'false');
+
+                // Play sound
+                audioOpen.currentTime = 0;
+                audioOpen.play().catch(e => console.log('Audio play failed', e));
+
+                // Populate text if data exists
+                if (textOverlay && speciesId) {
+                    const info = speciesData.find(s => s.id === speciesId);
+                    if (info) {
+                        // Set video speed
+                        video.playbackRate = info.dataVideoSpeed || 0.5;
+
+                        if (info.text) {
+                            textOverlay.innerHTML = ''; // Start empty
+                            textOverlay.classList.add('is-visible');
+                            
+                            // Start animation after 3 seconds
+                            typeWriterTimeout = setTimeout(() => {
+                                const fullText = info.text;
+                                const totalChars = getPlainTextLength(fullText);
+                                let currentIndex = 0;
+
+                                typeWriterInterval = setInterval(() => {
+                                    if (currentIndex <= totalChars) {
+                                        let displayText = getPartialHTML(fullText, currentIndex);
+                                        const glitchCount = Math.min(3, totalChars - currentIndex);
+                                        for (let i = 0; i < glitchCount; i++) {
+                                            displayText += `<span style="opacity: 0.6; animation: glitch-flicker 0.1s infinite;">${getRandomGlitchChar()}</span>`;
+                                        }
+                                        textOverlay.innerHTML = displayText;
+                                        currentIndex++;
+                                    } else {
+                                        textOverlay.innerHTML = fullText;
+                                        clearInterval(typeWriterInterval);
+                                    }
+                                }, 5);
+                            }, 3000);
+                        } else {
+                            textOverlay.classList.remove('is-visible');
+                            textOverlay.innerHTML = '';
+                        }
+                    } else {
+                        // Default speed if no info found
+                        video.playbackRate = 0.5;
+                        textOverlay.classList.remove('is-visible');
+                        textOverlay.innerHTML = '';
+                    }
+                } else if (textOverlay) {
+                    video.playbackRate = 0.5;
+                    textOverlay.classList.remove('is-visible');
+                    textOverlay.innerHTML = '';
+                }
+                
+                // Close on click outside
+                overlay.onclick = (e) => {
+                    if (e.target === overlay) {
+                        closeVideoOverlay();
+                    }
+                };
+
+                // Close on transparent pixel click
+                video.onclick = (e) => {
+                    if (isVideoPixelTransparent(video, e)) {
+                        closeVideoOverlay();
+                    }
+                };
+            }
+
+            function closeVideoOverlay() {
+                const overlay = document.getElementById('video-overlay');
+                const video = document.getElementById('overlay-video');
+                const textOverlay = document.getElementById('overlay-text');
+                
+                if (!overlay || !video) return;
+                
+                // Clear animations
+                if (typeWriterTimeout) clearTimeout(typeWriterTimeout);
+                if (typeWriterInterval) clearInterval(typeWriterInterval);
+                
+                video.pause();
+                video.src = '';
+                video.onclick = null; // Remove listener
+                overlay.classList.remove('is-visible');
+                overlay.setAttribute('aria-hidden', 'true');
+                
+                if (textOverlay) {
+                    textOverlay.classList.remove('is-visible');
+                    textOverlay.innerHTML = '';
+                }
+
+                // Play close sound
+                audioClose.currentTime = 0;
+                audioClose.play().catch(e => console.log('Audio play failed', e));
+            }
+
             function renderCards() {
                 const rows = [
                     document.getElementById('cards-row-top'),
@@ -984,6 +1243,7 @@
                     picks.slice(start, end).forEach((src) => {
                         const card = document.createElement('div');
                         card.className = 'card-item';
+                        card.style.cursor = 'pointer';
 
                         const img = document.createElement('img');
                         img.src = src;
@@ -991,6 +1251,15 @@
                         img.loading = 'lazy';
 
                         card.appendChild(img);
+                        
+                        card.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const filename = src.split('/').pop();
+                            const species = filename.split('.')[0];
+                            const videoPath = `game-assets/recorrido/criaturas/${species}/${species}_data.webm`;
+                            openVideoOverlay(videoPath, species);
+                        });
+
                         row.appendChild(card);
                     });
                 });
@@ -1050,6 +1319,14 @@
                 <p><strong>Música y sonido:</strong> Equipo Delta Grande.</p>
                 <p style="margin-top:12px;">Gracias a todas las comunidades, especialistas y colaboradores que hicieron posible este recorrido.</p>
             </div>
+        </div>
+    </div>
+
+    <!-- Video overlay -->
+    <div id="video-overlay" class="video-overlay" aria-hidden="true">
+        <div class="video-frame">
+            <video id="overlay-video" loop playsinline></video>
+            <div id="overlay-text" class="overlay-text"></div>
         </div>
     </div>
 
