@@ -1,0 +1,7919 @@
+{
+  "meta": {
+    "image": "sheet.webp",
+    "size": {
+      "w": 10240,
+      "h": 5206
+    },
+    "scale": 0.26666666666666666,
+    "frame_count": 376,
+    "cols": 20,
+    "rows": 19,
+    "frame_size": {
+      "w": 512,
+      "h": 274
+    },
+    "original_frame_size": {
+      "w": 1920,
+      "h": 1030
+    }
+  },
+  "frames": [
+    {
+      "filename": "BASE especie nombre_00000.png",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00001.png",
+      "frame": {
+        "x": 512,
+        "y": 0,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00002.png",
+      "frame": {
+        "x": 1024,
+        "y": 0,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00003.png",
+      "frame": {
+        "x": 1536,
+        "y": 0,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00004.png",
+      "frame": {
+        "x": 2048,
+        "y": 0,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00005.png",
+      "frame": {
+        "x": 2560,
+        "y": 0,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00006.png",
+      "frame": {
+        "x": 3072,
+        "y": 0,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00007.png",
+      "frame": {
+        "x": 3584,
+        "y": 0,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00008.png",
+      "frame": {
+        "x": 4096,
+        "y": 0,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00009.png",
+      "frame": {
+        "x": 4608,
+        "y": 0,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00010.png",
+      "frame": {
+        "x": 5120,
+        "y": 0,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00011.png",
+      "frame": {
+        "x": 5632,
+        "y": 0,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00012.png",
+      "frame": {
+        "x": 6144,
+        "y": 0,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00013.png",
+      "frame": {
+        "x": 6656,
+        "y": 0,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00014.png",
+      "frame": {
+        "x": 7168,
+        "y": 0,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00015.png",
+      "frame": {
+        "x": 7680,
+        "y": 0,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00016.png",
+      "frame": {
+        "x": 8192,
+        "y": 0,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00017.png",
+      "frame": {
+        "x": 8704,
+        "y": 0,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00018.png",
+      "frame": {
+        "x": 9216,
+        "y": 0,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00019.png",
+      "frame": {
+        "x": 9728,
+        "y": 0,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00020.png",
+      "frame": {
+        "x": 0,
+        "y": 274,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00021.png",
+      "frame": {
+        "x": 512,
+        "y": 274,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00022.png",
+      "frame": {
+        "x": 1024,
+        "y": 274,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00023.png",
+      "frame": {
+        "x": 1536,
+        "y": 274,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00024.png",
+      "frame": {
+        "x": 2048,
+        "y": 274,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00025.png",
+      "frame": {
+        "x": 2560,
+        "y": 274,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00026.png",
+      "frame": {
+        "x": 3072,
+        "y": 274,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00027.png",
+      "frame": {
+        "x": 3584,
+        "y": 274,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00028.png",
+      "frame": {
+        "x": 4096,
+        "y": 274,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00029.png",
+      "frame": {
+        "x": 4608,
+        "y": 274,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00030.png",
+      "frame": {
+        "x": 5120,
+        "y": 274,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00031.png",
+      "frame": {
+        "x": 5632,
+        "y": 274,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00032.png",
+      "frame": {
+        "x": 6144,
+        "y": 274,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00033.png",
+      "frame": {
+        "x": 6656,
+        "y": 274,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00034.png",
+      "frame": {
+        "x": 7168,
+        "y": 274,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00035.png",
+      "frame": {
+        "x": 7680,
+        "y": 274,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00036.png",
+      "frame": {
+        "x": 8192,
+        "y": 274,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00037.png",
+      "frame": {
+        "x": 8704,
+        "y": 274,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00038.png",
+      "frame": {
+        "x": 9216,
+        "y": 274,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00039.png",
+      "frame": {
+        "x": 9728,
+        "y": 274,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00040.png",
+      "frame": {
+        "x": 0,
+        "y": 548,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00041.png",
+      "frame": {
+        "x": 512,
+        "y": 548,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00042.png",
+      "frame": {
+        "x": 1024,
+        "y": 548,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00043.png",
+      "frame": {
+        "x": 1536,
+        "y": 548,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00044.png",
+      "frame": {
+        "x": 2048,
+        "y": 548,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00045.png",
+      "frame": {
+        "x": 2560,
+        "y": 548,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00046.png",
+      "frame": {
+        "x": 3072,
+        "y": 548,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00047.png",
+      "frame": {
+        "x": 3584,
+        "y": 548,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00048.png",
+      "frame": {
+        "x": 4096,
+        "y": 548,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00049.png",
+      "frame": {
+        "x": 4608,
+        "y": 548,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00050.png",
+      "frame": {
+        "x": 5120,
+        "y": 548,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00051.png",
+      "frame": {
+        "x": 5632,
+        "y": 548,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00052.png",
+      "frame": {
+        "x": 6144,
+        "y": 548,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00053.png",
+      "frame": {
+        "x": 6656,
+        "y": 548,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00054.png",
+      "frame": {
+        "x": 7168,
+        "y": 548,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00055.png",
+      "frame": {
+        "x": 7680,
+        "y": 548,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00056.png",
+      "frame": {
+        "x": 8192,
+        "y": 548,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00057.png",
+      "frame": {
+        "x": 8704,
+        "y": 548,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00058.png",
+      "frame": {
+        "x": 9216,
+        "y": 548,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00059.png",
+      "frame": {
+        "x": 9728,
+        "y": 548,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00060.png",
+      "frame": {
+        "x": 0,
+        "y": 822,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00061.png",
+      "frame": {
+        "x": 512,
+        "y": 822,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00062.png",
+      "frame": {
+        "x": 1024,
+        "y": 822,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00063.png",
+      "frame": {
+        "x": 1536,
+        "y": 822,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00064.png",
+      "frame": {
+        "x": 2048,
+        "y": 822,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00065.png",
+      "frame": {
+        "x": 2560,
+        "y": 822,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00066.png",
+      "frame": {
+        "x": 3072,
+        "y": 822,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00067.png",
+      "frame": {
+        "x": 3584,
+        "y": 822,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00068.png",
+      "frame": {
+        "x": 4096,
+        "y": 822,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00069.png",
+      "frame": {
+        "x": 4608,
+        "y": 822,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00070.png",
+      "frame": {
+        "x": 5120,
+        "y": 822,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00071.png",
+      "frame": {
+        "x": 5632,
+        "y": 822,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00072.png",
+      "frame": {
+        "x": 6144,
+        "y": 822,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00073.png",
+      "frame": {
+        "x": 6656,
+        "y": 822,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00074.png",
+      "frame": {
+        "x": 7168,
+        "y": 822,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00075.png",
+      "frame": {
+        "x": 7680,
+        "y": 822,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00076.png",
+      "frame": {
+        "x": 8192,
+        "y": 822,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00077.png",
+      "frame": {
+        "x": 8704,
+        "y": 822,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00078.png",
+      "frame": {
+        "x": 9216,
+        "y": 822,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00079.png",
+      "frame": {
+        "x": 9728,
+        "y": 822,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00080.png",
+      "frame": {
+        "x": 0,
+        "y": 1096,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00081.png",
+      "frame": {
+        "x": 512,
+        "y": 1096,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00082.png",
+      "frame": {
+        "x": 1024,
+        "y": 1096,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00083.png",
+      "frame": {
+        "x": 1536,
+        "y": 1096,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00084.png",
+      "frame": {
+        "x": 2048,
+        "y": 1096,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00085.png",
+      "frame": {
+        "x": 2560,
+        "y": 1096,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00086.png",
+      "frame": {
+        "x": 3072,
+        "y": 1096,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00087.png",
+      "frame": {
+        "x": 3584,
+        "y": 1096,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00088.png",
+      "frame": {
+        "x": 4096,
+        "y": 1096,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00089.png",
+      "frame": {
+        "x": 4608,
+        "y": 1096,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00090.png",
+      "frame": {
+        "x": 5120,
+        "y": 1096,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00091.png",
+      "frame": {
+        "x": 5632,
+        "y": 1096,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00092.png",
+      "frame": {
+        "x": 6144,
+        "y": 1096,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00093.png",
+      "frame": {
+        "x": 6656,
+        "y": 1096,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00094.png",
+      "frame": {
+        "x": 7168,
+        "y": 1096,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00095.png",
+      "frame": {
+        "x": 7680,
+        "y": 1096,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00096.png",
+      "frame": {
+        "x": 8192,
+        "y": 1096,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00097.png",
+      "frame": {
+        "x": 8704,
+        "y": 1096,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00098.png",
+      "frame": {
+        "x": 9216,
+        "y": 1096,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00099.png",
+      "frame": {
+        "x": 9728,
+        "y": 1096,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00100.png",
+      "frame": {
+        "x": 0,
+        "y": 1370,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00101.png",
+      "frame": {
+        "x": 512,
+        "y": 1370,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00102.png",
+      "frame": {
+        "x": 1024,
+        "y": 1370,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00103.png",
+      "frame": {
+        "x": 1536,
+        "y": 1370,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00104.png",
+      "frame": {
+        "x": 2048,
+        "y": 1370,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00105.png",
+      "frame": {
+        "x": 2560,
+        "y": 1370,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00106.png",
+      "frame": {
+        "x": 3072,
+        "y": 1370,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00107.png",
+      "frame": {
+        "x": 3584,
+        "y": 1370,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00108.png",
+      "frame": {
+        "x": 4096,
+        "y": 1370,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00109.png",
+      "frame": {
+        "x": 4608,
+        "y": 1370,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00110.png",
+      "frame": {
+        "x": 5120,
+        "y": 1370,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00111.png",
+      "frame": {
+        "x": 5632,
+        "y": 1370,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00112.png",
+      "frame": {
+        "x": 6144,
+        "y": 1370,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00113.png",
+      "frame": {
+        "x": 6656,
+        "y": 1370,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00114.png",
+      "frame": {
+        "x": 7168,
+        "y": 1370,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00115.png",
+      "frame": {
+        "x": 7680,
+        "y": 1370,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00116.png",
+      "frame": {
+        "x": 8192,
+        "y": 1370,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00117.png",
+      "frame": {
+        "x": 8704,
+        "y": 1370,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00118.png",
+      "frame": {
+        "x": 9216,
+        "y": 1370,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00119.png",
+      "frame": {
+        "x": 9728,
+        "y": 1370,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00120.png",
+      "frame": {
+        "x": 0,
+        "y": 1644,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00121.png",
+      "frame": {
+        "x": 512,
+        "y": 1644,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00122.png",
+      "frame": {
+        "x": 1024,
+        "y": 1644,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00123.png",
+      "frame": {
+        "x": 1536,
+        "y": 1644,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00124.png",
+      "frame": {
+        "x": 2048,
+        "y": 1644,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00125.png",
+      "frame": {
+        "x": 2560,
+        "y": 1644,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00126.png",
+      "frame": {
+        "x": 3072,
+        "y": 1644,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00127.png",
+      "frame": {
+        "x": 3584,
+        "y": 1644,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00128.png",
+      "frame": {
+        "x": 4096,
+        "y": 1644,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00129.png",
+      "frame": {
+        "x": 4608,
+        "y": 1644,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00130.png",
+      "frame": {
+        "x": 5120,
+        "y": 1644,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00131.png",
+      "frame": {
+        "x": 5632,
+        "y": 1644,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00132.png",
+      "frame": {
+        "x": 6144,
+        "y": 1644,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00133.png",
+      "frame": {
+        "x": 6656,
+        "y": 1644,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00134.png",
+      "frame": {
+        "x": 7168,
+        "y": 1644,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00135.png",
+      "frame": {
+        "x": 7680,
+        "y": 1644,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00136.png",
+      "frame": {
+        "x": 8192,
+        "y": 1644,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00137.png",
+      "frame": {
+        "x": 8704,
+        "y": 1644,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00138.png",
+      "frame": {
+        "x": 9216,
+        "y": 1644,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00139.png",
+      "frame": {
+        "x": 9728,
+        "y": 1644,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00140.png",
+      "frame": {
+        "x": 0,
+        "y": 1918,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00141.png",
+      "frame": {
+        "x": 512,
+        "y": 1918,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00142.png",
+      "frame": {
+        "x": 1024,
+        "y": 1918,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00143.png",
+      "frame": {
+        "x": 1536,
+        "y": 1918,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00144.png",
+      "frame": {
+        "x": 2048,
+        "y": 1918,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00145.png",
+      "frame": {
+        "x": 2560,
+        "y": 1918,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00146.png",
+      "frame": {
+        "x": 3072,
+        "y": 1918,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00147.png",
+      "frame": {
+        "x": 3584,
+        "y": 1918,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00148.png",
+      "frame": {
+        "x": 4096,
+        "y": 1918,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00149.png",
+      "frame": {
+        "x": 4608,
+        "y": 1918,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00150.png",
+      "frame": {
+        "x": 5120,
+        "y": 1918,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00151.png",
+      "frame": {
+        "x": 5632,
+        "y": 1918,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00152.png",
+      "frame": {
+        "x": 6144,
+        "y": 1918,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00153.png",
+      "frame": {
+        "x": 6656,
+        "y": 1918,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00154.png",
+      "frame": {
+        "x": 7168,
+        "y": 1918,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00155.png",
+      "frame": {
+        "x": 7680,
+        "y": 1918,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00156.png",
+      "frame": {
+        "x": 8192,
+        "y": 1918,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00157.png",
+      "frame": {
+        "x": 8704,
+        "y": 1918,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00158.png",
+      "frame": {
+        "x": 9216,
+        "y": 1918,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00159.png",
+      "frame": {
+        "x": 9728,
+        "y": 1918,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00160.png",
+      "frame": {
+        "x": 0,
+        "y": 2192,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00161.png",
+      "frame": {
+        "x": 512,
+        "y": 2192,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00162.png",
+      "frame": {
+        "x": 1024,
+        "y": 2192,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00163.png",
+      "frame": {
+        "x": 1536,
+        "y": 2192,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00164.png",
+      "frame": {
+        "x": 2048,
+        "y": 2192,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00165.png",
+      "frame": {
+        "x": 2560,
+        "y": 2192,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00166.png",
+      "frame": {
+        "x": 3072,
+        "y": 2192,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00167.png",
+      "frame": {
+        "x": 3584,
+        "y": 2192,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00168.png",
+      "frame": {
+        "x": 4096,
+        "y": 2192,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00169.png",
+      "frame": {
+        "x": 4608,
+        "y": 2192,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00170.png",
+      "frame": {
+        "x": 5120,
+        "y": 2192,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00171.png",
+      "frame": {
+        "x": 5632,
+        "y": 2192,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00172.png",
+      "frame": {
+        "x": 6144,
+        "y": 2192,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00173.png",
+      "frame": {
+        "x": 6656,
+        "y": 2192,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00174.png",
+      "frame": {
+        "x": 7168,
+        "y": 2192,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00175.png",
+      "frame": {
+        "x": 7680,
+        "y": 2192,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00176.png",
+      "frame": {
+        "x": 8192,
+        "y": 2192,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00177.png",
+      "frame": {
+        "x": 8704,
+        "y": 2192,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00178.png",
+      "frame": {
+        "x": 9216,
+        "y": 2192,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00179.png",
+      "frame": {
+        "x": 9728,
+        "y": 2192,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00180.png",
+      "frame": {
+        "x": 0,
+        "y": 2466,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00181.png",
+      "frame": {
+        "x": 512,
+        "y": 2466,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00182.png",
+      "frame": {
+        "x": 1024,
+        "y": 2466,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00183.png",
+      "frame": {
+        "x": 1536,
+        "y": 2466,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00184.png",
+      "frame": {
+        "x": 2048,
+        "y": 2466,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00185.png",
+      "frame": {
+        "x": 2560,
+        "y": 2466,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00186.png",
+      "frame": {
+        "x": 3072,
+        "y": 2466,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00187.png",
+      "frame": {
+        "x": 3584,
+        "y": 2466,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00188.png",
+      "frame": {
+        "x": 4096,
+        "y": 2466,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00189.png",
+      "frame": {
+        "x": 4608,
+        "y": 2466,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00190.png",
+      "frame": {
+        "x": 5120,
+        "y": 2466,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00191.png",
+      "frame": {
+        "x": 5632,
+        "y": 2466,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00192.png",
+      "frame": {
+        "x": 6144,
+        "y": 2466,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00193.png",
+      "frame": {
+        "x": 6656,
+        "y": 2466,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00194.png",
+      "frame": {
+        "x": 7168,
+        "y": 2466,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00195.png",
+      "frame": {
+        "x": 7680,
+        "y": 2466,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00196.png",
+      "frame": {
+        "x": 8192,
+        "y": 2466,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00197.png",
+      "frame": {
+        "x": 8704,
+        "y": 2466,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00198.png",
+      "frame": {
+        "x": 9216,
+        "y": 2466,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00199.png",
+      "frame": {
+        "x": 9728,
+        "y": 2466,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00200.png",
+      "frame": {
+        "x": 0,
+        "y": 2740,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00201.png",
+      "frame": {
+        "x": 512,
+        "y": 2740,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00202.png",
+      "frame": {
+        "x": 1024,
+        "y": 2740,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00203.png",
+      "frame": {
+        "x": 1536,
+        "y": 2740,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00204.png",
+      "frame": {
+        "x": 2048,
+        "y": 2740,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00205.png",
+      "frame": {
+        "x": 2560,
+        "y": 2740,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00206.png",
+      "frame": {
+        "x": 3072,
+        "y": 2740,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00207.png",
+      "frame": {
+        "x": 3584,
+        "y": 2740,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00208.png",
+      "frame": {
+        "x": 4096,
+        "y": 2740,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00209.png",
+      "frame": {
+        "x": 4608,
+        "y": 2740,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00210.png",
+      "frame": {
+        "x": 5120,
+        "y": 2740,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00211.png",
+      "frame": {
+        "x": 5632,
+        "y": 2740,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00212.png",
+      "frame": {
+        "x": 6144,
+        "y": 2740,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00213.png",
+      "frame": {
+        "x": 6656,
+        "y": 2740,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00214.png",
+      "frame": {
+        "x": 7168,
+        "y": 2740,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00215.png",
+      "frame": {
+        "x": 7680,
+        "y": 2740,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00216.png",
+      "frame": {
+        "x": 8192,
+        "y": 2740,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00217.png",
+      "frame": {
+        "x": 8704,
+        "y": 2740,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00218.png",
+      "frame": {
+        "x": 9216,
+        "y": 2740,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00219.png",
+      "frame": {
+        "x": 9728,
+        "y": 2740,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00220.png",
+      "frame": {
+        "x": 0,
+        "y": 3014,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00221.png",
+      "frame": {
+        "x": 512,
+        "y": 3014,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00222.png",
+      "frame": {
+        "x": 1024,
+        "y": 3014,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00223.png",
+      "frame": {
+        "x": 1536,
+        "y": 3014,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00224.png",
+      "frame": {
+        "x": 2048,
+        "y": 3014,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00225.png",
+      "frame": {
+        "x": 2560,
+        "y": 3014,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00226.png",
+      "frame": {
+        "x": 3072,
+        "y": 3014,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00227.png",
+      "frame": {
+        "x": 3584,
+        "y": 3014,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00228.png",
+      "frame": {
+        "x": 4096,
+        "y": 3014,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00229.png",
+      "frame": {
+        "x": 4608,
+        "y": 3014,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00230.png",
+      "frame": {
+        "x": 5120,
+        "y": 3014,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00231.png",
+      "frame": {
+        "x": 5632,
+        "y": 3014,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00232.png",
+      "frame": {
+        "x": 6144,
+        "y": 3014,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00233.png",
+      "frame": {
+        "x": 6656,
+        "y": 3014,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00234.png",
+      "frame": {
+        "x": 7168,
+        "y": 3014,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00235.png",
+      "frame": {
+        "x": 7680,
+        "y": 3014,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00236.png",
+      "frame": {
+        "x": 8192,
+        "y": 3014,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00237.png",
+      "frame": {
+        "x": 8704,
+        "y": 3014,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00238.png",
+      "frame": {
+        "x": 9216,
+        "y": 3014,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00239.png",
+      "frame": {
+        "x": 9728,
+        "y": 3014,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00240.png",
+      "frame": {
+        "x": 0,
+        "y": 3288,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00241.png",
+      "frame": {
+        "x": 512,
+        "y": 3288,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00242.png",
+      "frame": {
+        "x": 1024,
+        "y": 3288,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00243.png",
+      "frame": {
+        "x": 1536,
+        "y": 3288,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00244.png",
+      "frame": {
+        "x": 2048,
+        "y": 3288,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00245.png",
+      "frame": {
+        "x": 2560,
+        "y": 3288,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00246.png",
+      "frame": {
+        "x": 3072,
+        "y": 3288,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00247.png",
+      "frame": {
+        "x": 3584,
+        "y": 3288,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00248.png",
+      "frame": {
+        "x": 4096,
+        "y": 3288,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00249.png",
+      "frame": {
+        "x": 4608,
+        "y": 3288,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00250.png",
+      "frame": {
+        "x": 5120,
+        "y": 3288,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00251.png",
+      "frame": {
+        "x": 5632,
+        "y": 3288,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00252.png",
+      "frame": {
+        "x": 6144,
+        "y": 3288,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00253.png",
+      "frame": {
+        "x": 6656,
+        "y": 3288,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00254.png",
+      "frame": {
+        "x": 7168,
+        "y": 3288,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00255.png",
+      "frame": {
+        "x": 7680,
+        "y": 3288,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00256.png",
+      "frame": {
+        "x": 8192,
+        "y": 3288,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00257.png",
+      "frame": {
+        "x": 8704,
+        "y": 3288,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00258.png",
+      "frame": {
+        "x": 9216,
+        "y": 3288,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00259.png",
+      "frame": {
+        "x": 9728,
+        "y": 3288,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00260.png",
+      "frame": {
+        "x": 0,
+        "y": 3562,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00261.png",
+      "frame": {
+        "x": 512,
+        "y": 3562,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00262.png",
+      "frame": {
+        "x": 1024,
+        "y": 3562,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00263.png",
+      "frame": {
+        "x": 1536,
+        "y": 3562,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00264.png",
+      "frame": {
+        "x": 2048,
+        "y": 3562,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00265.png",
+      "frame": {
+        "x": 2560,
+        "y": 3562,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00266.png",
+      "frame": {
+        "x": 3072,
+        "y": 3562,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00267.png",
+      "frame": {
+        "x": 3584,
+        "y": 3562,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00268.png",
+      "frame": {
+        "x": 4096,
+        "y": 3562,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00269.png",
+      "frame": {
+        "x": 4608,
+        "y": 3562,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00270.png",
+      "frame": {
+        "x": 5120,
+        "y": 3562,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00271.png",
+      "frame": {
+        "x": 5632,
+        "y": 3562,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00272.png",
+      "frame": {
+        "x": 6144,
+        "y": 3562,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00273.png",
+      "frame": {
+        "x": 6656,
+        "y": 3562,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00274.png",
+      "frame": {
+        "x": 7168,
+        "y": 3562,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00275.png",
+      "frame": {
+        "x": 7680,
+        "y": 3562,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00276.png",
+      "frame": {
+        "x": 8192,
+        "y": 3562,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00277.png",
+      "frame": {
+        "x": 8704,
+        "y": 3562,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00278.png",
+      "frame": {
+        "x": 9216,
+        "y": 3562,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00279.png",
+      "frame": {
+        "x": 9728,
+        "y": 3562,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00280.png",
+      "frame": {
+        "x": 0,
+        "y": 3836,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00281.png",
+      "frame": {
+        "x": 512,
+        "y": 3836,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00282.png",
+      "frame": {
+        "x": 1024,
+        "y": 3836,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00283.png",
+      "frame": {
+        "x": 1536,
+        "y": 3836,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00284.png",
+      "frame": {
+        "x": 2048,
+        "y": 3836,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00285.png",
+      "frame": {
+        "x": 2560,
+        "y": 3836,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00286.png",
+      "frame": {
+        "x": 3072,
+        "y": 3836,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00287.png",
+      "frame": {
+        "x": 3584,
+        "y": 3836,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00288.png",
+      "frame": {
+        "x": 4096,
+        "y": 3836,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00289.png",
+      "frame": {
+        "x": 4608,
+        "y": 3836,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00290.png",
+      "frame": {
+        "x": 5120,
+        "y": 3836,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00291.png",
+      "frame": {
+        "x": 5632,
+        "y": 3836,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00292.png",
+      "frame": {
+        "x": 6144,
+        "y": 3836,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00293.png",
+      "frame": {
+        "x": 6656,
+        "y": 3836,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00294.png",
+      "frame": {
+        "x": 7168,
+        "y": 3836,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00295.png",
+      "frame": {
+        "x": 7680,
+        "y": 3836,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00296.png",
+      "frame": {
+        "x": 8192,
+        "y": 3836,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00297.png",
+      "frame": {
+        "x": 8704,
+        "y": 3836,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00298.png",
+      "frame": {
+        "x": 9216,
+        "y": 3836,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00299.png",
+      "frame": {
+        "x": 9728,
+        "y": 3836,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00300.png",
+      "frame": {
+        "x": 0,
+        "y": 4110,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00301.png",
+      "frame": {
+        "x": 512,
+        "y": 4110,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00302.png",
+      "frame": {
+        "x": 1024,
+        "y": 4110,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00303.png",
+      "frame": {
+        "x": 1536,
+        "y": 4110,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00304.png",
+      "frame": {
+        "x": 2048,
+        "y": 4110,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00305.png",
+      "frame": {
+        "x": 2560,
+        "y": 4110,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00306.png",
+      "frame": {
+        "x": 3072,
+        "y": 4110,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00307.png",
+      "frame": {
+        "x": 3584,
+        "y": 4110,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00308.png",
+      "frame": {
+        "x": 4096,
+        "y": 4110,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00309.png",
+      "frame": {
+        "x": 4608,
+        "y": 4110,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00310.png",
+      "frame": {
+        "x": 5120,
+        "y": 4110,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00311.png",
+      "frame": {
+        "x": 5632,
+        "y": 4110,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00312.png",
+      "frame": {
+        "x": 6144,
+        "y": 4110,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00313.png",
+      "frame": {
+        "x": 6656,
+        "y": 4110,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00314.png",
+      "frame": {
+        "x": 7168,
+        "y": 4110,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00315.png",
+      "frame": {
+        "x": 7680,
+        "y": 4110,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00316.png",
+      "frame": {
+        "x": 8192,
+        "y": 4110,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00317.png",
+      "frame": {
+        "x": 8704,
+        "y": 4110,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00318.png",
+      "frame": {
+        "x": 9216,
+        "y": 4110,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00319.png",
+      "frame": {
+        "x": 9728,
+        "y": 4110,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00320.png",
+      "frame": {
+        "x": 0,
+        "y": 4384,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00321.png",
+      "frame": {
+        "x": 512,
+        "y": 4384,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00322.png",
+      "frame": {
+        "x": 1024,
+        "y": 4384,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00323.png",
+      "frame": {
+        "x": 1536,
+        "y": 4384,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00324.png",
+      "frame": {
+        "x": 2048,
+        "y": 4384,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00325.png",
+      "frame": {
+        "x": 2560,
+        "y": 4384,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00326.png",
+      "frame": {
+        "x": 3072,
+        "y": 4384,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00327.png",
+      "frame": {
+        "x": 3584,
+        "y": 4384,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00328.png",
+      "frame": {
+        "x": 4096,
+        "y": 4384,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00329.png",
+      "frame": {
+        "x": 4608,
+        "y": 4384,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00330.png",
+      "frame": {
+        "x": 5120,
+        "y": 4384,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00331.png",
+      "frame": {
+        "x": 5632,
+        "y": 4384,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00332.png",
+      "frame": {
+        "x": 6144,
+        "y": 4384,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00333.png",
+      "frame": {
+        "x": 6656,
+        "y": 4384,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00334.png",
+      "frame": {
+        "x": 7168,
+        "y": 4384,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00335.png",
+      "frame": {
+        "x": 7680,
+        "y": 4384,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00336.png",
+      "frame": {
+        "x": 8192,
+        "y": 4384,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00337.png",
+      "frame": {
+        "x": 8704,
+        "y": 4384,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00338.png",
+      "frame": {
+        "x": 9216,
+        "y": 4384,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00339.png",
+      "frame": {
+        "x": 9728,
+        "y": 4384,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00340.png",
+      "frame": {
+        "x": 0,
+        "y": 4658,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00341.png",
+      "frame": {
+        "x": 512,
+        "y": 4658,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00342.png",
+      "frame": {
+        "x": 1024,
+        "y": 4658,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00343.png",
+      "frame": {
+        "x": 1536,
+        "y": 4658,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00344.png",
+      "frame": {
+        "x": 2048,
+        "y": 4658,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00345.png",
+      "frame": {
+        "x": 2560,
+        "y": 4658,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00346.png",
+      "frame": {
+        "x": 3072,
+        "y": 4658,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00347.png",
+      "frame": {
+        "x": 3584,
+        "y": 4658,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00348.png",
+      "frame": {
+        "x": 4096,
+        "y": 4658,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00349.png",
+      "frame": {
+        "x": 4608,
+        "y": 4658,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00350.png",
+      "frame": {
+        "x": 5120,
+        "y": 4658,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00351.png",
+      "frame": {
+        "x": 5632,
+        "y": 4658,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00352.png",
+      "frame": {
+        "x": 6144,
+        "y": 4658,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00353.png",
+      "frame": {
+        "x": 6656,
+        "y": 4658,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00354.png",
+      "frame": {
+        "x": 7168,
+        "y": 4658,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00355.png",
+      "frame": {
+        "x": 7680,
+        "y": 4658,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00356.png",
+      "frame": {
+        "x": 8192,
+        "y": 4658,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00357.png",
+      "frame": {
+        "x": 8704,
+        "y": 4658,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00358.png",
+      "frame": {
+        "x": 9216,
+        "y": 4658,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00359.png",
+      "frame": {
+        "x": 9728,
+        "y": 4658,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00360.png",
+      "frame": {
+        "x": 0,
+        "y": 4932,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00361.png",
+      "frame": {
+        "x": 512,
+        "y": 4932,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00362.png",
+      "frame": {
+        "x": 1024,
+        "y": 4932,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00363.png",
+      "frame": {
+        "x": 1536,
+        "y": 4932,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00364.png",
+      "frame": {
+        "x": 2048,
+        "y": 4932,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00365.png",
+      "frame": {
+        "x": 2560,
+        "y": 4932,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00366.png",
+      "frame": {
+        "x": 3072,
+        "y": 4932,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00367.png",
+      "frame": {
+        "x": 3584,
+        "y": 4932,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00368.png",
+      "frame": {
+        "x": 4096,
+        "y": 4932,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00369.png",
+      "frame": {
+        "x": 4608,
+        "y": 4932,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00370.png",
+      "frame": {
+        "x": 5120,
+        "y": 4932,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00371.png",
+      "frame": {
+        "x": 5632,
+        "y": 4932,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00372.png",
+      "frame": {
+        "x": 6144,
+        "y": 4932,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00373.png",
+      "frame": {
+        "x": 6656,
+        "y": 4932,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00374.png",
+      "frame": {
+        "x": 7168,
+        "y": 4932,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    },
+    {
+      "filename": "BASE especie nombre_00375.png",
+      "frame": {
+        "x": 7680,
+        "y": 4932,
+        "w": 512,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1030
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1030
+      }
+    }
+  ]
+}

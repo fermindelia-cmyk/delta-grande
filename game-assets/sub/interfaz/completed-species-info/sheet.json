@@ -1,0 +1,4034 @@
+{
+  "meta": {
+    "image": "sheet.webp",
+    "size": {
+      "w": 7168,
+      "h": 6426
+    },
+    "scale": 0.26666666666666666,
+    "frame_count": 191,
+    "cols": 14,
+    "rows": 14,
+    "frame_size": {
+      "w": 512,
+      "h": 459
+    },
+    "original_frame_size": {
+      "w": 1920,
+      "h": 1724
+    }
+  },
+  "frames": [
+    {
+      "filename": "BASE data especie_00000.png",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00001.png",
+      "frame": {
+        "x": 512,
+        "y": 0,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00002.png",
+      "frame": {
+        "x": 1024,
+        "y": 0,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00003.png",
+      "frame": {
+        "x": 1536,
+        "y": 0,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00004.png",
+      "frame": {
+        "x": 2048,
+        "y": 0,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00005.png",
+      "frame": {
+        "x": 2560,
+        "y": 0,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00006.png",
+      "frame": {
+        "x": 3072,
+        "y": 0,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00007.png",
+      "frame": {
+        "x": 3584,
+        "y": 0,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00008.png",
+      "frame": {
+        "x": 4096,
+        "y": 0,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00009.png",
+      "frame": {
+        "x": 4608,
+        "y": 0,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00010.png",
+      "frame": {
+        "x": 5120,
+        "y": 0,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00011.png",
+      "frame": {
+        "x": 5632,
+        "y": 0,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00012.png",
+      "frame": {
+        "x": 6144,
+        "y": 0,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00013.png",
+      "frame": {
+        "x": 6656,
+        "y": 0,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00014.png",
+      "frame": {
+        "x": 0,
+        "y": 459,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00015.png",
+      "frame": {
+        "x": 512,
+        "y": 459,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00016.png",
+      "frame": {
+        "x": 1024,
+        "y": 459,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00017.png",
+      "frame": {
+        "x": 1536,
+        "y": 459,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00018.png",
+      "frame": {
+        "x": 2048,
+        "y": 459,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00019.png",
+      "frame": {
+        "x": 2560,
+        "y": 459,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00020.png",
+      "frame": {
+        "x": 3072,
+        "y": 459,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00021.png",
+      "frame": {
+        "x": 3584,
+        "y": 459,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00022.png",
+      "frame": {
+        "x": 4096,
+        "y": 459,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00023.png",
+      "frame": {
+        "x": 4608,
+        "y": 459,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00024.png",
+      "frame": {
+        "x": 5120,
+        "y": 459,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00025.png",
+      "frame": {
+        "x": 5632,
+        "y": 459,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00026.png",
+      "frame": {
+        "x": 6144,
+        "y": 459,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00027.png",
+      "frame": {
+        "x": 6656,
+        "y": 459,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00028.png",
+      "frame": {
+        "x": 0,
+        "y": 918,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00029.png",
+      "frame": {
+        "x": 512,
+        "y": 918,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00030.png",
+      "frame": {
+        "x": 1024,
+        "y": 918,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00031.png",
+      "frame": {
+        "x": 1536,
+        "y": 918,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00032.png",
+      "frame": {
+        "x": 2048,
+        "y": 918,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00033.png",
+      "frame": {
+        "x": 2560,
+        "y": 918,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00034.png",
+      "frame": {
+        "x": 3072,
+        "y": 918,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00035.png",
+      "frame": {
+        "x": 3584,
+        "y": 918,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00036.png",
+      "frame": {
+        "x": 4096,
+        "y": 918,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00037.png",
+      "frame": {
+        "x": 4608,
+        "y": 918,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00038.png",
+      "frame": {
+        "x": 5120,
+        "y": 918,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00039.png",
+      "frame": {
+        "x": 5632,
+        "y": 918,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00040.png",
+      "frame": {
+        "x": 6144,
+        "y": 918,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00041.png",
+      "frame": {
+        "x": 6656,
+        "y": 918,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00042.png",
+      "frame": {
+        "x": 0,
+        "y": 1377,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00043.png",
+      "frame": {
+        "x": 512,
+        "y": 1377,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00044.png",
+      "frame": {
+        "x": 1024,
+        "y": 1377,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00045.png",
+      "frame": {
+        "x": 1536,
+        "y": 1377,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00046.png",
+      "frame": {
+        "x": 2048,
+        "y": 1377,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00047.png",
+      "frame": {
+        "x": 2560,
+        "y": 1377,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00048.png",
+      "frame": {
+        "x": 3072,
+        "y": 1377,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00049.png",
+      "frame": {
+        "x": 3584,
+        "y": 1377,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00050.png",
+      "frame": {
+        "x": 4096,
+        "y": 1377,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00051.png",
+      "frame": {
+        "x": 4608,
+        "y": 1377,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00052.png",
+      "frame": {
+        "x": 5120,
+        "y": 1377,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00053.png",
+      "frame": {
+        "x": 5632,
+        "y": 1377,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00054.png",
+      "frame": {
+        "x": 6144,
+        "y": 1377,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00055.png",
+      "frame": {
+        "x": 6656,
+        "y": 1377,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00056.png",
+      "frame": {
+        "x": 0,
+        "y": 1836,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00057.png",
+      "frame": {
+        "x": 512,
+        "y": 1836,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00058.png",
+      "frame": {
+        "x": 1024,
+        "y": 1836,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00059.png",
+      "frame": {
+        "x": 1536,
+        "y": 1836,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00060.png",
+      "frame": {
+        "x": 2048,
+        "y": 1836,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00061.png",
+      "frame": {
+        "x": 2560,
+        "y": 1836,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00062.png",
+      "frame": {
+        "x": 3072,
+        "y": 1836,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00063.png",
+      "frame": {
+        "x": 3584,
+        "y": 1836,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00064.png",
+      "frame": {
+        "x": 4096,
+        "y": 1836,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00065.png",
+      "frame": {
+        "x": 4608,
+        "y": 1836,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00066.png",
+      "frame": {
+        "x": 5120,
+        "y": 1836,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00067.png",
+      "frame": {
+        "x": 5632,
+        "y": 1836,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00068.png",
+      "frame": {
+        "x": 6144,
+        "y": 1836,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00069.png",
+      "frame": {
+        "x": 6656,
+        "y": 1836,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00070.png",
+      "frame": {
+        "x": 0,
+        "y": 2295,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00071.png",
+      "frame": {
+        "x": 512,
+        "y": 2295,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00072.png",
+      "frame": {
+        "x": 1024,
+        "y": 2295,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00073.png",
+      "frame": {
+        "x": 1536,
+        "y": 2295,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00074.png",
+      "frame": {
+        "x": 2048,
+        "y": 2295,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00075.png",
+      "frame": {
+        "x": 2560,
+        "y": 2295,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00076.png",
+      "frame": {
+        "x": 3072,
+        "y": 2295,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00077.png",
+      "frame": {
+        "x": 3584,
+        "y": 2295,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00078.png",
+      "frame": {
+        "x": 4096,
+        "y": 2295,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00079.png",
+      "frame": {
+        "x": 4608,
+        "y": 2295,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00080.png",
+      "frame": {
+        "x": 5120,
+        "y": 2295,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00081.png",
+      "frame": {
+        "x": 5632,
+        "y": 2295,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00082.png",
+      "frame": {
+        "x": 6144,
+        "y": 2295,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00083.png",
+      "frame": {
+        "x": 6656,
+        "y": 2295,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00084.png",
+      "frame": {
+        "x": 0,
+        "y": 2754,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00085.png",
+      "frame": {
+        "x": 512,
+        "y": 2754,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00086.png",
+      "frame": {
+        "x": 1024,
+        "y": 2754,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00087.png",
+      "frame": {
+        "x": 1536,
+        "y": 2754,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00088.png",
+      "frame": {
+        "x": 2048,
+        "y": 2754,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00089.png",
+      "frame": {
+        "x": 2560,
+        "y": 2754,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00090.png",
+      "frame": {
+        "x": 3072,
+        "y": 2754,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00091.png",
+      "frame": {
+        "x": 3584,
+        "y": 2754,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00092.png",
+      "frame": {
+        "x": 4096,
+        "y": 2754,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00093.png",
+      "frame": {
+        "x": 4608,
+        "y": 2754,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00094.png",
+      "frame": {
+        "x": 5120,
+        "y": 2754,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00095.png",
+      "frame": {
+        "x": 5632,
+        "y": 2754,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00096.png",
+      "frame": {
+        "x": 6144,
+        "y": 2754,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00097.png",
+      "frame": {
+        "x": 6656,
+        "y": 2754,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00098.png",
+      "frame": {
+        "x": 0,
+        "y": 3213,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00099.png",
+      "frame": {
+        "x": 512,
+        "y": 3213,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00100.png",
+      "frame": {
+        "x": 1024,
+        "y": 3213,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00101.png",
+      "frame": {
+        "x": 1536,
+        "y": 3213,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00102.png",
+      "frame": {
+        "x": 2048,
+        "y": 3213,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00103.png",
+      "frame": {
+        "x": 2560,
+        "y": 3213,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00104.png",
+      "frame": {
+        "x": 3072,
+        "y": 3213,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00105.png",
+      "frame": {
+        "x": 3584,
+        "y": 3213,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00106.png",
+      "frame": {
+        "x": 4096,
+        "y": 3213,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00107.png",
+      "frame": {
+        "x": 4608,
+        "y": 3213,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00108.png",
+      "frame": {
+        "x": 5120,
+        "y": 3213,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00109.png",
+      "frame": {
+        "x": 5632,
+        "y": 3213,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00110.png",
+      "frame": {
+        "x": 6144,
+        "y": 3213,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00111.png",
+      "frame": {
+        "x": 6656,
+        "y": 3213,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00112.png",
+      "frame": {
+        "x": 0,
+        "y": 3672,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00113.png",
+      "frame": {
+        "x": 512,
+        "y": 3672,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00114.png",
+      "frame": {
+        "x": 1024,
+        "y": 3672,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00115.png",
+      "frame": {
+        "x": 1536,
+        "y": 3672,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00116.png",
+      "frame": {
+        "x": 2048,
+        "y": 3672,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00117.png",
+      "frame": {
+        "x": 2560,
+        "y": 3672,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00118.png",
+      "frame": {
+        "x": 3072,
+        "y": 3672,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00119.png",
+      "frame": {
+        "x": 3584,
+        "y": 3672,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00120.png",
+      "frame": {
+        "x": 4096,
+        "y": 3672,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00121.png",
+      "frame": {
+        "x": 4608,
+        "y": 3672,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00122.png",
+      "frame": {
+        "x": 5120,
+        "y": 3672,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00123.png",
+      "frame": {
+        "x": 5632,
+        "y": 3672,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00124.png",
+      "frame": {
+        "x": 6144,
+        "y": 3672,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00125.png",
+      "frame": {
+        "x": 6656,
+        "y": 3672,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00126.png",
+      "frame": {
+        "x": 0,
+        "y": 4131,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00127.png",
+      "frame": {
+        "x": 512,
+        "y": 4131,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00128.png",
+      "frame": {
+        "x": 1024,
+        "y": 4131,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00129.png",
+      "frame": {
+        "x": 1536,
+        "y": 4131,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00130.png",
+      "frame": {
+        "x": 2048,
+        "y": 4131,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00131.png",
+      "frame": {
+        "x": 2560,
+        "y": 4131,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00132.png",
+      "frame": {
+        "x": 3072,
+        "y": 4131,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00133.png",
+      "frame": {
+        "x": 3584,
+        "y": 4131,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00134.png",
+      "frame": {
+        "x": 4096,
+        "y": 4131,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00135.png",
+      "frame": {
+        "x": 4608,
+        "y": 4131,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00136.png",
+      "frame": {
+        "x": 5120,
+        "y": 4131,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00137.png",
+      "frame": {
+        "x": 5632,
+        "y": 4131,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00138.png",
+      "frame": {
+        "x": 6144,
+        "y": 4131,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00139.png",
+      "frame": {
+        "x": 6656,
+        "y": 4131,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00140.png",
+      "frame": {
+        "x": 0,
+        "y": 4590,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00141.png",
+      "frame": {
+        "x": 512,
+        "y": 4590,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00142.png",
+      "frame": {
+        "x": 1024,
+        "y": 4590,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00143.png",
+      "frame": {
+        "x": 1536,
+        "y": 4590,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00144.png",
+      "frame": {
+        "x": 2048,
+        "y": 4590,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00145.png",
+      "frame": {
+        "x": 2560,
+        "y": 4590,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00146.png",
+      "frame": {
+        "x": 3072,
+        "y": 4590,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00147.png",
+      "frame": {
+        "x": 3584,
+        "y": 4590,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00148.png",
+      "frame": {
+        "x": 4096,
+        "y": 4590,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00149.png",
+      "frame": {
+        "x": 4608,
+        "y": 4590,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00150.png",
+      "frame": {
+        "x": 5120,
+        "y": 4590,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00151.png",
+      "frame": {
+        "x": 5632,
+        "y": 4590,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00152.png",
+      "frame": {
+        "x": 6144,
+        "y": 4590,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00153.png",
+      "frame": {
+        "x": 6656,
+        "y": 4590,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00154.png",
+      "frame": {
+        "x": 0,
+        "y": 5049,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00155.png",
+      "frame": {
+        "x": 512,
+        "y": 5049,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00156.png",
+      "frame": {
+        "x": 1024,
+        "y": 5049,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00157.png",
+      "frame": {
+        "x": 1536,
+        "y": 5049,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00158.png",
+      "frame": {
+        "x": 2048,
+        "y": 5049,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00159.png",
+      "frame": {
+        "x": 2560,
+        "y": 5049,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00160.png",
+      "frame": {
+        "x": 3072,
+        "y": 5049,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00161.png",
+      "frame": {
+        "x": 3584,
+        "y": 5049,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00162.png",
+      "frame": {
+        "x": 4096,
+        "y": 5049,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00163.png",
+      "frame": {
+        "x": 4608,
+        "y": 5049,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00164.png",
+      "frame": {
+        "x": 5120,
+        "y": 5049,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00165.png",
+      "frame": {
+        "x": 5632,
+        "y": 5049,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00166.png",
+      "frame": {
+        "x": 6144,
+        "y": 5049,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00167.png",
+      "frame": {
+        "x": 6656,
+        "y": 5049,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00168.png",
+      "frame": {
+        "x": 0,
+        "y": 5508,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00169.png",
+      "frame": {
+        "x": 512,
+        "y": 5508,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00170.png",
+      "frame": {
+        "x": 1024,
+        "y": 5508,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00171.png",
+      "frame": {
+        "x": 1536,
+        "y": 5508,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00172.png",
+      "frame": {
+        "x": 2048,
+        "y": 5508,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00173.png",
+      "frame": {
+        "x": 2560,
+        "y": 5508,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00174.png",
+      "frame": {
+        "x": 3072,
+        "y": 5508,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00175.png",
+      "frame": {
+        "x": 3584,
+        "y": 5508,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00176.png",
+      "frame": {
+        "x": 4096,
+        "y": 5508,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00177.png",
+      "frame": {
+        "x": 4608,
+        "y": 5508,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00178.png",
+      "frame": {
+        "x": 5120,
+        "y": 5508,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00179.png",
+      "frame": {
+        "x": 5632,
+        "y": 5508,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00180.png",
+      "frame": {
+        "x": 6144,
+        "y": 5508,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00181.png",
+      "frame": {
+        "x": 6656,
+        "y": 5508,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00182.png",
+      "frame": {
+        "x": 0,
+        "y": 5967,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00183.png",
+      "frame": {
+        "x": 512,
+        "y": 5967,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00184.png",
+      "frame": {
+        "x": 1024,
+        "y": 5967,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00185.png",
+      "frame": {
+        "x": 1536,
+        "y": 5967,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00186.png",
+      "frame": {
+        "x": 2048,
+        "y": 5967,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00187.png",
+      "frame": {
+        "x": 2560,
+        "y": 5967,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00188.png",
+      "frame": {
+        "x": 3072,
+        "y": 5967,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00189.png",
+      "frame": {
+        "x": 3584,
+        "y": 5967,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    },
+    {
+      "filename": "BASE data especie_00190.png",
+      "frame": {
+        "x": 4096,
+        "y": 5967,
+        "w": 512,
+        "h": 459
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1724
+      },
+      "sourceSize": {
+        "w": 1920,
+        "h": 1724
+      }
+    }
+  ]
+}
