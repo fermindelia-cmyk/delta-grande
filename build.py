@@ -84,9 +84,10 @@ def build():
                         ignored.append(f)
                     
                     # Exclude unused folders in game-assets/simulador/plants
-                    # Only 'webp_seq' is used by the code
+                    # NOTE: the Simulador scene loads its plant animations from
+                    # `game-assets/simulador/plants/sheets` (json + webp). Do NOT exclude `sheets`.
                     elif 'simulador' in directory.split(os.sep) and 'plants' in directory.split(os.sep):
-                        if f in ['9-16-images', 'low-poly-images', 'mp4s', 'realistic_images', 'sheets', 'transparent sequences', 'webps']:
+                        if f in ['9-16-images', 'low-poly-images', 'mp4s', 'realistic_images', 'transparent sequences', 'webps']:
                             ignored.append(f)
 
                     # Exclude unused files in game-assets/sub/others

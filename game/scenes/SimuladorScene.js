@@ -34,7 +34,7 @@ export const DEFAULT_PARAMS = Object.freeze({
       textureBasePath: '/game-assets/simulador',
       texturePrefix: 'cloud',
       textureExtension: '.png',
-      textureCount: 8,
+      textureCount: 3,
       maxConcurrent: 5,
       spawnInterval: 5,
       spawnIntervalJitter: 3,

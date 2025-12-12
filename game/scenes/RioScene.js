@@ -4052,7 +4052,10 @@ export class RioScene extends BaseScene {
       im.decoding = 'async';
       im.onload = () => resolve({ ok: true, img: im, index: idx });
       im.onerror = () => resolve({ ok: false, index: idx });
-      im.src = `${dir}/${prefix}${zeroPad(idx, pad)}.png`;
+
+      // Encode ONLY the filename portion so spaces and '+' are safe on all servers/CDNs.
+      const filename = `${prefix}${zeroPad(idx, pad)}.png`;
+      im.src = `${dir}/${encodeURIComponent(filename)}`;
     });
 
     while (keepLoading && attempts < maxAttempts) {
