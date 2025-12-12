@@ -72,7 +72,8 @@ export class AssetPreloader {
                 '../game-assets/recorrido/gracias_a_la_vida.m4a',
                 '../game-assets/recorrido/sonido/Transicion delta mas.mp3',
                 '../game-assets/recorrido/sonido/metadata_popup.mp3',
-                '../game-assets/recorrido/sonido/metadata_cierre.mp3'
+                '../game-assets/recorrido/sonido/metadata_cierre.mp3',
+                '../game-assets/sub/sonido/completed_species.mp3'
             ],
 
             // Imágenes críticas

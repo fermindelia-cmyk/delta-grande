@@ -3453,7 +3453,7 @@ export class SimuladorScene extends BaseScene {
 
     const interactions = this.params.interactions || {};
     const burstOffset = Math.max(0.005, interactions.seedBurstHeightOffset ?? 0.06);
-    const desiredBurstY = state.riverbedHeight + burstOffset;
+    const desiredBurstY = worldY + burstOffset;
     const burstY = Math.min(this.worldTop, Math.max(worldY, desiredBurstY));
     
     // Check minimum distance
@@ -3461,7 +3461,9 @@ export class SimuladorScene extends BaseScene {
     const minDistanceWorld = minDistance * this.worldWidth;
     
     for (const plant of this._plants) {
-        if (Math.abs(plant.x - clampedX) < minDistanceWorld) {
+        const dx = plant.x - clampedX;
+        const dy = plant.baseY - worldY;
+        if (Math.hypot(dx, dy) < minDistanceWorld) {
             this._showGoalMessage('¡Demasiado cerca de otra planta!');
             return false;
         }
@@ -3469,7 +3471,7 @@ export class SimuladorScene extends BaseScene {
 
     this._emitSeedBurst(clampedX, burstY);
 
-    this._spawnPlant(seed, clampedX, state.riverbedHeight);
+    this._spawnPlant(seed, clampedX, worldY);
     this._playSeedPlantSound();
     this._refreshCursor();
     this._updateSeedLabels();

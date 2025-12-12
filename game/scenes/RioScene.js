@@ -731,7 +731,8 @@ const DEFAULT_PARAMS = {
       music: 0.0,           // volumen base del tema “Músicos Entrerios…”
       lanchas: 0.0,         // volumen base del loop “lanchas.mp3” (mismo comportamiento que música)
       sfxCatch: 0.9,        // volumen SFX “Pez agarrado.mp3”
-      sfxWrong: 0.9         // volumen SFX “Pez equivocado.mp3”
+      sfxWrong: 0.9,        // volumen SFX “Pez equivocado.mp3”
+      sfxCompleted: 0.9     // volumen SFX “completed_species.mp3”
     },
     eq: {
       // Frecuencias objetivo (ajustables)
@@ -1092,8 +1093,9 @@ class FishAgent {
 /* Deck UI for fish catching gameplay                                         */
 /* ========================================================================== */
 class Deck {
-  constructor(speciesList, speciesObjs, deckParams = {}) {
+  constructor(speciesList, speciesObjs, deckParams = {}, callbacks = {}) {
     this.cfg = deckParams;
+    this.callbacks = callbacks;
     this._ensureAdobeFontLink(this.cfg.fontKitHref);
     this.cardSeparation = 220; // not used now; kept for compatibility
     this.speciesList = speciesList;
@@ -1417,6 +1419,7 @@ class Deck {
         if (cur.count >= cur.winCount && !cur.completed) {
           cur.completed = true;
           cur.element.classList.add('completed');
+          this.callbacks?.onSpeciesCompleted?.();
           this.checkGameWin();
         }
       } else if (!cur.revealed) {
@@ -3179,7 +3182,9 @@ export class RioScene extends BaseScene {
     
     // Build the Deck UI (hidden until intro ends)
     if (this.params.debug.deck) {
-      this.deck = new Deck(SPECIES, this.speciesObjs, this.params.deckUI);
+      this.deck = new Deck(SPECIES, this.speciesObjs, this.params.deckUI, {
+        onSpeciesCompleted: () => this.playSfx('completed')
+      });
       await this._trackLoadingStep('Cargando UI del deck y sprites asociados', async () => {
         await this.deck.build();
       });
@@ -3322,7 +3327,8 @@ export class RioScene extends BaseScene {
       music: '/game-assets/sub/sonido/musica.mp3',
       sfxCatch: '/game-assets/sub/sonido/exito.mp3',
       sfxWrong: '/game-assets/sub/sonido/fracaso.mp3',
-      lanchas: '/game-assets/sub/sonido/lanchas.mp3'
+      lanchas: '/game-assets/sub/sonido/lanchas.mp3',
+      sfxCompleted: '/game-assets/sub/sonido/completed_species.mp3'
     };
 
     const audioBuffers = {};
@@ -3377,6 +3383,11 @@ export class RioScene extends BaseScene {
     this.sounds.sfxWrong.setBuffer(audioBuffers.sfxWrong);
     this.sounds.sfxWrong.setLoop(false);
     this.sounds.sfxWrong.setVolume(this.params.audio.volumes.sfxWrong);
+
+    this.sounds.sfxCompleted = new THREE.Audio(this.audioListener);
+    this.sounds.sfxCompleted.setBuffer(audioBuffers.sfxCompleted);
+    this.sounds.sfxCompleted.setLoop(false);
+    this.sounds.sfxCompleted.setVolume(this.params.audio.volumes.sfxCompleted);
 
     this.audioState.ambientUnder = undefined;
     this.audioState.eqUnderPrev  = undefined;
@@ -6474,6 +6485,9 @@ export class RioScene extends BaseScene {
     } else if (kind === 'wrong' && this.sounds.sfxWrong) {
       this.sounds.sfxWrong.stop();
       this.sounds.sfxWrong.play();
+    } else if (kind === 'completed' && this.sounds.sfxCompleted) {
+      this.sounds.sfxCompleted.stop();
+      this.sounds.sfxCompleted.play();
     }
   }
 
