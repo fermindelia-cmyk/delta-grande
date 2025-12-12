@@ -417,6 +417,39 @@ const DEFAULT_PARAMS = {
   },
 
 
+  /** Shore vegetation background — image card behind shoreHaze */
+  shoreVegBackground: {
+    enabled: true,
+    src: '/game-assets/sub/vegetation/veg-background.png',
+    /** World height in meters (width preserves image aspect) */
+    height: 10.0,
+    /** Offset (meters) relative to the haze bottom edge (surfaceLevel) */
+    bottomOffset: 9.0,
+    /** Distance (meters) between the shore haze plane and the first vegetation row (in X) */
+    xOffsetFromHaze: 25.03,
+    /** Distance (meters) between vegetation rows (in X) */
+    rowSpacingX: 3.0,
+    /** Vertical offset (meters) added cumulatively for each subsequent row */
+    rowSpacingY: 3.0
+  },
+
+  /** Second layer of shore vegetation background */
+  shoreVegBackground2: {
+    enabled: true,
+    src: '/game-assets/sub/vegetation/veg-background-2.png',
+    /** World height in meters (width preserves image aspect) */
+    height: 10.0,
+    /** Offset (meters) relative to the haze bottom edge (surfaceLevel) */
+    bottomOffset: 0.0,
+    /** Distance (meters) between the shore haze plane and the first vegetation row (in X) */
+    xOffsetFromHaze: 17.0,
+    /** Distance (meters) between vegetation rows (in X) */
+    rowSpacingX: 3.0,
+    /** Vertical offset (meters) added cumulatively for each subsequent row */
+    rowSpacingY: 3.0
+  },
+
+
   /** Surface transition FX (video overlay while crossing the membrane) */
   surfaceFX: {
     enabled: true,
@@ -2770,6 +2803,11 @@ export class RioScene extends BaseScene {
     
     // Deck UI
     this.deck = null;
+    this._loadingEl = null;
+    this._loadingTextEl = null;
+    this._loadingBarFillEl = null;
+    this._loadingProgressTotal = 0;
+    this._loadingProgressCompleted = 0;
 
   // Completed overlay state
   this.completedOverlay = null;
@@ -2903,6 +2941,18 @@ export class RioScene extends BaseScene {
     this.shoreHazeMesh = null;
     this._shoreHazeTex = null;
 
+    // Shore vegetation background (image card behind shore haze)
+    this.shoreVegBackgroundGroup = null;
+    this._shoreVegBackgroundTex = null;
+    this._shoreVegBackgroundGeo = null;
+    this._shoreVegBackgroundMat = null;
+
+    // Shore vegetation background 2
+    this.shoreVegBackgroundGroup2 = null;
+    this._shoreVegBackgroundTex2 = null;
+    this._shoreVegBackgroundGeo2 = null;
+    this._shoreVegBackgroundMat2 = null;
+
     // Keep instances by category for updates/cleanup
     this.vegetation = {
       floor: [],   // { mesh }
@@ -2985,70 +3035,71 @@ export class RioScene extends BaseScene {
 
     
     // Load environment model (floor/walls)
-    this._setLoadingText('Cargando modelo environment.glb (entorno)');
-    try {
-      const gltf = await AssetLoader.gltf('/game-assets/sub/environment.glb');
-      this.model = gltf.scene || gltf.scenes?.[0];
-      if (this.model) {
-        // Optional: set mesh flags
-        this.model.traverse(o => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; } });
+    await this._trackLoadingStep('Cargando modelo environment.glb (entorno)', async () => {
+      try {
+        const gltf = await AssetLoader.gltf('/game-assets/sub/environment-without-background-plants.glb');
+        this.model = gltf.scene || gltf.scenes?.[0];
+        if (this.model) {
+          // Optional: set mesh flags
+          this.model.traverse(o => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; } });
 
-        // Add to scene FIRST so world matrices/materials are valid
-        this.scene.add(this.model);
-        this.scene.updateMatrixWorld(true);
+          // Add to scene FIRST so world matrices/materials are valid
+          this.scene.add(this.model);
+          this.scene.updateMatrixWorld(true);
 
-        // === Gather baked vegetation by explicit group OR name prefix 'veg_' ===
-        let vegBaked = this.model.getObjectByName('VEG_BAKED');
-        const detachList = [];
-        if (vegBaked) {
-          detachList.push(vegBaked);
+          // === Gather baked vegetation by explicit group OR name prefix 'veg_' ===
+          let vegBaked = this.model.getObjectByName('VEG_BAKED');
+          const detachList = [];
+          if (vegBaked) {
+            detachList.push(vegBaked);
+          } else {
+            this.model.traverse((n) => {
+              if (!n || !n.name) return;
+              const nm = n.name.toLowerCase();
+              if (nm.startsWith('veg_')) detachList.push(n);
+            });
+          }
+          console.log(`[env] veg nodes to detach: ${detachList.length}`);
+
+          // Temporary holder so vegetation doesn't affect recenter bbox or tiling
+          const tempVegHolder = new THREE.Group();
+          tempVegHolder.name = 'VEG_BAKED_RUNTIME';
+          this.model.add(tempVegHolder);
+
+          // Move veg nodes under the holder, preserving world transform
+          const _reparentKeepWorld = (parent, child) => {
+            // Save child's world transform
+            const mWorld = child.matrixWorld.clone();
+
+            // Reparent
+            parent.add(child);
+
+            // Compute child's local matrix = parent^-1 * child_world
+            const parentInv = new THREE.Matrix4().copy(parent.matrixWorld).invert();
+            const mLocal = new THREE.Matrix4().multiplyMatrices(parentInv, mWorld);
+
+            // Apply local matrix
+            child.matrix.copy(mLocal);
+            child.matrix.decompose(child.position, child.quaternion, child.scale);
+            child.updateMatrixWorld(true);
+          };
+          for (const node of detachList) _reparentKeepWorld(tempVegHolder, node);
+
+          // Recenter & scale the environment (veg is detached, so it won't skew bbox)
+          this.recenterToFloor(this.model);
+          if (Number.isFinite(this.params.overrideScale)) {
+            this.model.scale.setScalar(this.params.overrideScale);
+          } else {
+            this.scaleModelToLongest(this.model, this.params.modelLongestTarget);
+          }
+          this.scene.updateMatrixWorld(true);
         } else {
-          this.model.traverse((n) => {
-            if (!n || !n.name) return;
-            const nm = n.name.toLowerCase();
-            if (nm.startsWith('veg_')) detachList.push(n);
-          });
+          console.error('environment.glb loaded but had no scene.');
         }
-        console.log(`[env] veg nodes to detach: ${detachList.length}`);
-
-        // Temporary holder so vegetation doesn't affect recenter bbox or tiling
-        const tempVegHolder = new THREE.Group();
-        tempVegHolder.name = 'VEG_BAKED_RUNTIME';
-        this.model.add(tempVegHolder);
-
-        // Move veg nodes under the holder, preserving world transform
-        const _reparentKeepWorld = (parent, child) => {
-          // Save child's world transform
-          const mWorld = child.matrixWorld.clone();
-
-          // Reparent
-          parent.add(child);
-
-          // Compute child's local matrix = parent^-1 * child_world
-          const parentInv = new THREE.Matrix4().copy(parent.matrixWorld).invert();
-          const mLocal = new THREE.Matrix4().multiplyMatrices(parentInv, mWorld);
-
-          // Apply local matrix
-          child.matrix.copy(mLocal);
-          child.matrix.decompose(child.position, child.quaternion, child.scale);
-          child.updateMatrixWorld(true);
-        };
-        for (const node of detachList) _reparentKeepWorld(tempVegHolder, node);
-
-        // Recenter & scale the environment (veg is detached, so it won't skew bbox)
-        this.recenterToFloor(this.model);
-        if (Number.isFinite(this.params.overrideScale)) {
-          this.model.scale.setScalar(this.params.overrideScale);
-        } else {
-          this.scaleModelToLongest(this.model, this.params.modelLongestTarget);
-        }
-        this.scene.updateMatrixWorld(true);
-      } else {
-        console.error('environment.glb loaded but had no scene.');
+      } catch (err) {
+        console.error('Error loading environment.glb', err);
       }
-    } catch (err) {
-      console.error('Error loading environment.glb', err);
-    }
+    });
 
 
     // Camera pose & yaw
@@ -3089,14 +3140,26 @@ export class RioScene extends BaseScene {
 
     // --- Mist layer (cheap steam above water) ---
     if (this.params.mist?.enabled) {
-      this._setLoadingText('Generando capa de niebla y vapor');
-      this.buildMistLayer();
+      await this._trackLoadingStep('Generando capa de niebla y vapor', async () => {
+        this.buildMistLayer();
+      });
     }
 
     // Shoreline haze (simple PNG card)
+    if (this.params.shoreVegBackground?.enabled) {
+      await this._trackLoadingStep('Construyendo fondo de vegetación costera', async () => {
+        await this.buildOrUpdateShoreVegBackground();
+      });
+    }
+    if (this.params.shoreVegBackground2?.enabled) {
+      await this._trackLoadingStep('Construyendo fondo de vegetación costera 2', async () => {
+        await this.buildOrUpdateShoreVegBackground2();
+      });
+    }
     if (this.params.shoreHaze?.enabled) {
-      this._setLoadingText('Construyendo shore haze y detalle costero');
-      await this.buildOrUpdateShoreHaze();
+      await this._trackLoadingStep('Construyendo shore haze y detalle costero', async () => {
+        await this.buildOrUpdateShoreHaze();
+      });
     }
 
     // Initialize explicit swimBox using the world parameters directly
@@ -3104,8 +3167,9 @@ export class RioScene extends BaseScene {
 
     // Vegetation
     if (this.params.vegetation?.enabled) {
-      this._setLoadingText('Inicializando vegetación dinámica');
-      await this.initVegetation();    // loads GLBs & spawns instances
+      await this._trackLoadingStep('Inicializando vegetación dinámica', async () => {
+        await this.initVegetation();    // loads GLBs & spawns instances
+      });
     }
 
     // Prepare species objects (use explicit bias block)
@@ -3116,8 +3180,9 @@ export class RioScene extends BaseScene {
     // Build the Deck UI (hidden until intro ends)
     if (this.params.debug.deck) {
       this.deck = new Deck(SPECIES, this.speciesObjs, this.params.deckUI);
-      this._setLoadingText('Cargando UI del deck y sprites asociados');
-      await this.deck.build();
+      await this._trackLoadingStep('Cargando UI del deck y sprites asociados', async () => {
+        await this.deck.build();
+      });
 
       // ---- Depth Ruler Overlay (DOM) ----
       this.ruler = { el: null, naturalW: 0, naturalH: 0, img: null };
@@ -3174,19 +3239,22 @@ export class RioScene extends BaseScene {
       const R = this.params.radarUI?.anim;
 
       if (C) {
-        this._setLoadingText('Cargando animación del cursor');
-        this._cursorAnim.frames = await this._preloadFrameSequence(C.dir, C.prefix, C.pad, C.startIndex, C.maxFramesProbe);
+        this._cursorAnim.frames = await this._trackLoadingStep('Cargando animación del cursor', async () => {
+          return await this._preloadFrameSequence(C.dir, C.prefix, C.pad, C.startIndex, C.maxFramesProbe);
+        });
       }
       if (this.params.radarUI?.enabled && R) {
         const fps = Math.max(1, Number(R.fps) || 30);
         const frameDuration = 1 / fps;
         if (R.sheetSrc) {
-          this._setLoadingText('Cargando animación del radar (spritesheet)');
-          this._radarAnim = await this._loadSpriteSheet({ ...R, frameDuration });
+          this._radarAnim = await this._trackLoadingStep('Cargando animación del radar (spritesheet)', async () => {
+            return await this._loadSpriteSheet({ ...R, frameDuration });
+          });
         } else {
-          this._setLoadingText('Cargando animación del radar (frames)');
-          const frames = await this._preloadFrameSequence(R.dir, R.prefix, R.pad, R.startIndex, R.maxFramesProbe);
-          this._radarAnim = frames?.length ? { kind: 'frames', frames, totalFrames: frames.length, frameDuration } : null;
+          this._radarAnim = await this._trackLoadingStep('Cargando animación del radar (frames)', async () => {
+            const frames = await this._preloadFrameSequence(R.dir, R.prefix, R.pad, R.startIndex, R.maxFramesProbe);
+            return frames?.length ? { kind: 'frames', frames, totalFrames: frames.length, frameDuration } : null;
+          });
         }
       } else {
         this._radarAnim = null;
@@ -3259,8 +3327,9 @@ export class RioScene extends BaseScene {
 
     const audioBuffers = {};
     for (const [key, path] of Object.entries(soundPaths)) {
-      this._setLoadingText(`Cargando audio ${key} (${path})`);
-      audioBuffers[key] = await AssetLoader.audioBuffer(path);
+      audioBuffers[key] = await this._trackLoadingStep(`Cargando audio ${key} (${path})`, async () => {
+        return await AssetLoader.audioBuffer(path);
+      });
     }
 
     // Ambientes (loops)
@@ -3313,8 +3382,9 @@ export class RioScene extends BaseScene {
     this.audioState.eqUnderPrev  = undefined;
 
     // === Todo cargado: cambiar overlay a texto real y arrancar intro + audio ===
-    this._setLoadingText('Finalizando carga y preparando intro/audio');
-    if (this.app?.canvas) this.app.canvas.style.visibility = 'visible';
+    await this._trackLoadingStep('Finalizando carga y preparando intro/audio', async () => {
+      if (this.app?.canvas) this.app.canvas.style.visibility = 'visible';
+    });
     this._hideLoadingOverlay();
 
 
@@ -3386,6 +3456,8 @@ export class RioScene extends BaseScene {
   this._destroySurfaceVideoFX();
 
     this.disposeShoreHaze();
+    this.disposeShoreVegBackground();
+    this.disposeShoreVegBackground2();
 
     for (const agent of this.fish) {
       if (agent.tracker) {
@@ -4633,10 +4705,260 @@ export class RioScene extends BaseScene {
   }
 
 
+  async buildOrUpdateShoreVegBackground() {
+    const V = this.params.shoreVegBackground;
+    if (!V?.enabled) { this.disposeShoreVegBackground(); return; }
+
+    // Load / reuse texture
+    if (!this._shoreVegBackgroundTex) {
+      const tex = await AssetLoader.texture(V.src);
+      tex.wrapS = THREE.ClampToEdgeWrapping;
+      tex.wrapT = THREE.ClampToEdgeWrapping;
+      tex.anisotropy = 4;
+      tex.minFilter = THREE.LinearMipMapLinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      this._shoreVegBackgroundTex = tex;
+    }
+
+    this.disposeShoreVegBackground();
+
+    // Shared material/geometry (geometry is resized in updateShoreVegBackgroundLayout())
+    this._shoreVegBackgroundMat = new THREE.MeshBasicMaterial({
+      map: this._shoreVegBackgroundTex,
+      transparent: true,
+      opacity: 1.0,
+      depthWrite: false,
+      depthTest: true,
+      side: THREE.FrontSide,
+      blending: THREE.NormalBlending
+    });
+
+    this._shoreVegBackgroundGeo = new THREE.PlaneGeometry(1, 1, 1, 1);
+    this._shoreVegBackgroundGeo.rotateY(Math.PI / 2); // match shore haze orientation (normal -> +X)
+
+    const group = new THREE.Group();
+    group.name = 'shore-veg-background-group';
+
+    // 3 rows (X), each row is 5 tiles (Z): centered at camera start Z
+    for (let row = 0; row < 3; row++) {
+      for (let col = -2; col <= 2; col++) {
+        const mesh = new THREE.Mesh(this._shoreVegBackgroundGeo, this._shoreVegBackgroundMat);
+        mesh.name = `shore-veg-background-r${row}-c${col}`;
+        mesh.renderOrder = 9; // behind shore haze (which is 10)
+        mesh.frustumCulled = true;
+        group.add(mesh);
+      }
+    }
+
+    this.shoreVegBackgroundGroup = group;
+    this.scene.add(group);
+
+    this.updateShoreVegBackgroundLayout();
+  }
+
+  updateShoreVegBackgroundLayout() {
+    if (!this.shoreVegBackgroundGroup) return;
+    const V = this.params.shoreVegBackground;
+    if (!V?.enabled) return;
+
+    // Height in world meters; width preserves image aspect ratio.
+    const wantH = Math.max(0.05, Number.isFinite(V.height) ? V.height : 10.0);
+
+    const img = this._shoreVegBackgroundTex?.image;
+    const imgW = (img?.naturalWidth ?? img?.width ?? 0);
+    const imgH = (img?.naturalHeight ?? img?.height ?? 0);
+    const aspect = (imgW > 0 && imgH > 0) ? (imgW / imgH) : 1.0;
+    const wantW = Math.max(0.05, wantH * aspect);
+
+    // Bottom edge aligned to the haze bottom edge (surfaceLevel) + offset.
+    const hazeBottomY = this.params.surfaceLevel;
+    const bottomOffset = Number.isFinite(V.bottomOffset) ? V.bottomOffset : 0.0;
+    const yBottom = hazeBottomY + bottomOffset;
+    const yMid = yBottom + wantH * 0.5;
+
+    // X placement: behind the haze by an explicit offset, then rows further behind.
+    // (Haze x uses the same tiny epsilon as updateShoreHazeLayout.)
+    const hazeX = this.params.shoreLevel + 0.001;
+    const xOffsetFromHaze = Number.isFinite(V.xOffsetFromHaze) ? V.xOffsetFromHaze : 0.03;
+    const rowSpacingX = Number.isFinite(V.rowSpacingX) ? V.rowSpacingX : 3.0;
+    const rowSpacingY = Number.isFinite(V.rowSpacingY) ? V.rowSpacingY : 3.0;
+    const xRow0 = hazeX - xOffsetFromHaze;
+
+    // Z tiling: keep one tile centered at initial camera Z.
+    const zBase = this.params.start?.z ?? 0;
+
+    // Resize shared geometry if needed (width is along Z after rotateY).
+    const g = this._shoreVegBackgroundGeo;
+    const curW = g?.parameters?.width ?? 0;
+    const curH = g?.parameters?.height ?? 0;
+    if (!g || Math.abs(curW - wantW) > 1e-4 || Math.abs(curH - wantH) > 1e-4) {
+      const geo = new THREE.PlaneGeometry(wantW, wantH, 1, 1);
+      geo.rotateY(Math.PI / 2);
+      this._shoreVegBackgroundGeo?.dispose?.();
+      this._shoreVegBackgroundGeo = geo;
+      for (const child of this.shoreVegBackgroundGroup.children) {
+        if (child?.isMesh) child.geometry = geo;
+      }
+    }
+
+    // Position tiles: 3 rows in X, each row staggered by +W/3 in Z.
+    let idx = 0;
+    for (let row = 0; row < 3; row++) {
+      const x = xRow0 - row * rowSpacingX;
+      const y = yMid + row * rowSpacingY;
+      const rowShiftZ = row * (wantW / 3);
+      for (let col = -2; col <= 2; col++) {
+        const z = zBase + rowShiftZ + col * wantW;
+        const child = this.shoreVegBackgroundGroup.children[idx++];
+        if (child?.isMesh) child.position.set(x, y, z);
+      }
+    }
+  }
+
+  disposeShoreVegBackground() {
+    if (!this.shoreVegBackgroundGroup) return;
+    const group = this.shoreVegBackgroundGroup;
+    group.parent?.remove(group);
+
+    this._shoreVegBackgroundGeo?.dispose?.();
+    this._shoreVegBackgroundGeo = null;
+    this._shoreVegBackgroundMat?.dispose?.();
+    this._shoreVegBackgroundMat = null;
+
+    this.shoreVegBackgroundGroup = null;
+    // Keep texture cached for quick rebuilds; if you prefer, also dispose it:
+    // this._shoreVegBackgroundTex?.dispose?.(); this._shoreVegBackgroundTex = null;
+  }
+
+
+  async buildOrUpdateShoreVegBackground2() {
+    const V = this.params.shoreVegBackground2;
+    if (!V?.enabled) { this.disposeShoreVegBackground2(); return; }
+
+    this.disposeShoreVegBackground2();
+
+    // Load / reuse texture
+    if (!this._shoreVegBackgroundTex2) {
+      const tex = await AssetLoader.texture(V.src);
+      tex.wrapS = THREE.ClampToEdgeWrapping;
+      tex.wrapT = THREE.ClampToEdgeWrapping;
+      tex.anisotropy = 4;
+      tex.minFilter = THREE.LinearMipMapLinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      this._shoreVegBackgroundTex2 = tex;
+    }
+
+    // Shared material/geometry
+    this._shoreVegBackgroundMat2 = new THREE.MeshBasicMaterial({
+      map: this._shoreVegBackgroundTex2,
+      transparent: true,
+      opacity: 1.0,
+      depthWrite: false,
+      depthTest: true,
+      side: THREE.FrontSide,
+      blending: THREE.NormalBlending
+    });
+
+    this._shoreVegBackgroundGeo2 = new THREE.PlaneGeometry(1, 1, 1, 1);
+    this._shoreVegBackgroundGeo2.rotateY(Math.PI / 2);
+
+    const group = new THREE.Group();
+    group.name = 'shore-veg-background-group-2';
+
+    // 3 rows (X), each row is 5 tiles (Z)
+    for (let row = 0; row < 3; row++) {
+      for (let col = -2; col <= 2; col++) {
+        const mesh = new THREE.Mesh(this._shoreVegBackgroundGeo2, this._shoreVegBackgroundMat2);
+        mesh.name = `shore-veg-background2-r${row}-c${col}`;
+        mesh.renderOrder = 8; // behind the first veg layer (which is 9)
+        mesh.frustumCulled = true;
+        group.add(mesh);
+      }
+    }
+
+    this.shoreVegBackgroundGroup2 = group;
+    this.scene.add(group);
+
+    this.updateShoreVegBackgroundLayout2();
+  }
+
+  updateShoreVegBackgroundLayout2() {
+    if (!this.shoreVegBackgroundGroup2) return;
+    const V = this.params.shoreVegBackground2;
+    if (!V?.enabled) return;
+
+    const wantH = Math.max(0.05, Number.isFinite(V.height) ? V.height : 10.0);
+
+    const img = this._shoreVegBackgroundTex2?.image;
+    const imgW = (img?.naturalWidth ?? img?.width ?? 0);
+    const imgH = (img?.naturalHeight ?? img?.height ?? 0);
+    const aspect = (imgW > 0 && imgH > 0) ? (imgW / imgH) : 1.0;
+    const wantW = Math.max(0.05, wantH * aspect);
+
+    const hazeBottomY = this.params.surfaceLevel;
+    const bottomOffset = Number.isFinite(V.bottomOffset) ? V.bottomOffset : 0.0;
+    const yBottom = hazeBottomY + bottomOffset;
+    const yMid = yBottom + wantH * 0.5;
+
+    const hazeX = this.params.shoreLevel + 0.001;
+    const xOffsetFromHaze = Number.isFinite(V.xOffsetFromHaze) ? V.xOffsetFromHaze : 17.0;
+    const rowSpacingX = Number.isFinite(V.rowSpacingX) ? V.rowSpacingX : 3.0;
+    const rowSpacingY = Number.isFinite(V.rowSpacingY) ? V.rowSpacingY : 3.0;
+    const xRow0 = hazeX - xOffsetFromHaze;
+
+    const zBase = this.params.start?.z ?? 0;
+
+    // Resize shared geometry
+    const g = this._shoreVegBackgroundGeo2;
+    const curW = g?.parameters?.width ?? 0;
+    const curH = g?.parameters?.height ?? 0;
+    if (!g || Math.abs(curW - wantW) > 1e-4 || Math.abs(curH - wantH) > 1e-4) {
+      const geo = new THREE.PlaneGeometry(wantW, wantH, 1, 1);
+      geo.rotateY(Math.PI / 2);
+      this._shoreVegBackgroundGeo2?.dispose?.();
+      this._shoreVegBackgroundGeo2 = geo;
+      for (const child of this.shoreVegBackgroundGroup2.children) {
+        if (child?.isMesh) child.geometry = geo;
+      }
+    }
+
+    // Position tiles
+    let idx = 0;
+    for (let row = 0; row < 3; row++) {
+      const x = xRow0 - row * rowSpacingX;
+      const y = yMid + row * rowSpacingY;
+      const rowShiftZ = row * (wantW / 3);
+      for (let col = -2; col <= 2; col++) {
+        const z = zBase + rowShiftZ + col * wantW;
+        const child = this.shoreVegBackgroundGroup2.children[idx++];
+        if (child?.isMesh) child.position.set(x, y, z);
+      }
+    }
+  }
+
+  disposeShoreVegBackground2() {
+    if (!this.shoreVegBackgroundGroup2) return;
+    const group = this.shoreVegBackgroundGroup2;
+    group.parent?.remove(group);
+
+    this._shoreVegBackgroundGeo2?.dispose?.();
+    this._shoreVegBackgroundGeo2 = null;
+    this._shoreVegBackgroundMat2?.dispose?.();
+    this._shoreVegBackgroundMat2 = null;
+
+    this.shoreVegBackgroundGroup2 = null;
+  }
+
+
   // --- Loading overlay (black screen with spinning logo) ---
   _createLoadingOverlay() {
     // Already created?
     if (this._loadingEl) return;
+
+    this._loadingProgressTotal = 0;
+    this._loadingProgressCompleted = 0;
+    this._loadingTextEl = null;
+    this._loadingBarFillEl = null;
 
     const styleId = '__rio_loading_css';
     if (!document.getElementById(styleId)) {
@@ -4662,13 +4984,33 @@ export class RioScene extends BaseScene {
           perspective: 800px;
           /* slow -> fast -> slow, returns to same orientation each loop */
           animation: rio-spin-y 2.4s ease-in-out infinite;
-          margin-bottom: 18px;
+          margin-bottom: 20px;
           filter: drop-shadow(0 10px 30px rgba(255,212,0,0.18));
         }
+        #rio-loading-bar {
+          width: min(70vmin, 420px);
+          height: 10px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.18);
+          overflow: hidden;
+          position: relative;
+          margin-bottom: 12px;
+        }
+        #rio-loading-bar-fill {
+          width: 0%;
+          height: 100%;
+          border-radius: 999px;
+          background: linear-gradient(90deg, #ffd360, #ff9c5d, #ffd360);
+          transition: width 0.35s ease;
+        }
         #rio-loading-text {
-          font-weight: 700;
-          font-size: clamp(18px, 3.2vmin, 28px);
-          letter-spacing: .02em;
+          font-weight: 400;
+          font-size: clamp(12px, 1.6vmin, 16px);
+          letter-spacing: 0.02em;
+          max-width: 90vw;
+          text-align: center;
+          line-height: 1.4;
+          margin-top: 4px;
         }
         @keyframes rio-spin-y {
           from { transform: rotateY(0deg); }
@@ -4692,21 +5034,54 @@ export class RioScene extends BaseScene {
     img.src = (this.params?.deckUI?.assets?.logo) || '/game-assets/sub/interfaz/logo.png';
     img.alt = 'Logo';
 
+    const bar = document.createElement('div');
+    bar.id = 'rio-loading-bar';
+    const fill = document.createElement('div');
+    fill.id = 'rio-loading-bar-fill';
+    bar.appendChild(fill);
+
+    this._loadingBarFillEl = fill;
+
     const txt = document.createElement('div');
     txt.id = 'rio-loading-text';
     this._loadingTextEl = txt;
     this._setLoadingText('Cargando');
 
     wrap.appendChild(img);
+    wrap.appendChild(bar);
     wrap.appendChild(txt);
     document.body.appendChild(wrap);
 
     this._loadingEl = wrap;
+
+    this._updateLoadingBar();
   }
 
   _setLoadingText(message) {
     if (!this._loadingTextEl) return;
     this._loadingTextEl.textContent = message || 'Cargando';
+  }
+
+  _updateLoadingBar() {
+    if (!this._loadingBarFillEl) return;
+    const total = this._loadingProgressTotal;
+    const completed = this._loadingProgressCompleted;
+    const ratio = total > 0 ? Math.min(1, completed / total) : 0;
+    this._loadingBarFillEl.style.width = `${(ratio * 100).toFixed(2)}%`;
+  }
+
+  async _trackLoadingStep(message, fn) {
+    if (typeof fn !== 'function') fn = () => undefined;
+    this._loadingProgressTotal++;
+    this._updateLoadingBar();
+    this._setLoadingText(message);
+    try {
+      const result = await fn();
+      return result;
+    } finally {
+      this._loadingProgressCompleted++;
+      this._updateLoadingBar();
+    }
   }
 
   _hideLoadingOverlay() {
@@ -5870,6 +6245,14 @@ export class RioScene extends BaseScene {
     if (this.shoreHazeMesh && this.params.shoreHaze?.enabled) {
       this.updateShoreHazeLayout();
     }
+
+    if (this.shoreVegBackgroundGroup && this.params.shoreVegBackground?.enabled) {
+      this.updateShoreVegBackgroundLayout();
+    }
+
+    if (this.shoreVegBackgroundGroup2 && this.params.shoreVegBackground2?.enabled) {
+      this.updateShoreVegBackgroundLayout2();
+    }
   }
 
   updateFish(dt) {
@@ -6161,6 +6544,14 @@ export class RioScene extends BaseScene {
 
     if (this.shoreHazeMesh && this.params.shoreHaze?.enabled) {
       this.updateShoreHazeLayout();
+    }
+
+    if (this.shoreVegBackgroundGroup && this.params.shoreVegBackground?.enabled) {
+      this.updateShoreVegBackgroundLayout();
+    }
+
+    if (this.shoreVegBackgroundGroup2 && this.params.shoreVegBackground2?.enabled) {
+      this.updateShoreVegBackgroundLayout2();
     }
 
     this._updateTimerLayout?.();
