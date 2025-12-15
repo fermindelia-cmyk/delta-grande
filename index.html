@@ -46,6 +46,24 @@
             overflow: hidden;
         }
 
+        /* ER logo top-left */
+        .er-logo {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 2000;
+            pointer-events: none;
+            padding: 8px 12px;
+        }
+
+        .er-logo img {
+            height: clamp(12px, 2.4vw, 28px);
+            width: auto;
+            display: block;
+            filter: brightness(0) invert(1);
+            opacity: 0.5;
+        }
+
         #bg-transition-root {
             position: absolute;
             inset: 0;
@@ -68,7 +86,7 @@
             opacity: 1;
         }
 
-          /* Video sections - full viewport height and centered content
+        /* Video sections - full viewport height and centered content
               Sections are separate blocks and their inner frames occupy 95vw */
         .video-section {
             width: 100%;
@@ -98,7 +116,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: radial-gradient(circle at center, rgba(0,0,0,0.94), #000 65%);
+            background: radial-gradient(circle at center, rgba(0, 0, 0, 0.94), #000 65%);
             z-index: 100000;
             transition: opacity 500ms ease, visibility 500ms ease;
             overflow: hidden;
@@ -131,7 +149,7 @@
         }
 
         #page-loader video {
-            width: clamp(220px, 32vw, 520px);
+            width: clamp(110px, 16vw, 260px);
             height: auto;
             position: relative;
             z-index: 1;
@@ -156,7 +174,8 @@
             width: 100%;
             height: 100%;
             z-index: 10;
-            isolation: isolate; /* keep blend modes local so black pixels can lighten instead of showing solid */
+            isolation: isolate;
+            /* keep blend modes local so black pixels can lighten instead of showing solid */
             /* allow clicks on the island so it can enable audio */
             pointer-events: auto;
             /* cursor: pointer; */
@@ -190,14 +209,17 @@
         }
 
         @media (max-width: 768px) {
+
             .floating-island::before,
             .floating-island::after {
                 background-size: 180%;
             }
 
             .cards-row {
-                grid-template-columns: 1fr; /* Stack cards vertically on mobile */
-                max-width: 280px; /* Limit width for better look */
+                grid-template-columns: 1fr;
+                /* Stack cards vertically on mobile */
+                max-width: 280px;
+                /* Limit width for better look */
                 margin: 0 auto;
             }
         }
@@ -205,12 +227,14 @@
         @keyframes cloudTintCycle {
             0% {
                 opacity: 0.2;
-                filter: hue-rotate(-12deg) sa   turate(0.95) brightness(1.02);
+                filter: hue-rotate(-12deg) sa turate(0.95) brightness(1.02);
             }
+
             50% {
                 opacity: 0.42;
                 filter: hue-rotate(24deg) saturate(1.25) brightness(1.12);
             }
+
             100% {
                 opacity: 0.26;
                 filter: hue-rotate(-18deg) saturate(1.05) brightness(1.08);
@@ -221,6 +245,7 @@
             0% {
                 transform: translateX(-12%) scale(1.2);
             }
+
             100% {
                 transform: translateX(12%) scale(1.2);
             }
@@ -230,8 +255,9 @@
             0% {
                 transform: translateX(12%) scale(1.2) scaleY(-1);
             }
+
             100% {
-                transform: translateX(-12%) scale(1.2   ) scaleY(-1);
+                transform: translateX(-12%) scale(1.2) scaleY(-1);
             }
         }
 
@@ -295,66 +321,88 @@
         /* Frame image as background */
         .video-frame {
             position: relative;
-            width: 86vw;
-            max-width: 86vw;
+            width: 77.4vw;
+            max-width: 77.4vw;
             aspect-ratio: 16/9;
             margin: 0 auto;
-            padding: var(--video-frame-padding);
-            overflow: hidden;
+            padding: 0;
+            overflow: visible;
             box-sizing: border-box;
+            border-radius: var(--video-frame-radius);
         }
 
-        .video-frame::before {
+        /* Overlay graphic instead of corner borders */
+        .video-frame::after {
             content: '';
             position: absolute;
-            inset: 0;
-            border-radius: var(--video-frame-radius);
+            inset: -4%;
+            background: url('assets/marco-videos.webp') center center / 93% no-repeat;
             pointer-events: none;
-            z-index: 2;
-            outline: 1px solid #FBFE5E;
-            outline-offset: var(--video-frame-outline-offset);
+            z-index: 4;
+        }
+
+
+
+        .video-frame::before {
+            display: none;
         }
 
         .video-frame .frame-corner {
+            display: none;
             position: absolute;
             width: var(--video-frame-corner-length);
             height: var(--video-frame-corner-length);
-            border: 6px solid transparent;
+            border: 3px solid #FBFE5E;
             box-sizing: border-box;
             pointer-events: none;
             z-index: 3;
+            box-shadow:
+                0 0 10px rgba(255, 255, 94, 0.7),
+                0 0 22px rgba(255, 255, 94, 0.45);
         }
 
         .video-frame .frame-corner.top-left {
             top: 0;
             left: 0;
+            transform: translate(-5%, -5%);
             border-top-color: #FBFE5E;
             border-left-color: #FBFE5E;
+            border-right-color: transparent;
+            border-bottom-color: transparent;
             border-top-left-radius: var(--video-frame-radius);
         }
 
         .video-frame .frame-corner.top-right {
             top: 0;
             right: 0;
+            transform: translate(5%, -5%);
             border-top-color: #FBFE5E;
             border-right-color: #FBFE5E;
+            border-left-color: transparent;
+            border-bottom-color: transparent;
             border-top-right-radius: var(--video-frame-radius);
         }
 
         .video-frame .frame-corner.bottom-left {
             bottom: 0;
             left: 0;
+            transform: translate(-5%, 5%);
             border-bottom-color: #FBFE5E;
             border-left-color: #FBFE5E;
-            border-bottom-left-radius: var(--video-frame-radius);
+            border-top-color: transparent;
+            border-right-color: transparent;
+            border-bottom-left-radius: 54px;
         }
 
         .video-frame .frame-corner.bottom-right {
             bottom: 0;
             right: 0;
+            transform: translate(5%, 5%);
             border-bottom-color: #FBFE5E;
             border-right-color: #FBFE5E;
-            border-bottom-right-radius: var(--video-frame-radius);
+            border-top-color: transparent;
+            border-left-color: transparent;
+            border-bottom-right-radius: 54px;
         }
 
         /* Video wrapper with rounded corners and overflow hidden */
@@ -371,8 +419,8 @@
             position: absolute;
             inset: 0;
             border-radius: var(--video-frame-radius);
-            outline: 1px solid #FBFE5E;
-            outline-offset: var(--video-frame-outline-inner-offset);
+            outline: none;
+            outline-offset: 0;
             overflow: hidden;
         }
 
@@ -380,11 +428,11 @@
         .video-frame.clean-frame::before {
             display: none;
         }
-        
+
         .video-frame.clean-frame .video-shell {
             outline: none;
         }
-        
+
         .video-frame.clean-frame .video-shell iframe,
         .video-frame.clean-frame .video-shell video {
             border: none;
@@ -396,7 +444,7 @@
             inset: 0;
             border-radius: var(--video-frame-radius);
             box-sizing: border-box;
-            border: 1px solid #FBFE5E;
+            border: none;
         }
 
         /* YouTube iframe */
@@ -406,7 +454,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            border: 1px solid #FBFE5E;
+            border: none;
             border-radius: var(--video-frame-radius);
         }
 
@@ -422,8 +470,16 @@
         }
 
         /* Make the giant map clickable and show pointer */
-        .map-link { display: block; width: 100%; text-decoration: none; color: inherit; }
-        .map-link .video-wrapper { cursor: pointer; }
+        .map-link {
+            display: block;
+            width: 100%;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .map-link .video-wrapper {
+            cursor: pointer;
+        }
 
         /* Cards strip below video frame */
         .cards-section {
@@ -487,9 +543,17 @@
         }
 
         @keyframes scrollPulse {
-            0% { transform: translate(-50%, 0); }
-            50% { transform: translate(-50%, 8px); }
-            100% { transform: translate(-50%, 0); }
+            0% {
+                transform: translate(-50%, 0);
+            }
+
+            50% {
+                transform: translate(-50%, 8px);
+            }
+
+            100% {
+                transform: translate(-50%, 0);
+            }
         }
 
         /* Manifiesto item: same background and font as .news-item,
@@ -497,21 +561,16 @@
         .manifiesto-item {
             position: absolute;
             top: 20px;
-            left: 20px;
+            right: 20px;
             z-index: 50;
             width: 300px;
-            height: 300px;
-            background-image: url('assets/ui/oblea1.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            padding: 38px 38px;
+            height: 450px;
+            background: none;
+            padding: 0;
             color: #DDDC31;
             font-family: "new-science", 'New Science', sans-serif;
-            font-size: 14px;
+            font-size: 17px;
             line-height: 1.6;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
             cursor: move;
             user-select: none;
             -webkit-user-select: none;
@@ -535,8 +594,14 @@
         }
 
         /* Small visible scrollbar for desktop, unobtrusive on mobile */
-        .manifiesto-item::-webkit-scrollbar { width: 8px; }
-        .manifiesto-item::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 6px; }
+        .manifiesto-item::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .manifiesto-item::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 6px;
+        }
 
         @media (max-width: 768px) {
             .manifiesto-item {
@@ -597,19 +662,23 @@
             transform: translateX(-50%) translateY(-2px);
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.6);
         }
+
         /* Sound selector (hero section bottom centered) */
         .video-section.hero .sound-selector {
             position: absolute;
-            bottom: 2.5%;
+            bottom: 5%;
             left: 50%;
             transform: translate(-50%, 0);
             z-index: 21;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 12px;
             pointer-events: auto;
             opacity: 0;
             transition: opacity 1.5s ease;
+            max-width: 600px;
+            width: 90%;
         }
 
         .video-section.hero .sound-selector.is-visible {
@@ -619,6 +688,8 @@
         .video-section.hero .sound-selector img {
             display: block;
             cursor: pointer;
+            width: 1200px;
+            height: auto;
         }
 
         .sound-tooltip {
@@ -641,6 +712,7 @@
             opacity: 1;
             transform: translate(-50%, -14px);
         }
+
         /* Hotspots are invisible (image contains UI). Keep focus-visible outline for accessibility. */
         .video-section.hero .sound-hotspot {
             background: transparent !important;
@@ -653,8 +725,9 @@
             opacity: 1 !important;
             outline: 2px solid #FFE55C;
             outline-offset: 4px;
-            background: rgba(0,0,0,0.18);
+            background: rgba(0, 0, 0, 0.18);
         }
+
         /* Debug panel removed in production */
         /* Footer styles */
         .site-footer {
@@ -666,7 +739,7 @@
             font-family: "new-science", 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
             font-size: 14px;
             letter-spacing: 0.08em;
-            background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,0.55));
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.55));
             backdrop-filter: blur(4px);
         }
 
@@ -674,8 +747,8 @@
             display: inline-block;
             padding: 8px 16px;
             border-radius: 999px;
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.06);
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.06);
         }
 
         /* PWA action buttons */
@@ -690,25 +763,35 @@
             padding: 8px 14px;
             font-size: 13px;
             font-weight: 700;
-            color: #000;
-            background: linear-gradient(135deg, #DDDC31 0%, #FFE55C 100%);
-            border: 2px solid #fff;
+            color: #FBFE5E;
+            background: rgba(0, 102, 204, 0);
+            border: 2px solid #FBFE5E;
             border-radius: 24px;
             cursor: pointer;
             text-transform: uppercase;
             letter-spacing: 0.06em;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+            transition: background 0.3s ease, border-color 0.3s ease;
         }
 
-        .pwa-button[hidden] { display: none; }
+        .pwa-button:hover {
+            background: rgba(0, 102, 204, 0.5);
+            border-color: #FFE55C;
+        }
+
+        .pwa-button[hidden] {
+            display: none;
+        }
 
         /* Credits overlay */
-        .credits-open { overflow: hidden; }
+        .credits-open {
+            overflow: hidden;
+        }
 
         .credits-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.78);
+            background: rgba(0, 0, 0, 0.78);
             display: none;
             align-items: center;
             justify-content: center;
@@ -716,15 +799,17 @@
             padding: 20px;
         }
 
-        .credits-overlay.is-visible { display: flex; }
+        .credits-overlay.is-visible {
+            display: flex;
+        }
 
         .credits-panel {
             width: min(880px, 94vw);
             max-height: 86vh;
             background: rgba(12, 12, 12, 0.94);
-            border: 1px solid rgba(255,255,255,0.16);
+            border: 1px solid rgba(255, 255, 255, 0.16);
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
             color: #f7f7f7;
             padding: 22px 24px;
             font-family: "new-science", 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
@@ -755,24 +840,30 @@
             line-height: 1.6;
         }
 
-        .credits-body strong { color: #FFE55C; }
+        .credits-body strong {
+            color: #FFE55C;
+        }
 
         /* Video Overlay */
         .video-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.5);
             display: none;
             align-items: center;
             justify-content: center;
             z-index: 130000;
         }
-        .video-overlay.is-visible { display: flex; }
-        
+
+        .video-overlay.is-visible {
+            display: flex;
+        }
+
         .video-overlay .video-frame {
             position: relative;
             width: 100%;
-            max-width: 177.78vh; /* 16/9 aspect ratio constraint based on height */
+            max-width: 177.78vh;
+            /* 16/9 aspect ratio constraint based on height */
             aspect-ratio: 16/9;
             max-height: 100vh;
             display: flex;
@@ -804,19 +895,47 @@
             scrollbar-color: #FFC96A rgba(11, 18, 28, 0.45);
             display: none;
             z-index: 130001;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
         }
-        .overlay-text.is-visible { display: block; }
-        
-        .overlay-text::-webkit-scrollbar { width: 8px; background: transparent; }
-        .overlay-text::-webkit-scrollbar-track { background: rgba(11, 18, 28, 0.38); border-radius: 4px; }
-        .overlay-text::-webkit-scrollbar-thumb { background: #FFC96A; border-radius: 4px; }
-        .overlay-text strong { color: #FFE55C; font-weight: 700; }
-        .overlay-text p { margin-bottom: 1em; }
+
+        .overlay-text.is-visible {
+            display: block;
+        }
+
+        .overlay-text::-webkit-scrollbar {
+            width: 8px;
+            background: transparent;
+        }
+
+        .overlay-text::-webkit-scrollbar-track {
+            background: rgba(11, 18, 28, 0.38);
+            border-radius: 4px;
+        }
+
+        .overlay-text::-webkit-scrollbar-thumb {
+            background: #FFC96A;
+            border-radius: 4px;
+        }
+
+        .overlay-text strong {
+            color: #FFE55C;
+            font-weight: 700;
+        }
+
+        .overlay-text p {
+            margin-bottom: 1em;
+        }
 
         @keyframes glitch-flicker {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 0.2; }
+
+            0%,
+            100% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 0.2;
+            }
         }
 
         /* Toast / progress UI */
@@ -827,35 +946,40 @@
             transform: translateX(-50%);
             min-width: 280px;
             max-width: 90%;
-            background: rgba(0,0,0,0.85);
+            background: rgba(0, 0, 0, 0.85);
             color: #fff;
             padding: 12px 14px;
             border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
             display: flex;
             gap: 12px;
             align-items: center;
             z-index: 20000;
         }
 
-        .pwa-toast[hidden] { display: none; }
+        .pwa-toast[hidden] {
+            display: none;
+        }
 
         .pwa-progress {
             flex: 1 1 auto;
             height: 10px;
-            background: rgba(255,255,255,0.08);
+            background: rgba(255, 255, 255, 0.08);
             border-radius: 8px;
             overflow: hidden;
         }
 
-        .pwa-progress > .bar {
+        .pwa-progress>.bar {
             width: 0%;
             height: 100%;
-            background: linear-gradient(90deg,#DDDC31,#FFE55C);
+            background: linear-gradient(90deg, #DDDC31, #FFE55C);
             transition: width 260ms linear;
         }
 
-        .pwa-toast .label { font-size: 13px; white-space: nowrap; }
+        .pwa-toast .label {
+            font-size: 13px;
+            white-space: nowrap;
+        }
 
         .site-footer__inner strong {
             display: inline-block;
@@ -876,7 +1000,8 @@
             z-index: 5;
         }
 
-        .floating-text p {
+        .floating-text p,
+        .floating-text div {
             font-family: "new-science", 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
             color: #FBFE5E;
             font-size: clamp(18px, 3vw, 28px);
@@ -886,36 +1011,66 @@
             letter-spacing: 0.02em;
         }
 
-        .floating-text p:last-child {
+        .floating-text p:last-child,
+        .floating-text div:last-child {
             margin-bottom: 0;
+        }
+
+        /* Floating text typewriter styles */
+        .floating-text[data-typewriter] p {
+            min-height: 1.6em;
+            text-align: left;
+        }
+
+        .floating-text[data-typewriter] div {
+            min-height: 1.6em;
+            text-align: left;
+        }
+
+        .floating-text[data-typewriter] p:empty,
+        .floating-text[data-typewriter] div:empty {
+            visibility: hidden;
         }
     </style>
 </head>
 
 <body class="is-loading">
+    <!-- Top-left ER horizontal logo -->
+    <div class="er-logo">
+        <img src="assets/LOGO_ER_horizontal.png" alt="ER" loading="eager" />
+    </div>
     <div id="page-loader" aria-live="polite" aria-label="Cargando Delta+">
         <video autoplay muted playsinline preload="auto">
             <source src="assets/D+_loader04.webm" type="video/webm">
         </video>
     </div>
     <div id="bg-transition-root" aria-hidden="true"></div>
-    <div id="bg-dark-overlay" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: -1; pointer-events: none;" aria-hidden="true"></div>
+    <div id="bg-dark-overlay"
+        style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: -1; pointer-events: none;"
+        aria-hidden="true"></div>
     <!-- First video section with floating island (background video removed to show body image) -->
     <section class="video-section hero">
         <!-- Floating island centered on top: draw video into a canvas (preserves alpha and allows extra compositing) -->
         <div class="floating-island">
             <canvas id="island-canvas" role="img" aria-label="Isla flotante" style="display: none;"></canvas>
-            <div id="splat-container" style="display: block; width: 100%; height: 100%; position: absolute; top: 0; left: 0;z-index: 3;">
-                <iframe id="splat-iframe" src="isla%20splat/isla_splat.html" style="width: 100%; height: 100%; border: none; background: transparent;" allowtransparency="true"></iframe>
+            <div id="splat-container"
+                style="display: block; width: 100%; height: 100%; position: absolute; top: 0; left: 0;z-index: 3;">
+                <iframe id="splat-iframe" src="isla%20splat/isla_splat.html"
+                    style="width: 100%; height: 100%; border: none; background: transparent;"
+                    allowtransparency="true"></iframe>
                 <div id="splat-overlay" style="position: absolute; inset: 0; z-index: 10;"></div>
             </div>
-            <div id="island-loader" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 140px; padding: 10px 10px 8px; background: rgba(0,0,0,0.55); border-radius: 8px; overflow: hidden; pointer-events: none; text-align: center; color: #fff; font-size: 13px; letter-spacing: 0.04em;">
+            <div id="island-loader"
+                style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 140px; padding: 10px 10px 8px; background: rgba(0,0,0,0.55); border-radius: 8px; overflow: hidden; pointer-events: none; text-align: center; color: #fff; font-size: 13px; letter-spacing: 0.04em;">
                 <div style="margin-bottom: 6px;">Cargando isla...</div>
-                <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden;">
-                    <div id="island-loader-bar" style="width: 0%; height: 100%; background: #DDDC31; transition: width 0.1s linear;"></div>
+                <div
+                    style="width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden;">
+                    <div id="island-loader-bar"
+                        style="width: 0%; height: 100%; background: #DDDC31; transition: width 0.1s linear;"></div>
                 </div>
             </div>
-            <div id="splat-loader" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 14px 20px; background: rgba(0,0,0,0.55); border-radius: 8px; pointer-events: none; text-align: center; color: #fff; font-size: 13px; letter-spacing: 0.04em; z-index: 0;">
+            <div id="splat-loader"
+                style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 14px 20px; background: rgba(0,0,0,0.55); border-radius: 8px; pointer-events: none; text-align: center; color: #fff; font-size: 13px; letter-spacing: 0.04em; z-index: 0;">
                 Cargando isla...
             </div>
             <div class="sound-selector" aria-hidden="false" role="group" aria-label="Selector de sonido">
@@ -934,7 +1089,13 @@
         </div>
 
         <div class="manifiesto-item" role="region" aria-label="Manifiesto Delta Grande">
-            <p>Delta Grande existe gracias al trabajo conjunto de científicas y científicos, docentes, artistas, programadores, diseñadores, productores,  pobladoras  y pobladores del Delta que, con orgullo y compromiso, hacen posible esta obra colectiva. Las muchas voces a las que atravesaron los ríos.</p>
+            <div class="grid-frame-wrapper" style="position: relative; width: 100%; height: 100%;">
+                <canvas id="manifiesto-canvas" style="position: absolute; top: -20px; left: -20px; pointer-events: none;"></canvas>
+                <div class="grid-frame-content" style="position: relative; z-index: 1; width: 100%; height: 100%; padding: 70px 1px 59px 79px; overflow-y: auto;">
+                    <p>Delta Grande es un ecosistema digital donde podés explorar el Delta del Paraná a través de juegos,
+                        recorridos interactivos, microdocumentales, paisajes 3D, voces y sonidos del territorio.</p>
+                </div>
+            </div>
         </div>
 
         <!-- 'Jugar' button removed from landing (kept in-game menu link removed) -->
@@ -942,7 +1103,10 @@
 
     <!-- Floating text between section 1 and 2 -->
     <div class="floating-text">
-        <p>"El Delta es una historia evolutiva, una historia geológica, geomorfológica de la parte Centro Este de América del Sur."</p>
+        
+        <p>El Delta entrerriano, un largo abrazo de ríos que envuelven nuestra llanura, nuestros humedales, nuestros
+            hombres y mujeres y niños. Nuestro equilibrio anfibio: la tierra camina en el agua, el agua camina en la
+            tierra.</p>
     </div>
 
     <!-- Second video section with framed YouTube video (background video removed to show body image) -->
@@ -952,8 +1116,7 @@
             <div class="video-frame">
                 <div class="video-wrapper">
                     <div class="video-shell">
-                        <iframe 
-                            src="https://www.youtube.com/embed/ANyR_fuIF-g?rel=0&modestbranding=1&playsinline=1"
+                        <iframe src="https://www.youtube.com/embed/ANyR_fuIF-g?rel=0&modestbranding=1&playsinline=1"
                             title="Video"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                             allowfullscreen>
@@ -971,9 +1134,10 @@
     <!-- Floating text between section 2 and 3 -->
     <div class="floating-text">
         <div>
-            <p>"Esta historia empezó hace diez mil años.</p>
-            <p>Y es tanto el tiempo, que el colibrí vuela en cámara lenta.</p>
-            <p>¿Cuántas cosas ocurren a la vez? ¿Cuánto podemos ver en lo que miramos?"</p>
+            Esta historia empezó hace diez mil años.
+            Y es tanto el tiempo, que el colibrí vuela en cámara lenta.
+            ¿Cuántas cosas ocurren a la vez? ¿Cuánto podemos ver en lo que miramos?
+
         </div>
     </div>
 
@@ -984,19 +1148,19 @@
             <!-- Video frame container -->
             <div class="video-frame-container">
                 <a href="game/index.html#menu" class="map-link" aria-label="Ir al juego">
-                <div class="video-frame">
-                    <div class="video-wrapper">
-                        <div class="video-shell">
-                            <video autoplay loop muted playsinline>
-                                <source src="assets/mapa_gigante.webm" type="video/webm">
-                            </video>
+                    <div class="video-frame">
+                        <div class="video-wrapper">
+                            <div class="video-shell">
+                                <video autoplay loop muted playsinline>
+                                    <source src="assets/mapa_gigante.webm" type="video/webm">
+                                </video>
+                            </div>
                         </div>
+                        <span class="frame-corner top-left"></span>
+                        <span class="frame-corner top-right"></span>
+                        <span class="frame-corner bottom-left"></span>
+                        <span class="frame-corner bottom-right"></span>
                     </div>
-                    <span class="frame-corner top-left"></span>
-                    <span class="frame-corner top-right"></span>
-                    <span class="frame-corner bottom-left"></span>
-                    <span class="frame-corner bottom-right"></span>
-                </div>
                 </a>
             </div>
 
@@ -1009,7 +1173,7 @@
     </section>
 
     <script>
-        (function(){
+        (function () {
             const cardImages = [
                 'assets/cards_webp/aguara.webp',
                 'assets/cards_webp/armado.webp',
@@ -1069,7 +1233,7 @@
             let typeWriterTimeout = null;
             let typeWriterInterval = null;
             const glitchChars = "!@#$%^&*()_+-=[]{}|;':\",./<>?~`abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            
+
             const getRandomGlitchChar = () => glitchChars[Math.floor(Math.random() * glitchChars.length)];
 
             const getPlainTextLength = (html) => {
@@ -1082,7 +1246,7 @@
                 const temp = document.createElement('div');
                 temp.innerHTML = html;
                 let count = 0;
-                
+
                 const walk = (node, maxChars) => {
                     if (count >= maxChars) return '';
                     if (node.nodeType === Node.TEXT_NODE) {
@@ -1148,16 +1312,16 @@
                 const overlay = document.getElementById('video-overlay');
                 const video = document.getElementById('overlay-video');
                 const textOverlay = document.getElementById('overlay-text');
-                
+
                 if (!overlay || !video) return;
-                
+
                 // Clear any existing animations
                 if (typeWriterTimeout) clearTimeout(typeWriterTimeout);
                 if (typeWriterInterval) clearInterval(typeWriterInterval);
-                
+
                 video.src = src;
                 video.play().catch(e => console.error("Video play failed:", e));
-                
+
                 overlay.classList.add('is-visible');
                 overlay.setAttribute('aria-hidden', 'false');
 
@@ -1175,7 +1339,7 @@
                         if (info.text) {
                             textOverlay.innerHTML = ''; // Start empty
                             textOverlay.classList.add('is-visible');
-                            
+
                             // Start animation after 3 seconds
                             typeWriterTimeout = setTimeout(() => {
                                 const fullText = info.text;
@@ -1212,7 +1376,7 @@
                     textOverlay.classList.remove('is-visible');
                     textOverlay.innerHTML = '';
                 }
-                
+
                 // Close on click outside
                 overlay.onclick = (e) => {
                     if (e.target === overlay) {
@@ -1232,19 +1396,19 @@
                 const overlay = document.getElementById('video-overlay');
                 const video = document.getElementById('overlay-video');
                 const textOverlay = document.getElementById('overlay-text');
-                
+
                 if (!overlay || !video) return;
-                
+
                 // Clear animations
                 if (typeWriterTimeout) clearTimeout(typeWriterTimeout);
                 if (typeWriterInterval) clearInterval(typeWriterInterval);
-                
+
                 video.pause();
                 video.src = '';
                 video.onclick = null; // Remove listener
                 overlay.classList.remove('is-visible');
                 overlay.setAttribute('aria-hidden', 'true');
-                
+
                 if (textOverlay) {
                     textOverlay.classList.remove('is-visible');
                     textOverlay.innerHTML = '';
@@ -1301,7 +1465,7 @@
                 img.loading = 'lazy';
 
                 card.appendChild(img);
-                
+
                 if (!disableClick) {
                     card.addEventListener('click', (e) => {
                         e.stopPropagation();
@@ -1316,7 +1480,7 @@
             }
 
             document.addEventListener('DOMContentLoaded', renderCards);
-            
+
             // Re-render on resize if crossing breakpoint
             let wasMobile = window.innerWidth <= 768;
             window.addEventListener('resize', () => {
@@ -1331,12 +1495,12 @@
 
     <script>
         // Show the down arrow after a brief delay to hint scrolling
-        (function(){
+        (function () {
             const indicator = document.getElementById('scroll-indicator');
             const SHOW_DELAY_MS = 3000;
             if (!indicator) return;
 
-            function reveal(){ indicator.classList.add('is-visible'); }
+            function reveal() { indicator.classList.add('is-visible'); }
 
             if (document.readyState === 'complete' || document.readyState === 'interactive') {
                 setTimeout(reveal, SHOW_DELAY_MS);
@@ -1346,18 +1510,21 @@
         })();
     </script>
 
+
+
     <!-- Floating text between section 3 and footer -->
     <div class="floating-text">
-        <p>"El Delta entrerriano, un largo abrazo de ríos que envuelven nuestra llanura, nuestros humedales, nuestros hombres y mujeres y niños. Nuestro equilibrio anfibio: la tierra camina en el agua, el agua camina en la tierra."</p>
+            <p>Delta Grande existe gracias al trabajo conjunto de científicas y científicos, docentes, artistas, programadores, diseñadores, productores,  pobladoras  y pobladores del Delta que, con orgullo y compromiso, hacen posible esta obra colectiva. Las muchas voces a las que atravesaron los ríos.</p>
     </div>
-    
+
     <!-- Site footer -->
     <footer class="site-footer" aria-label="Pie de página">
         <div class="site-footer__inner">
             <strong>© Delta Grande 2025</strong> Todos los derechos reservados
             <span class="pwa-actions" aria-hidden="false">
                 <button id="pwaInstallBtn" class="pwa-button" hidden aria-label="Instalar aplicación">Instalar</button>
-                <button id="pwaSaveBtn" class="pwa-button" aria-label="Guardar para uso offline">Guardar offline</button>
+                <button id="pwaSaveBtn" class="pwa-button" aria-label="Guardar para uso offline">Guardar
+                    offline</button>
                 <button id="credits-btn" class="pwa-button" aria-label="Ver créditos">Créditos</button>
             </span>
         </div>
@@ -1377,7 +1544,8 @@
                 <p><strong>Arte y animación:</strong> Equipo Delta Grande.</p>
                 <p><strong>Investigación y relatos:</strong> Equipo Delta Grande.</p>
                 <p><strong>Música y sonido:</strong> Equipo Delta Grande.</p>
-                <p style="margin-top:12px;">Gracias a todas las comunidades, especialistas y colaboradores que hicieron posible este recorrido.</p>
+                <p style="margin-top:12px;">Gracias a todas las comunidades, especialistas y colaboradores que hicieron
+                    posible este recorrido.</p>
             </div>
         </div>
     </div>
@@ -1402,7 +1570,7 @@
             }
         };
 
-        window.showWelcomeSequence = async function(onComplete) {
+        window.showWelcomeSequence = async function (onComplete) {
             // Load font
             if (!document.getElementById('efedra-transition-font')) {
                 const link = document.createElement('link');
@@ -1432,7 +1600,7 @@
 
             // Background video
             const bgVideo = document.createElement('video');
-            bgVideo.src = 'assets/web-bgs/web-bg01.webm'; 
+            bgVideo.src = 'assets/web-bgs/web-bg01.webm';
             bgVideo.style.cssText = `
                 position: absolute;
                 top: 0;
@@ -1446,7 +1614,7 @@
             bgVideo.playsInline = true;
             bgVideo.loop = true;
             bgVideo.autoplay = true;
-            
+
             bgVideo.onerror = () => {
                 console.warn('Video failed to load, falling back to image');
                 bgVideo.style.display = 'none';
@@ -1456,10 +1624,10 @@
             };
 
             overlay.appendChild(bgVideo);
-            
+
             try {
                 await bgVideo.play();
-            } catch(e) {
+            } catch (e) {
                 console.warn('Video play failed', e);
             }
 
@@ -1506,7 +1674,7 @@
                 text-shadow: 0 0 14px ${WELCOME_THEME.colors.textShadow};
                 transition: all 0.3s ease;
             `;
-            
+
             skipButton.addEventListener('mouseenter', () => {
                 skipButton.style.background = `rgba(255, 201, 106, 0.35)`;
                 skipButton.style.transform = `scale(1.05)`;
@@ -1615,7 +1783,7 @@
 
                 currentLineContainer.innerHTML = '';
                 currentLineContainer.style.opacity = '1';
-                
+
                 const lineElement = document.createElement('div');
                 lineElement.style.cssText = `
                     color: ${WELCOME_THEME.colors.text};
@@ -1648,11 +1816,11 @@
                             s.style.filter = 'blur(3px)';
                             s.style.transition = 'opacity 220ms ease-out, transform 360ms ease-out, filter 480ms ease-out';
                             s.style.willChange = 'transform, opacity, filter';
-                            
+
                             // Continuous wave animation once revealed
                             s.style.setProperty('--waveAmp', '5px');
                             s.style.animation = `charWave 2800ms ease-in-out ${spans.length * 150}ms infinite`;
-                            
+
                             lineElement.appendChild(s);
                             spans.push(s);
 
@@ -1704,7 +1872,7 @@
                     let delay = 100;
                     const wordText = el.textContent;
                     const lastChar = wordText[wordText.length - 1];
-                    
+
                     if (lastChar === ',' || lastChar === ';') delay = 300;
                     else if (lastChar === '.' || lastChar === ':') delay = 500;
                     await new Promise(resolve => setTimeout(resolve, delay));
@@ -1745,13 +1913,13 @@
 
             // Cleanup
             if (onComplete) onComplete();
-            
+
             // Small delay to ensure loader is hidden behind the overlay before fading out overlay
             await new Promise(r => setTimeout(r, 100));
-            
+
             overlay.style.transition = 'opacity 2s ease'; // Slower fade out
             overlay.style.opacity = '0';
-            
+
             // Trigger fade-in of selector and manifesto after 3 seconds
             setTimeout(() => {
                 const selector = document.querySelector('.sound-selector');
@@ -1771,7 +1939,7 @@
 
     <script>
         // Display the loader for 4 seconds, fade to black, hold 2 seconds, then reveal the page
-        (function(){
+        (function () {
             const loader = document.getElementById('page-loader');
             const loaderVideo = loader ? loader.querySelector('video') : null;
             const body = document.body;
@@ -1782,9 +1950,9 @@
             let loaderHidden = false;
             let revealStarted = false;
 
-            function shouldSkipLoader(){
-                const DEBUG_KEYS = ['debug','dgDebug','skipLoader'];
-                const truthyValues = new Set(['1','true','yes','on','skip','loader']);
+            function shouldSkipLoader() {
+                const DEBUG_KEYS = ['debug', 'dgDebug', 'skipLoader'];
+                const truthyValues = new Set(['1', 'true', 'yes', 'on', 'skip', 'loader']);
                 const sources = [
                     new URLSearchParams(window.location.search),
                     new URLSearchParams(window.location.hash ? window.location.hash.substring(1) : '')
@@ -1809,24 +1977,25 @@
 
             const skipLoader = shouldSkipLoader();
 
-            function hideLoader(){
+            function hideLoader() {
                 if (!loader || loaderHidden) return;
                 loaderHidden = true;
                 loader.classList.add('is-hidden');
                 body && body.classList.remove('is-loading');
             }
 
-            function startReveal(){
+            function startReveal() {
                 if (!loader || revealStarted) return;
                 revealStarted = true;
-                loader.classList.add('is-blackout');
+                // Skip welcome intro: hide loader immediately
+                hideLoader();
+                // Small delay before showing selector + manifesto
+                const selector = document.querySelector('.sound-selector');
+                const manifesto = document.querySelector('.manifiesto-item');
                 setTimeout(() => {
-                    if (typeof window.showWelcomeSequence === 'function') {
-                        window.showWelcomeSequence(hideLoader);
-                    } else {
-                        hideLoader();
-                    }
-                }, BLACKOUT_FADE_MS + BLACKOUT_HOLD_MS);
+                    if (selector) selector.classList.add('is-visible');
+                    if (manifesto) manifesto.classList.add('is-visible');
+                }, 900);
             }
 
             if (skipLoader) {
@@ -1859,10 +2028,10 @@
             setTimeout(startReveal, FALLBACK_REVEAL_MS);
         })();
     </script>
-    
+
     <script>
         // Background image cycle: fade between hero textures after the page loads (ping-pong order)
-        (function(){
+        (function () {
             const root = document.getElementById('bg-transition-root');
             const BG_IMAGES = [
                 '/assets/web-bgs/D+fondo_para_web_01.webp',
@@ -1892,13 +2061,13 @@
                 img.src = src;
             });
 
-            function nextIndex(){
+            function nextIndex() {
                 if (currentIndex === BG_IMAGES.length - 1) direction = -1;
                 else if (currentIndex === 0) direction = 1;
                 return currentIndex + direction;
             }
 
-            function crossfade(toIdx){
+            function crossfade(toIdx) {
                 const nextLayer = layers[activeLayer ^ 1];
                 nextLayer.style.backgroundImage = `url('${BG_IMAGES[toIdx]}')`;
                 void nextLayer.offsetWidth; // force reflow so the transition always triggers
@@ -1908,7 +2077,7 @@
                 currentIndex = toIdx;
             }
 
-            function startCycle(){
+            function startCycle() {
                 layers[activeLayer].style.backgroundImage = `url('${BG_IMAGES[currentIndex]}')`;
                 layers[activeLayer].classList.add('is-visible');
 
@@ -1924,7 +2093,7 @@
 
     <script>
         // Basic PWA install + offline helpers
-        (function(){
+        (function () {
             let deferredPrompt = null;
             const installBtn = document.getElementById('pwaInstallBtn');
             const saveBtn = document.getElementById('pwaSaveBtn');
@@ -1997,13 +2166,16 @@
 
     <script>
         // Sound selector hotspots: positions are given relative to the image's natural size.
-        (function(){
+        (function () {
             const coords = {
                 dialog: { x: 798, y: 71 },
                 music: { x: 872, y: 40 },
                 ambient: { x: 948, y: 71 }
             };
             const RADIUS = 25; // px radius as requested
+
+            // Re-grab the global audio element here (module scope const is not visible in this IIFE)
+            const audioEl = document.getElementById('web-music');
 
             const selectorImg = document.querySelector('.sound-selector img#sound-toggle');
             if (!selectorImg) return;
@@ -2038,7 +2210,7 @@
                 ambient: 'Ambiente'
             };
 
-            function positionTooltip(target){
+            function positionTooltip(target) {
                 if (!tooltip || !selParent || tooltip.hidden) return;
                 const rect = target.getBoundingClientRect();
                 const parentRect = selParent.getBoundingClientRect();
@@ -2048,7 +2220,7 @@
                 tooltip.style.top = (top - 6) + 'px';
             }
 
-            function showTooltip(name, target){
+            function showTooltip(name, target) {
                 if (!tooltip) return;
                 if (hideTooltipTimer) {
                     clearTimeout(hideTooltipTimer);
@@ -2061,7 +2233,7 @@
                 requestAnimationFrame(() => tooltip.classList.add('is-visible'));
             }
 
-            function hideTooltip(){
+            function hideTooltip() {
                 if (!tooltip) return;
                 tooltip.classList.remove('is-visible');
                 tooltipTarget = null;
@@ -2069,7 +2241,7 @@
             }
 
             // Helper to create a hotspot element
-            function makeHotspot(name){
+            function makeHotspot(name) {
                 const el = document.createElement('button');
                 el.type = 'button';
                 el.className = 'sound-hotspot';
@@ -2077,8 +2249,8 @@
                 el.setAttribute('aria-pressed', 'false');
                 el.setAttribute('aria-label', `Alternar ${name}`);
                 el.style.position = 'absolute';
-                el.style.width = (RADIUS*2) + 'px';
-                el.style.height = (RADIUS*2) + 'px';
+                el.style.width = (RADIUS * 2) + 'px';
+                el.style.height = (RADIUS * 2) + 'px';
                 el.style.borderRadius = '50%';
                 el.style.boxSizing = 'border-box';
                 el.style.pointerEvents = 'auto';
@@ -2119,7 +2291,7 @@
             const debugContent = null;
 
             // Positioning function: scale coords from natural image size to displayed size
-            function positionHotspots(){
+            function positionHotspots() {
                 const naturalW = selectorImg.naturalWidth || selectorImg.width;
                 const naturalH = selectorImg.naturalHeight || selectorImg.height;
                 const rect = selectorImg.getBoundingClientRect();
@@ -2146,7 +2318,7 @@
             // Toggle state storage (start all OFF)
             const state = { dialog: false, music: false, ambient: false };
 
-            function updateHotspotUI(name){
+            function updateHotspotUI(name) {
                 const el = hotspots[name];
                 if (!el) return;
                 const on = !!state[name];
@@ -2203,7 +2375,7 @@
 
                     // Toggle logic: if clicking the active one, turn it off.
                     const wasActive = state[k];
-                    
+
                     // Turn all off in UI state
                     Object.keys(state).forEach(s => { state[s] = false; updateHotspotUI(s); });
 
@@ -2220,7 +2392,7 @@
                     refreshSelectorImage(k);
 
                     // Ensure audio is unlocked
-                    if (audioEl.dataset.enabled !== '1'){
+                    if (audioEl.dataset.enabled !== '1') {
                         if (typeof window.enableGlobalAudio === 'function') {
                             await window.enableGlobalAudio();
                         }
@@ -2247,7 +2419,7 @@
                         audioEl.loop = loop;
                         try {
                             await audioEl.play();
-                        } catch(e) {
+                        } catch (e) {
                             console.warn('Audio play error', e);
                         }
                     }
@@ -2270,7 +2442,9 @@
     <!-- PWA progress toast -->
     <div id="pwaToast" class="pwa-toast" hidden role="status" aria-live="polite">
         <div class="label">Guardando para uso offline...</div>
-        <div class="pwa-progress" aria-hidden="true"><div class="bar"></div></div>
+        <div class="pwa-progress" aria-hidden="true">
+            <div class="bar"></div>
+        </div>
         <div id="pwaToastPct" class="label">0%</div>
     </div>
 
@@ -2316,7 +2490,7 @@
         let splatCamera = null;
         const btnPoly = document.getElementById('btn-poly');
         const btnSplat = document.getElementById('btn-splat');
-        
+
         let renderer, scene, camera, model, pivot, mixer;
         let isDragging = false;
         let previousMouseX = 0;
@@ -2334,10 +2508,10 @@
             if (!islandCanvas) return;
 
             // Renderer
-            renderer = new THREE.WebGLRenderer({ 
-                canvas: islandCanvas, 
-                alpha: true, 
-                antialias: true 
+            renderer = new THREE.WebGLRenderer({
+                canvas: islandCanvas,
+                alpha: true,
+                antialias: true
             });
             renderer.setPixelRatio(window.devicePixelRatio);
             renderer.setSize(islandCanvas.clientWidth, islandCanvas.clientHeight, false);
@@ -2375,7 +2549,7 @@
             loader.load('assets/isla_3d.glb', (gltf) => {
                 model = gltf.scene;
                 // Center the model if needed, or adjust scale
-                model.scale.set(3, 3,3); 
+                model.scale.set(3, 3, 3);
                 // Adjust position to center it
                 model.position.y = -1.4;
                 pivot.add(model);
@@ -2446,7 +2620,7 @@
                 islandEl.addEventListener('mousedown', handleMouseDown);
                 islandEl.addEventListener('touchstart', handleMouseDown, { passive: true });
             }
-            
+
             // Add listener to splat container overlay
             // We need to wait for the element to be available or use event delegation
             // Since this script runs after DOM is parsed (module), it should be fine if element exists
@@ -2462,50 +2636,50 @@
                     }
                 });
             }
-            
+
             const handleMove = (e) => {
                 if (isDragging) {
                     const clientX = getClientX(e);
                     const deltaX = clientX - previousMouseX;
                     if (Math.abs(deltaX) > 1) dragMoved = true;
-                    
+
                     if (!isSplatMode && model) {
                         model.rotation.y += deltaX * 0.003;
                     } else if (isSplatMode && splatIframe) {
                         // Rotate Splat Camera
                         try {
                             const iframeWin = splatIframe.contentWindow;
-                                    if (iframeWin && iframeWin.document && splatCamera) {
-                                        // Get current position and rotation
-                                        const pos = splatCamera.getPosition();
-                                        const currentRot = splatCamera.getEulerAngles();
-                                        const radius = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
-                                        let theta = Math.atan2(pos.x, pos.z);
+                            if (iframeWin && iframeWin.document && splatCamera) {
+                                // Get current position and rotation
+                                const pos = splatCamera.getPosition();
+                                const currentRot = splatCamera.getEulerAngles();
+                                const radius = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
+                                let theta = Math.atan2(pos.x, pos.z);
 
-                                        theta -= deltaX * 0.0025; // rotate around Y (50% slower)
+                                theta -= deltaX * 0.0025; // rotate around Y (50% slower)
 
-                                        const newX = radius * Math.sin(theta);
-                                        const newZ = radius * Math.cos(theta);
+                                const newX = radius * Math.sin(theta);
+                                const newZ = radius * Math.cos(theta);
 
-                                        splatCamera.setPosition(newX, pos.y, newZ);
-                                        // Maintain the pitch (x rotation) while rotating to look at center
-                                        const targetY = 0;
-                                        const dx = 0 - newX;
-                                        const dz = 0 - newZ;
-                                        const yaw = Math.atan2(dx, dz) * (180 / Math.PI);
-                                        splatCamera.setEulerAngles(currentRot.x, yaw, 0);
-                                    }
-                                } catch (err) {
-                                    // Ignore cross-origin errors if any
-                                }
+                                splatCamera.setPosition(newX, pos.y, newZ);
+                                // Maintain the pitch (x rotation) while rotating to look at center
+                                const targetY = 0;
+                                const dx = 0 - newX;
+                                const dz = 0 - newZ;
+                                const yaw = Math.atan2(dx, dz) * (180 / Math.PI);
+                                splatCamera.setEulerAngles(currentRot.x, yaw, 0);
+                            }
+                        } catch (err) {
+                            // Ignore cross-origin errors if any
+                        }
                     }
-                    
-                            previousMouseX = clientX;
-                }
-                    };
 
-                    window.addEventListener('mousemove', handleMove);
-                    window.addEventListener('touchmove', handleMove, { passive: true });
+                    previousMouseX = clientX;
+                }
+            };
+
+            window.addEventListener('mousemove', handleMove);
+            window.addEventListener('touchmove', handleMove, { passive: true });
 
             const handleUp = (e) => {
                 isDragging = false;
@@ -2516,7 +2690,7 @@
             window.addEventListener('touchend', handleUp, { passive: true });
 
             // Bottom selector buttons (removed)
-            
+
             // Setup Iframe Click Listener
             if (splatIframe) {
                 splatIframe.onload = () => {
@@ -2576,7 +2750,7 @@
 
         function animate() {
             requestAnimationFrame(animate);
-            
+
             if (!isSplatMode) {
                 const delta = clock.getDelta();
                 if (mixer) {
@@ -2688,12 +2862,12 @@
             if (ev.key === 'Escape') closeCredits();
         });
 
-       
+
     </script>
 
     <script>
         // Handle messages from service worker to update progress UI
-        (function(){
+        (function () {
             const toast = document.getElementById('pwaToast');
             const bar = toast ? toast.querySelector('.pwa-progress > .bar') : null;
             const pct = document.getElementById('pwaToastPct');
@@ -2736,7 +2910,7 @@
     </script>
 
     <script>
-        (function(){
+        (function () {
             const MIN_RADIUS = 42;
             const MAX_RADIUS = 42;
             const RATIO = 0.017;
@@ -2747,7 +2921,7 @@
             const root = document.documentElement;
             if (!frame || !root) return;
 
-            function updateRadius(){
+            function updateRadius() {
                 const rect = frame.getBoundingClientRect();
                 if (!rect.width || !rect.height) return;
                 const calculated = Math.round(rect.width * RATIO);
@@ -2770,7 +2944,7 @@
 
     <script>
         // Drag and drop functionality for manifesto item
-        (function() {
+        (function () {
             const manifestoItem = document.querySelector('.manifiesto-item');
             if (!manifestoItem) return;
 
@@ -2815,7 +2989,7 @@
             function drag(e) {
                 if (isDragging) {
                     e.preventDefault();
-                    
+
                     if (e.type === "touchmove") {
                         currentX = e.touches[0].clientX - initialX;
                         currentY = e.touches[0].clientY - initialY;
@@ -2831,7 +3005,7 @@
                     const rect = manifestoItem.getBoundingClientRect();
                     const maxX = window.innerWidth - rect.width;
                     const maxY = window.innerHeight - rect.height;
-                    
+
                     xOffset = Math.max(0, Math.min(xOffset, maxX));
                     yOffset = Math.max(0, Math.min(yOffset, maxY));
 
@@ -2849,6 +3023,482 @@
             manifestoItem.addEventListener('touchstart', dragStart, false);
             document.addEventListener('touchend', dragEnd, false);
             document.addEventListener('touchmove', drag, { passive: false });
+        })();
+    </script>
+
+    <script>
+        // Floating text typewriter animation on scroll
+        (function () {
+            const floatingTexts = document.querySelectorAll('.floating-text');
+            if (!floatingTexts.length) return;
+
+            const typewriterConfig = {
+                totalDuration: 2000, // Total duration in ms for all characters
+                startDelay: 300, // ms before animation starts when element enters viewport
+                glitchChars: '█▓▒░@#$%&*ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
+                glitchIterations: 2, // Number of random characters to show before the real one
+                glitchSpeed: 15 // ms between glitch characters
+            };
+
+            // Store original content and state for each floating-text
+            const textStates = new Map();
+
+            function initFloatingText() {
+                floatingTexts.forEach(container => {
+                    // If already initialized, skip
+                    if (textStates.has(container)) return;
+
+                    const paragraphs = container.querySelectorAll('p, div');
+                    const originalContent = Array.from(paragraphs).map(p => ({
+                        element: p,
+                        originalHTML: p.innerHTML,
+                        isAnimating: false,
+                        timeoutId: null,
+                        intervalId: null,
+                        height: 0,
+                        width: 0,
+                        textAlign: '',
+                        charPositions: [] // Array of {x, y, width, height} for each character
+                    }));
+                    textStates.set(container, originalContent);
+
+                    // Calculate positions by rendering text invisibly
+                    let hasValidHeight = false;
+                    originalContent.forEach(state => {
+                        const { element, originalHTML } = state;
+                        
+                        // Store original text-align
+                        state.textAlign = window.getComputedStyle(element).textAlign;
+                        
+                        // Temporarily show full text to measure
+                        element.innerHTML = originalHTML;
+                        element.style.visibility = 'hidden';
+                        element.style.height = 'auto';
+                        element.style.width = 'auto';
+                        
+                        const rect = element.getBoundingClientRect();
+                        state.height = rect.height;
+                        state.width = rect.width;
+                        
+                        if (state.height > 0) hasValidHeight = true;
+
+                        // Get character positions relative to element
+                        const plainText = element.textContent;
+                        const elementRect = element.getBoundingClientRect();
+                        
+                        for (let i = 0; i < plainText.length; i++) {
+                            try {
+                                // Create a range for each character
+                                let charIndex = 0;
+                                let found = false;
+                                
+                                const walk = (node) => {
+                                    if (found) return;
+                                    if (node.nodeType === Node.TEXT_NODE) {
+                                        for (let j = 0; j < node.textContent.length; j++) {
+                                            if (charIndex === i) {
+                                                const range = document.createRange();
+                                                range.setStart(node, j);
+                                                range.setEnd(node, j + 1);
+                                                const rects = range.getClientRects();
+                                                
+                                                if (rects.length > 0) {
+                                                    const charRect = rects[0];
+                                                    state.charPositions.push({
+                                                        x: charRect.left - elementRect.left,
+                                                        y: charRect.top - elementRect.top,
+                                                        width: charRect.width,
+                                                        height: charRect.height
+                                                    });
+                                                } else {
+                                                    state.charPositions.push({
+                                                        x: 0,
+                                                        y: 0,
+                                                        width: 0,
+                                                        height: 0
+                                                    });
+                                                }
+                                                found = true;
+                                                return;
+                                            }
+                                            charIndex++;
+                                        }
+                                    } else if (node.nodeType === Node.ELEMENT_NODE) {
+                                        for (let child of node.childNodes) {
+                                            walk(child);
+                                            if (found) return;
+                                        }
+                                    }
+                                };
+                                
+                                walk(element);
+                            } catch (e) {
+                                // Fallback if position calculation fails
+                                state.charPositions.push({
+                                    x: 0,
+                                    y: 0,
+                                    width: 0,
+                                    height: 0
+                                });
+                            }
+                        }
+                        
+                        // Clear and set proper dimensions ONLY if we got a valid height
+                        // Otherwise leave it alone (fallback to static text)
+                        if (state.height > 0) {
+                            element.innerHTML = '';
+                            element.style.visibility = 'visible';
+                            element.style.height = state.height + 'px';
+                            element.style.width = 'auto';
+                        } else {
+                            element.style.visibility = 'visible';
+                            element.style.height = 'auto';
+                        }
+                    });
+
+                    // Set container height
+                    const maxHeight = originalContent.reduce((max, state) => Math.max(max, state.height), 0);
+                    if (maxHeight > 0) {
+                        container.style.minHeight = maxHeight + 'px';
+                    }
+                });
+            }
+
+            function getPlainTextLength(html) {
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                return temp.textContent.length;
+            }
+
+            function getPartialHTML(html, charCount) {
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                let count = 0;
+
+                const walk = (node, maxChars) => {
+                    if (count >= maxChars) return '';
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        const remaining = maxChars - count;
+                        const text = node.textContent.substring(0, remaining);
+                        count += text.length;
+                        return text;
+                    } else if (node.nodeType === Node.ELEMENT_NODE) {
+                        const tagName = node.tagName.toLowerCase();
+                        let result = `<${tagName}>`;
+                        for (let child of node.childNodes) {
+                            if (count >= maxChars) break;
+                            result += walk(child, maxChars);
+                        }
+                        result += `</${tagName}>`;
+                        return result;
+                    }
+                    return '';
+                };
+
+                let result = '';
+                for (let child of temp.childNodes) {
+                    if (count >= charCount) break;
+                    result += walk(child, charCount);
+                }
+                return result;
+            }
+
+            function getPartialHTMLWithGlitch(html, charCount, glitchChar = null) {
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                let count = 0;
+
+                const walk = (node, maxChars) => {
+                    if (count >= maxChars) return '';
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        const remaining = maxChars - count;
+                        let text = node.textContent.substring(0, remaining);
+                        
+                        // If we have a glitch character and we're at the last position, replace it
+                        if (glitchChar !== null && count + text.length === maxChars && text.length > 0) {
+                            text = text.substring(0, text.length - 1) + glitchChar;
+                        }
+                        
+                        count += text.length;
+                        return text;
+                    } else if (node.nodeType === Node.ELEMENT_NODE) {
+                        const tagName = node.tagName.toLowerCase();
+                        let result = `<${tagName}>`;
+                        for (let child of node.childNodes) {
+                            if (count >= maxChars) break;
+                            result += walk(child, maxChars);
+                        }
+                        result += `</${tagName}>`;
+                        return result;
+                    }
+                    return '';
+                };
+
+                let result = '';
+                for (let child of temp.childNodes) {
+                    if (count >= charCount) break;
+                    result += walk(child, charCount);
+                }
+                return result;
+            }
+
+            function animateTypewriter(container) {
+                const states = textStates.get(container);
+                if (!states) return;
+
+                states.forEach(state => {
+                    if (state.isAnimating) return; // Already animating
+
+                    state.isAnimating = true;
+                    const { element, originalHTML, charPositions, textAlign } = state;
+                    const plainText = element.textContent || getPlainTextLength(originalHTML);
+                    const totalChars = typeof plainText === 'string' ? plainText.length : plainText;
+
+                    // Create a wrapper to maintain centering
+                    const wrapper = document.createElement('div');
+                    wrapper.style.position = 'relative';
+                    wrapper.style.display = 'inline-block';
+                    wrapper.style.textAlign = 'left';
+                    wrapper.style.minHeight = state.height + 'px';
+                    wrapper.style.minWidth = state.width + 'px';
+                    
+                    element.innerHTML = '';
+                    element.style.textAlign = textAlign;
+                    element.appendChild(wrapper);
+
+                    const getRandomGlitchChar = () => {
+                        return typewriterConfig.glitchChars.charAt(
+                            Math.floor(Math.random() * typewriterConfig.glitchChars.length)
+                        );
+                    };
+
+                    // Get the actual text content to display
+                    const temp = document.createElement('div');
+                    temp.innerHTML = originalHTML;
+                    const textContent = temp.textContent;
+
+                    // Create randomized indices
+                    const indices = Array.from({ length: totalChars }, (_, i) => i);
+                    // Shuffle the indices
+                    for (let i = indices.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [indices[i], indices[j]] = [indices[j], indices[i]];
+                    }
+
+                    // Calculate time per character including glitch iterations
+                    const timePerChar = typewriterConfig.totalDuration / totalChars;
+                    const glitchTime = typewriterConfig.glitchIterations * typewriterConfig.glitchSpeed;
+
+                    state.timeoutId = setTimeout(() => {
+                        // Animate all characters simultaneously with staggered starts
+                        indices.forEach((charIndex, order) => {
+                            const startTime = order * timePerChar;
+                            
+                            // Glitch phase
+                            for (let g = 0; g < typewriterConfig.glitchIterations; g++) {
+                                setTimeout(() => {
+                                    const glitchChar = getRandomGlitchChar();
+                                    const pos = charPositions[charIndex] || { x: 0, y: 0 };
+                                    
+                                    let span = wrapper.querySelector(`[data-char-index="${charIndex}"]`);
+                                    if (!span) {
+                                        span = document.createElement('span');
+                                        span.setAttribute('data-char-index', charIndex);
+                                        span.style.position = 'absolute';
+                                        span.style.left = pos.x + 'px';
+                                        span.style.top = pos.y + 'px';
+                                        span.style.whiteSpace = 'pre';
+                                        wrapper.appendChild(span);
+                                    }
+                                    span.textContent = glitchChar;
+                                }, startTime + g * typewriterConfig.glitchSpeed);
+                            }
+                            
+                            // Final character reveal
+                            setTimeout(() => {
+                                const realChar = textContent[charIndex];
+                                const pos = charPositions[charIndex] || { x: 0, y: 0 };
+                                
+                                let span = wrapper.querySelector(`[data-char-index="${charIndex}"]`);
+                                if (!span) {
+                                    span = document.createElement('span');
+                                    span.setAttribute('data-char-index', charIndex);
+                                    span.style.position = 'absolute';
+                                    span.style.left = pos.x + 'px';
+                                    span.style.top = pos.y + 'px';
+                                    span.style.whiteSpace = 'pre';
+                                    wrapper.appendChild(span);
+                                }
+                                span.textContent = realChar;
+                            }, startTime + glitchTime);
+                        });
+
+                        // Animation complete - restore original HTML
+                        setTimeout(() => {
+                            element.innerHTML = originalHTML;
+                            element.style.textAlign = '';
+                            state.isAnimating = false;
+                        }, typewriterConfig.totalDuration + glitchTime + 100);
+                    }, typewriterConfig.startDelay);
+                });
+            }
+
+            // Setup Intersection Observer
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.2 // Trigger when 20% of the element is visible
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        animateTypewriter(entry.target);
+                        observer.unobserve(entry.target); // Animate only once
+                    }
+                });
+            }, observerOptions);
+
+            function startObserving() {
+                initFloatingText();
+                floatingTexts.forEach(container => observer.observe(container));
+            }
+
+            if (document.body.classList.contains('is-loading')) {
+                const bodyObserver = new MutationObserver((mutations) => {
+                    if (!document.body.classList.contains('is-loading')) {
+                        startObserving();
+                        bodyObserver.disconnect();
+                    }
+                });
+                bodyObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+            } else {
+                startObserving();
+            }
+        })();
+    </script>
+
+    <script>
+        (function() {
+            const canvas = document.getElementById('manifiesto-canvas');
+            if (!canvas) return;
+
+            const content = document.querySelector('.grid-frame-content');
+            const ctx = canvas.getContext('2d');
+            const SQUARE_SIZE = 25;
+            const COLS = 8;
+            const ROWS = 13;
+            
+            const GRID_WIDTH = COLS * SQUARE_SIZE;
+            const GRID_HEIGHT = ROWS * SQUARE_SIZE;
+            
+            // Margins for the outer elements
+            const PADDING = 80; 
+            
+            canvas.width = GRID_WIDTH + PADDING * 2;
+            canvas.height = GRID_HEIGHT + PADDING * 2;
+            
+            const startX = PADDING;
+            const startY = PADDING;
+
+            // Increase right padding when columns decrease so text stays inside the grid area
+            if (content) {
+                const BASE_COLS = 10;
+                const BASE_RIGHT_PADDING = 30; // matches initial inline padding-right
+                const extraRight = Math.max(0, (BASE_COLS - COLS) * SQUARE_SIZE * 0.6);
+                content.style.paddingRight = `${Math.round(BASE_RIGHT_PADDING + extraRight)}px`;
+            }
+
+            // 1. Grid of transparent blue squares with faint yellow outlines
+            ctx.strokeStyle = 'rgba(255, 255, 0, 0.15)'; // Faint yellow (fainter)
+            ctx.fillStyle = 'rgba(0, 100, 255, 0.05)'; // Transparent blue (fainter)
+            ctx.lineWidth = 1;
+
+            for (let i = 0; i < COLS; i++) {
+                for (let j = 0; j < ROWS; j++) {
+                    const x = startX + i * SQUARE_SIZE;
+                    const y = startY + j * SQUARE_SIZE;
+                    ctx.fillRect(x, y, SQUARE_SIZE, SQUARE_SIZE);
+                    ctx.strokeRect(x, y, SQUARE_SIZE, SQUARE_SIZE);
+                }
+            }
+
+            // 2. 4px outsetted from the grid are yellow lines that form a square without corners
+            // (the lines stops 5px before meeting in the corner)
+            const OUTSET_1 = 16; // Slightly tighter spacing between grid and outer lines
+            const CORNER_GAP = 30;
+            
+            const frameX = startX - OUTSET_1;
+            const frameY = startY - OUTSET_1;
+            const frameW = GRID_WIDTH + OUTSET_1 * 2;
+            const frameH = GRID_HEIGHT + OUTSET_1 * 2;
+
+            ctx.strokeStyle = '#FFFF00'; // Yellow
+            ctx.lineWidth = 1;
+            ctx.shadowBlur = 0;
+
+            ctx.beginPath();
+            // Top line
+            ctx.moveTo(frameX + CORNER_GAP, frameY);
+            ctx.lineTo(frameX + frameW - CORNER_GAP, frameY);
+            
+            // Bottom line
+            ctx.moveTo(frameX + CORNER_GAP, frameY + frameH);
+            ctx.lineTo(frameX + frameW - CORNER_GAP, frameY + frameH);
+            
+            // Left line
+            ctx.moveTo(frameX, frameY + CORNER_GAP);
+            ctx.lineTo(frameX, frameY + frameH - CORNER_GAP);
+            
+            // Right line
+            ctx.moveTo(frameX + frameW, frameY + CORNER_GAP);
+            ctx.lineTo(frameX + frameW, frameY + frameH - CORNER_GAP);
+            
+            ctx.stroke();
+
+            // 3. Rounded corners just outside the outer frame with a tighter, aligned gap.
+            const OFFSET_2 = 14; // Minimal separation to keep corners hugging the frame
+            const cornerX = frameX - OFFSET_2;
+            const cornerY = frameY - OFFSET_2;
+            const cornerW = frameW + OFFSET_2 * 2;
+            const cornerH = frameH + OFFSET_2 * 2;
+            const CORNER_LENGTH = 55; // Base corner leg length
+            const CORNER_BIAS = Math.round(CORNER_LENGTH * 0.01); // Extra run along the clockwise side
+            const CORNER_RADIUS = 38; // Balanced curve for the extended legs
+
+            ctx.strokeStyle = '#FFFF00';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.shadowColor = '#FFFF00';
+            ctx.shadowBlur = 10; // Glowing
+            
+            ctx.beginPath();
+            
+            // Top-Left Corner: base run down, arc, then extend along top (clockwise side)
+            ctx.moveTo(cornerX, cornerY + CORNER_LENGTH);
+            ctx.arcTo(cornerX, cornerY, cornerX + CORNER_LENGTH, cornerY, CORNER_RADIUS);
+            ctx.lineTo(cornerX + CORNER_LENGTH + CORNER_BIAS, cornerY);
+
+            // Top-Right Corner: base run along top, arc, then extend down (clockwise side)
+            ctx.moveTo(cornerX + cornerW - CORNER_LENGTH, cornerY);
+            ctx.arcTo(cornerX + cornerW, cornerY, cornerX + cornerW, cornerY + CORNER_LENGTH, CORNER_RADIUS);
+            ctx.lineTo(cornerX + cornerW, cornerY + CORNER_LENGTH + CORNER_BIAS);
+
+            // Bottom-Right Corner: base run down, arc, then extend left along bottom (clockwise side)
+            ctx.moveTo(cornerX + cornerW, cornerY + cornerH - CORNER_LENGTH);
+            ctx.arcTo(cornerX + cornerW, cornerY + cornerH, cornerX + cornerW - CORNER_LENGTH, cornerY + cornerH, CORNER_RADIUS);
+            ctx.lineTo(cornerX + cornerW - CORNER_LENGTH - CORNER_BIAS, cornerY + cornerH);
+
+            // Bottom-Left Corner: base run along bottom, arc, then extend up (clockwise side)
+            ctx.moveTo(cornerX + CORNER_LENGTH, cornerY + cornerH);
+            ctx.arcTo(cornerX, cornerY + cornerH, cornerX, cornerY + cornerH - CORNER_LENGTH, CORNER_RADIUS);
+            ctx.lineTo(cornerX, cornerY + cornerH - CORNER_LENGTH - CORNER_BIAS);
+            
+            ctx.stroke();
+            
+            // Reset shadow
+            ctx.shadowBlur = 0;
         })();
     </script>
 
