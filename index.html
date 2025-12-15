@@ -8,8 +8,8 @@
     <link rel="stylesheet" href="https://use.typekit.net/tas7aat.css">
     <style>
         :root {
-            --video-frame-radius: 36px;
-            --video-frame-corner-length: 34px;
+            --video-frame-radius: clamp(18px, 3vw, 38px);
+            --video-frame-corner-length: clamp(24px, 8vw, 90px);
             --video-frame-outline-offset: 10px;
             --video-frame-outline-inner-offset: -4px;
             --video-frame-padding: clamp(6px, 0px, 6px);
@@ -156,6 +156,65 @@
             transition: opacity 400ms ease;
         }
 
+        /* Entry gate shown after loader */
+        #entry-gate {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 99990;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            pointer-events: none;
+            transition: opacity 900ms ease;
+        }
+
+        #entry-gate.is-fading {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #entry-gate.is-interactive {
+            pointer-events: auto;
+        }
+
+        #entry-gate button {
+            font-family: "new-science", 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
+            font-size: clamp(18px, 3vw, 28px);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #FBFE5E;
+            background: transparent;
+            border: 2px solid #FBFE5E;
+            padding: 14px 48px;
+            border-radius: 999px;
+            cursor: pointer;
+            outline: none;
+            transition: opacity 240ms ease, transform 240ms ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #entry-gate button:hover {
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        #entry-gate button:active {
+            transform: translateY(0) scale(0.99);
+        }
+
+        #entry-gate button.is-hiding {
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
+        }
+
+        #entry-gate.is-interactive button {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
         /* Video wrapper with rounded corners and overflow hidden */
         .video-wrapper {
             position: relative;
@@ -188,9 +247,11 @@
             inset: 0;
             background: url('assets/nube.png') center center / contain no-repeat;
             mix-blend-mode: lighten;
-            opacity: 0.3;
+            opacity: 0;
             filter: hue-rotate(-8deg) saturate(1.05) brightness(1.06);
             animation: cloudTintCycle 20s ease-in-out infinite alternate, cloudDrift 32s ease-in-out infinite alternate;
+            animation-play-state: paused;
+            transition: opacity 1100ms ease;
             pointer-events: none;
             z-index: 1;
         }
@@ -201,11 +262,23 @@
             inset: 0;
             background: url('assets/nube.png') center center / contain no-repeat;
             mix-blend-mode: lighten;
-            opacity: 0.26;
+            opacity: 0;
             filter: hue-rotate(-8deg) saturate(1.05) brightness(1.04);
             animation: cloudTintCycle 20s ease-in-out infinite alternate, cloudDriftFlip 32s ease-in-out infinite alternate;
+            animation-play-state: paused;
+            transition: opacity 1200ms ease;
             pointer-events: none;
             z-index: 1;
+        }
+
+        .floating-island.cloud1-visible::before {
+            opacity: 0.3;
+            animation-play-state: running;
+        }
+
+        .floating-island.cloud2-visible::after {
+            opacity: 0.26;
+            animation-play-state: running;
         }
 
         @media (max-width: 768px) {
@@ -266,6 +339,17 @@
             pointer-events: auto;
         }
 
+        #splat-container {
+            opacity: 0;
+            transition: opacity 1200ms ease;
+            pointer-events: none;
+        }
+
+        #splat-container.is-visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
         /* Floating island transitions */
         .floating-island,
         .floating-island canvas {
@@ -321,8 +405,8 @@
         /* Frame image as background */
         .video-frame {
             position: relative;
-            width: 77.4vw;
-            max-width: 77.4vw;
+            width: 84vw;
+            max-width: 84vw;
             aspect-ratio: 16/9;
             margin: 0 auto;
             padding: 0;
@@ -335,8 +419,9 @@
         .video-frame::after {
             content: '';
             position: absolute;
-            inset: -4%;
-            background: url('assets/marco-videos.webp') center center / 93% no-repeat;
+            inset: 0;
+            background: url('assets/marco-videos.webp') center center / 100% 100% no-repeat;
+            border-radius: inherit;
             pointer-events: none;
             z-index: 4;
         }
@@ -677,8 +762,8 @@
             pointer-events: auto;
             opacity: 0;
             transition: opacity 1.5s ease;
-            max-width: 600px;
-            width: 90%;
+            max-width: 1200px;
+            width: min(90vw, 1200px);
         }
 
         .video-section.hero .sound-selector.is-visible {
@@ -688,7 +773,8 @@
         .video-section.hero .sound-selector img {
             display: block;
             cursor: pointer;
-            width: 1200px;
+            width: 100%;
+            max-width: 100%;
             height: auto;
         }
 
@@ -1044,6 +1130,9 @@
             <source src="assets/D+_loader04.webm" type="video/webm">
         </video>
     </div>
+    <div id="entry-gate" aria-hidden="true">
+        <button id="entry-button" type="button">ENTRAR</button>
+    </div>
     <div id="bg-transition-root" aria-hidden="true"></div>
     <div id="bg-dark-overlay"
         style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: -1; pointer-events: none;"
@@ -1060,7 +1149,7 @@
                     allowtransparency="true"></iframe>
                 <div id="splat-overlay" style="position: absolute; inset: 0; z-index: 10;"></div>
             </div>
-            <div id="island-loader"
+           <!--  <div id="island-loader"
                 style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 140px; padding: 10px 10px 8px; background: rgba(0,0,0,0.55); border-radius: 8px; overflow: hidden; pointer-events: none; text-align: center; color: #fff; font-size: 13px; letter-spacing: 0.04em;">
                 <div style="margin-bottom: 6px;">Cargando isla...</div>
                 <div
@@ -1072,7 +1161,7 @@
             <div id="splat-loader"
                 style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 14px 20px; background: rgba(0,0,0,0.55); border-radius: 8px; pointer-events: none; text-align: center; color: #fff; font-size: 13px; letter-spacing: 0.04em; z-index: 0;">
                 Cargando isla...
-            </div>
+            </div> -->
             <div class="sound-selector" aria-hidden="false" role="group" aria-label="Selector de sonido">
                 <img src="assets/selectores/selector-sonido-off.png" alt="Selector de sonido" id="sound-toggle">
             </div>
@@ -1502,11 +1591,11 @@
 
             function reveal() { indicator.classList.add('is-visible'); }
 
-            if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            function startTimer() {
                 setTimeout(reveal, SHOW_DELAY_MS);
-            } else {
-                document.addEventListener('DOMContentLoaded', () => setTimeout(reveal, SHOW_DELAY_MS), { once: true });
             }
+
+            window.addEventListener('dg:entry-ui', startTimer, { once: true });
         })();
     </script>
 
@@ -1943,12 +2032,18 @@
             const loader = document.getElementById('page-loader');
             const loaderVideo = loader ? loader.querySelector('video') : null;
             const body = document.body;
+            const entryGate = document.getElementById('entry-gate');
+            const entryButton = document.getElementById('entry-button');
+            const floatingIsland = document.querySelector('.floating-island');
+            const splatContainer = document.getElementById('splat-container');
             const MIN_DISPLAY_MS = 4000;
             const BLACKOUT_FADE_MS = 800;
             const BLACKOUT_HOLD_MS = 2000;
             const FALLBACK_REVEAL_MS = MIN_DISPLAY_MS + BLACKOUT_FADE_MS + BLACKOUT_HOLD_MS + 2000;
             let loaderHidden = false;
             let revealStarted = false;
+            let entryStarted = false;
+            let uiRevealed = false;
 
             function shouldSkipLoader() {
                 const DEBUG_KEYS = ['debug', 'dgDebug', 'skipLoader'];
@@ -1984,22 +2079,75 @@
                 body && body.classList.remove('is-loading');
             }
 
+            function revealUIElements() {
+                if (uiRevealed) return;
+                uiRevealed = true;
+                const selector = document.querySelector('.sound-selector');
+                const manifesto = document.querySelector('.manifiesto-item');
+                if (selector) selector.classList.add('is-visible');
+                if (manifesto) manifesto.classList.add('is-visible');
+                window.dispatchEvent(new CustomEvent('dg:entry-ui'));
+            }
+
+            function showEntryGate() {
+                if (!entryGate) {
+                    revealUIElements();
+                    return;
+                }
+                entryGate.setAttribute('aria-hidden', 'false');
+                entryGate.classList.add('is-interactive');
+            }
+
+            function runEntryTimeline() {
+                if (entryStarted) return;
+                entryStarted = true;
+
+                if (entryButton) {
+                    entryButton.disabled = true;
+                    entryButton.classList.add('is-hiding');
+                }
+
+                setTimeout(() => {
+                    if (entryGate) entryGate.classList.add('is-fading');
+                }, 140);
+
+                setTimeout(() => {
+                    if (floatingIsland) floatingIsland.classList.add('cloud1-visible');
+                }, 600);
+
+                setTimeout(() => {
+                    if (floatingIsland) floatingIsland.classList.add('cloud2-visible');
+                }, 1200);
+
+                setTimeout(() => {
+                    if (splatContainer) splatContainer.classList.add('is-visible');
+                }, 1800);
+
+                setTimeout(revealUIElements, 2400);
+
+                setTimeout(() => {
+                    if (entryGate && entryGate.parentElement) {
+                        entryGate.setAttribute('aria-hidden', 'true');
+                        entryGate.remove();
+                    }
+                }, 1700);
+            }
+
+            if (entryButton) {
+                entryButton.addEventListener('click', runEntryTimeline);
+            }
+
             function startReveal() {
                 if (!loader || revealStarted) return;
                 revealStarted = true;
                 // Skip welcome intro: hide loader immediately
                 hideLoader();
-                // Small delay before showing selector + manifesto
-                const selector = document.querySelector('.sound-selector');
-                const manifesto = document.querySelector('.manifiesto-item');
-                setTimeout(() => {
-                    if (selector) selector.classList.add('is-visible');
-                    if (manifesto) manifesto.classList.add('is-visible');
-                }, 900);
+                showEntryGate();
             }
 
             if (skipLoader) {
                 hideLoader();
+                showEntryGate();
                 return; // Debug flag short-circuits the rest of the loader choreography
             }
 
@@ -2911,9 +3059,9 @@
 
     <script>
         (function () {
-            const MIN_RADIUS = 42;
-            const MAX_RADIUS = 42;
-            const RATIO = 0.017;
+            const MIN_RADIUS = 18;
+            const MAX_RADIUS = 38;
+            const RATIO = 0.03;
             const MIN_CORNER = 24;
             const MAX_CORNER = 90;
             const CORNER_RATIO = 0.1;

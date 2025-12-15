@@ -101890,6 +101890,11 @@ fn fragmentMain(input: FragmentInput) -> FragmentOutput {
 						state.animationTime = controllers.anim.animState.cursor.value;
 					}
 				};
+				// external setter so UI can tweak FOV
+				this.setFov = (fov) => {
+					target.fov = fov;
+					this.camera.fov = fov;
+				};
 				// handle input events
 				events.on('inputEvent', (eventName, event) => {
 					switch (eventName) {
@@ -102070,6 +102075,7 @@ fn fragmentMain(input: FragmentInput) -> FragmentOutput {
 				ctrl: 0,
 				touches: 0
 			};
+			_debugCounter = 0;
 			_desktopInput = new KeyboardMouseSource();
 			_orbitInput = new MultiTouchSource();
 			_flyInput = new DualGestureSource();
@@ -102102,11 +102108,16 @@ fn fragmentMain(input: FragmentInput) -> FragmentOutput {
 					this.joystick.stick = [sx - bx, sy - by];
 				});
 				this.global = global;
-				// Generate input events
-				['wheel', 'pointerdown', 'contextmenu', 'keydown'].forEach((eventName) => {
+				// Generate input events (ignore wheel so scroll doesn't break autorotate)
+				['pointerdown', 'contextmenu', 'keydown'].forEach((eventName) => {
 					canvas.addEventListener(eventName, (event) => {
 						events.fire('inputEvent', 'interrupt', event);
 					});
+				});
+				// When drag ends, allow autorotation to resume quickly
+				canvas.addEventListener('pointerup', () => {
+					this.lastInteractionTime = performance.now() * 0.001 - (this.autoSpinResumeDelay || 0.3);
+					console.log('[splat] pointerup -> lastInteractionTime reset for autorotate');
 				});
 				canvas.addEventListener('pointermove', (event) => {
 					events.fire('inputEvent', 'interact', event);
@@ -102245,22 +102256,40 @@ fn fragmentMain(input: FragmentInput) -> FragmentOutput {
 				stickRotate.set(rightStick[0], rightStick[1], 0);
 				v.add(stickRotate.mulScalar(this.orbitSpeed * orbitFactor * dt));
 				deltas.rotate.append([v.x, v.y, v.z]);
+				// reset per-frame mouse deltas so autorotate can resume after drag
+				this._state.mouse[0] = 0;
+				this._state.mouse[1] = 0;
 				
 				// Apply autorotation when in orbit mode and user isn't actively rotating
-				if (!this.autoSpinSpeed) this.autoSpinSpeed = 0.06;
+				if (!this.autoSpinSpeed) this.autoSpinSpeed = 4; // visibly faster autorotate (deg/sec equivalent)
 				if (!this.autoSpinResumeDelay) this.autoSpinResumeDelay = 0.3;
 				if (!this.lastInteractionTime) this.lastInteractionTime = 0;
 				
 				const rotateDeltaMag = deltas.rotate.length();
 				const now = performance.now() * 0.001;
-				const userInteracting = rotateDeltaMag > 0;
-				
+				const userInteracting = rotateDeltaMag > 1e-6;
+
 				if (userInteracting) {
 					this.lastInteractionTime = now;
 				}
-				
-				if (!userInteracting && (now - this.lastInteractionTime) > this.autoSpinResumeDelay && this.autoSpinSpeed > 0 && state.cameraMode === 'orbit') {
+
+				const idleFor = now - this.lastInteractionTime;
+				const canAutorotate = !userInteracting && idleFor > this.autoSpinResumeDelay && this.autoSpinSpeed > 0 && state.cameraMode === 'orbit';
+				if ((this._debugCounter++ % 60) === 0) {
+					console.log('[splat] auto-spin debug', {
+						rotateDeltaMag: rotateDeltaMag.toFixed(4),
+						idleFor: idleFor.toFixed(3),
+						resumeDelay: this.autoSpinResumeDelay,
+						autoSpinSpeed: this.autoSpinSpeed,
+						cameraMode: state.cameraMode,
+						userInteracting,
+						canAutorotate
+					});
+				}
+
+				if (canAutorotate) {
 					deltas.rotate.append([this.autoSpinSpeed * dt, 0, 0]);
+					this.global.app.renderNextFrame = true; // ensure a frame renders to show the spin
 				}
 				
 				// update touch joystick UI
@@ -102496,6 +102525,40 @@ vec3 prepareOutputFromGamma(vec3 gammaColor) {
 					this.inputController = new InputController(global);
 					this.cameraManager = new CameraManager(global, sceneBound);
 					applyCamera(this.cameraManager.camera);
+					// Toggle zoom on tap/click by adjusting camera FOV
+					const zoomState = {
+						active: false,
+						baseFov: this.cameraManager.camera.fov,
+						zoomFov: Math.max(35, this.cameraManager.camera.fov * 0.85), // subtle zoom-in
+						anim: null
+					};
+					const animateFov = (toFov) => {
+						if (zoomState.anim) cancelAnimationFrame(zoomState.anim);
+						const fromFov = this.cameraManager.camera.fov;
+						const duration = 400; // ms
+						const start = performance.now();
+						const easeInOut = (t) => (t < 0.5 ? 2 * t * t : 1 - 2 * (1 - t) * (1 - t));
+						const step = (now) => {
+							const t = Math.min(1, (now - start) / duration);
+							const eased = easeInOut(t);
+							const fov = fromFov + (toFov - fromFov) * eased;
+							this.cameraManager.setFov(fov);
+							app.renderNextFrame = true;
+							if (t < 1) {
+								zoomState.anim = requestAnimationFrame(step);
+							} else {
+								zoomState.anim = null;
+							}
+						};
+						zoomState.anim = requestAnimationFrame(step);
+					};
+					const toggleZoom = () => {
+						zoomState.active = !zoomState.active;
+						const nextFov = zoomState.active ? zoomState.zoomFov : zoomState.baseFov;
+						animateFov(nextFov);
+					};
+					const canvasEl = app.graphicsDevice.canvas;
+					canvasEl.addEventListener('click', toggleZoom);
 					const { instance } = gsplat;
 					if (instance) {
 						// kick off gsplat sorting immediately now that camera is in position
