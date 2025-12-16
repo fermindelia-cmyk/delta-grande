@@ -375,6 +375,7 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
+            transform: translateY(-30%);
         }
 
         #spark-canvas {
@@ -2087,6 +2088,9 @@
             const floatingIsland = document.querySelector('.floating-island');
             const birdsOverlay = document.getElementById('birds-overlay');
             const birdsVideo = document.getElementById('birds-video');
+            const ua = navigator.userAgent || '';
+            const isSafari = /Safari/.test(ua) && !/Chrome|CriOS|FxiOS|Edg/i.test(ua);
+            const disableBirds = isSafari; // Safari cannot show WebM alpha
             const splatContainer = document.getElementById('splat-container');
             const sparkCanvas = document.getElementById('spark-canvas');
             const sparkCtx = sparkCanvas ? sparkCanvas.getContext('2d') : null;
@@ -2098,6 +2102,10 @@
             let revealStarted = false;
             let entryStarted = false;
             let uiRevealed = false;
+
+            if (disableBirds && birdsOverlay) {
+                birdsOverlay.style.display = 'none';
+            }
 
             const sparkState = { running: false, raf: 0, lastTs: 0, squares: [], dots: [], resizeHandler: null };
 
@@ -2283,6 +2291,11 @@
                 if (entryStarted) return;
                 entryStarted = true;
 
+                // Arrancar ambiente apenas el usuario hace clic en "Entrar"
+                if (typeof window.playAmbientFromEntry === 'function') {
+                    window.playAmbientFromEntry();
+                }
+
                 if (entryButton) {
                     entryButton.disabled = true;
                     entryButton.classList.add('is-hiding');
@@ -2307,6 +2320,7 @@
                 if (splatContainer) {
                     let birdsLoopPatched = false;
                     const startBirdsVideo = () => {
+                        if (disableBirds) return;
                         if (!birdsVideo) return;
                         birdsVideo.pause();
                         birdsVideo.currentTime = 0;
@@ -2817,6 +2831,32 @@
             // Ensure selector image and debug reflect initial OFF state
             try { refreshSelectorImage(); } catch (e) { /* ignore */ }
             // Debugging removed: no initial debug state
+
+            // Allow entry button to start ambient immediately after user gesture
+            window.playAmbientFromEntry = async function playAmbientFromEntry() {
+                const audio = document.getElementById('web-music');
+                if (!audio) return;
+
+                // Reset UI state to only ambient on
+                Object.keys(state).forEach(s => { state[s] = false; updateHotspotUI(s); });
+                state.ambient = true;
+                updateHotspotUI('ambient');
+                refreshSelectorImage('ambient');
+
+                // Ensure audio is unlocked
+                if (audio.dataset.enabled !== '1' && typeof window.enableGlobalAudio === 'function') {
+                    await window.enableGlobalAudio();
+                }
+
+                // Set ambient track and play
+                audio.src = 'assets/delta-web-ambiente.mp3';
+                audio.loop = true;
+                try {
+                    await audio.play();
+                } catch (err) {
+                    console.warn('No se pudo iniciar ambiente en la entrada:', err);
+                }
+            };
         })();
     </script>
 
@@ -3414,7 +3454,7 @@
             if (!floatingTexts.length) return;
 
             const typewriterConfig = {
-                totalDuration: 2000, // Total duration in ms for all characters
+                totalDuration: 1000, // Total duration in ms for all characters (faster entry)
                 startDelay: 300, // ms before animation starts when element enters viewport
                 glitchChars: '█▓▒░@#$%&*ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
                 glitchIterations: 2, // Number of random characters to show before the real one
