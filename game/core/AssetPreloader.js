@@ -29,7 +29,6 @@ export class AssetPreloader {
                 '../assets/web-bgs/web-bg02.webm',
                 '../assets/web-bgs/web-bg03.webm',
                 '../game-assets/menu/cinematicas/logo_naranja.webm',
-                '../game-assets/menu/logo_naranja_alpha.webm',
                 '../game-assets/recorrido/cinematicas/carpa_flota.webm',
                 '../game-assets/transiciones/lab-a-subacua.webm',
                 '../game-assets/transiciones/secuencia_inicio_recorrido1.webm',

@@ -28,6 +28,12 @@ export class MenuScene extends BaseScene {
     // Cargar fuente de Adobe Typekit
     this.ensureMenuFont();
     
+    // Reproducir sonido ambiente del laboratorio
+    this.ambientAudio = new Audio('/game-assets/menu/laboratorio.mp3');
+    this.ambientAudio.loop = true;
+    this.ambientAudio.volume = 0.5;
+    this.ambientAudio.play().catch(err => console.warn('Audio playback failed:', err));
+    
     // Ocultar el canvas 3D
     this.app.canvas.style.display = 'none';
 
@@ -49,14 +55,8 @@ export class MenuScene extends BaseScene {
     `;
     document.body.appendChild(overlay);
 
-    // Mostrar botón de inicio cada vez que se entra a la página del menú
-    await this.showStartButton(overlay);
-
-    // Delay inicial de medio segundo
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Reproducir video del logo naranja con audio (skippeable)
-    const introSkipped = await this.playIntroVideo(overlay, '/game-assets/menu/cinematicas/logo_naranja.webm', true, false, '/game-assets/menu/cinematicas/logo delta mas vf2.mp3', 1.0);
+    // Mostrar loader de laboratorio
+    await this.playLoaderSequence(overlay);
 
     // Mostrar menú principal con botones
     const menuAction = await this.showMainMenu(overlay);
@@ -84,108 +84,78 @@ export class MenuScene extends BaseScene {
     
   }
 
-  async showStartButton(overlay) {
+  async playLoaderSequence(overlay) {
     return new Promise((resolve) => {
-      overlay.style.pointerEvents = 'auto';
-      overlay.style.cursor = 'auto';
-      
-      const button = document.createElement('button');
-      button.textContent = 'INICIAR';
-      button.style.cssText = `
-        /* Responsive sizing: font and width adapt to viewport */
-        padding: 18px 24px;
-        font-size: clamp(20px, 6vw, 36px);
-        font-weight: bold;
-        font-family: "new-science-mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-        background: transparent;
-        color: white;
-        border: 3px solid white;
-        border-radius: 12px;
-        cursor: pointer;
-        text-transform: uppercase;
-        letter-spacing: 3px;
-        transition: all 0.3s ease;
-        animation: pulse 2s infinite;
-        /* Make sure the button never overflows on small screens */
-        width: clamp(180px, 70vw, 520px);
-        max-width: 90vw;
-        box-sizing: border-box;
-        white-space: normal; /* allow text to wrap if needed */
-        text-align: center;
-      `;
-      
-      // Animación de pulso
-      const style = document.createElement('style');
-      style.textContent = `
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.05); opacity: 0.9; }
-        }
-      `;
-      document.head.appendChild(style);
-      
-      button.addEventListener('mouseenter', () => {
-        button.style.transform = 'scale(1.1)';
-        button.style.background = 'rgba(255, 255, 255, 0.2)';
-        button.style.animation = 'none';
-      });
-      
-      button.addEventListener('mouseleave', () => {
-        button.style.transform = 'scale(1)';
-        button.style.background = 'transparent';
-        button.style.animation = 'pulse 2s infinite';
-      });
-      
-      button.addEventListener('click', () => {
-        button.style.transition = 'opacity 0.5s';
-        button.style.opacity = '0';
-        setTimeout(() => {
-          button.remove();
-          style.remove();
-          overlay.style.pointerEvents = 'none';
-          overlay.style.cursor = 'none';
-          resolve();
-        }, 500);
-      });
-      
-      overlay.appendChild(button);
-    });
-  }
+      overlay.style.pointerEvents = 'none';
+      overlay.style.cursor = 'none';
 
-  async showLogoFlash(overlay, videoSrc, holdDuration, fadeOutDuration) {
-    return new Promise((resolve) => {
-      const video = document.createElement('video');
-      video.src = videoSrc;
-      video.style.cssText = `
+      const container = document.createElement('div');
+      container.style.cssText = `
+        position: absolute;
+        inset: 0;
+        background: black;
+        overflow: hidden;
+        z-index: 1;
+        opacity: 1;
+      `;
+
+      const exterior = new Image();
+      exterior.src = '/game-assets/menu/laboratorio_exterior.png';
+      exterior.style.cssText = `
+        position: absolute;
+        inset: 0;
         width: 100%;
         height: 100%;
         object-fit: cover;
         opacity: 1;
-        pointer-events: none;
-        z-index: 10001;
-        position: absolute;
-        inset: 0;
       `;
-      video.muted = true;
-      video.playsInline = true;
-      video.loop = true;
-      video.playbackRate = 2.0;
 
-      overlay.appendChild(video);
+      const loader = document.createElement('video');
+      loader.src = '/game-assets/menu/D+_loader%2003.webm';
+      loader.style.cssText = `
+        position: absolute;
+        right: clamp(16px, 3vw, 64px);
+        bottom: clamp(16px, 3vw, 64px);
+          width: clamp(100px, 15vw, 260px);
+          max-height: 50%;
+        object-fit: contain;
+        opacity: 1;
+        pointer-events: none;
+      `;
+      loader.muted = true;
+      loader.playsInline = true;
+      loader.loop = false;
 
-      video.play().then(() => {
-        // Mantener el logo visible, luego hacer fadeout lento
+      container.appendChild(exterior);
+      container.appendChild(loader);
+      overlay.appendChild(container);
+
+      let playbackStarted = false;
+      const startPlayback = () => {
+        if (playbackStarted) return;
+        playbackStarted = true;
+        const duration = loader.duration || 0;
+        loader.playbackRate = duration > 0 ? duration / 5 : 1;
+        loader.currentTime = 0;
+        loader.play().catch(() => {});
+
         setTimeout(() => {
-          video.style.transition = `opacity ${fadeOutDuration / 1000}s ease-out`;
-          video.style.opacity = '0';
-          
-          // Remover después del fadeout
+          container.style.transition = 'opacity 0.8s ease';
+          container.style.opacity = '0';
           setTimeout(() => {
-            overlay.removeChild(video);
+            loader.pause();
+            if (container.parentNode) container.parentNode.removeChild(container);
             resolve();
-          }, fadeOutDuration);
-        }, holdDuration);
-      });
+          }, 800);
+        }, 5000);
+      };
+
+      if (loader.readyState >= 1) {
+        startPlayback();
+      } else {
+        loader.addEventListener('loadedmetadata', startPlayback, { once: true });
+        setTimeout(startPlayback, 300);
+      }
     });
   }
 
@@ -279,9 +249,130 @@ export class MenuScene extends BaseScene {
   async showMainMenu(overlay) {
     return new Promise((resolve) => {
       // Preparar overlay para el menú
-      overlay.style.background = 'black';
+      overlay.style.background = 'transparent';
       overlay.style.pointerEvents = 'auto';
       overlay.style.cursor = 'auto';
+
+      // Fondo de laboratorio interior con fit calculado (cover sin deformar)
+      const BASE_IMG_W = 1344;
+      const BASE_IMG_H = 768;
+      const sceneLayer = document.createElement('div');
+      sceneLayer.style.cssText = `
+        position: absolute;
+        inset: 0;
+        background-image: url('/game-assets/menu/laboratorio_interior.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        opacity: 0;
+        transition: opacity 0.8s ease;
+        z-index: 0;
+        pointer-events: auto;
+      `;
+      const applyCoverFit = () => {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const scale = Math.max(vw / BASE_IMG_W, vh / BASE_IMG_H);
+        const w = BASE_IMG_W * scale;
+        const h = BASE_IMG_H * scale;
+        const left = (vw - w) / 2;
+        const top = (vh - h) / 2;
+        sceneLayer.style.width = `${w}px`;
+        sceneLayer.style.height = `${h}px`;
+        sceneLayer.style.left = `${left}px`;
+        sceneLayer.style.top = `${top}px`;
+      };
+      requestAnimationFrame(() => { applyCoverFit(); sceneLayer.style.opacity = '1'; });
+      overlay.appendChild(sceneLayer);
+
+      // Función de limpieza y resolución común
+      const finalizeAction = (action) => {
+        try {
+          if (this && this._menuResizeHandler) {
+            window.removeEventListener('resize', this._menuResizeHandler);
+          }
+        } catch (e) {}
+        if (menuWrapper && menuWrapper.parentNode) menuWrapper.parentNode.removeChild(menuWrapper);
+        this._menuResizeHandler = null;
+        this._menuWrapper = null;
+        this._menuContainer = null;
+        resolve(action);
+      };
+
+      // Hotspots poligonales sobre los monitores
+      const hotspotLayer = document.createElement('div');
+      hotspotLayer.style.cssText = `
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 2;
+      `;
+
+      const hotspotStyle = document.createElement('style');
+      hotspotStyle.textContent = `
+        .menu-hotspot {
+          position: absolute;
+          inset: 0;
+          pointer-events: auto;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          clip-path: polygon(var(--poly));
+          -webkit-clip-path: polygon(var(--poly));
+          outline: 2px solid transparent;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          white-space: pre-line;
+          font-family: "new-science-mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+          font-size: clamp(14px, 1.4vw, 22px);
+          font-weight: 700;
+          letter-spacing: 1px;
+          color: rgba(255,255,255,0.95);
+          text-transform: uppercase;
+          text-shadow: 0 2px 6px rgba(0,0,0,0.45);
+          user-select: none;
+        }
+      `;
+      document.head.appendChild(hotspotStyle);
+
+      const hotspotDefs = [
+        {
+          action: 'recorrido',
+          title: 'Iniciar recorrido',
+          polygon: '21.42% 41.28%, 31.20% 40.10%, 31.63% 55.08%, 22.99% 59.38%',
+        },
+        {
+          action: 'subacuatica',
+          title: 'Misión subacuática',
+          polygon: '41.90% 34.03%, 50.46% 34.03%, 50.58% 48.83%, 42.20% 49.09%',
+        },
+        {
+          action: 'simulador',
+          title: 'Simulador',
+          polygon: '51.99% 34.90%, 59.72% 34.90%, 59.72% 48.44%, 52.24% 48.05%',
+        },
+      ];
+
+      hotspotDefs.forEach(({ action, title, polygon }) => {
+        const area = document.createElement('button');
+        area.className = `menu-hotspot hotspot-${action}`;
+        area.type = 'button';
+        area.title = title;
+        area.dataset.action = action;
+        area.style.setProperty('--poly', polygon);
+        area.addEventListener('click', () => {
+          // Navegar a la escena correspondiente
+          if (action === 'recorrido') location.hash = '#instrucciones-transition';
+          else if (action === 'subacuatica') location.hash = '#rio';
+          else if (action === 'simulador') location.hash = '#simulador';
+          finalizeAction(action);
+        });
+        hotspotLayer.appendChild(area);
+      });
+
+      sceneLayer.appendChild(hotspotLayer);
       
       // Crear wrapper del menú que permitirá escalar el contenido
       const menuWrapper = document.createElement('div');
@@ -291,7 +382,8 @@ export class MenuScene extends BaseScene {
         display: flex;
         align-items: center;
         justify-content: center;
-        pointer-events: auto;
+        pointer-events: none;
+        z-index: 5;
       `;
 
       // Contenedor interno que realmente alberga el menú (este será escalado)
@@ -305,80 +397,8 @@ export class MenuScene extends BaseScene {
         position: relative;
         transform-origin: center center;
         transition: transform 200ms ease;
+        display: none;
       `;
-      
-      // Logo naranja en loop arriba del menú
-      const logoVideo = document.createElement('video');
-      logoVideo.src = '/game-assets/menu/logo_naranja_alpha.webm';
-      logoVideo.style.cssText = `
-        width: 600px;
-        height: auto;
-        object-fit: cover;
-        margin-bottom: 20px;
-      `;
-      logoVideo.muted = true;
-      logoVideo.playsInline = true;
-      logoVideo.loop = true;
-      logoVideo.play().catch(() => {});
-      
-      // Función para crear botones
-      const createButton = (text, action) => {
-        const button = document.createElement('button');
-        button.textContent = text;
-        button.style.cssText = `
-          padding: 20px 80px;
-          font-size: 28px;
-          font-weight: bold;
-          font-family: "new-science-mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-          background: transparent;
-          color: white;
-          border: 2px solid white;
-          border-radius: 8px;
-          cursor: pointer;
-          text-transform: uppercase;
-          letter-spacing: 2px;
-          transition: all 0.3s ease;
-          /* Responsive width: clamp(min, preferred, max) */
-          width: clamp(220px, 40vw, 420px);
-          max-width: 90vw;
-        `;
-        
-        // Efectos hover
-        button.addEventListener('mouseenter', () => {
-          button.style.transform = 'scale(1.05)';
-          button.style.background = 'rgba(255, 255, 255, 0.1)';
-        });
-        
-        button.addEventListener('mouseleave', () => {
-          button.style.transform = 'scale(1)';
-          button.style.background = 'transparent';
-        });
-        
-        // Click del botón
-        button.addEventListener('click', () => {
-          logoVideo.pause();
-          // Limpiar listener y wrapper para evitar fugas
-          try {
-            if (this && this._menuResizeHandler) {
-              window.removeEventListener('resize', this._menuResizeHandler);
-            }
-          } catch (e) {}
-          if (menuWrapper && menuWrapper.parentNode) menuWrapper.parentNode.removeChild(menuWrapper);
-          if (this) {
-            this._menuResizeHandler = null;
-            this._menuWrapper = null;
-            this._menuContainer = null;
-          }
-          resolve(action);
-        });
-        
-        return button;
-      };
-      
-      // Crear los tres botones
-      const recorridoBtn = createButton('INICIAR RECORRIDO', 'recorrido');
-      const subacuaticaBtn = createButton('MISIÓN SUBACUÁTICA', 'subacuatica');
-      const simuladorBtn = createButton('SIMULADOR', 'simulador');
       
       // Botón de borrar progreso en la esquina
       const resetBtn = document.createElement('button');
@@ -399,6 +419,7 @@ export class MenuScene extends BaseScene {
         text-transform: uppercase;
         letter-spacing: 1px;
         transition: all 0.3s ease;
+        pointer-events: auto;
       `;
       
       resetBtn.addEventListener('mouseenter', () => {
@@ -424,11 +445,6 @@ export class MenuScene extends BaseScene {
         }
       });
       
-      // Agregar logo y botones al contenedor escalable
-      menuContainer.appendChild(logoVideo);
-      menuContainer.appendChild(recorridoBtn);
-      menuContainer.appendChild(subacuaticaBtn);
-      menuContainer.appendChild(simuladorBtn);
       // Colocar el botón de reset fuera del contenedor escalable, en el wrapper
       // para que permanezca en la esquina del viewport y no sea afectado por el scale.
       menuWrapper.appendChild(resetBtn);
@@ -458,13 +474,17 @@ export class MenuScene extends BaseScene {
       };
 
       // Guarda referencia para limpieza posterior
-      this._menuResizeHandler = updateMenuScale;
+      const handleResize = () => {
+        updateMenuScale();
+        applyCoverFit();
+      };
+      this._menuResizeHandler = handleResize;
       this._menuWrapper = menuWrapper;
       this._menuContainer = menuContainer;
 
       window.addEventListener('resize', this._menuResizeHandler);
       // Ejecutar inicialmente para ajustar al tamaño actual
-      updateMenuScale();
+      handleResize();
     });
   }
 
@@ -481,6 +501,13 @@ export class MenuScene extends BaseScene {
   }
 
   async unmount() {
+    // Detener y limpiar sonido ambiente
+    if (this.ambientAudio) {
+      this.ambientAudio.pause();
+      this.ambientAudio.currentTime = 0;
+      this.ambientAudio = null;
+    }
+    
     // Restaurar canvas
     this.app.canvas.style.display = '';
     document.body.style.cursor = 'auto';

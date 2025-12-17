@@ -7,7 +7,7 @@ const EFEDRA_OVERLAY_THEME = {
     family: `"new-science-mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace`
   },
   colors: {
-    text: '#FFC96A', // Color naranja/dorado principal
+    text: '#FBFE5E', // Amarillo principal del proyecto
     textShadow: 'rgba(0, 0, 0, 0.45)'
   }
 };
@@ -62,7 +62,7 @@ export class InstruccionesTransitionScene extends BaseScene {
     };
     window.addEventListener('resize', this.resizeHandler);
     
-    // Crear overlay con video de fondo
+    // Crear overlay con fondo estático web-bg
     const overlay = document.createElement('div');
     // clase para estilos específicos del overlay de instrucciones
     overlay.className = 'efedra-instrucciones-overlay';
@@ -77,29 +77,60 @@ export class InstruccionesTransitionScene extends BaseScene {
       pointer-events: auto;
       opacity: 1;
       overflow: hidden;
+      background-image: url('../assets/web-bgs/D+fondo_para_web_01.webp');
+      background-position: top center;
+      background-repeat: no-repeat;
+      background-size: cover;
+      background-attachment: scroll;
     `;
     document.body.appendChild(overlay);
 
-    // Video de fondo
-    const bgVideo = document.createElement('video');
-    bgVideo.src = '../assets/web-bgs/web-bg01.webm';
-    // Use CSS to control layout so we don't rely on inline styles here.
-    bgVideo.className = 'efedra-instrucciones-video';
-    bgVideo.muted = true;
-    bgVideo.playsInline = true;
-    bgVideo.loop = true;
-    bgVideo.autoplay = true;
-    overlay.appendChild(bgVideo);
-    // Responsive behavior for wide viewports is provided via global CSS
-    // in `game/index.html` (class: .efedra-instrucciones-overlay)
-    
-    // Reproducir video de fondo
-    bgVideo.play().catch((err) => {
-      console.warn('No se pudo reproducir video de fondo:', err);
+    // Agregar nubes animadas
+    const cloud1 = document.createElement('div');
+    cloud1.style.cssText = `
+      position: absolute;
+      inset: -14%;
+      background: url('../assets/nube.png') center center / contain no-repeat;
+      mix-blend-mode: lighten;
+      opacity: 0.3;
+      filter: hue-rotate(-8deg) saturate(1.05) brightness(1.06);
+      pointer-events: none;
+      z-index: 1;
+      animation: cloudTintCycle 20s ease-in-out infinite alternate, cloudDrift 32s ease-in-out infinite alternate;
+    `;
+    overlay.appendChild(cloud1);
+
+    const cloud2 = document.createElement('div');
+    cloud2.style.cssText = `
+      position: absolute;
+      inset: -14%;
+      background: url('../assets/nube.png') center center / contain no-repeat;
+      mix-blend-mode: lighten;
+      opacity: 0.26;
+      filter: hue-rotate(-8deg) saturate(1.05) brightness(1.04);
+      pointer-events: none;
+      z-index: 1;
+      animation: cloudTintCycle 20s ease-in-out infinite alternate, cloudDriftFlip 32s ease-in-out infinite alternate;
+    `;
+    overlay.appendChild(cloud2);
+
+    // Agregar sonido ambiente
+    const ambientSound = document.createElement('audio');
+    ambientSound.src = '../assets/delta-web-ambiente.mp3';
+    ambientSound.loop = true;
+    ambientSound.volume = 0.5;
+    ambientSound.play().catch((err) => {
+      console.warn('No se pudo reproducir sonido ambiente:', err);
     });
 
     // Mostrar texto con efecto typewriter
     await this.showTypewriterText(overlay);
+
+    // Detener sonido ambiente antes de salir
+    if (ambientSound && !ambientSound.paused) {
+      ambientSound.pause();
+      ambientSound.currentTime = 0;
+    }
 
     // Limpiar overlay
     overlay.style.transition = 'opacity 0.5s';
@@ -229,7 +260,7 @@ export class InstruccionesTransitionScene extends BaseScene {
     `;
     overlay.appendChild(clickIndicator);
 
-    // Agregar animación de pulso
+    // Agregar animación de pulso y nubes
     const style = document.createElement('style');
     style.textContent = `
       /* Indicador con ondas/ripples */
@@ -260,6 +291,40 @@ export class InstruccionesTransitionScene extends BaseScene {
       @keyframes charWave {
         0%, 100% { transform: translateY(0); }
         50% { transform: translateY(var(--waveAmp, 6px)); }
+      }
+
+      /* Animaciones de nubes */
+      @keyframes cloudTintCycle {
+        0% {
+          opacity: 0.2;
+          filter: hue-rotate(-12deg) saturate(0.95) brightness(1.02);
+        }
+        50% {
+          opacity: 0.42;
+          filter: hue-rotate(24deg) saturate(1.25) brightness(1.12);
+        }
+        100% {
+          opacity: 0.26;
+          filter: hue-rotate(-18deg) saturate(1.05) brightness(1.08);
+        }
+      }
+
+      @keyframes cloudDrift {
+        0% {
+          transform: translateX(-12%) scale(1.2);
+        }
+        100% {
+          transform: translateX(12%) scale(1.2);
+        }
+      }
+
+      @keyframes cloudDriftFlip {
+        0% {
+          transform: translateX(12%) scale(1.2) scaleY(-1);
+        }
+        100% {
+          transform: translateX(-12%) scale(1.2) scaleY(-1);
+        }
       }
     `;
     document.head.appendChild(style);

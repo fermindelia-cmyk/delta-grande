@@ -2317,12 +2317,7 @@ export class RecorridoScene extends BaseScene {
       // Segundo: marcar especie (no visual, sin lag)
       if (this.currentSpecies) {
         this.speciesManager.markSpeciesFound(this.currentSpecies.id);
-        // Update panel usando requestAnimationFrame para no bloquear
-        requestAnimationFrame(() => {
-          if (this.inventoryImg) {
-            this.inventoryImg.src = this.speciesManager.getPanelPath();
-          }
-        });
+        // 👇 El panel se actualizará cuando el usuario cierre el overlay
       }
 
       // Tercero: efectos pesados con delay mínimo para permitir que el primer frame se renderice
@@ -3241,9 +3236,13 @@ export class RecorridoScene extends BaseScene {
       if (videoEl.readyState >= 3) tryPlayVideo(); else videoEl.addEventListener('canplay', tryPlayVideo, { once: true });
 
       // Click handler to close only the efedra wrapper when clicking on transparent pixels
+      // 👇 Deshabilitar cierre por 4 segundos para permitir que el video se reproduzca
+      let canClose = false;
+      setTimeout(() => { canClose = true; }, 4000);
+      
       const handleEfedraClick = (e) => {
         // If click was on a transparent pixel of the species video, close efedra UI
-        if (this.isVideoPixelTransparent(videoEl, e)) {
+        if (canClose && this.isVideoPixelTransparent(videoEl, e)) {
           if (this.metadataOverlayAudio) {
             this.metadataOverlayAudio.pause();
             this.metadataOverlayAudio.currentTime = 0;
@@ -3261,6 +3260,16 @@ export class RecorridoScene extends BaseScene {
 
           // Close efedra widgets only (don't touch full video overlay or transition state)
           this.removeTextOverlay();
+
+          // 👇 Actualizar panel AQUÍ cuando el usuario cierra el overlay
+          requestAnimationFrame(() => {
+            if (this.inventoryImg) {
+              this.inventoryImg.src = this.speciesManager.getPanelPath();
+            }
+            if (this.inventoryImgEl) {
+              this.inventoryImgEl.src = this.speciesManager.getPanelPath();
+            }
+          });
 
           // Hide efedra wrapper and stop species video
           try { if (efedraWrapper) { efedraWrapper.style.pointerEvents = 'none'; efedraWrapper.style.display = 'none'; } } catch (err) {}
@@ -4221,6 +4230,24 @@ export class RecorridoScene extends BaseScene {
       parent.appendChild(barridaOverlay);
 
       const showBarridaOverlay = () => {
+        // Limpiar el texto anterior y resetear el video de loading box
+        const textOverlay = document.getElementById('transition-text-overlay');
+        const textEl = textOverlay?.querySelector('.transition-text-inner');
+        if (textEl) {
+          textEl.textContent = '';
+        }
+        
+        const sequenceVideo = document.getElementById('sequenceOverlayVideo');
+        const sequenceOverlay = document.getElementById('sequenceOverlay');
+        if (sequenceVideo) {
+          sequenceVideo.pause();
+          sequenceVideo.currentTime = 0;
+        }
+        if (sequenceOverlay) {
+          sequenceOverlay.style.display = 'none';
+          sequenceOverlay.setAttribute('aria-hidden', 'true');
+        }
+        
         barridaOverlay.style.visibility = 'visible';
         barridaOverlay.style.opacity = '1';
       };
@@ -4271,22 +4298,92 @@ export class RecorridoScene extends BaseScene {
         textOverlay.setAttribute('aria-hidden', 'false');
         setTimeout(() => { textOverlay.style.opacity = '1'; }, 800);
 
-        // 🖊️ Efecto typewriter (same cadence as before)
-        const fullText = transitionText.text || transitionText.intro || '';
-        let currentIndex = 0;
-
-        const typewriterInterval = setInterval(() => {
-          if (currentIndex <= fullText.length) {
-            textEl.textContent = fullText.substring(0, currentIndex);
-            currentIndex++;
-          } else {
-            clearInterval(typewriterInterval);
+        // � Obtener el video de loading-text-box-animation
+        const sequenceVideo = document.getElementById('sequenceOverlayVideo');
+        const sequenceOverlay = document.getElementById('sequenceOverlay');
+        
+        const startTypewriter = () => {
+          // 🖊️ Efecto typewriter mejorado - pre-calcula layout para evitar saltos
+          const fullText = transitionText.text || transitionText.intro || '';
+          
+          // Primero, renderizar todo el texto de forma invisible para calcular el layout final
+          textEl.textContent = fullText;
+          textEl.style.visibility = 'hidden';
+          
+          // Forzar un reflow para que el navegador calcule el layout
+          textEl.offsetHeight;
+          
+          // Ahora crear spans para cada carácter, preservando espacios y saltos de línea
+          textEl.textContent = '';
+          textEl.style.visibility = 'visible';
+          textEl.style.whiteSpace = 'pre-wrap'; // Preservar saltos de línea y espacios
+          
+          const chars = fullText.split('');
+          const charSpans = [];
+          
+          chars.forEach((char, index) => {
+            const span = document.createElement('span');
+            span.textContent = char;
+            span.style.opacity = '0';
+            span.style.display = 'inline'; // Forzar inline para evitar espacios extras
+            textEl.appendChild(span);
+            charSpans.push(span);
+          });
+          
+          // Efecto typewriter: revelar caracteres uno por uno
+          let currentIndex = 0;
+          
+          const typewriterInterval = setInterval(() => {
+            if (currentIndex < charSpans.length) {
+              charSpans[currentIndex].style.opacity = '1';
+              charSpans[currentIndex].style.transition = 'opacity 0.05s ease-in';
+              currentIndex++;
+            } else {
+              clearInterval(typewriterInterval);
+            }
+          }, 20);
+          
+          // Store references for cleanup
+          barridaOverlay._typewriterInterval = typewriterInterval;
+        };
+        
+        if (sequenceVideo && sequenceOverlay) {
+          // Resetear el video al frame 0
+          sequenceVideo.currentTime = 0;
+          
+          // Mostrar el overlay y reproducir el video
+          sequenceOverlay.style.display = 'block';
+          sequenceOverlay.setAttribute('aria-hidden', 'false');
+          
+          // Cuando llegue al segundo 2.2, pausar e iniciar el typewriter
+          const checkTime = () => {
+            if (sequenceVideo.currentTime >= 2.2) {
+              sequenceVideo.pause();
+              sequenceVideo.removeEventListener('timeupdate', checkTime);
+              startTypewriter();
+            }
+          };
+          
+          sequenceVideo.addEventListener('timeupdate', checkTime);
+          
+          // Reproducir el video
+          const playPromise = sequenceVideo.play();
+          if (playPromise) {
+            playPromise.catch(err => {
+              console.warn('[RecorridoScene] Loading box animation play failed, starting typewriter anyway', err);
+              sequenceVideo.removeEventListener('timeupdate', checkTime);
+              startTypewriter();
+            });
           }
-        }, 20);
+        } else {
+          // Si no hay video de loading box, iniciar el typewriter directamente
+          startTypewriter();
+        }
 
         // Store references for cleanup
         barridaOverlay._textOverlay = textOverlay;
-        barridaOverlay._typewriterInterval = typewriterInterval;
+        barridaOverlay._sequenceVideo = sequenceVideo;
+        barridaOverlay._sequenceOverlay = sequenceOverlay;
         barridaOverlay._textShownTime = performance.now();
 
         // Auto-hide after configured duration; if element is static keep it in DOM and hide
@@ -4298,6 +4395,12 @@ export class RecorridoScene extends BaseScene {
 
             barridaOverlay._textOverlay.style.transition = 'opacity 0.3s ease-out';
             barridaOverlay._textOverlay.style.opacity = '0';
+            
+            // También ocultar el sequenceOverlay
+            if (barridaOverlay._sequenceOverlay) {
+              barridaOverlay._sequenceOverlay.style.display = 'none';
+              barridaOverlay._sequenceOverlay.setAttribute('aria-hidden', 'true');
+            }
 
             setTimeout(() => {
               try {
@@ -4498,12 +4601,27 @@ export class RecorridoScene extends BaseScene {
 
               }, { once: true });
 
-              const playPromise = sequenceVideo.play();
-              if (playPromise) {
-                playPromise.catch(err => {
-                  console.warn('[RecorridoScene] Transition overlay video play failed', err);
-                });
-              }
+              // 👇 Esperar a que el video esté listo antes de reproducirlo
+              const tryPlaySequenceVideo = () => {
+                if (sequenceVideo.readyState >= 2) {
+                  const playPromise = sequenceVideo.play();
+                  if (playPromise) {
+                    playPromise.catch(err => {
+                      console.warn('[RecorridoScene] Transition overlay video play failed', err);
+                    });
+                  }
+                } else {
+                  sequenceVideo.addEventListener('loadeddata', () => {
+                    const playPromise = sequenceVideo.play();
+                    if (playPromise) {
+                      playPromise.catch(err => {
+                        console.warn('[RecorridoScene] Transition overlay video play failed', err);
+                      });
+                    }
+                  }, { once: true });
+                }
+              };
+              tryPlaySequenceVideo();
 
               const detachOverlay = () => {
                 try {

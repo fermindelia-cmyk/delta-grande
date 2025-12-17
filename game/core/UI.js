@@ -4,11 +4,10 @@ export const UI = new class{
     this.videoOverlayEl = videoOverlayEl;
     this.videoEl = videoEl;
 
-    // Cerrar overlay al click “afuera” o con ESC
+    // Cerrar overlay al click "afuera"
     this.videoOverlayEl.addEventListener('click', (e)=>{
       if (e.target === this.videoOverlayEl) this.hideVideo();
     });
-    addEventListener('keydown', (e)=>{ if (e.key === 'Escape') this.hideVideo(); });
   }
 
   /**

@@ -534,6 +534,7 @@
       line-height: 1.6;
       max-height: 100%;
       overflow: auto; /* allow scrolling when text is long */
+      text-align: left; /* alinear texto a la izquierda */
     }
   </style>
   <link rel="stylesheet" href="./styles/sub/deck-style.css">
@@ -586,7 +587,7 @@
          consistently with aspect ratio like other overlay boxes. */
       /* Make overlay larger but still responsive. Expose the chosen size as
          a CSS variable so child elements (like text) can base sizes off it. */
-      --overlay-size: min(45vmin, 360px);
+      --overlay-size: 45vmin;
       width: var(--overlay-size);
       aspect-ratio: 1 / 1;
       z-index: 10003;
@@ -614,7 +615,7 @@
       /* Font scales with the overlay width: multiply the overlay size to
         compute a responsive mid value, clamped between min and max. This
         makes the font increase as the overlay grows but stops at a max. */
-      font-size: clamp(10px, calc(var(--overlay-size) * 0.045), 20px);
+      font-size: clamp(10px, 2vmin, 32px);
       font-weight: 400;
       color: #FDFE63;
       text-shadow: 0 0 18px rgba(0,0,0,0.6);
@@ -699,8 +700,6 @@
     </div>
 
     <div class="menu-overlay menu-overlay--main" id="mainMenuOverlay" aria-hidden="true">
-      <video class="menu-overlay__logo" src="../game-assets/menu/logo_naranja_alpha.webm" playsinline muted loop
-        autoplay></video>
       <div class="menu-overlay__title">Menú Principal</div>
       <div class="menu-overlay__options">
         <button type="button" class="menu-button" data-action="continue">Continuar</button>
