@@ -178,26 +178,55 @@ export class RecorridoTransitionScene extends BaseScene {
           const getRandomGlitchChar = () => glitchChars[Math.floor(Math.random() * glitchChars.length)];
 
           const fullText = textContent;
+          
+          // Pre-renderizar el texto completo para calcular el layout
+          textEl.textContent = fullText;
+          textEl.style.visibility = 'hidden';
+          textEl.offsetHeight; // Forzar reflow
+          
+          // Crear spans para cada carácter
+          textEl.textContent = '';
+          textEl.style.visibility = 'visible';
+          textEl.style.whiteSpace = 'pre-wrap'; // Preservar saltos de línea y espacios
+          
+          const chars = fullText.split('');
+          const charSpans = [];
+          
+          chars.forEach((char) => {
+            const span = document.createElement('span');
+            span.textContent = char;
+            span.style.opacity = '0';
+            span.style.display = 'inline'; // Forzar inline para evitar espacios extras
+            textEl.appendChild(span);
+            charSpans.push(span);
+          });
+          
+          // Crear contenedor para caracteres glitch
+          const glitchSpan = document.createElement('span');
+          glitchSpan.style.opacity = '0.3';
+          glitchSpan.style.animation = 'glitch-flicker 0.1s infinite';
+          textEl.appendChild(glitchSpan);
+          
           let currentIndex = 0;
 
           const typewriterInterval = setInterval(() => {
-            if (currentIndex <= fullText.length) {
-              const displayedText = fullText.substring(0, currentIndex);
-
-              // Agregar 3-5 caracteres glitch al final
+            if (currentIndex < charSpans.length) {
+              // Revelar el siguiente carácter
+              charSpans[currentIndex].style.opacity = '1';
+              charSpans[currentIndex].style.transition = 'opacity 0.05s ease-in';
+              
+              // Actualizar caracteres glitch
               const glitchCount = Math.floor(Math.random() * 3) + 3;
               let glitchText = '';
               for (let i = 0; i < glitchCount; i++) {
                 glitchText += getRandomGlitchChar();
               }
-
-              textEl.innerHTML = displayedText +
-                `<span style="opacity: 0.3; animation: glitch-flicker 0.1s infinite;">${glitchText}</span>`;
-
+              glitchSpan.textContent = glitchText;
+              
               currentIndex++;
             } else {
               clearInterval(typewriterInterval);
-              textEl.textContent = fullText; // Mostrar solo el texto final sin glitch
+              glitchSpan.remove(); // Remover los caracteres glitch al final
             }
           }, 25); // 25ms entre cada caracter
 
