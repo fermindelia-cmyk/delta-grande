@@ -3917,6 +3917,114 @@ export class RecorridoScene extends BaseScene {
     return 1 - Math.pow(1 - t, 3);
   }
 
+  showCompletionOverlay() {
+    const round = this.speciesManager.getProgress().round;
+    
+    const overlay = document.createElement('div');
+    overlay.id = 'completion-overlay';
+    overlay.style.cssText = `
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 20000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: "new-science", 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
+      color: #eef2f6;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    `;
+
+    const title = document.createElement('h2');
+    title.textContent = `Felicidades, terminaste el recorrido ${round}/6`;
+    title.style.cssText = `
+      font-size: clamp(24px, 4vw, 36px);
+      margin-bottom: 40px;
+      text-align: center;
+      font-weight: normal;
+      letter-spacing: 0.05em;
+    `;
+
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.style.cssText = `
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    `;
+
+    const btnStyle = `
+      font-family: "new-science", 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
+      font-size: clamp(16px, 2vw, 20px);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #FBFE5E;
+      background: transparent;
+      border: 2px solid #FBFE5E;
+      padding: 12px 32px;
+      border-radius: 999px;
+      cursor: pointer;
+      outline: none;
+      transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+    `;
+
+    const btnContinue = document.createElement('button');
+    btnContinue.textContent = 'Seguir descubriendo especies';
+    btnContinue.style.cssText = btnStyle;
+    btnContinue.onmouseover = () => {
+      btnContinue.style.transform = 'translateY(-2px) scale(1.02)';
+      btnContinue.style.background = 'rgba(251, 254, 94, 0.1)';
+    };
+    btnContinue.onmouseout = () => {
+      btnContinue.style.transform = 'none';
+      btnContinue.style.background = 'transparent';
+    };
+    btnContinue.onclick = () => {
+      // Advance round and reload first stage
+      if (this.speciesManager.advanceRound()) {
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+          overlay.remove();
+          this.loadStage(0);
+        }, 500);
+      } else {
+        // If no more rounds (finished game?), maybe go to menu or show another message
+        // For now, just go to menu if max round reached
+        window.location.href = '/index.html';
+      }
+    };
+
+    const btnMenu = document.createElement('button');
+    btnMenu.textContent = 'Volver a la base';
+    btnMenu.style.cssText = btnStyle;
+    btnMenu.onmouseover = () => {
+      btnMenu.style.transform = 'translateY(-2px) scale(1.02)';
+      btnMenu.style.background = 'rgba(251, 254, 94, 0.1)';
+    };
+    btnMenu.onmouseout = () => {
+      btnMenu.style.transform = 'none';
+      btnMenu.style.background = 'transparent';
+    };
+    btnMenu.onclick = () => {
+      window.location.href = '/index.html';
+    };
+
+    buttonsContainer.appendChild(btnContinue);
+    buttonsContainer.appendChild(btnMenu);
+    overlay.appendChild(title);
+    overlay.appendChild(buttonsContainer);
+
+    const parent = this.overlayRoot || document.body;
+    parent.appendChild(overlay);
+
+    // Fade in
+    requestAnimationFrame(() => {
+      overlay.style.opacity = '1';
+    });
+  }
+
   onFlechaClick() {
     // 👇 Previene clicks múltiples
     if (this.flechaClicked) return;
@@ -4120,6 +4228,12 @@ export class RecorridoScene extends BaseScene {
           flechaObj.visible = false;
         });
       }
+    }
+
+    // 👇 Check if this is the last scene of the round
+    if (this.current === 5) {
+      this.showCompletionOverlay();
+      return;
     }
 
     // New transition system with barrida.webm overlay

@@ -2154,7 +2154,7 @@
                 const spawnSquare = (width, height) => {
                     // Spawn in an ellipse, with depth for pseudo-3D
                     const rx = width * 0.2184; // +20% radius
-                    const ry = height * 0.155;  // +10% radius
+                    const ry = Math.max(height * 0.155, width * 0.09);  // Scale with width on wide screens
                     const rz = Math.max(width, height) * 0.2; // depth range
                     const ang = Math.random() * Math.PI * 2;
                     const rad = Math.sqrt(Math.random());
@@ -2168,8 +2168,9 @@
                     const dx = Math.sin(dirPhi) * Math.cos(dirTheta);
                     const dy = Math.cos(dirPhi);
                     const dz = Math.sin(dirPhi) * Math.sin(dirTheta);
-                    const viewportScale = Math.min(width, height) / 900;
-                    const size = (6 + Math.random() * 10) * Math.max(0.7, Math.min(1.8, viewportScale));
+                    // Scale size based on width, uncapped for wide screens
+                    const viewportScale = width / 1600;
+                    const size = (6 + Math.random() * 10) * Math.max(0.7, viewportScale);
                     const colors = ['rgba(251, 254, 94, 1)', 'rgba(255, 255, 255, 1)', 'rgba(76, 91, 255, 1)'];
                     const life = 1.1 + Math.random() * 0.9;
                     sparkState.squares.push({
@@ -2188,14 +2189,15 @@
 
                 const spawnDot = (width, height) => {
                     const rx = width * 0.2184; // +20% radius
-                    const ry = height * 0.155;  // +10% radius
+                    const ry = Math.max(height * 0.155, width * 0.09);  // Scale with width on wide screens
                     const rz = Math.max(width, height) * 0.2;
                     const ang = Math.random() * Math.PI * 2;
                     const rad = Math.sqrt(Math.random());
                     const x = Math.cos(ang) * rx * rad;
                     const y = (Math.random() - 0.288) * ry; // lift higher (~+44% from original)
                     const z = Math.random() * rz;
-                    const size = (2 + Math.random() * 3) * 0.2;
+                    const viewportScale = width / 1600;
+                    const size = (2 + Math.random() * 3) * 0.2 * Math.max(1, viewportScale);
                     const speed = 12 + Math.random() * 10;
                     const dirTheta = Math.random() * Math.PI * 2;
                     const dirPhi = Math.acos(2 * Math.random() - 1);
@@ -2235,7 +2237,8 @@
                     sparkState.angleY += (sparkState.targetAngleY - sparkState.angleY) * 0.12;
                     const cosY = Math.cos(sparkState.angleY);
                     const sinY = Math.sin(sparkState.angleY);
-                    const fov = 420; // perspective factor
+                    // Scale fov with viewport size to maintain perspective scale (zooming in as viewport grows)
+                    const fov = Math.max(width, height) * 0.5; 
                     const cx = width * 0.5;
                     const cy = height * 0.53;
                     const zOffset = Math.max(width, height) * 0.4; // push everything forward to avoid z<=0

@@ -102277,17 +102277,7 @@ fn fragmentMain(input: FragmentInput) -> FragmentOutput {
 
 				const idleFor = now - this.lastInteractionTime;
 				const canAutorotate = !userInteracting && idleFor > this.autoSpinResumeDelay && this.autoSpinSpeed > 0 && state.cameraMode === 'orbit';
-				if ((this._debugCounter++ % 60) === 0) {
-					console.log('[splat] auto-spin debug', {
-						rotateDeltaMag: rotateDeltaMag.toFixed(4),
-						idleFor: idleFor.toFixed(3),
-						resumeDelay: this.autoSpinResumeDelay,
-						autoSpinSpeed: this.autoSpinSpeed,
-						cameraMode: state.cameraMode,
-						userInteracting,
-						canAutorotate
-					});
-				}
+				
 
 				if (canAutorotate) {
 					deltas.rotate.append([this.autoSpinSpeed * dt, 0, 0]);
