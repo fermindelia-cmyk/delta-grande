@@ -124,9 +124,10 @@ class SpatialHash {
  * Bubble System for surface transition
  * ------------------------------------------------------------- */
 class BubbleSystem {
-  constructor(container) {
+  constructor(container, baseColor = null) {
     this.canvas = document.createElement('canvas');
     this.ctx = this.canvas.getContext('2d');
+    this.baseColor = baseColor; // THREE.Color or null
     Object.assign(this.canvas.style, {
       position: 'absolute',
       inset: '0',
@@ -217,23 +218,33 @@ class BubbleSystem {
       b.x - b.radius * 0.3, b.y - b.radius * 0.3, b.radius * 0.1,
       b.x, b.y, b.radius
     );
-    grad.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
-    grad.addColorStop(0.4, 'rgba(200, 230, 255, 0.3)');
-    grad.addColorStop(1, 'rgba(150, 200, 255, 0.1)');
+
+    let r = 200, g = 230, b_col = 255;
+    if (this.baseColor) {
+      // Make bubbles significantly darker than the background for contrast
+      const darker = this.baseColor.clone().multiplyScalar(0.4);
+      r = Math.floor(darker.r * 255);
+      g = Math.floor(darker.g * 255);
+      b_col = Math.floor(darker.b * 255);
+    }
+
+    grad.addColorStop(0, 'rgba(255, 255, 255, 0.4)'); // Dimmer center
+    grad.addColorStop(0.4, `rgba(${r}, ${g}, ${b_col}, 0.7)`); // Darker, more opaque body
+    grad.addColorStop(1, `rgba(${r}, ${g}, ${b_col}, 0.3)`); // Darker edges
     
     ctx.fillStyle = grad;
     ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
     ctx.fill();
     
     // Rim highlight
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.lineWidth = 1.2;
     ctx.stroke();
 
     // Specular highlight
     ctx.beginPath();
     ctx.ellipse(b.x - b.radius * 0.4, b.y - b.radius * 0.4, b.radius * 0.2, b.radius * 0.1, Math.PI / 4, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
     ctx.fill();
 
     ctx.restore();
@@ -398,6 +409,105 @@ const SPECIES = [
   }
 ];
 
+const SPECIES_FACTS = {
+  raya_negra: [
+    "Habita fondos arenosos o fangosos de ríos y arroyos.",
+    "Tiene cuerpo plano y cola larga con aguijón venenoso.",
+    "Se alimenta de crustáceos, moluscos y peces pequeños.",
+    "Es ovovivípara (las crías se desarrollan dentro del cuerpo).",
+    "Puede medir más de un metro de ancho.",
+    "Suele camuflarse en el fondo para cazar.",
+    "Su veneno no es mortal, pero causa dolor intenso.",
+    "Respira moviendo el agua por aberturas situadas encima del cuerpo.",
+    "Es activa principalmente durante la noche.",
+    "En Entre Ríos se la encuentra en zonas profundas del Paraná."
+  ],
+  surubi_pintado: [
+    "Es un gran bagre de piel moteada (Pseudoplatystoma corruscans).",
+    "Puede superar los 50 kg de peso.",
+    "Predador tope de ambientes fluviales.",
+    "Se alimenta de peces más chicos y crustáceos.",
+    "Realiza migraciones para reproducirse.",
+    "Muy valorado en la pesca deportiva.",
+    "También llamado “manguruyú pintado” en algunas regiones.",
+    "Su piel carece de escamas.",
+    "Requiere aguas limpias y con corriente para reproducirse.",
+    "Su carne es firme y de alto valor gastronómico."
+  ],
+  vieja_del_agua: [
+    "Posee cuerpo cubierto de placas óseas.",
+    "Se adhiere a superficies con su boca en forma de ventosa.",
+    "Come algas y restos orgánicos.",
+    "Cumple un rol ecológico limpiando fondos y rocas.",
+    "Prefiere aguas calmas y claras.",
+    "Su nombre científico común es Hypostomus spp.",
+    "Tolera aguas con bajo nivel de oxígeno.",
+    "Tiene hábitos principalmente nocturnos.",
+    "Puede fijarse a las piedras incluso con corriente fuerte.",
+    "Es muy resistente y común en acuarios de agua dulce."
+  ],
+  palometa_brava: [
+    "De cuerpo plateado y dientes muy filosos.",
+    "Relacionada con las pirañas (Serrasalmus).",
+    "Vive en cardúmenes.",
+    "Se alimenta de peces, escamas y a veces frutas.",
+    "Abunda en verano en aguas cálidas.",
+    "Puede causar mordidas dolorosas.",
+    "De crecimiento rápido y vida relativamente corta.",
+    "Su agresividad aumenta con altas temperaturas.",
+    "Cumple un rol ecológico controlando poblaciones de peces.",
+    "Es frecuente verla en cardúmenes cerca de la superficie."
+  ],
+  armado_chancho: [
+    "Bagre grande con placas óseas defensivas.",
+    "Su cuerpo es robusto y su boca inferior, adaptada al fondo.",
+    "Se alimenta de materia orgánica y pequeños invertebrados.",
+    "Habita zonas profundas de ríos y lagunas.",
+    "Su carne es muy apreciada.",
+    "Puede emitir sonidos con su vejiga natatoria.",
+    "También conocido como Pterodoras granulosus.",
+    "Su cuerpo está cubierto de espinas protectoras.",
+    "Es un nadador lento.",
+    "Desempeña un papel importante reciclando materia orgánica."
+  ],
+  pacu: [
+    "De cuerpo alto y dientes similares a los humanos.",
+    "Omnívoro: come frutos, semillas y pequeños animales.",
+    "Muy fuerte y buscado en pesca deportiva.",
+    "Puede superar los 10 kg.",
+    "Vive en aguas cálidas y tranquilas.",
+    "Ayuda a dispersar semillas en los ríos.",
+    "Pertenece a la familia de las pirañas, pero es pacífico.",
+    "Puede adaptarse a estanques y represas.",
+    "Se reproduce durante las crecientes del río.",
+    "Su consumo es habitual en la gastronomía mesopotámica"
+  ],
+  sabalo: [
+    "Especie más abundante del Paraná.",
+    "Come algas, plancton y materia orgánica.",
+    "Base alimentaria de muchos peces carnívoros.",
+    "Realiza migraciones largas para desovar.",
+    "Tiene gran importancia comercial.",
+    "Filtra el alimento con sus branquias.",
+    "Su nombre científico es Prochilodus lineatus.",
+    "Es esencial para mantener el equilibrio ecológico del río.",
+    "Sus migraciones masivas son conocidas como “subida del sábalo”.",
+    "Sirve como indicador biológico de la salud del ecosistema."
+  ],
+  dorado: [
+    "Depredador emblemático del Paraná (Salminus brasiliensis).",
+    "De color dorado intenso y gran potencia.",
+    "Puede alcanzar más de 20 kg.",
+    "Vive en aguas con corriente.",
+    "Se alimenta de peces, especialmente sábalos.",
+    "Muy valorado en la pesca deportiva y conservación.",
+    "Se lo considera el “tigre del río” por su ferocidad.",
+    "Necesita aguas oxigenadas y correntosas.",
+    "Su reproducción depende de los pulsos de inundación.",
+    "Es una especie protegida: en muchos lugares se promueve su devolución al río."
+  ]
+};
+
 /* -------------------------------------------------------------
  * Single source of truth: explicit world & behavior parameters
  * Place any tunables here; everything else reads from this block.
@@ -414,7 +524,7 @@ const DEFAULT_PARAMS = {
   rightLimit:   60.0,    // z max for both camera and swimbox
 
   /** Camera constraints aligned to world limits */
-  cameraSurfaceMargin: 0.1,   // how much camera may go above surfaceLevel
+  cameraSurfaceMargin: 0.3,   // how much camera may go above surfaceLevel
   cameraFloorMargin:  4.0,    // how much camera must stay above floorLevel
   cameraLeftMargin:   55.0,    // how far from leftLimit (Z min) the camera is kept
   cameraRightMargin:  45.0,    // how far from rightLimit (Z max) the camera is kept
@@ -488,11 +598,11 @@ const DEFAULT_PARAMS = {
 
   /** Above-water fog */
   aboveFog: {
-    enabled: false,
+    enabled: true,
     color: 0xB7BEC6,       // soft gray/blue
     useExp2: false,        // true => FogExp2(density), false => Fog(near,far)
     near: 10.0,
-    far: 200.0,
+    far: 150.0,
     density: 0.015,        // only used if useExp2=true
     surfaceHysteresis: 0.03 // reduce flicker at the surface (meters)
   },
@@ -502,9 +612,9 @@ const DEFAULT_PARAMS = {
     enabled: true,
     color: 0xC9CED6,
     opacity: 0.55,         // 0..1
-    height: 0.3,          // meters above surface
-    count: 400,             // number of patches
-    sizeRange: [2, 5],    // meters (min, max) per patch
+    height: 0.5,          // meters above surface
+    count: 20,             // number of patches
+    sizeRange: [8, 20],    // meters (min, max) per patch
     windDirDeg: 15,        // world wind heading (deg, 0 = +X)
     windSpeed: 0.01,       // meters/sec
     jitterAmp: 0.2,        // small local bobbing in meters
@@ -519,11 +629,11 @@ const DEFAULT_PARAMS = {
     /** PNG with baked alpha (the one I gave you): */
     src: '/game-assets/sub/interfaz/shore_haze_bottom1_quadratic_1024x2048.png',
     /** How tall above the water surface (meters) */
-    height: 50.0,
+    height: 20.0,
     /** Extra Z padding beyond [leftLimit, rightLimit] to avoid edge pops */
     zPad: 2.0,
     /** Opacity multiplier on top of the PNG’s alpha (0..1) */
-    opacity: 1.0,
+    opacity: 0.2,
     /** Use the same color as mist (material color tints the white PNG) */
     color: 0xC9CED6,
 
@@ -788,17 +898,17 @@ const DEFAULT_PARAMS = {
       loopTailFrames: 30,
       position: { xPct: 0.1, yPct: 0.1 },
       widthPct: 0.2,
-      textColor: '#FFD400',
+      textColor: '#E6C200',
       textShadow: '0 2px 10px rgba(0,0,0,0.75)',
       primaryStyle: {
-        fontSizePx: 24,
+        fontSizePx: 26,
         topPct: 0.27,
         heightPct: 0.24,
         textAlign: 'center',
         lineHeight: 1.0
       },
       secondaryStyle: {
-        fontSizePx: 14,
+        fontSizePx: 16,
         topPct: 0.5,
         heightPct: 0.18,
         textAlign: 'center',
@@ -833,10 +943,10 @@ const DEFAULT_PARAMS = {
       offsetPct: { x: 0.28, y: 0.25 },
       widthPct: 0.2,
       textBox: { xPct: 0.17, yPct: 0.14, wPct: 0.70, hPct: 0.72 },
-      textColor: '#FFD400',
-      fontSizePx: 12,
+      textColor: '#E6C200',
+      fontSizePx: 14,
       lineHeight: 1.35,
-      scrollThumbColor: 'rgba(255, 212, 0, 0.7)',
+      scrollThumbColor: 'rgba(230, 194, 0, 0.7)',
       scrollTrackColor: 'rgba(0,0,0,0.35)'
     }
   },
@@ -2282,7 +2392,7 @@ class CompletedOverlay {
           -ms-user-select: none;
         }
         .completed-overlay-text {
-          color: #FFD400;
+          color: #E6C200;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -2404,7 +2514,7 @@ class CompletedOverlay {
 
   _applyScrollStyles() {
     const infoCfg = this.components.info.cfg || {};
-    const thumb = infoCfg.scrollThumbColor || 'rgba(255, 212, 0, 0.7)';
+    const thumb = infoCfg.scrollThumbColor || 'rgba(230, 194, 0, 0.7)';
     const track = infoCfg.scrollTrackColor || 'rgba(0,0,0,0.35)';
 
     if (!document.getElementById('__completed_overlay_scroll_css')) {
@@ -2517,7 +2627,7 @@ class CompletedOverlay {
     secondary.style.display = secondaryText ? 'flex' : 'none';
 
     comp.contentEl.style.fontFamily = this.fontFamily;
-    comp.contentEl.style.color = comp.cfg.textColor || '#FFD400';
+    comp.contentEl.style.color = comp.cfg.textColor || '#E6C200';
     comp.contentEl.style.textShadow = comp.cfg.textShadow || '0 2px 10px rgba(0,0,0,0.75)';
     comp.contentEl.style.position = 'absolute';
     comp.contentEl.style.left = '0px';
@@ -2551,7 +2661,7 @@ class CompletedOverlay {
     if (!comp.contentEl) return;
     comp.contentEl.textContent = infoText || '';
     comp.contentEl.style.fontFamily = this.fontFamily;
-    comp.contentEl.style.color = comp.cfg.textColor || '#FFD400';
+    comp.contentEl.style.color = comp.cfg.textColor || '#E6C200';
     comp.contentEl.style.lineHeight = `${comp.cfg.lineHeight ?? 1.3}`;
     const fontSize = (comp.cfg.fontSizePx || 18);
     comp.contentEl.style.fontSize = `${fontSize}px`;
@@ -2879,6 +2989,49 @@ class CompletedOverlay {
   }
 }
 
+class FactOverlay {
+  constructor() {
+    this.container = document.createElement('div');
+    this.container.id = 'fact-overlay';
+    Object.assign(this.container.style, {
+      position: 'absolute',
+      bottom: '15%',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      color: 'white',
+      padding: '10px 20px',
+      borderRadius: '5px',
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '18px',
+      textAlign: 'center',
+      zIndex: '1000',
+      opacity: '0',
+      transition: 'opacity 0.5s ease-in-out',
+      pointerEvents: 'none',
+      maxWidth: '80%'
+    });
+    document.body.appendChild(this.container);
+    this.timeout = null;
+  }
+
+  show(text) {
+    if (this.timeout) clearTimeout(this.timeout);
+    this.container.textContent = text;
+    this.container.style.opacity = '1';
+    this.timeout = setTimeout(() => {
+      this.container.style.opacity = '0';
+    }, 4000);
+  }
+
+  destroy() {
+    if (this.timeout) clearTimeout(this.timeout);
+    if (this.container.parentNode) {
+      this.container.parentNode.removeChild(this.container);
+    }
+  }
+}
+
 /* ========================================================================== */
 /* RioScene                                                                   */
 /* ========================================================================== */
@@ -2909,6 +3062,11 @@ export class RioScene extends BaseScene {
     this.raycaster = new THREE.Raycaster();
     this.clickMouse = new THREE.Vector2();
 
+    // Fact overlay system
+    this.factOverlay = new FactOverlay();
+    this.fishClickCount = 0;
+    this.speciesFactIndices = {};
+
     // Reusables
     this.tmpRight = new THREE.Vector3();
     this.tmpUp = new THREE.Vector3(0, 1, 0);
@@ -2921,6 +3079,8 @@ export class RioScene extends BaseScene {
 
     // Water
     this.waterSurface = null;
+    this.waterSurfaceBottom = null;
+    this.waterOccluder = null;
 
     // SwimBox (world-aligned, explicit bounds)
     this.swimBox = new THREE.Box3();
@@ -3004,7 +3164,7 @@ export class RioScene extends BaseScene {
     inside.id = 'rio-inside-overlay';
     document.body.appendChild(inside);
     this._insideOverlay = inside;
-    const c = new THREE.Color(this.params.waterColor);
+    const c = this.getUnderwaterSurfaceColor();
     this._insideOverlay.style.backgroundColor = `#${c.getHexString()}`;
 
   this.surfaceFX = null;
@@ -3563,6 +3723,7 @@ export class RioScene extends BaseScene {
     this._appResumeListener = null;
     this.app.canvas.removeEventListener('wheel', this._onWheel);
     if (this.deck) this.deck.destroy();
+    if (this.factOverlay) this.factOverlay.destroy();
     if (this.completedOverlay) {
       this.completedOverlay.destroy();
       this.completedOverlay = null;
@@ -3680,16 +3841,19 @@ export class RioScene extends BaseScene {
     const fwd = this.forward.clone().normalize();
     const baseWidthForward = Math.max(0.01, this.widthAlongDirectionWorld(this.model || new THREE.Object3D(), fwd));
 
-    const t = Math.max(0.02, this.params.waterSurfaceThicknessMeters ?? 0.5);
-
-    // Oclusor volumétrico
-    if (!this.waterOccluder) {
-      const occGeo = new THREE.BoxGeometry(1, 1, 1);
+    // Oclusor volumétrico (Plane instead of Box to avoid Z-fighting with its own faces)
+    if (!this.waterOccluder || this.waterOccluder.geometry.type === 'BoxGeometry') {
+      if (this.waterOccluder) {
+        this.scene.remove(this.waterOccluder);
+        this.waterOccluder.geometry?.dispose();
+        this.waterOccluder.material?.dispose();
+      }
+      const occGeo = new THREE.PlaneGeometry(1, 1); occGeo.rotateX(Math.PI/2); // Facing down
       const occMat = new THREE.MeshBasicMaterial({
-        colorWrite: false,    // <- NO escribe color (no verás caras internas)
+        colorWrite: false,    // <- NO escribe color
         depthWrite: true,     // <- SÍ escribe z
         depthTest: true,
-        side: THREE.DoubleSide
+        side: THREE.FrontSide
       });
       this.waterOccluder = new THREE.Mesh(occGeo, occMat);
       this.waterOccluder.frustumCulled = false;
@@ -3697,12 +3861,15 @@ export class RioScene extends BaseScene {
       this.scene.add(this.waterOccluder);
     }
 
-    const sx = totalRightSpan * 1.1;
-    const sz = baseWidthForward * 2.0;
+    // Make the surface much larger to ensure it hits the fog far plane
+    const sx = Math.max(totalRightSpan * 2.0, 1000);
+    const sz = Math.max(baseWidthForward * 5.0, 1000);
     const yTop = this.params.surfaceLevel;
 
-    this.waterOccluder.position.set(100, yTop - t*0.5, 0);
-    this.waterOccluder.scale.set(sx, t, sz);
+    // Position occluder slightly BELOW the top surface
+    // This hides everything above the water when looking from below.
+    this.waterOccluder.position.set(100, yTop - 0.1, 0);
+    this.waterOccluder.scale.set(sx, sz, 1);
 
     // Superficie visible (opcional, solo cara superior, sin “segunda tapa”)
     if (!this.waterSurface) {
@@ -3712,7 +3879,8 @@ export class RioScene extends BaseScene {
         transparent: false,
         roughness: 0.9, metalness: 0.0,
         side: THREE.FrontSide, // solo desde arriba
-        depthWrite: true, depthTest: true
+        depthWrite: true, depthTest: true,
+        fog: true
       });
       this.waterSurface = new THREE.Mesh(surfGeo, surfMat);
       this.waterSurface.frustumCulled = false;
@@ -3721,6 +3889,41 @@ export class RioScene extends BaseScene {
     this.waterSurface.position.set(100, yTop, 0);
     this.waterSurface.scale.set(sx, 1, sz);
 
+    // Superficie inferior (brillante desde abajo)
+
+    if (!this.waterSurfaceBottom) {
+      const surfGeoBottom = new THREE.PlaneGeometry(1, 1); surfGeoBottom.rotateX(Math.PI/2);
+      // Blend sky color with white for a less saturated, brighter look
+      const blended = this.getUnderwaterSurfaceColor();
+      const surfMatBottom = new THREE.MeshLambertMaterial({
+        color: blended,
+        emissive: blended,
+        emissiveIntensity: 0.4,
+        transparent: false, // Opaque to avoid seeing the occluder/void behind it
+        side: THREE.FrontSide, // facing down
+        depthWrite: true,
+        depthTest: true,
+        fog: true
+      });
+      this.waterSurfaceBottom = new THREE.Mesh(surfGeoBottom, surfMatBottom);
+      this.waterSurfaceBottom.frustumCulled = false;
+      this.scene.add(this.waterSurfaceBottom);
+    }
+    // Position bottom surface further down to avoid any precision issues with the occluder
+    this.waterSurfaceBottom.position.set(100, yTop - 0.2, 0); 
+    this.waterSurfaceBottom.scale.set(sx, 1, sz);
+
+  }
+
+  /**
+   * Returns the color used for the water surface as seen from below.
+   * Blends sky color with white for a less saturated, brighter look.
+   */
+  getUnderwaterSurfaceColor() {
+    const skyColor = new THREE.Color(this.params.skyColor || 0xF6B26B);
+    const white = new THREE.Color(0xffffff);
+    // Blend 85% sky, 15% white, then dim it to 50% brightness
+    return skyColor.clone().lerp(white, 0.15).multiplyScalar(0.5);
   }
 
   updateFog() {
@@ -5384,9 +5587,9 @@ export class RioScene extends BaseScene {
     const g = c.getContext('2d');
 
     // radial gradient from center -> edges
-    const grad = g.createRadialGradient(size/2, size/2, size*0.1, size/2, size/2, size*0.5);
-    grad.addColorStop(0.0, 'rgba(255,255,255,0.9)');
-    grad.addColorStop(0.5, 'rgba(255,255,255,0.35)');
+    const grad = g.createRadialGradient(size/2, size/2, 0, size/2, size/2, size*0.5);
+    grad.addColorStop(0.0, 'rgba(255,255,255,0.8)');
+    grad.addColorStop(0.4, 'rgba(255,255,255,0.2)');
     grad.addColorStop(1.0, 'rgba(255,255,255,0.0)');
 
     g.fillStyle = grad;
@@ -5414,7 +5617,8 @@ export class RioScene extends BaseScene {
 
     if (!this.surfaceFX.enabled || !this._insideOverlay) return;
 
-    this.surfaceFX.bubbleSystem = new BubbleSystem(this._insideOverlay);
+    const c = this.getUnderwaterSurfaceColor();
+    this.surfaceFX.bubbleSystem = new BubbleSystem(this._insideOverlay, c);
   }
 
   _handleSurfaceVideoInsideToggle(isInside) {
@@ -5605,6 +5809,7 @@ export class RioScene extends BaseScene {
       // Walk up to find a mesh tagged with speciesKey
       while (obj) {
         if (obj.userData && obj.userData.speciesKey) {
+          this._handleFishClickForFacts();
           const agent = this._findAgentByObject(obj);
           const skipIncrement = !!agent?.tracked;
           const isMatch = this.deck.checkMatch(obj.userData.speciesKey, { skipIncrement });
@@ -5626,6 +5831,28 @@ export class RioScene extends BaseScene {
 
         }
         obj = obj.parent;
+      }
+    }
+  }
+
+  _handleFishClickForFacts() {
+    if (!this.deck) return;
+    // Don't show facts if the completed species overlay is active
+    if (this.completedOverlay && this.completedOverlay._activeKey) return;
+
+    this.fishClickCount++;
+    if (this.fishClickCount % 2 === 0) {
+      const currentSpecies = this.deck.speciesList[this.deck.currentIndex];
+      if (!currentSpecies) return;
+      const speciesKey = currentSpecies.key;
+      const facts = SPECIES_FACTS[speciesKey];
+      if (facts && facts.length > 0) {
+        if (this.speciesFactIndices[speciesKey] === undefined) {
+          this.speciesFactIndices[speciesKey] = 0;
+        }
+        const fact = facts[this.speciesFactIndices[speciesKey]];
+        this.factOverlay.show(fact);
+        this.speciesFactIndices[speciesKey] = (this.speciesFactIndices[speciesKey] + 1) % facts.length;
       }
     }
   }
@@ -5902,18 +6129,12 @@ export class RioScene extends BaseScene {
 
   /** Devuelve true si la cámara está dentro del volumen “sólido” del agua. */
   isCameraInsideSolid() {
-    // 1) Si existe el oclusor volumétrico (recomendado), usamos su AABB:
-    if (this.waterOccluder) {
-      const box = new THREE.Box3().setFromObject(this.waterOccluder);
-      return box.containsPoint(this.camera.position);
-    }
-
-    // 2) Fallback geométrico: entre superficie y su “grosor” hacia abajo
-    const t = Math.max(0.02, this.params.waterSurfaceThicknessMeters ?? 0.5);
+    // Increased thickness to ensure the camera doesn't skip the transition zone
+    // even when moving fast (e.g. 10m/s at 60fps is ~0.16m per frame).
     const yTop = this.params.surfaceLevel;
-    const yBottom = yTop - t;
     const y = this.camera.position.y;
-    return (y >= Math.min(yTop, yBottom) && y <= Math.max(yTop, yBottom));
+    const halfT = 0.15; // 15cm above/below surface (30cm total zone)
+    return (y >= yTop - halfT && y <= yTop + halfT);
   }
 
   /* ----------------------------------- Update ----------------------------------- */
