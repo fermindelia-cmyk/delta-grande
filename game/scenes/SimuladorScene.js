@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { SimplexNoise } from 'three/addons/math/SimplexNoise.js';
 import { AssetLoader } from '../core/AssetLoader.js';
 import { BaseScene } from '../core/BaseScene.js';
+import { UI } from '../core/UI.js';
 
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -719,6 +720,18 @@ export class SimuladorScene extends BaseScene {
   }
 
   async mount() {
+    // 👇 Limpiar cualquier overlay del menú que haya quedado abierto
+    const menuOverlays = document.querySelectorAll('body > div');
+    menuOverlays.forEach(overlay => {
+      const zIndex = window.getComputedStyle(overlay).zIndex;
+      if (zIndex === '10000') {
+        overlay.remove();
+      }
+    });
+
+    // 👇 Ocultar el videoOverlay al inicio para evitar que bloquee clicks/cámara
+    UI.hideVideo();
+
     this._isReady = false;
     this._showLoadingOverlay();
 

@@ -3,6 +3,7 @@ import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { BaseScene } from '../core/BaseScene.js';
 import { AssetLoader } from '../core/AssetLoader.js';
 import { EventBus } from '../core/EventBus.js';
+import { UI } from '../core/UI.js';
 
 const ensureTrailingSlash = (value = '') => (value.endsWith('/') ? value : `${value}/`);
 const computePublicBaseUrl = () => {
@@ -1088,7 +1089,22 @@ class FishSpecies {
       ? this.template.clone(true)
       : SkeletonUtils.clone(this.template);
 
-    makeMaterialsUnique(mesh); // <- asegura materiales no compartidos con el deck
+    // NEW: Share materials among all water agents of the same species to reduce draw calls.
+    // We only clone them ONCE per species (the first time an agent is created).
+    if (!this._sharedWaterMaterials) {
+      makeMaterialsUnique(mesh);
+      this._sharedWaterMaterials = new Map();
+      mesh.traverse(o => {
+        if (o.isMesh) this._sharedWaterMaterials.set(o.name || o.uuid, o.material);
+      });
+    } else {
+      mesh.traverse(o => {
+        if (o.isMesh) {
+          const shared = this._sharedWaterMaterials.get(o.name || o.uuid);
+          if (shared) o.material = shared;
+        }
+      });
+    }
 
     // Ensure a unique name for raycasting + tag species key
     mesh.name = `fish_${this.def.key}_${Math.random().toString(36).substr(2, 9)}`;
@@ -2356,7 +2372,7 @@ class CompletedOverlay {
           position: fixed;
           inset: 0;
           pointer-events: none;
-          z-index: 100010;
+          z-index: 9999;
           visibility: hidden;
           user-select: none;
           -webkit-user-select: none;
@@ -3072,6 +3088,12 @@ export class RioScene extends BaseScene {
     this.tmpUp = new THREE.Vector3(0, 1, 0);
     this.tmpDelta = new THREE.Vector3();
 
+    // Reusables for steering & math (avoid GC)
+    this._v1 = new THREE.Vector3();
+    this._v2 = new THREE.Vector3();
+    this._v3 = new THREE.Vector3();
+    this._tmpBox = new THREE.Box3();
+
     // Scene content
     this.model = null;
     this.tilesGroup = new THREE.Group();
@@ -3132,6 +3154,7 @@ export class RioScene extends BaseScene {
       this._cursorBlockedByMenu = true;
       this._applyInsideOverlayState(this.isCameraInsideSolid());
       this._updateCursorVisibility();
+      this._cancelCompletedOverlay();
     };
     this._handleAppResumed = () => {
       this._suppressInsideOverlay = false;
@@ -3271,6 +3294,18 @@ export class RioScene extends BaseScene {
   /* --------------------------------- Lifecycle --------------------------------- */
 
   async mount() {
+    // 👇 Limpiar cualquier overlay del menú que haya quedado abierto
+    const menuOverlays = document.querySelectorAll('body > div');
+    menuOverlays.forEach(overlay => {
+      const zIndex = window.getComputedStyle(overlay).zIndex;
+      if (zIndex === '10000') {
+        overlay.remove();
+      }
+    });
+
+    // 👇 Ocultar el videoOverlay al inicio para evitar que bloquee clicks/cámara
+    UI.hideVideo();
+
     this._createLoadingOverlay();
     this._setLoadingText('Preparando escena principal...');
     if (this.app?.canvas) {
@@ -4480,26 +4515,39 @@ export class RioScene extends BaseScene {
 
 
   // --- NEW: advance one frame per update; when finished, restore static cursor ---
-  _updateCursorAnim() {
+  _updateCursorAnim(dt = 0) {
     const C = this.params.cursorUI;
     if (!this.cursorEl || !this._cursorAnim.playing) return;
 
     const frames = this._cursorAnim.frames;
     if (!frames?.length) { this._cursorAnim.playing = false; return; }
 
-    // avanzar un frame por update
-    this._cursorAnim.idx += 1;
+    // Use dt for frame-rate independent animation (target ~30fps)
+    this._cursorAnim.timeAccum = (this._cursorAnim.timeAccum || 0) + dt;
+    const frameDuration = 1 / 30;
 
-    if (this._cursorAnim.idx >= frames.length) {
-      // terminó: volvemos al cursor estático
-      this._cursorAnim.playing = false;
-      this.cursorEl.src = C.src;
-      return;
+    if (this._cursorAnim.timeAccum < frameDuration) return;
+
+    let changed = false;
+    while (this._cursorAnim.timeAccum >= frameDuration) {
+      this._cursorAnim.timeAccum -= frameDuration;
+      this._cursorAnim.idx += 1;
+      changed = true;
+
+      if (this._cursorAnim.idx >= frames.length) {
+        // terminó: volvemos al cursor estático
+        this._cursorAnim.playing = false;
+        this._cursorAnim.timeAccum = 0;
+        this.cursorEl.src = C.src;
+        return;
+      }
     }
 
-    const im = frames[this._cursorAnim.idx];
-    if (im) {
-      this.cursorEl.src = im.src;
+    if (changed) {
+      const im = frames[this._cursorAnim.idx];
+      if (im) {
+        this.cursorEl.src = im.src;
+      }
     }
   }
 
@@ -4599,14 +4647,19 @@ export class RioScene extends BaseScene {
 
       if (r.timeAccum < frameDuration) continue;
 
+      let changed = false;
       while (r.timeAccum >= frameDuration) {
         r.timeAccum -= frameDuration;
         r.idx += 1;
+        changed = true;
         if (r.idx >= r.totalFrames) {
           r.el?.parentNode?.removeChild(r.el);
           this._radars.splice(i, 1);
+          changed = false;
           break;
         }
+      }
+      if (changed) {
         this._applyRadarFrame(r, r.idx);
       }
     }
@@ -5911,7 +5964,7 @@ export class RioScene extends BaseScene {
     if (config.useFatRaycast) {
       // Multi-ray approach: create a pattern of rays around the center point
       const radiusScale = config.radiusScale || 0.15;
-      const numRays = 8; // Number of rays in circle pattern
+      const numRays = 4; // Reduced from 8 for performance
       const centerRadius = radiusScale * 0.5; // Scale down for raycast offset
       
       // Center ray
@@ -6400,7 +6453,7 @@ export class RioScene extends BaseScene {
 
     if (this.params.rulerUI?.enabled) this._updateRulerPosition();
 
-    this._updateCursorAnim();
+    this._updateCursorAnim(dt);
     this._updateRadars(dt);
 
     // Keep haze aligned if params change, or if surfaceLevel moves
@@ -6429,34 +6482,40 @@ export class RioScene extends BaseScene {
     this._sepAccum += dt;
     const doSeparationTick = (this._sepAccum >= (1 / this._sepHz));
     if (doSeparationTick) {
-      this._sepAccum = 0;
       this._hash.s = Math.max(1e-3, pf.separationRadius); // cell ~= radius
       this._hash.rebuild(this.fish);
+      this._sepAccum = 0;
     }
 
     const renderDistSq = pf.renderDistance * pf.renderDistance;
 
     for (const a of this.fish) {
       // Retarget if reached, timed out, or target left the box (due to camera X change)
-      const toTarget = a.target.clone().sub(a.pos);
-      if (toTarget.length() < pf.targetReachDist || now >= a.nextRetargetAt || !this.swimBox.containsPoint(a.target)) {
+      this._v1.copy(a.target).sub(a.pos);
+      if (this._v1.length() < pf.targetReachDist || now >= a.nextRetargetAt || !this.swimBox.containsPoint(a.target)) {
         a.target = a.species.randBiasedPoint(this.swimBox);
         const ret = pf.retargetTime; a.nextRetargetAt = now + lerp(ret[0], ret[1], Math.random());
       }
 
       // Steering forces
-      const fSeek = this.steerSeek(a, a.target, 1.0);
       if (!a._sepForce) a._sepForce = new THREE.Vector3();
       if (doSeparationTick) {
         const local = this._hash.neighbors(a.pos); // nearby fish only
-        const fSepNow = this.steerSeparation(a, local, pf.separationRadius, pf.separationStrength);
-        a._sepForce.copy(fSepNow);
+        this.steerSeparation(a, local, pf.separationRadius, pf.separationStrength, a._sepForce);
       }
-      const fSep = a._sepForce;
-      const fBox = this.steerContain(a).multiplyScalar(6.0); // push back inside
 
-      // Sum and clamp by max accel
-      const force = new THREE.Vector3().add(fSeek).add(fSep).add(fBox);
+      // Sum forces into _v1 (avoiding new Vector3)
+      const force = this._v1;
+      force.set(0, 0, 0);
+
+      this.steerSeek(a, a.target, this._v2, 1.0);
+      force.add(this._v2);
+
+      force.add(a._sepForce);
+
+      this.steerContain(a, this._v2);
+      force.add(this._v2.multiplyScalar(6.0));
+
       if (force.length() > pf.accel) force.setLength(pf.accel);
 
       // Integrate velocity and clamp speed per species
@@ -6486,15 +6545,16 @@ export class RioScene extends BaseScene {
             !a.wiggleBone.rotation ||
             typeof a.wiggleBone.rotation.set !== 'function';
 
-          if (needsRecover) {
+          if (needsRecover && !a._wiggleFailed) {
             // Try to reacquire from the clone's skeleton, honoring 'moving'
             let sk = null;
             a.mesh.traverse(o => { if (!sk && o.isSkinnedMesh) sk = o; });
 
             if (sk) {
               // Recompute local forward from current mesh bbox + flips
-              const box = new THREE.Box3().setFromObject(a.mesh);
-              const size = new THREE.Vector3(); box.getSize(size);
+              this._tmpBox.setFromObject(a.mesh);
+              const size = this._v2; // reuse _v2
+              this._tmpBox.getSize(size);
               const axes = [
                 { v: new THREE.Vector3(1,0,0), len: size.x },
                 { v: new THREE.Vector3(0,1,0), len: size.y },
@@ -6514,6 +6574,10 @@ export class RioScene extends BaseScene {
                 a.wiggleBone = findTailBoneDirectional(sk, { ownerMesh: a.mesh, forwardLocal }) ||
                                 findTailBoneFromSkeleton(sk);
               }
+              
+              if (!a.wiggleBone) a._wiggleFailed = true;
+            } else {
+              a._wiggleFailed = true;
             }
           }
 
@@ -6647,46 +6711,53 @@ export class RioScene extends BaseScene {
 
   /* ------------------------------- Steering helpers ------------------------------ */
 
-  steerSeek(agent, target, intensity = 1) {
-    const desired = target.clone().sub(agent.pos);
-    const d = desired.length();
-    if (d < 1e-5) return new THREE.Vector3();
-    desired.normalize().multiplyScalar(agent.speedMax);
-    return desired.sub(agent.vel).multiplyScalar(intensity);
+  steerSeek(agent, target, out, intensity = 1) {
+    out.copy(target).sub(agent.pos);
+    const d = out.length();
+    if (d < 1e-5) {
+      out.set(0, 0, 0);
+      return out;
+    }
+    out.normalize().multiplyScalar(agent.speedMax);
+    out.sub(agent.vel).multiplyScalar(intensity);
+    return out;
   }
 
-  steerSeparation(agent, neighbors, radius, strength) {
-    const force = new THREE.Vector3(); let count = 0;
+  steerSeparation(agent, neighbors, radius, strength, out) {
+    out.set(0, 0, 0);
+    let count = 0;
     const r2 = radius * radius;
     for (const other of neighbors) {
       if (other === agent) continue;
-      const diff = agent.pos.clone().sub(other.pos);
-      const d2 = diff.lengthSq();
+      // Use _v3 as a temporary for diff
+      this._v3.copy(agent.pos).sub(other.pos);
+      const d2 = this._v3.lengthSq();
       if (d2 > 0 && d2 < r2) {
-        diff.normalize().multiplyScalar(1.0 / d2);
-        force.add(diff); count++;
+        this._v3.normalize().multiplyScalar(1.0 / d2);
+        out.add(this._v3);
+        count++;
       }
     }
-    if (count > 0) force.multiplyScalar(strength);
-    return force;
+    if (count > 0) out.multiplyScalar(strength);
+    return out;
   }
 
-  steerContain(agent) {
+  steerContain(agent, out) {
     // Simple inward push when at/near the box faces (zero margin => only when outside)
-    const f = new THREE.Vector3();
+    out.set(0, 0, 0);
     const p = agent.pos;
     const b = this.swimBox;
 
-    let d = p.x - b.min.x; if (d < 0) f.x += -d;
-    d = b.max.x - p.x;     if (d < 0) f.x -= -d;
+    let d = p.x - b.min.x; if (d < 0) out.x += -d;
+    d = b.max.x - p.x;     if (d < 0) out.x -= -d;
 
-    d = p.y - b.min.y;     if (d < 0) f.y += -d;
-    d = b.max.y - p.y;     if (d < 0) f.y -= -d;
+    d = p.y - b.min.y;     if (d < 0) out.y += -d;
+    d = b.max.y - p.y;     if (d < 0) out.y -= -d;
 
-    d = p.z - b.min.z;     if (d < 0) f.z += -d;
-    d = b.max.z - p.z;     if (d < 0) f.z -= -d;
+    d = p.z - b.min.z;     if (d < 0) out.z += -d;
+    d = b.max.z - p.z;     if (d < 0) out.z -= -d;
 
-    return f;
+    return out;
   }
 
   /* ---------------------------------- Resize ---------------------------------- */
