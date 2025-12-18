@@ -120,6 +120,126 @@ class SpatialHash {
   }
 }
 
+/* -------------------------------------------------------------
+ * Bubble System for surface transition
+ * ------------------------------------------------------------- */
+class BubbleSystem {
+  constructor(container) {
+    this.canvas = document.createElement('canvas');
+    this.ctx = this.canvas.getContext('2d');
+    Object.assign(this.canvas.style, {
+      position: 'absolute',
+      inset: '0',
+      width: '100%',
+      height: '100%',
+      pointerEvents: 'none',
+      zIndex: '10'
+    });
+    container.appendChild(this.canvas);
+    this.bubbles = [];
+    this.active = false;
+    this.resize();
+    this._onResize = () => this.resize();
+    window.addEventListener('resize', this._onResize);
+  }
+
+  destroy() {
+    window.removeEventListener('resize', this._onResize);
+    if (this.canvas.parentNode) this.canvas.parentNode.removeChild(this.canvas);
+  }
+
+  resize() {
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+  }
+
+  start() {
+    this.active = true;
+    // Initial burst
+    for (let i = 0; i < 60; i++) {
+      const b = this.createBubble();
+      b.y = Math.random() * this.canvas.height; // distribute initially
+      this.bubbles.push(b);
+    }
+  }
+
+  stop() {
+    this.active = false;
+  }
+
+  createBubble() {
+    const radius = Math.random() * 12 + 4;
+    return {
+      x: Math.random() * this.canvas.width,
+      y: this.canvas.height + radius + Math.random() * 200,
+      vx: (Math.random() - 0.5) * 1.5,
+      vy: -Math.random() * 8 - 4,
+      radius: radius,
+      alpha: Math.random() * 0.4 + 0.1,
+      wobble: Math.random() * Math.PI * 2,
+      wobbleSpeed: Math.random() * 0.1 + 0.05,
+      wobbleAmp: Math.random() * 3 + 1
+    };
+  }
+
+  update(dt) {
+    if (!this.active && this.bubbles.length === 0) return;
+
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    for (let i = this.bubbles.length - 1; i >= 0; i--) {
+      const b = this.bubbles[i];
+      b.x += b.vx + Math.sin(b.wobble) * b.wobbleAmp;
+      b.y += b.vy;
+      b.wobble += b.wobbleSpeed;
+
+      if (b.y + b.radius < -50) {
+        if (this.active) {
+          Object.assign(b, this.createBubble());
+        } else {
+          this.bubbles.splice(i, 1);
+          continue;
+        }
+      }
+
+      this.drawBubble(b);
+    }
+  }
+
+  drawBubble(b) {
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.globalAlpha = b.alpha;
+    
+    // Main bubble body
+    ctx.beginPath();
+    const grad = ctx.createRadialGradient(
+      b.x - b.radius * 0.3, b.y - b.radius * 0.3, b.radius * 0.1,
+      b.x, b.y, b.radius
+    );
+    grad.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+    grad.addColorStop(0.4, 'rgba(200, 230, 255, 0.3)');
+    grad.addColorStop(1, 'rgba(150, 200, 255, 0.1)');
+    
+    ctx.fillStyle = grad;
+    ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Rim highlight
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Specular highlight
+    ctx.beginPath();
+    ctx.ellipse(b.x - b.radius * 0.4, b.y - b.radius * 0.4, b.radius * 0.2, b.radius * 0.1, Math.PI / 4, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.fill();
+
+    ctx.restore();
+  }
+}
+
 
 /* -------------------------------------------------------------
  * Param scales and species configuration
@@ -589,7 +709,7 @@ const DEFAULT_PARAMS = {
   timerUI: {
     src: '/game-assets/sub/interfaz/timer.png',
     // Prefer Vh-based values so size/margin stay constant when width changes
-    xMarginVh: 0.25,    // right margin as fraction of viewport HEIGHT (deck-style)
+    xMarginVh: 0.3,    // right margin as fraction of viewport HEIGHT (deck-style)
     yMarginVh: 0.055,   // bottom margin as fraction of viewport height
     widthVh:   0.3,     // timer width tied to container height for consistency
     zIndex:    9996,
@@ -2780,6 +2900,11 @@ export class RioScene extends BaseScene {
     this._wasUnderwater = undefined;              // last frame's underwater state
     this._lastUnderwaterX = this.params.start.x; // last X while underwater
     
+    // --- Surface transition state ---
+    this._surfaceTransitionActive = false;
+    this._surfaceTransitionTime = 0;
+    this._wasInsideSolid = false;
+    
     // Raycasting for fish clicks
     this.raycaster = new THREE.Raycaster();
     this.clickMouse = new THREE.Vector2();
@@ -2869,21 +2994,6 @@ export class RioScene extends BaseScene {
           pointer-events: none;
           z-index: 100002;              /* por encima de todo lo in-escena */
           user-select: none; -webkit-user-select: none; -ms-user-select: none;
-        }
-        #rio-inside-overlay .surface-video-wrap {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-        }
-        #rio-inside-overlay .surface-video-wrap video {
-          position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          opacity: 0;
-          transition: opacity 0.7s linear;
-          filter: none;
         }
       `;
       document.head.appendChild(css);
@@ -5291,231 +5401,37 @@ export class RioScene extends BaseScene {
 
 
   /* ========================================================================== */
-  /* Surface transition video FX                                                */
+  /* Surface transition Bubble FX                                               */
   /* ========================================================================== */
 
   _setupSurfaceVideoFX() {
     const cfg = this.params.surfaceFX || {};
-    const supportsBlend = (mode) => typeof CSS !== 'undefined' && CSS.supports && CSS.supports('mix-blend-mode', mode);
-    const desiredBlend = cfg.blendMode || 'screen';
-    const fallbackBlend = cfg.fallbackBlendMode || 'screen';
-    const resolvedBlend = supportsBlend(desiredBlend) ? desiredBlend
-                          : (supportsBlend(fallbackBlend) ? fallbackBlend : 'screen');
-
     this.surfaceFX = {
       enabled: !!cfg.enabled,
-      ready: false,
-      readyCount: 0,
-      videos: [],
-      listeners: [],
-      timers: [],
-      active: 0,
-      duration: 0,
-      crossfadeSec: Math.max(0, (cfg.crossfadeMs ?? 0) / 1000),
-      playbackRate: cfg.playbackRate ?? 1,
-      blendMode: resolvedBlend,
-      filter: cfg.filter || '',
-      pendingCrossfade: false,
       playing: false,
-      pendingStart: false,
-      wrap: null
+      bubbleSystem: null
     };
 
-    if (!this.surfaceFX.enabled || !this._insideOverlay || !cfg.src) return;
+    if (!this.surfaceFX.enabled || !this._insideOverlay) return;
 
-    const wrap = document.createElement('div');
-    wrap.className = 'surface-video-wrap';
-    wrap.style.opacity = '1';
-    wrap.style.pointerEvents = 'none';
-    this._insideOverlay.appendChild(wrap);
-    this.surfaceFX.wrap = wrap;
-
-    const mkTransition = (sec) => `${Math.max(0, sec)}s linear`;
-    const videoCount = (this.surfaceFX.crossfadeSec > 0) ? 2 : 1;
-    for (let i = 0; i < videoCount; i++) {
-      const vid = document.createElement('video');
-      vid.src = cfg.src;
-      vid.preload = 'auto';
-      vid.playsInline = true;
-      vid.muted = true;
-      vid.loop = (this.surfaceFX.crossfadeSec <= 0);
-      vid.crossOrigin = 'anonymous';
-      vid.controls = false;
-  vid.playbackRate = this.surfaceFX.playbackRate;
-      vid.setAttribute('playsinline', '');
-      vid.style.position = 'absolute';
-      vid.style.inset = '0';
-      vid.style.width = '100%';
-      vid.style.height = '100%';
-      vid.style.objectFit = 'cover';
-      vid.style.opacity = '0';
-  vid.style.mixBlendMode = this.surfaceFX.blendMode;
-  if (this.surfaceFX.filter) vid.style.filter = this.surfaceFX.filter;
-      vid.style.transition = `opacity ${mkTransition(this.surfaceFX.crossfadeSec)}`;
-      vid.style.pointerEvents = 'none';
-
-      const onLoaded = () => this._onSurfaceVideoLoaded(vid);
-      const onTimeUpdate = () => this._onSurfaceVideoTimeUpdate(vid);
-      const onEnded = () => this._onSurfaceVideoEnded(vid);
-      vid.addEventListener('loadedmetadata', onLoaded, { passive: true });
-      vid.addEventListener('timeupdate', onTimeUpdate, { passive: true });
-      vid.addEventListener('ended', onEnded, { passive: true });
-
-      this.surfaceFX.listeners.push({ video: vid, type: 'loadedmetadata', handler: onLoaded });
-      this.surfaceFX.listeners.push({ video: vid, type: 'timeupdate', handler: onTimeUpdate });
-      this.surfaceFX.listeners.push({ video: vid, type: 'ended', handler: onEnded });
-
-      wrap.appendChild(vid);
-      this.surfaceFX.videos.push(vid);
-
-      // Kick preload immediately (loading time requirement)
-      try { vid.load(); } catch (_) { /* ignore */ }
-    }
-  }
-
-  _onSurfaceVideoLoaded(video) {
-    const fx = this.surfaceFX;
-    if (!fx || !fx.enabled) return;
-    if (!Number.isFinite(video.duration) || video.duration <= 0) return;
-
-    fx.duration = Math.max(fx.duration, video.duration);
-    fx.readyCount += 1;
-
-    if (fx.crossfadeSec > 0 && fx.duration > 0 && fx.crossfadeSec >= fx.duration) {
-      fx.crossfadeSec = Math.max(0, fx.duration - 0.1);
-      const transition = `${Math.max(0, fx.crossfadeSec)}s linear`;
-      fx.videos.forEach(v => { v.style.transition = `opacity ${transition}`; });
-    }
-
-    if (fx.readyCount >= fx.videos.length) {
-      fx.ready = true;
-      if (fx.pendingStart) {
-        fx.pendingStart = false;
-        this._playSurfaceVideo();
-      }
-    }
-  }
-
-  _onSurfaceVideoTimeUpdate(video) {
-    const fx = this.surfaceFX;
-    if (!fx || !fx.enabled || !fx.playing) return;
-    if (fx.crossfadeSec <= 0) return;
-    if (video !== fx.videos[fx.active]) return;
-    if (fx.pendingCrossfade) return;
-
-    const duration = fx.duration || video.duration;
-    if (!Number.isFinite(duration) || duration <= 0) return;
-    const remaining = duration - video.currentTime;
-    if (remaining <= fx.crossfadeSec + 0.05) {
-      this._startSurfaceVideoCrossfade();
-    }
-  }
-
-  _onSurfaceVideoEnded(video) {
-    const fx = this.surfaceFX;
-    if (!fx || !fx.enabled || !fx.playing) return;
-    if (fx.crossfadeSec > 0) return; // handled via loop flag
-    if (video !== fx.videos[fx.active]) return;
-
-    try { video.currentTime = 0; } catch (_) { /* ignore */ }
-    const playPromise = video.play();
-    if (playPromise?.catch) playPromise.catch(()=>{});
-  }
-
-  _startSurfaceVideoCrossfade() {
-    const fx = this.surfaceFX;
-    if (!fx || !fx.enabled || !fx.playing) return;
-    if (fx.crossfadeSec <= 0 || fx.videos.length < 2) return;
-    if (fx.pendingCrossfade) return;
-
-    const fromIdx = fx.active;
-    const toIdx = (fromIdx + 1) % fx.videos.length;
-    const fromVideo = fx.videos[fromIdx];
-    const toVideo = fx.videos[toIdx];
-
-    fx.pendingCrossfade = true;
-
-    try { toVideo.pause(); toVideo.currentTime = 0; } catch (_) { /* ignore */ }
-    toVideo.playbackRate = fx.playbackRate;
-    const playPromise = toVideo.play();
-    if (playPromise?.catch) playPromise.catch(()=>{});
-
-    const transition = `${Math.max(0, fx.crossfadeSec)}s linear`;
-    toVideo.style.transition = `opacity ${transition}`;
-    fromVideo.style.transition = `opacity ${transition}`;
-
-    toVideo.style.opacity = '0';
-    requestAnimationFrame(() => {
-      toVideo.style.opacity = '1';
-      fromVideo.style.opacity = '0';
-    });
-
-    const timer = window.setTimeout(() => {
-      fromVideo.pause();
-      try { fromVideo.currentTime = 0; } catch (_) { /* ignore */ }
-      fromVideo.style.opacity = '0';
-      fx.active = toIdx;
-      fx.pendingCrossfade = false;
-      fx.timers = fx.timers.filter(id => id !== timer);
-    }, Math.max(10, fx.crossfadeSec * 1000 + 30));
-    fx.timers.push(timer);
-  }
-
-  _playSurfaceVideo() {
-    const fx = this.surfaceFX;
-    if (!fx || !fx.enabled) return;
-    if (!fx.ready) {
-      fx.pendingStart = true;
-      return;
-    }
-    if (fx.playing) return;
-
-    fx.timers.forEach(t => window.clearTimeout(t));
-    fx.timers.length = 0;
-
-    fx.videos.forEach((v, idx) => {
-      v.pause();
-      try { v.currentTime = 0; } catch (_) { /* ignore */ }
-      v.style.opacity = '0';
-      v.playbackRate = fx.playbackRate;
-      v.loop = (fx.crossfadeSec <= 0);
-    });
-
-    fx.active = 0;
-    fx.pendingCrossfade = false;
-    fx.playing = true;
-
-    const first = fx.videos[fx.active];
-    const playPromise = first.play();
-    const reveal = () => { first.style.opacity = '1'; };
-    if (playPromise?.then) {
-      playPromise.then(reveal).catch(()=>{});
-    } else {
-      reveal();
-    }
-  }
-
-  _stopSurfaceVideo() {
-    const fx = this.surfaceFX;
-    if (!fx) return;
-    fx.timers.forEach(t => window.clearTimeout(t));
-    fx.timers.length = 0;
-    fx.pendingCrossfade = false;
-    fx.playing = false;
-    fx.pendingStart = false;
-
-    fx.videos.forEach(v => {
-      v.pause();
-      try { v.currentTime = 0; } catch (_) { /* ignore */ }
-      v.style.opacity = '0';
-    });
+    this.surfaceFX.bubbleSystem = new BubbleSystem(this._insideOverlay);
   }
 
   _handleSurfaceVideoInsideToggle(isInside) {
     const fx = this.surfaceFX;
     if (!fx || !fx.enabled) return;
-    if (isInside) this._playSurfaceVideo();
-    else this._stopSurfaceVideo();
+    
+    if (isInside) {
+      if (!fx.playing) {
+        fx.playing = true;
+        fx.bubbleSystem?.start();
+      }
+    } else {
+      if (fx.playing) {
+        fx.playing = false;
+        fx.bubbleSystem?.stop();
+      }
+    }
   }
 
   _applyInsideOverlayState(inside) {
@@ -5533,16 +5449,7 @@ export class RioScene extends BaseScene {
   _destroySurfaceVideoFX() {
     const fx = this.surfaceFX;
     if (!fx) return;
-    this._stopSurfaceVideo();
-    fx.timers.forEach(t => window.clearTimeout(t));
-    fx.timers.length = 0;
-    fx.listeners.forEach(({ video, type, handler }) => {
-      if (video) video.removeEventListener(type, handler);
-    });
-    fx.listeners.length = 0;
-    if (fx.wrap && fx.wrap.parentNode) fx.wrap.parentNode.removeChild(fx.wrap);
-    fx.videos.length = 0;
-    fx.ready = false;
+    fx.bubbleSystem?.destroy();
     this.surfaceFX = null;
   }
 
@@ -6134,9 +6041,29 @@ export class RioScene extends BaseScene {
       const yMax = this.params.surfaceLevel + this.params.cameraSurfaceMargin;
       const newY = clamp(this.camera.position.y + deltaY.y, yMin, yMax);
 
-      // Apply camera transform
-      this.camera.position.set(p.x, newY, p.z);
-      this.camera.lookAt(this.camera.position.clone().add(this.forward));
+      // --- Surface Transition Lock ---
+      const currentInside = this.isCameraInsideSolid();
+      if (currentInside && !this._surfaceTransitionActive && !this._wasInsideSolid) {
+        this._surfaceTransitionActive = true;
+        this._surfaceTransitionTime = 0;
+      }
+      this._wasInsideSolid = currentInside;
+
+      let allowMovement = true;
+      if (this._surfaceTransitionActive) {
+        this._surfaceTransitionTime += dt;
+        if (this._surfaceTransitionTime >= 0.5) {
+          this._surfaceTransitionActive = false;
+        } else {
+          allowMovement = false;
+        }
+      }
+
+      if (allowMovement) {
+        // Apply camera transform
+        this.camera.position.set(p.x, newY, p.z);
+        this.camera.lookAt(this.camera.position.clone().add(this.forward));
+      }
     }
 
     // --- Snap X on surface crossing; restore when diving back ---
@@ -6266,6 +6193,11 @@ export class RioScene extends BaseScene {
 
     if (this.shoreVegBackgroundGroup2 && this.params.shoreVegBackground2?.enabled) {
       this.updateShoreVegBackgroundLayout2();
+    }
+
+    // Update bubble system
+    if (this.surfaceFX?.bubbleSystem) {
+      this.surfaceFX.bubbleSystem.update(dt);
     }
   }
 
