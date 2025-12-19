@@ -258,7 +258,7 @@ class BubbleSystem {
  * ------------------------------------------------------------- */
 const SizeScale       = { small: 1.0,  medium: 1.5,  large: 2.0 };
 const SpeedScale      = { slow: 0.3,   medium: 0.8,  fast: 1.5 };
-const AbundanceCount  = { scarce: 3,   usual: 8,    veryCommon: 15 };
+const AbundanceCount  = { scarce: 2,   usual: 6,    veryCommon: 10 };
 //const AbundanceCount  = { scarce: 1,   usual: 1,    veryCommon: 1 };
 
 /**
@@ -614,7 +614,7 @@ const DEFAULT_PARAMS = {
     color: 0xC9CED6,
     opacity: 0.55,         // 0..1
     height: 0.5,          // meters above surface
-    count: 20,             // number of patches
+    count: 30,             // number of patches
     sizeRange: [8, 20],    // meters (min, max) per patch
     windDirDeg: 15,        // world wind heading (deg, 0 = +X)
     windSpeed: 0.01,       // meters/sec
@@ -630,11 +630,11 @@ const DEFAULT_PARAMS = {
     /** PNG with baked alpha (the one I gave you): */
     src: '/game-assets/sub/interfaz/shore_haze_bottom1_quadratic_1024x2048.png',
     /** How tall above the water surface (meters) */
-    height: 20.0,
+    height: 50.0,
     /** Extra Z padding beyond [leftLimit, rightLimit] to avoid edge pops */
     zPad: 2.0,
     /** Opacity multiplier on top of the PNG’s alpha (0..1) */
-    opacity: 0.2,
+    opacity: 0.6,
     /** Use the same color as mist (material color tints the white PNG) */
     color: 0xC9CED6,
 
@@ -945,7 +945,7 @@ const DEFAULT_PARAMS = {
       widthPct: 0.2,
       textBox: { xPct: 0.17, yPct: 0.14, wPct: 0.70, hPct: 0.72 },
       textColor: '#E6C200',
-      fontSizePx: 14,
+      fontSizePx: 18,
       lineHeight: 1.35,
       scrollThumbColor: 'rgba(230, 194, 0, 0.7)',
       scrollTrackColor: 'rgba(0,0,0,0.35)'
@@ -2371,7 +2371,7 @@ class CompletedOverlay {
         #completed-overlay-root {
           position: fixed;
           inset: 0;
-          pointer-events: none;
+          pointer-events: auto;
           z-index: 9999;
           visibility: hidden;
           user-select: none;
@@ -2380,7 +2380,7 @@ class CompletedOverlay {
         }
         .completed-overlay-wrap {
           position: absolute;
-          pointer-events: none;
+          pointer-events: auto;
           opacity: 0;
           visibility: hidden;
           transition: opacity 200ms ease;
@@ -2445,6 +2445,7 @@ class CompletedOverlay {
 
     const root = document.createElement('div');
     root.id = 'completed-overlay-root';
+    root.addEventListener('click', () => this.hide());
     document.body.appendChild(root);
     this.root = root;
 
@@ -2456,6 +2457,7 @@ class CompletedOverlay {
     // Species Name component
     const nameComp = this.components.name;
     nameComp.wrap = this._makeWrapDiv('species-name');
+    nameComp.wrap.addEventListener('click', (e) => e.stopPropagation());
     nameComp.imgEl = this._makeBgImg();
     nameComp.wrap.appendChild(nameComp.imgEl);
   nameComp.wrap.style.zIndex = '30';
@@ -2470,6 +2472,7 @@ class CompletedOverlay {
     // Species Image component
     const imageComp = this.components.image;
     imageComp.wrap = this._makeWrapDiv('species-image');
+    imageComp.wrap.addEventListener('click', (e) => e.stopPropagation());
     imageComp.imgEl = this._makeBgImg();
     imageComp.wrap.appendChild(imageComp.imgEl);
   imageComp.wrap.style.zIndex = '10';
@@ -2493,6 +2496,7 @@ class CompletedOverlay {
     // Species Info component
     const infoComp = this.components.info;
     infoComp.wrap = this._makeWrapDiv('species-info');
+    infoComp.wrap.addEventListener('click', (e) => e.stopPropagation());
     infoComp.imgEl = this._makeBgImg();
     infoComp.wrap.appendChild(infoComp.imgEl);
   infoComp.wrap.style.zIndex = '40';
