@@ -216,57 +216,106 @@ self.addEventListener('message', async (event) => {
           return; // Exit early
         }
 
-        try {
-          const req = new Request(url, { credentials: 'same-origin' });
-          const resp = await fetch(req);
-          // Only cache full 200 responses; skip partial (206) or other non-200.
-          if (resp && resp.status === 200) {
-            const contentLength = parseInt(resp.headers.get('content-length') || '0', 10);
+        // Retry logic: try up to 2 times
+        let attempts = 0;
+        let success = false;
+        const maxAttempts = 2;
 
-            try {
-              await cache.put(req, resp.clone());
-            } catch (err) {
-              // Might happen if response is partial or storage quota exceeded
+        while (attempts < maxAttempts && !success) {
+          attempts++;
+
+          try {
+            // Create fetch with timeout (30 seconds)
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+            const req = new Request(url, {
+              credentials: 'same-origin',
+              signal: controller.signal
+            });
+
+            const resp = await fetch(req);
+            clearTimeout(timeoutId);
+
+            // Only cache full 200 responses; skip partial (206) or other non-200.
+            if (resp && resp.status === 200) {
+              const contentLength = parseInt(resp.headers.get('content-length') || '0', 10);
+
+              try {
+                await cache.put(req, resp.clone());
+              } catch (err) {
+                // Might happen if response is partial or storage quota exceeded
+                const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
+                clientsList.forEach(c => c.postMessage({
+                  type: 'CACHE_ERROR',
+                  url,
+                  error: err.message,
+                  skipping: true
+                }));
+                break; // Skip this file, move to next
+              }
+
+              cachedCount++;
+              cachedBytes += contentLength;
+
+              // Add to cached manifest
+              cachedManifest.add(url);
+
+              // Save progress to manifest cache
+              try {
+                const manifestCache = await caches.open(CACHE_NAME + '-manifest');
+                const manifestData = { files: Array.from(cachedManifest), timestamp: Date.now() };
+                await manifestCache.put('/cached-files-manifest',
+                  new Response(JSON.stringify(manifestData), {
+                    headers: { 'Content-Type': 'application/json' }
+                  })
+                );
+              } catch (err) {
+                console.warn('[SW] Failed to save manifest:', err);
+              }
+
               const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
-              clientsList.forEach(c => c.postMessage({ type: 'CACHE_ERROR', url, error: err.message }));
-              continue;
+              clientsList.forEach(c => c.postMessage({
+                type: 'CACHE_PROGRESS',
+                cached: cachedCount,
+                total,
+                url,
+                fileSize: contentLength,
+                cachedBytes
+              }));
+
+              success = true; // Mark as successful
+            } else {
+              // Non-200 response
+              if (attempts >= maxAttempts) {
+                const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
+                clientsList.forEach(c => c.postMessage({
+                  type: 'CACHE_ERROR',
+                  url,
+                  status: resp ? resp.status : 'no-response',
+                  skipping: true
+                }));
+              }
+              // Will retry if attempts < maxAttempts
             }
+          } catch (err) {
+            // Fetch failed (timeout, network error, etc.)
+            clearTimeout(timeoutId);
 
-            cachedCount++;
-            cachedBytes += contentLength;
-
-            // Add to cached manifest
-            cachedManifest.add(url);
-
-            // Save progress to manifest cache
-            try {
-              const manifestCache = await caches.open(CACHE_NAME + '-manifest');
-              const manifestData = { files: Array.from(cachedManifest), timestamp: Date.now() };
-              await manifestCache.put('/cached-files-manifest',
-                new Response(JSON.stringify(manifestData), {
-                  headers: { 'Content-Type': 'application/json' }
-                })
-              );
-            } catch (err) {
-              console.warn('[SW] Failed to save manifest:', err);
+            if (attempts >= maxAttempts) {
+              // Final attempt failed, skip this file
+              const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
+              clientsList.forEach(c => c.postMessage({
+                type: 'CACHE_ERROR',
+                url,
+                error: err.name === 'AbortError' ? 'Timeout (30s)' : err.message,
+                skipping: true
+              }));
+            } else {
+              // Will retry
+              console.warn(`[SW] Fetch failed for ${url}, attempt ${attempts}/${maxAttempts}:`, err);
             }
-
-            const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
-            clientsList.forEach(c => c.postMessage({
-              type: 'CACHE_PROGRESS',
-              cached: cachedCount,
-              total,
-              url,
-              fileSize: contentLength,
-              cachedBytes
-            }));
-          } else {
-            const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
-            clientsList.forEach(c => c.postMessage({ type: 'CACHE_ERROR', url, status: resp ? resp.status : 'no-response' }));
           }
-        } catch (err) {
-          const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
-          clientsList.forEach(c => c.postMessage({ type: 'CACHE_ERROR', url, error: err.message }));
         }
       }
 

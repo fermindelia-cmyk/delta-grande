@@ -3561,9 +3561,18 @@
                         );
                         showCancelButton();
                     } else if (data.type === 'CACHE_ERROR') {
-                        // show an error briefly
+                        // Show error briefly but don't interrupt the download
                         const filename = data.url ? getFilename(data.url) : '';
-                        showPwaToast('Error guardando: ' + filename, 0, '', 0, 0);
+                        const errorMsg = data.error || `Status: ${data.status}`;
+
+                        if (data.skipping) {
+                            // File is being skipped, show briefly
+                            console.warn(`[Cache] Skipping file: ${filename} (${errorMsg})`);
+                            // Don't update the toast for skipped files - let progress continue
+                        } else {
+                            // Critical error
+                            showPwaToast('Error: ' + filename, 0, '', 0, 0);
+                        }
                         // Don't hide cancel button on error, user might want to cancel
                     } else if (data.type === 'CACHE_CANCELLED') {
                         const { cached, total } = data;
