@@ -138,8 +138,11 @@ self.addEventListener('message', async (event) => {
 
   if (event.data.type === 'CANCEL_CACHE') {
     // Signal to cancel ongoing cache operation
-    // We'll use a flag stored in the global scope
     self.cancelCacheOperation = true;
+    // Abort the current fetch immediately
+    if (self.currentAbortController) {
+      self.currentAbortController.abort();
+    }
   }
 
   if (event.data.type === 'CACHE_OFFLINE') {
@@ -225,17 +228,22 @@ self.addEventListener('message', async (event) => {
           attempts++;
 
           try {
-            // Create fetch with timeout (30 seconds)
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 30000);
+            // Create new AbortController for this request
+            self.currentAbortController = new AbortController();
+
+            // Timeout: 60s for most files, logic to detect large files if we wished
+            const timeoutId = setTimeout(() => {
+              if (self.currentAbortController) self.currentAbortController.abort();
+            }, 60000); // 60 seconds timeout
 
             const req = new Request(url, {
               credentials: 'same-origin',
-              signal: controller.signal
+              signal: self.currentAbortController.signal
             });
 
             const resp = await fetch(req);
             clearTimeout(timeoutId);
+            self.currentAbortController = null; // Clear on success/complete
 
             // Only cache full 200 responses; skip partial (206) or other non-200.
             if (resp && resp.status === 200) {
@@ -245,6 +253,7 @@ self.addEventListener('message', async (event) => {
                 await cache.put(req, resp.clone());
               } catch (err) {
                 // Might happen if response is partial or storage quota exceeded
+                console.warn('[SW] Cache put error:', err);
                 const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
                 clientsList.forEach(c => c.postMessage({
                   type: 'CACHE_ERROR',
@@ -287,6 +296,7 @@ self.addEventListener('message', async (event) => {
               success = true; // Mark as successful
             } else {
               // Non-200 response
+              // For large videos, sometimes ranges cause 206. But SW cache.put requires 200 usually.
               if (attempts >= maxAttempts) {
                 const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
                 clientsList.forEach(c => c.postMessage({
@@ -299,8 +309,18 @@ self.addEventListener('message', async (event) => {
               // Will retry if attempts < maxAttempts
             }
           } catch (err) {
-            // Fetch failed (timeout, network error, etc.)
-            clearTimeout(timeoutId);
+            // Fetch failed (timeout, network error, cancellation)
+
+            // Check if it was a user cancellation
+            if (err.name === 'AbortError' && self.cancelCacheOperation) {
+              const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
+              clientsList.forEach(c => c.postMessage({
+                type: 'CACHE_CANCELLED',
+                cached: cachedCount,
+                total
+              }));
+              return; // Stop everything
+            }
 
             if (attempts >= maxAttempts) {
               // Final attempt failed, skip this file
@@ -308,7 +328,7 @@ self.addEventListener('message', async (event) => {
               clientsList.forEach(c => c.postMessage({
                 type: 'CACHE_ERROR',
                 url,
-                error: err.name === 'AbortError' ? 'Timeout (30s)' : err.message,
+                error: (err.name === 'AbortError') ? 'Timeout (60s)' : err.message,
                 skipping: true
               }));
             } else {
