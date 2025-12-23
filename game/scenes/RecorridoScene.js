@@ -4287,6 +4287,7 @@ export class RecorridoScene extends BaseScene {
 
     // New transition system with barrida.webm overlay
     return import('../core/UI.js').then(({ UI }) => {
+      console.log('[RecorridoScene] Starting transition sequence');
       // 👇 Ocultar zócalo al iniciar la transición
       const zocaloVideo = document.getElementById('zocaloVideo');
       if (zocaloVideo) {
@@ -4416,8 +4417,19 @@ export class RecorridoScene extends BaseScene {
       };
 
       const hideBarridaOverlay = () => {
+        console.log('[RecorridoScene] hideBarridaOverlay called');
         barridaOverlay.style.opacity = '0';
         barridaOverlay.style.visibility = 'hidden';
+        
+        // Make sure video overlay stays visible
+        const videoOverlay = document.getElementById('videoOverlay');
+        if (videoOverlay) {
+          console.log('[RecorridoScene] Ensuring videoOverlay stays visible, current display:', videoOverlay.style.display);
+          if (videoOverlay.style.display === 'none') {
+            console.warn('[RecorridoScene] videoOverlay was hidden! Forcing display: block');
+            videoOverlay.style.display = 'block';
+          }
+        }
       };
 
       let transitionVideoStarted = false;
@@ -4604,6 +4616,7 @@ export class RecorridoScene extends BaseScene {
 
 
       const handleFirstBarridaEnd = () => {
+        console.log('[RecorridoScene] First barrida ended');
 
 
         hideBarridaOverlay();
@@ -4615,6 +4628,13 @@ export class RecorridoScene extends BaseScene {
       };
       barridaVideo.addEventListener('ended', handleFirstBarridaEnd, { once: true });      // Handle second barrida end - only remove after it finishes
       const handleSecondBarridaEnd = async () => {
+        console.log('[RecorridoScene] Second barrida ended');
+        
+        // Clear the interval that keeps video visible
+        if (this._keepVideoVisibleInterval) {
+          clearInterval(this._keepVideoVisibleInterval);
+          this._keepVideoVisibleInterval = null;
+        }
 
 
         if (this._stopTransitionSequence) {
@@ -4681,8 +4701,18 @@ export class RecorridoScene extends BaseScene {
 
       // Start the transition video (guarded so we can call from multiple triggers)
       const startTransitionVideo = () => {
+        console.log('[RecorridoScene] startTransitionVideo called');
         if (transitionVideoStarted) return;
         transitionVideoStarted = true;
+
+        // Set up interval to keep videoOverlay visible
+        this._keepVideoVisibleInterval = setInterval(() => {
+          const videoOverlay = document.getElementById('videoOverlay');
+          if (videoOverlay && videoOverlay.style.display === 'none') {
+            console.warn('[RecorridoScene] videoOverlay hidden by external code, restoring');
+            videoOverlay.style.display = 'block';
+          }
+        }, 100);
 
 
         // 👇 Ajustar z-index del video overlay para que esté DEBAJO de la barrida
@@ -4709,25 +4739,42 @@ export class RecorridoScene extends BaseScene {
           });
         }
 
-        UI.showVideo({
+        const showVideoPromise = UI.showVideo({
           src: transitionVideoSrc,
           controls: false,
           // Keep muted so autoplay isn't blocked; audio is handled separately
           muted: true,
           immersive: false,
           onended: () => {
-
+            console.log('[RecorridoScene] Transition video onended fired');
+            console.log('[RecorridoScene] Video currentTime:', transitionEl?.currentTime);
+            console.log('[RecorridoScene] Video duration:', transitionEl?.duration);
+            console.log('[RecorridoScene] Video ended:', transitionEl?.ended);
             // Ocultar el video cuando termina, la segunda barrida ya está encima
             if (this._stopTransitionSequence) {
               this._stopTransitionSequence();
             }
             UI.hideVideo();
           }
-        }).then(async (transitionVideo) => {
-
-
-
-
+        });
+        
+        console.log('[RecorridoScene] UI.showVideo promise:', showVideoPromise);
+        
+        showVideoPromise.then(async (transitionVideo) => {
+          console.log('[RecorridoScene] Transition video element:', transitionVideo);
+          console.log('[RecorridoScene] Video readyState:', transitionVideo.readyState);
+          console.log('[RecorridoScene] Video duration:', transitionVideo.duration);
+          console.log('[RecorridoScene] Video currentTime:', transitionVideo.currentTime);
+          console.log('[RecorridoScene] Video paused:', transitionVideo.paused);
+          console.log('[RecorridoScene] Video src:', transitionVideo.src);
+          const videoOverlay = document.getElementById('videoOverlay');
+          console.log('[RecorridoScene] videoOverlay display after showVideo:', videoOverlay?.style.display);
+          
+          // Safety: Force display block if it's somehow hidden
+          if (videoOverlay && videoOverlay.style.display === 'none') {
+            console.warn('[RecorridoScene] videoOverlay was hidden, forcing display block');
+            videoOverlay.style.display = 'block';
+          }
 
           const videoOverlayEl = document.getElementById('videoOverlay');
           if (videoOverlayEl) {
@@ -4888,7 +4935,16 @@ export class RecorridoScene extends BaseScene {
 
           // Monitor transition video to trigger second barrida 19 frames before end
           const monitorTransition = () => {
-            if (!transitionVideo || transitionVideo.paused) return;
+            if (!transitionVideo || transitionVideo.paused) {
+              console.log('[RecorridoScene] Monitor stopped - video paused or null');
+              return;
+            }
+            
+            // Log every 0.5 seconds
+            if (!this._lastLogTime || Date.now() - this._lastLogTime > 500) {
+              console.log('[RecorridoScene] Video playing:', transitionVideo.currentTime.toFixed(2), '/', transitionVideo.duration.toFixed(2));
+              this._lastLogTime = Date.now();
+            }
 
             const timeRemaining = transitionVideo.duration - transitionVideo.currentTime;
             const framesRemaining = Math.floor(timeRemaining * FRAME_RATE);
@@ -4983,6 +5039,16 @@ export class RecorridoScene extends BaseScene {
           checkBarridaFrame();
           // 📺 Iniciar monitoreo para mostrar texto 1 segundo antes del final
           monitorFirstBarrida();
+
+          // Safety timeout for first barrida end
+          const duration = (barridaVideo.duration && isFinite(barridaVideo.duration)) ? barridaVideo.duration : 3;
+          setTimeout(() => {
+             // Check if overlay is still visible (opacity 1)
+             if (barridaOverlay.style.opacity === '1') {
+                 console.warn('[RecorridoScene] Force ending first barrida (timeout)');
+                 handleFirstBarridaEnd();
+             }
+          }, (duration * 1000) + 1000);
         }).catch(err => {
           console.error('[RecorridoScene] Failed to play barrida:', err);
           hideBarridaOverlay();
@@ -4993,6 +5059,16 @@ export class RecorridoScene extends BaseScene {
         checkBarridaFrame();
         // 📺 Iniciar monitoreo para mostrar texto 1 segundo antes del final
         monitorFirstBarrida();
+
+        // Safety timeout for first barrida end
+        const duration = (barridaVideo.duration && isFinite(barridaVideo.duration)) ? barridaVideo.duration : 3;
+        setTimeout(() => {
+            // Check if overlay is still visible (opacity 1)
+            if (barridaOverlay.style.opacity === '1') {
+                console.warn('[RecorridoScene] Force ending first barrida (timeout/fallback)');
+                handleFirstBarridaEnd();
+            }
+        }, (duration * 1000) + 1000);
       }
 
       // Safety: hide overlay if the barrida media fails to load
