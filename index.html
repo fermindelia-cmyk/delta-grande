@@ -28,7 +28,7 @@
 
         body {
             margin: 0;
-            font-family: "new-science", 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
+            font-family: "new-science", system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
             background-color: #000;
             background-image: url('assets/web-bgs/D+fondo_para_web_01.webp');
             /* Make the background cover the full viewport and move with the page scroll */
@@ -42,8 +42,11 @@
             width: 100%;
         }
 
-        body.is-loading {
-            overflow: hidden;
+        body.is-loading,
+        html.no-scroll,
+        body.no-scroll {
+            overflow: hidden !important;
+            height: 100% !important;
         }
 
         /* ER logo top-left */
@@ -153,7 +156,7 @@
         }
 
         #page-loader video {
-            width: clamp(110px, 16vw, 260px);
+            width: clamp(110px, 9vw, 260px);
             height: auto;
             position: relative;
             z-index: 1;
@@ -164,7 +167,7 @@
         #entry-gate {
             position: fixed;
             inset: 0;
-            background: #000;
+            background: rgba(0, 0, 0, 0.3);
             z-index: 99990;
             display: flex;
             align-items: center;
@@ -184,7 +187,7 @@
         }
 
         #entry-gate button {
-            font-family: "new-science", 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
+            font-family: "new-science", system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
             font-size: clamp(18px, 3vw, 28px);
             letter-spacing: 0.08em;
             text-transform: uppercase;
@@ -201,11 +204,11 @@
         }
 
         #entry-gate button:hover {
-            transform: translateY(-2px) scale(1.02);
+            transform: scale(1.02);
         }
 
         #entry-gate button:active {
-            transform: translateY(0) scale(0.99);
+            transform: scale(0.99);
         }
 
         #entry-gate button.is-hiding {
@@ -698,7 +701,7 @@
             background: none;
             padding: 0;
             color: #DDDC31;
-            font-family: "new-science", 'New Science', sans-serif;
+            font-family: "new-science", sans-serif;
             font-size: 17px;
             line-height: 1.6;
             cursor: move;
@@ -767,7 +770,7 @@
             padding: 12px 40px;
             font-size: 24px;
             font-weight: bold;
-            font-family: "new-science", 'New Science', sans-serif;
+            font-family: "new-science", sans-serif;
             color: #000;
             background: linear-gradient(135deg, #DDDC31 0%, #FFE55C 100%);
             border: 3px solid #fff;
@@ -1120,6 +1123,52 @@
             white-space: nowrap;
         }
 
+        .pwa-toast .filename-label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        .pwa-toast-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 4px;
+        }
+
+        .pwa-toast .size-label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+            white-space: nowrap;
+        }
+
+        .pwa-cancel-btn {
+            margin-top: 8px;
+            padding: 6px 12px;
+            background: rgba(255, 80, 80, 0.2);
+            border: 1px solid rgba(255, 80, 80, 0.4);
+            border-radius: 6px;
+            color: #ff6b6b;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .pwa-cancel-btn:hover {
+            background: rgba(255, 80, 80, 0.3);
+            border-color: rgba(255, 80, 80, 0.6);
+        }
+
+        .pwa-cancel-btn[hidden] {
+            display: none;
+        }
+
         .site-footer__inner strong {
             display: inline-block;
             font-weight: 700;
@@ -1170,6 +1219,36 @@
         .floating-text[data-typewriter] div:empty {
             visibility: hidden;
         }
+
+        /* Waveform style */
+        .waveform-container {
+            position: absolute;
+            top: 20px;
+            /* Keep it visible on screen even if parent overflows using max and calc */
+            right: max(60px, calc((100% - 100vw) / 2 + 30px));
+            bottom: auto;
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 30px;
+            padding: 0;
+            z-index: 1000;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            opacity: 0;
+        }
+
+        .waveform-container.is-visible {
+            opacity: 1;
+        }
+
+        .waveform-bar {
+            width: 3px;
+            background-color: #fc8f21;
+            height: 2px;
+            border-radius: 2px;
+            transition: height 0.05s ease;
+        }
     </style>
 </head>
 
@@ -1194,7 +1273,7 @@
     <section class="video-section hero">
         <!-- Floating island centered on top: draw video into a canvas (preserves alpha and allows extra compositing) -->
         <div class="floating-island">
-            <canvas id="island-canvas" role="img" aria-label="Isla flotante" style="display: none;"></canvas>
+
             <div id="splat-container"
                 style="display: block; width: 100%; height: 100%; position: absolute; top: 0; left: 0;z-index: 3;">
                 <iframe id="splat-iframe" src="isla%20splat/isla_splat.html"
@@ -1208,7 +1287,7 @@
                 </div>
                 <canvas id="spark-canvas" aria-hidden="true"></canvas>
             </div>
-           <!--  <div id="island-loader"
+            <!--  <div id="island-loader"
                 style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 140px; padding: 10px 10px 8px; background: rgba(0,0,0,0.55); border-radius: 8px; overflow: hidden; pointer-events: none; text-align: center; color: #fff; font-size: 13px; letter-spacing: 0.04em;">
                 <div style="margin-bottom: 6px;">Cargando isla...</div>
                 <div
@@ -1223,6 +1302,24 @@
             </div> -->
             <div class="sound-selector" aria-hidden="false" role="group" aria-label="Selector de sonido">
                 <img src="assets/selectores/selector-sonido-off.png" alt="Selector de sonido" id="sound-toggle">
+                <div class="waveform-container" id="waveform">
+                    <div class="waveform-bar"></div>
+                    <div class="waveform-bar"></div>
+                    <div class="waveform-bar"></div>
+                    <div class="waveform-bar"></div>
+                    <div class="waveform-bar"></div>
+                    <div class="waveform-bar"></div>
+                    <div class="waveform-bar"></div>
+                    <div class="waveform-bar"></div>
+                    <div class="waveform-bar"></div>
+                    <div class="waveform-bar"></div>
+                    <div class="waveform-bar"></div>
+                    <div class="waveform-bar"></div>
+                    <div class="waveform-bar"></div>
+                    <div class="waveform-bar"></div>
+                    <div class="waveform-bar"></div>
+                    <div class="waveform-bar"></div>
+                </div>
             </div>
 
             <div class="scroll-indicator" id="scroll-indicator" aria-hidden="true">
@@ -1238,9 +1335,12 @@
 
         <div class="manifiesto-item" role="region" aria-label="Manifiesto Delta Grande">
             <div class="grid-frame-wrapper" style="position: relative; width: 100%; height: 100%;">
-                <canvas id="manifiesto-canvas" style="position: absolute; top: -20px; left: -20px; pointer-events: none;"></canvas>
-                <div class="grid-frame-content" style="position: relative; z-index: 1; width: 100%; height: 100%; padding: 70px 1px 59px 79px; overflow-y: auto;">
-                    <p>Delta Grande es un ecosistema digital donde podés explorar el Delta del Paraná a través de juegos,
+                <canvas id="manifiesto-canvas"
+                    style="position: absolute; top: -20px; left: -20px; pointer-events: none;"></canvas>
+                <div class="grid-frame-content"
+                    style="position: relative; z-index: 1; width: 100%; height: 100%; padding: 70px 1px 59px 79px; overflow-y: auto;">
+                    <p>Delta Grande es un ecosistema digital donde podés explorar el Delta del Paraná a través de
+                        juegos,
                         recorridos interactivos, microdocumentales, paisajes 3D, voces y sonidos del territorio.</p>
                 </div>
             </div>
@@ -1251,7 +1351,7 @@
 
     <!-- Floating text between section 1 and 2 -->
     <div class="floating-text">
-        
+
         <p>El Delta entrerriano, un largo abrazo de ríos que envuelven nuestra llanura, nuestros humedales, nuestros
             hombres y mujeres y niños. Nuestro equilibrio anfibio: la tierra camina en el agua, el agua camina en la
             tierra.</p>
@@ -1624,7 +1724,20 @@
                         const filename = src.split('/').pop();
                         const species = filename.split('.')[0];
                         const videoPath = `game-assets/recorrido/criaturas/${species}/${species}_data.webm`;
-                        openVideoOverlay(videoPath, species);
+
+                        // Check if video exists before opening
+                        fetch(videoPath, { method: 'HEAD' })
+                            .then(res => {
+                                const type = res.headers.get('content-type');
+                                if (res.ok && type && type.startsWith('video/')) {
+                                    openVideoOverlay(videoPath, species);
+                                } else {
+                                    console.warn('Video not found or invalid type for species:', species, type);
+                                }
+                            })
+                            .catch(e => {
+                                console.warn('Error checking video existence:', e);
+                            });
                     });
                 }
 
@@ -1666,7 +1779,9 @@
 
     <!-- Floating text between section 3 and footer -->
     <div class="floating-text">
-            <p>Delta Grande existe gracias al trabajo conjunto de científicas y científicos, docentes, artistas, programadores, diseñadores, productores,  pobladoras  y pobladores del Delta que, con orgullo y compromiso, hacen posible esta obra colectiva. Las muchas voces a las que atravesaron los ríos.</p>
+        <p>Delta Grande existe gracias al trabajo conjunto de científicas y científicos, docentes, artistas,
+            programadores, diseñadores, productores, pobladoras y pobladores del Delta que, con orgullo y compromiso,
+            hacen posible esta obra colectiva. Las muchas voces a las que atravesaron los ríos.</p>
     </div>
 
     <!-- Site footer -->
@@ -1704,8 +1819,10 @@
 
     <!-- Video overlay -->
     <div id="video-overlay" class="video-overlay" aria-hidden="true">
-        <div class="video-frame">
-            <video id="overlay-video" loop playsinline></video>
+        <div
+            style="position: relative; width: 100%; max-width: 177.78vh; aspect-ratio: 16/9; max-height: 100vh; display: flex; align-items: center; justify-content: center;">
+            <video id="overlay-video" loop playsinline
+                style="width: 100%; height: 100%; object-fit: contain; outline: none;"></video>
             <div id="overlay-text" class="overlay-text"></div>
         </div>
     </div>
@@ -2092,6 +2209,12 @@
     <script>
         // Display the loader for 4 seconds, fade to black, hold 2 seconds, then reveal the page
         (function () {
+            // Force scroll to top on every load and prevent browser scroll restoration
+            if ('scrollRestoration' in history) {
+                history.scrollRestoration = 'manual';
+            }
+            window.scrollTo(0, 0);
+
             const loader = document.getElementById('page-loader');
             const loaderVideo = loader ? loader.querySelector('video') : null;
             const body = document.body;
@@ -2238,7 +2361,7 @@
                     const cosY = Math.cos(sparkState.angleY);
                     const sinY = Math.sin(sparkState.angleY);
                     // Scale fov with viewport size to maintain perspective scale (zooming in as viewport grows)
-                    const fov = Math.max(width, height) * 0.5; 
+                    const fov = Math.max(width, height) * 0.5;
                     const cx = width * 0.5;
                     const cy = height * 0.53;
                     const zOffset = Math.max(width, height) * 0.4; // push everything forward to avoid z<=0
@@ -2362,6 +2485,11 @@
                     revealUIElements();
                     return;
                 }
+                // Ensure page starts at top and prevent scroll
+                window.scrollTo(0, 0);
+                document.documentElement.classList.add('no-scroll');
+                body && body.classList.add('no-scroll');
+
                 entryGate.setAttribute('aria-hidden', 'false');
                 entryGate.classList.add('is-interactive');
             }
@@ -2369,6 +2497,13 @@
             function runEntryTimeline() {
                 if (entryStarted) return;
                 entryStarted = true;
+
+                // Allow scroll again
+                document.documentElement.classList.remove('no-scroll');
+                body && body.classList.remove('no-scroll');
+                if ('scrollRestoration' in history) {
+                    history.scrollRestoration = 'auto';
+                }
 
                 // Arrancar ambiente apenas el usuario hace clic en "Entrar"
                 if (typeof window.playAmbientFromEntry === 'function') {
@@ -2838,64 +2973,113 @@
             ];
 
             // Wire click handlers
+            // Wire click handlers
             Object.keys(hotspots).forEach((k) => {
                 const el = hotspots[k];
                 el.addEventListener('click', async (ev) => {
                     ev.preventDefault();
                     ev.stopPropagation();
 
-                    const audioEl = document.getElementById('web-music');
-                    if (!audioEl) return;
+                    // Resolve layers (ensure we have them even if module hasn't run)
+                    const layers = window.audioLayers || {
+                        ambient: document.getElementById('audio-ambient'),
+                        music: document.getElementById('audio-music'),
+                        dialog: document.getElementById('audio-dialog')
+                    };
 
-                    // Toggle logic: if clicking the active one, turn it off.
                     const wasActive = state[k];
 
-                    // Turn all off in UI state
-                    Object.keys(state).forEach(s => { state[s] = false; updateHotspotUI(s); });
-
+                    // 1. If clicking the currently active selector -> Toggle OFF (Stop All)
                     if (wasActive) {
-                        // Turning off
-                        audioEl.pause();
-                        refreshSelectorImage(); // will show off
+                        // Reset State
+                        Object.keys(state).forEach(s => { state[s] = false; updateHotspotUI(s); });
+                        refreshSelectorImage();
+
+                        // Stop All Layers
+                        Object.values(layers).forEach(layer => {
+                            if (layer) {
+                                layer.pause();
+                                layer.currentTime = 0;
+                            }
+                        });
                         return;
                     }
 
-                    // Turning on
-                    state[k] = true;
-                    updateHotspotUI(k);
+                    // 2. Switching TO a mode
+
+                    // Update UI State: Only clicked one is ON
+                    Object.keys(state).forEach(s => { state[s] = (s === k); updateHotspotUI(s); });
                     refreshSelectorImage(k);
 
-                    // Ensure audio is unlocked
-                    if (audioEl.dataset.enabled !== '1') {
-                        if (typeof window.enableGlobalAudio === 'function') {
-                            await window.enableGlobalAudio();
-                        }
+                    // Ensure Audio Context is resumed
+                    if (typeof window.enableGlobalAudio === 'function') {
+                        await window.enableGlobalAudio(true);
                     }
 
-                    // Set source and play
-                    let src = '';
-                    let loop = false;
+                    // Helper functions
+                    const play = async (layerName, vol, src, loop, forceReload = false) => {
+                        const l = layers[layerName];
+                        if (!l) return;
+                        l.volume = vol;
+                        l.loop = loop;
 
+                        const alreadyCorrectSrc = l.src && src && l.src.includes(src);
+                        if (!alreadyCorrectSrc || forceReload) {
+                            l.src = src;
+                            l.load();
+                        }
+                        try { await l.play(); } catch (e) { console.warn('Play error', e); }
+                    };
+
+                    const stop = (layerName) => {
+                        const l = layers[layerName];
+                        if (l) {
+                            l.pause();
+                            l.currentTime = 0;
+                        }
+                    };
+
+                    const SRC_MUSIC = 'assets/web_musica.ogg';
+                    const SRC_AMBIENT = 'assets/delta-web-ambiente.mp3';
+
+                    // 3. Logic Branches based on selection
                     if (k === 'dialog') {
+                        // RELATOS MODE
+                        // 1. Play Random Story (100%)
                         const randomFile = relatosFiles[Math.floor(Math.random() * relatosFiles.length)];
-                        src = `assets/relatos/${randomFile}`;
-                        loop = false;
-                    } else if (k === 'ambient') {
-                        src = 'assets/delta-web-ambiente.mp3';
-                        loop = true;
-                    } else if (k === 'music') {
-                        src = 'assets/web_musica.ogg';
-                        loop = true;
-                    }
+                        await play('dialog', 1.0, `assets/relatos/${randomFile}`, false, true);
 
-                    if (src) {
-                        audioEl.src = src;
-                        audioEl.loop = loop;
-                        try {
-                            await audioEl.play();
-                        } catch (e) {
-                            console.warn('Audio play error', e);
+                        // 2. Ambient BG (50%)
+                        await play('ambient', 0.5, SRC_AMBIENT, true, false);
+
+                        // 3. Music BG (50%) - only if it was already playing or part of the vibe?
+                        // "lo mismo con la musica" -> imply treating it like ambient. 
+                        // We check if it is active or simple assume if it was playing we keep it.
+                        if (layers.music && !layers.music.paused) {
+                            await play('music', 0.5, SRC_MUSIC, true, false);
+                        } else {
+                            stop('music');
                         }
+
+                    } else if (k === 'music') {
+                        // MUSIC MODE
+                        // 1. Music (100%)
+                        await play('music', 1.0, SRC_MUSIC, true, false);
+
+                        // 2. Ambient BG (50%)
+                        await play('ambient', 0.5, SRC_AMBIENT, true, false);
+
+                        // 3. Stop Dialog
+                        stop('dialog');
+
+                    } else if (k === 'ambient') {
+                        // AMBIENT MODE
+                        // 1. Ambient (100%)
+                        await play('ambient', 1.0, SRC_AMBIENT, true, false);
+
+                        // 2. Stop others
+                        stop('music');
+                        stop('dialog');
                     }
                 });
             });
@@ -2913,7 +3097,12 @@
 
             // Allow entry button to start ambient immediately after user gesture
             window.playAmbientFromEntry = async function playAmbientFromEntry() {
-                const audio = document.getElementById('web-music');
+                const layers = window.audioLayers || {
+                    ambient: document.getElementById('audio-ambient'),
+                    music: document.getElementById('audio-music'),
+                    dialog: document.getElementById('audio-dialog')
+                };
+                const audio = layers.ambient;
                 if (!audio) return;
 
                 // Reset UI state to only ambient on
@@ -2923,11 +3112,10 @@
                 refreshSelectorImage('ambient');
 
                 // Ensure audio is unlocked
-                if (audio.dataset.enabled !== '1' && typeof window.enableGlobalAudio === 'function') {
-                    await window.enableGlobalAudio();
+                if (typeof window.enableGlobalAudio === 'function') {
+                    await window.enableGlobalAudio(true);
                 }
 
-                // Set ambient track and play
                 audio.src = 'assets/delta-web-ambiente.mp3';
                 audio.loop = true;
                 try {
@@ -2942,146 +3130,57 @@
     <!-- PWA progress toast -->
     <div id="pwaToast" class="pwa-toast" hidden role="status" aria-live="polite">
         <div class="label">Guardando para uso offline...</div>
+        <div id="pwaToastFilename" class="filename-label"></div>
         <div class="pwa-progress" aria-hidden="true">
             <div class="bar"></div>
         </div>
-        <div id="pwaToastPct" class="label">0%</div>
+        <div class="pwa-toast-bottom">
+            <div id="pwaToastPct" class="label">0%</div>
+            <div id="pwaToastSize" class="size-label"></div>
+        </div>
+        <button id="pwaCancelBtn" class="pwa-cancel-btn" hidden>Cancelar</button>
     </div>
 
-    <!-- Simple global audio element used to play web_musica.ogg -->
-    <audio id="web-music" preload="auto"></audio>
+    <!-- Global audio layers -->
+    <audio id="audio-ambient" loop preload="auto" crossorigin="anonymous"></audio>
+    <audio id="audio-music" loop preload="auto" crossorigin="anonymous"></audio>
+    <audio id="audio-dialog" preload="auto" crossorigin="anonymous"></audio>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.164.1/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.164.1/examples/jsm/"
-            }
-        }
-    </script>
 
-    <script type="importmap">
-    {
-        "imports": {
-            "three": "https://unpkg.com/three@0.164.1/build/three.module.js",
-            "three/addons/": "https://unpkg.com/three@0.164.1/examples/jsm/",
-            "@mkkellogg/gaussian-splats-3d": "https://unpkg.com/@mkkellogg/gaussian-splats-3d@0.4.1/build/gaussian-splats-3d.module.js"
-        }
-    }
-    </script>
+
+
 
     <script type="module">
-        import * as THREE from 'https://unpkg.com/three@0.164.1/build/three.module.js';
-        import { GLTFLoader } from 'https://unpkg.com/three@0.164.1/examples/jsm/loaders/GLTFLoader.js';
-        import { DRACOLoader } from 'https://unpkg.com/three@0.164.1/examples/jsm/loaders/DRACOLoader.js';
+        // Expose globally for the other script
+        window.audioLayers = {
+            ambient: document.getElementById('audio-ambient'),
+            music: document.getElementById('audio-music'),
+            dialog: document.getElementById('audio-dialog')
+        };
+        const audioLayers = window.audioLayers;
 
         const enableBtn = document.getElementById('enable-audio-global');
-        const audioEl = document.getElementById('web-music');
+        // Legacy reference removed: audioEl (web-music)
         const islandEl = document.querySelector('.floating-island');
         const creditsBtn = document.getElementById('credits-btn');
         const creditsOverlay = document.getElementById('credits-overlay');
         const creditsClose = document.getElementById('credits-close');
 
-        // Three.js setup for the floating island
-        const islandCanvas = document.getElementById('island-canvas');
+        // Splat Viewer components
         const splatContainer = document.getElementById('splat-container');
         const splatIframe = document.getElementById('splat-iframe');
         let splatOverlay = null;
         let splatCamera = null;
-        const btnPoly = document.getElementById('btn-poly');
-        const btnSplat = document.getElementById('btn-splat');
 
-        let renderer, scene, camera, model, pivot, mixer;
         let isDragging = false;
         let previousMouseX = 0;
         let dragMoved = false;
-        const clock = new THREE.Clock();
-
-        // Splat Viewer variables
-        let isSplatMode = true;
 
         // Click detection
         let mouseDownTime = 0;
         let mouseDownPos = { x: 0, y: 0 };
 
-        function initThree() {
-            if (!islandCanvas) return;
-
-            // Renderer
-            renderer = new THREE.WebGLRenderer({
-                canvas: islandCanvas,
-                alpha: true,
-                antialias: true
-            });
-            renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.setSize(islandCanvas.clientWidth, islandCanvas.clientHeight, false);
-
-            // Scene
-            scene = new THREE.Scene();
-
-            // Camera
-            camera = new THREE.PerspectiveCamera(45, islandCanvas.clientWidth / islandCanvas.clientHeight, 0.1, 1000);
-            camera.position.set(0, 0, 14); // Adjusted distance for better view
-
-            // Lights
-            const ambientLight = new THREE.AmbientLight(0xaa00ff, 1.5); // Purple ambient
-            scene.add(ambientLight);
-
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
-            directionalLight.position.set(5, 5, 5);
-            scene.add(directionalLight);
-
-            const backLight = new THREE.DirectionalLight(0x800080, 3); // Purple back light
-            backLight.position.set(-5, 5, -10);
-            scene.add(backLight);
-
-            // Pivot Group
-            pivot = new THREE.Group();
-            pivot.rotation.x = 12 * (Math.PI / 180); // slightly lower camera tilt for polygons
-            scene.add(pivot);
-
-            // Load Model
-            const loader = new GLTFLoader();
-            const dracoLoader = new DRACOLoader();
-            dracoLoader.setDecoderPath('https://unpkg.com/three@0.164.1/examples/jsm/libs/draco/');
-            loader.setDRACOLoader(dracoLoader);
-
-            loader.load('assets/isla_3d.glb', (gltf) => {
-                model = gltf.scene;
-                // Center the model if needed, or adjust scale
-                model.scale.set(3, 3, 3);
-                // Adjust position to center it
-                model.position.y = -1.4;
-                pivot.add(model);
-
-                // Setup Animations
-                if (gltf.animations && gltf.animations.length > 0) {
-                    mixer = new THREE.AnimationMixer(model);
-                    gltf.animations.forEach((clip) => {
-                        mixer.clipAction(clip).play();
-                    });
-                }
-
-                // Hide loader
-                const loaderEl = document.getElementById('island-loader');
-                if (loaderEl) loaderEl.style.display = 'none';
-
-            }, (xhr) => {
-                if (xhr.lengthComputable) {
-                    const percentComplete = (xhr.loaded / xhr.total) * 100;
-                    const bar = document.getElementById('island-loader-bar');
-                    if (bar) bar.style.width = percentComplete + '%';
-                }
-            }, (error) => {
-                console.error('An error occurred loading the island model:', error);
-                // Hide loader on error
-                const loaderEl = document.getElementById('island-loader');
-                if (loaderEl) loaderEl.style.display = 'none';
-            });
-
-            // Handle Resize
-            window.addEventListener('resize', onWindowResize);
-
+        function initIslandInteractions() {
             // Helper to capture PlayCanvas camera once the iframe is ready
             const attachSplatCamera = () => {
                 if (!splatIframe) return;
@@ -3103,7 +3202,7 @@
                 setTimeout(attachSplatCamera, 150);
             };
 
-            // Mouse Controls for GLB and Splat
+            // Mouse Controls for Splat
             const getClientX = (ev) => (ev.touches && ev.touches[0] ? ev.touches[0].clientX : ev.clientX);
 
             const handleMouseDown = (e) => {
@@ -3114,22 +3213,16 @@
                 dragMoved = false;
             };
 
-            islandCanvas.addEventListener('mousedown', handleMouseDown);
-            islandCanvas.addEventListener('touchstart', handleMouseDown, { passive: true });
             if (islandEl) {
                 islandEl.addEventListener('mousedown', handleMouseDown);
                 islandEl.addEventListener('touchstart', handleMouseDown, { passive: true });
             }
 
-            // Add listener to splat container overlay
-            // We need to wait for the element to be available or use event delegation
-            // Since this script runs after DOM is parsed (module), it should be fine if element exists
             splatOverlay = document.getElementById('splat-overlay');
             if (splatOverlay) {
                 splatOverlay.addEventListener('mousedown', handleMouseDown);
                 splatOverlay.addEventListener('touchstart', handleMouseDown, { passive: true });
             } else {
-                // Fallback if element not found immediately (though it should be)
                 document.addEventListener('mousedown', (e) => {
                     if (e.target.id === 'splat-overlay') {
                         handleMouseDown(e);
@@ -3148,9 +3241,7 @@
                         window.dgSetSparkYaw(deltaX * 0.003);
                     }
 
-                    if (!isSplatMode && model) {
-                        model.rotation.y += deltaX * 0.003;
-                    } else if (isSplatMode && splatIframe) {
+                    if (splatIframe) {
                         // Rotate Splat Camera
                         try {
                             const iframeWin = splatIframe.contentWindow;
@@ -3168,7 +3259,6 @@
 
                                 splatCamera.setPosition(newX, pos.y, newZ);
                                 // Maintain the pitch (x rotation) while rotating to look at center
-                                const targetY = 0;
                                 const dx = 0 - newX;
                                 const dz = 0 - newZ;
                                 const yaw = Math.atan2(dx, dz) * (180 / Math.PI);
@@ -3188,13 +3278,10 @@
 
             const handleUp = (e) => {
                 isDragging = false;
-                // Clicks are handled by the bottom selector buttons; no toggle here
             };
 
             window.addEventListener('mouseup', handleUp);
             window.addEventListener('touchend', handleUp, { passive: true });
-
-            // Bottom selector buttons (removed)
 
             // Setup Iframe Click Listener
             if (splatIframe) {
@@ -3205,73 +3292,64 @@
                         console.warn('Cannot access iframe content (likely CORS issue if not local):', e);
                     }
                 };
-                // If it was already loaded before this script executed, attempt immediately
                 attachSplatCamera();
             }
-
-            // Initial mode: Gaussian Splatting
-            setRenderMode('splat');
-
-            // Start Animation
-            animate();
         }
 
-        function setRenderMode(mode) {
-            const enableSplat = mode === 'splat';
-            isSplatMode = enableSplat;
-            const splatLoader = document.getElementById('splat-loader');
+        initIslandInteractions();
 
-            if (enableSplat) {
-                // Switch to Splat
-                if (islandCanvas) islandCanvas.style.display = 'none';
-                if (splatContainer) splatContainer.style.display = 'block';
-                if (splatLoader) splatLoader.style.display = 'block';
-                if (splatOverlay) {
-                    splatOverlay.style.pointerEvents = 'none';
+        let audioAnalyzer = null;
+        let dataArray = null;
+        let animationFrameId = null;
+
+        function initWaveform() {
+            if (audioAnalyzer) return; // already initialized
+
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                const audioCtx = new AudioContext();
+                audioAnalyzer = audioCtx.createAnalyser();
+                audioAnalyzer.connect(audioCtx.destination); // Master output
+
+                audioAnalyzer.fftSize = 64;
+                const bufferLength = audioAnalyzer.frequencyBinCount;
+                dataArray = new Uint8Array(bufferLength);
+
+                // Connect ALL audio layers to the analyzer
+                Object.values(audioLayers).forEach(layer => {
+                    if (layer) {
+                        try {
+                            const source = audioCtx.createMediaElementSource(layer);
+                            source.connect(audioAnalyzer);
+                        } catch (e) {
+                            // reduce noise if already connected 
+                        }
+                    }
+                });
+
+                const waveformBars = document.querySelectorAll('.waveform-bar');
+                const waveformContainer = document.getElementById('waveform');
+                if (waveformContainer) waveformContainer.classList.add('is-visible');
+
+                function draw() {
+                    animationFrameId = requestAnimationFrame(draw);
+                    audioAnalyzer.getByteFrequencyData(dataArray);
+
+                    waveformBars.forEach((bar, index) => {
+                        const value = dataArray[index] || 0;
+                        const percent = value / 255;
+                        const height = Math.max(2, percent * 34);
+                        bar.style.height = `${height}px`;
+                    });
                 }
-            } else {
-                // Switch to GLB
-                if (islandCanvas) islandCanvas.style.display = 'block';
-                if (splatContainer) splatContainer.style.display = 'none';
-                if (splatLoader) splatLoader.style.display = 'none';
-                if (splatOverlay) {
-                    splatOverlay.style.pointerEvents = 'auto';
-                }
-            }
-
-            // Update toggle UI state
-            if (btnPoly) btnPoly.classList[enableSplat ? 'remove' : 'add']('active');
-            if (btnSplat) btnSplat.classList[enableSplat ? 'add' : 'remove']('active');
-        }
-
-        function onWindowResize() {
-            if (!camera || !renderer || !islandCanvas) return;
-            const width = islandCanvas.clientWidth;
-            const height = islandCanvas.clientHeight;
-            camera.aspect = width / height;
-            camera.updateProjectionMatrix();
-            renderer.setSize(width, height, false);
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-
-            if (!isSplatMode) {
-                const delta = clock.getDelta();
-                if (mixer) {
-                    mixer.update(delta);
-                }
-
-                if (model && !isDragging) {
-                    model.rotation.y += 0.005; // Rotate the island
-                }
-                if (renderer && scene && camera) {
-                    renderer.render(scene, camera);
-                }
+                draw();
+                return audioCtx;
+            } catch (err) {
+                console.warn('Waveform init failed:', err);
+                return null;
             }
         }
 
-        initThree();
 
 
         // Preload background music and SFX to avoid playback delay on first click
@@ -3287,53 +3365,54 @@
         // Trigger load to warm cache (won't autoplay)
         try { sfxEl.load(); } catch (e) { /* ignore load errors */ }
 
-        // Configure background audio element for preloading (don't play yet)
-        if (audioEl) {
-            audioEl.src = PRELOAD_BG_SRC;
-            audioEl.loop = true;
-            audioEl.volume = 0.4; // restored background volume (only SFX lowered)
-            audioEl.crossOrigin = 'anonymous';
-            audioEl.preload = 'auto';
-            try { audioEl.load(); } catch (e) { /* ignore load errors */ }
+        // Preload settings for layers
+        if (audioLayers.music) {
+            audioLayers.music.src = PRELOAD_BG_SRC;
+            audioLayers.music.volume = 0.4;
+        }
+        if (audioLayers.ambient) {
+            audioLayers.ambient.volume = 0.4;
+        }
+        if (audioLayers.dialog) {
+            audioLayers.dialog.volume = 0.8;
         }
 
-        async function enableGlobalAudio() {
-            if (!audioEl) return;
-            if (audioEl.dataset.enabled === '1') return; // already enabled
+        async function enableGlobalAudio(onlyContext = false) {
+            // Initialize waveform (which creates context)
+            const ctx = initWaveform();
 
-            // Debugging listeners (idempotent-ish)
-            audioEl.addEventListener('canplaythrough', () => console.log('[Audio] canplaythrough'));
-            audioEl.addEventListener('loadeddata', () => console.log('[Audio] loadeddata'));
-            audioEl.addEventListener('playing', () => console.log('[Audio] playing'));
-            audioEl.addEventListener('play', () => console.log('[Audio] play event fired'));
-            audioEl.addEventListener('error', (ev) => console.error('[Audio] error', ev, audioEl.error));
-
-            try {
-                await audioEl.play();
-                audioEl.dataset.enabled = '1';
-                if (enableBtn) {
-                    enableBtn.textContent = 'Audio habilitado';
-                    enableBtn.disabled = true;
+            // Try to resume context
+            if (ctx && ctx.state === 'suspended') {
+                try { await ctx.resume(); } catch (e) { }
+            } else {
+                // Fallback if initWaveform didn't creating one or we need one generic
+                const Ctx = window.AudioContext || window.webkitAudioContext;
+                if (Ctx) {
+                    const tempCtx = new Ctx();
+                    await tempCtx.resume();
                 }
-                console.log('[Audio] reproducción iniciada con elemento <audio>');
-            } catch (playErr) {
-                console.warn('[Audio] play() falló:', playErr);
-                try {
-                    const Ctx = window.AudioContext || window.webkitAudioContext;
-                    if (Ctx) {
-                        const ctx = new Ctx();
-                        await ctx.resume();
-                        // try again
-                        await audioEl.play();
-                        audioEl.dataset.enabled = '1';
-                        if (enableBtn) {
-                            enableBtn.textContent = 'Audio habilitado';
-                            enableBtn.disabled = true;
-                        }
-                        console.log('[Audio] reproducción iniciada tras activar AudioContext');
-                    }
-                } catch (ctxErr) {
-                    console.error('[Audio] No se pudo iniciar reproducción tras fallback:', ctxErr);
+            }
+
+            if (onlyContext) return;
+
+            if (enableBtn) {
+                enableBtn.textContent = 'Audio habilitado';
+                enableBtn.disabled = true;
+            }
+            // Logic to play default music if nothing else is playing? 
+            // Original code played `audioEl`.
+            // We assume explicit click starts audio, OR we start music by default?
+            // "Play" on enable usually implies starting background music.
+            // Let's check if any layer is playing.
+            const anyPlaying = Object.values(audioLayers).some(l => !l.paused);
+            if (!anyPlaying) {
+                // Start music by default if nothing playing
+                if (audioLayers.music) {
+                    audioLayers.music.src = PRELOAD_BG_SRC;
+                    try { await audioLayers.music.play(); } catch (e) { }
+                    // Update UI state
+                    /* We can't easily update `state` from here as it's in another scope. 
+                       But the user interacts via clicks mostly. */
                 }
             }
         }
@@ -3376,18 +3455,85 @@
             const toast = document.getElementById('pwaToast');
             const bar = toast ? toast.querySelector('.pwa-progress > .bar') : null;
             const pct = document.getElementById('pwaToastPct');
+            const filenameEl = document.getElementById('pwaToastFilename');
+            const sizeEl = document.getElementById('pwaToastSize');
+            const cancelBtn = document.getElementById('pwaCancelBtn');
 
-            function showPwaToast(message, percent) {
+            function formatBytes(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+            }
+
+            function getFilename(url) {
+                try {
+                    const urlObj = new URL(url, window.location.origin);
+                    const pathname = decodeURIComponent(urlObj.pathname);
+                    const parts = pathname.split('/');
+                    return parts[parts.length - 1] || pathname;
+                } catch (e) {
+                    return url;
+                }
+            }
+
+            function showPwaToast(message, percent, filename = '', fileSize = 0, cachedBytes = 0) {
                 if (!toast) return;
                 toast.querySelector('.label').textContent = message;
                 if (bar) bar.style.width = (percent || 0) + '%';
                 if (pct) pct.textContent = Math.round(percent || 0) + '%';
+
+                if (filenameEl) {
+                    filenameEl.textContent = filename ? `📄 ${filename}` : '';
+                    filenameEl.style.display = filename ? 'block' : 'none';
+                }
+
+                if (sizeEl) {
+                    if (fileSize > 0 && cachedBytes > 0) {
+                        // Show: "45.2 KB | 735.8 MB downloaded"
+                        sizeEl.textContent = `${formatBytes(fileSize)} | ${formatBytes(cachedBytes)} descargados`;
+                        sizeEl.style.display = 'block';
+                    } else if (cachedBytes > 0) {
+                        sizeEl.textContent = `${formatBytes(cachedBytes)} descargados`;
+                        sizeEl.style.display = 'block';
+                    } else if (fileSize > 0) {
+                        sizeEl.textContent = formatBytes(fileSize);
+                        sizeEl.style.display = 'block';
+                    } else {
+                        sizeEl.style.display = 'none';
+                    }
+                }
+
                 toast.hidden = false;
             }
 
             function hidePwaToast() {
                 if (!toast) return;
                 toast.hidden = true;
+                if (cancelBtn) cancelBtn.hidden = true;
+            }
+
+            function showCancelButton() {
+                if (cancelBtn) cancelBtn.hidden = false;
+            }
+
+            function hideCancelButton() {
+                if (cancelBtn) cancelBtn.hidden = true;
+            }
+
+            // Cancel button handler
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', async () => {
+                    if ('serviceWorker' in navigator) {
+                        const reg = await navigator.serviceWorker.ready;
+                        if (reg && reg.active) {
+                            reg.active.postMessage({ type: 'CANCEL_CACHE' });
+                            cancelBtn.disabled = true;
+                            cancelBtn.textContent = 'Cancelando...';
+                        }
+                    }
+                });
             }
 
             // Expose a show function used by the other inline script
@@ -3396,17 +3542,48 @@
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.addEventListener('message', (event) => {
                     const data = event.data || {};
-                    if (data.type === 'CACHE_PROGRESS') {
-                        const { cached, total, url } = data;
+
+                    if (data.type === 'CACHE_RESUME') {
+                        const { cached, total } = data;
                         const pctVal = total ? Math.round((cached / total) * 100) : 0;
-                        showPwaToast(`Guardando recursos... (${cached}/${total})`, pctVal);
+                        showPwaToast(`Reanudando... (${cached}/${total})`, pctVal, '', 0, 0);
+                        showCancelButton();
+                    } else if (data.type === 'CACHE_PROGRESS') {
+                        const { cached, total, url, fileSize, cachedBytes } = data;
+                        const pctVal = total ? Math.round((cached / total) * 100) : 0;
+                        const filename = url ? getFilename(url) : '';
+                        showPwaToast(
+                            `Guardando recursos... (${cached}/${total})`,
+                            pctVal,
+                            filename,
+                            fileSize || 0,
+                            cachedBytes || 0
+                        );
+                        showCancelButton();
                     } else if (data.type === 'CACHE_ERROR') {
-                        // show an error briefly
-                        showPwaToast('Error guardando recursos: ' + (data.url || ''), 0);
+                        // Show error briefly but don't interrupt the download
+                        const filename = data.url ? getFilename(data.url) : '';
+                        const errorMsg = data.error || `Status: ${data.status}`;
+
+                        if (data.skipping) {
+                            // File is being skipped, show briefly
+                            console.warn(`[Cache] Skipping file: ${filename} (${errorMsg})`);
+                            // Don't update the toast for skipped files - let progress continue
+                        } else {
+                            // Critical error
+                            showPwaToast('Error: ' + filename, 0, '', 0, 0);
+                        }
+                        // Don't hide cancel button on error, user might want to cancel
+                    } else if (data.type === 'CACHE_CANCELLED') {
+                        const { cached, total } = data;
+                        showPwaToast(`Cancelado: ${cached}/${total} recursos guardados`, 0, '', 0, 0);
+                        hideCancelButton();
                         setTimeout(hidePwaToast, 4000);
                     } else if (data.type === 'CACHE_COMPLETE') {
-                        const { cached, total } = data;
-                        showPwaToast(`Listo: ${cached}/${total} recursos guardados`, 100);
+                        const { cached, total, totalBytes } = data;
+                        const sizeInfo = totalBytes ? ` (${formatBytes(totalBytes)})` : '';
+                        showPwaToast(`Listo: ${cached}/${total} recursos guardados${sizeInfo}`, 100, '', 0, 0);
+                        hideCancelButton();
                         setTimeout(hidePwaToast, 3000);
                     }
                 });
@@ -3571,32 +3748,32 @@
                     let hasValidHeight = false;
                     originalContent.forEach(state => {
                         const { element, originalHTML } = state;
-                        
+
                         // Store original text-align
                         state.textAlign = window.getComputedStyle(element).textAlign;
-                        
+
                         // Temporarily show full text to measure
                         element.innerHTML = originalHTML;
                         element.style.visibility = 'hidden';
                         element.style.height = 'auto';
                         element.style.width = 'auto';
-                        
+
                         const rect = element.getBoundingClientRect();
                         state.height = rect.height;
                         state.width = rect.width;
-                        
+
                         if (state.height > 0) hasValidHeight = true;
 
                         // Get character positions relative to element
                         const plainText = element.textContent;
                         const elementRect = element.getBoundingClientRect();
-                        
+
                         for (let i = 0; i < plainText.length; i++) {
                             try {
                                 // Create a range for each character
                                 let charIndex = 0;
                                 let found = false;
-                                
+
                                 const walk = (node) => {
                                     if (found) return;
                                     if (node.nodeType === Node.TEXT_NODE) {
@@ -3606,7 +3783,7 @@
                                                 range.setStart(node, j);
                                                 range.setEnd(node, j + 1);
                                                 const rects = range.getClientRects();
-                                                
+
                                                 if (rects.length > 0) {
                                                     const charRect = rects[0];
                                                     state.charPositions.push({
@@ -3635,7 +3812,7 @@
                                         }
                                     }
                                 };
-                                
+
                                 walk(element);
                             } catch (e) {
                                 // Fallback if position calculation fails
@@ -3647,7 +3824,7 @@
                                 });
                             }
                         }
-                        
+
                         // Clear and set proper dimensions ONLY if we got a valid height
                         // Otherwise leave it alone (fallback to static text)
                         if (state.height > 0) {
@@ -3718,12 +3895,12 @@
                     if (node.nodeType === Node.TEXT_NODE) {
                         const remaining = maxChars - count;
                         let text = node.textContent.substring(0, remaining);
-                        
+
                         // If we have a glitch character and we're at the last position, replace it
                         if (glitchChar !== null && count + text.length === maxChars && text.length > 0) {
                             text = text.substring(0, text.length - 1) + glitchChar;
                         }
-                        
+
                         count += text.length;
                         return text;
                     } else if (node.nodeType === Node.ELEMENT_NODE) {
@@ -3766,7 +3943,7 @@
                     wrapper.style.textAlign = 'left';
                     wrapper.style.minHeight = state.height + 'px';
                     wrapper.style.minWidth = state.width + 'px';
-                    
+
                     element.innerHTML = '';
                     element.style.textAlign = textAlign;
                     element.appendChild(wrapper);
@@ -3798,13 +3975,13 @@
                         // Animate all characters simultaneously with staggered starts
                         indices.forEach((charIndex, order) => {
                             const startTime = order * timePerChar;
-                            
+
                             // Glitch phase
                             for (let g = 0; g < typewriterConfig.glitchIterations; g++) {
                                 setTimeout(() => {
                                     const glitchChar = getRandomGlitchChar();
                                     const pos = charPositions[charIndex] || { x: 0, y: 0 };
-                                    
+
                                     let span = wrapper.querySelector(`[data-char-index="${charIndex}"]`);
                                     if (!span) {
                                         span = document.createElement('span');
@@ -3818,12 +3995,12 @@
                                     span.textContent = glitchChar;
                                 }, startTime + g * typewriterConfig.glitchSpeed);
                             }
-                            
+
                             // Final character reveal
                             setTimeout(() => {
                                 const realChar = textContent[charIndex];
                                 const pos = charPositions[charIndex] || { x: 0, y: 0 };
-                                
+
                                 let span = wrapper.querySelector(`[data-char-index="${charIndex}"]`);
                                 if (!span) {
                                     span = document.createElement('span');
@@ -3884,7 +4061,7 @@
     </script>
 
     <script>
-        (function() {
+        (function () {
             const canvas = document.getElementById('manifiesto-canvas');
             if (!canvas) return;
 
@@ -3893,16 +4070,16 @@
             const SQUARE_SIZE = 25;
             const COLS = 8;
             const ROWS = 13;
-            
+
             const GRID_WIDTH = COLS * SQUARE_SIZE;
             const GRID_HEIGHT = ROWS * SQUARE_SIZE;
-            
+
             // Margins for the outer elements
-            const PADDING = 80; 
-            
+            const PADDING = 80;
+
             canvas.width = GRID_WIDTH + PADDING * 2;
             canvas.height = GRID_HEIGHT + PADDING * 2;
-            
+
             const startX = PADDING;
             const startY = PADDING;
 
@@ -3932,7 +4109,7 @@
             // (the lines stops 5px before meeting in the corner)
             const OUTSET_1 = 16; // Slightly tighter spacing between grid and outer lines
             const CORNER_GAP = 30;
-            
+
             const frameX = startX - OUTSET_1;
             const frameY = startY - OUTSET_1;
             const frameW = GRID_WIDTH + OUTSET_1 * 2;
@@ -3946,19 +4123,19 @@
             // Top line
             ctx.moveTo(frameX + CORNER_GAP, frameY);
             ctx.lineTo(frameX + frameW - CORNER_GAP, frameY);
-            
+
             // Bottom line
             ctx.moveTo(frameX + CORNER_GAP, frameY + frameH);
             ctx.lineTo(frameX + frameW - CORNER_GAP, frameY + frameH);
-            
+
             // Left line
             ctx.moveTo(frameX, frameY + CORNER_GAP);
             ctx.lineTo(frameX, frameY + frameH - CORNER_GAP);
-            
+
             // Right line
             ctx.moveTo(frameX + frameW, frameY + CORNER_GAP);
             ctx.lineTo(frameX + frameW, frameY + frameH - CORNER_GAP);
-            
+
             ctx.stroke();
 
             // 3. Rounded corners just outside the outer frame with a tighter, aligned gap.
@@ -3977,9 +4154,9 @@
             ctx.lineJoin = 'round';
             ctx.shadowColor = '#FFFF00';
             ctx.shadowBlur = 10; // Glowing
-            
+
             ctx.beginPath();
-            
+
             // Top-Left Corner: base run down, arc, then extend along top (clockwise side)
             ctx.moveTo(cornerX, cornerY + CORNER_LENGTH);
             ctx.arcTo(cornerX, cornerY, cornerX + CORNER_LENGTH, cornerY, CORNER_RADIUS);
@@ -3999,9 +4176,9 @@
             ctx.moveTo(cornerX + CORNER_LENGTH, cornerY + cornerH);
             ctx.arcTo(cornerX, cornerY + cornerH, cornerX, cornerY + cornerH - CORNER_LENGTH, CORNER_RADIUS);
             ctx.lineTo(cornerX, cornerY + cornerH - CORNER_LENGTH - CORNER_BIAS);
-            
+
             ctx.stroke();
-            
+
             // Reset shadow
             ctx.shadowBlur = 0;
         })();

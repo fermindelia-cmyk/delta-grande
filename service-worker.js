@@ -10,118 +10,34 @@ const PRECACHE_URLS = [
   '/game/styles/sub/deck-style.css'
 ];
 
-// Complete list of media and other assets to cache when user requests "Guardar offline"
-// This includes all .webm files discovered in the workspace (encoded for URLs).
-// NOTE: we will filter out any paths that contain '_old' or '/dist/' to avoid caching
-// backup/old files and distribution artifacts.
-const RAW_OFFLINE_URLS = [
-  '/',
-  '/index.html',
-  '/game/index.html',
-  '/game/',
-  '/game/main.js',
-  '/game/styles/sub/deck-style.css',
-  '/assets/island.webm',
-  '/assets/island_1.webm',
-  '/assets/island_2.webm',
-  '/assets/mapa_gigante.webm',
-  '/assets/web-bgs/web-bg03.webm',
-  '/assets/web-bgs/web-bg02.webm',
-  '/assets/web-bgs/web-bg01.webm',
-  '/game-assets/transiciones/secuencia_inicio_recorrido1.webm',
-  '/game-assets/transiciones/old/transicion05.webm',
-  '/game-assets/transiciones/old/transicion04.webm',
-  '/game-assets/transiciones/old/transicion03.webm',
-  '/game-assets/transiciones/old/transicion02.webm',
-  '/game-assets/transiciones/old/transicion01.webm',
-  '/game-assets/transiciones/lab-a-subacua.webm',
-  '/game-assets/transiciones/hd/secuencia_inicio_recorrido2_VP9.webm',
-  '/game-assets/transiciones/hd/secuencia_inicio_recorrido2.webm',
-  '/game-assets/recorrido/lab-a-recorrido.webm',
-  '/game-assets/recorrido/interfaz/loading-text-box-animation.webm',
-  '/game-assets/recorrido/transiciones_escenas/transicion01.webm',
-  '/game-assets/recorrido/transiciones_escenas/transicion02.webm',
-  '/game-assets/recorrido/transiciones_escenas/transicion03.webm',
-  '/game-assets/recorrido/transiciones_escenas/transicion04.webm',
-  '/game-assets/recorrido/transiciones_escenas/transicion05.webm',
-  '/game-assets/recorrido/transiciones_escenas/barrida.webm',
-  '/game-assets/recorrido/paneles/panel%20metadata.webm',
-  '/game-assets/recorrido/paneles/Suelda%20Consuelda%20-%20criatura-data-main%2014_1.webm',
-  '/game-assets/recorrido/paneles/originals/panel%20metadata.webm',
-  '/game-assets/recorrido/paneles/efedra%20-%20criatura-data-main%2011.webm',
-  '/game-assets/recorrido/zocalos/escena01_zocalo_espinal.webm',
-  '/game-assets/recorrido/zocalos/escena02_zocalo_monte.webm',
-  '/game-assets/recorrido/zocalos/escena03_zocalo_bosque%20en%20galeria.webm',
-  '/game-assets/recorrido/zocalos/escena04_zocalo_bosque%20de%20barrancas.webm',
-  '/game-assets/recorrido/zocalos/escena05_zocalo_humedal.webm',
-  '/game-assets/recorrido/zocalos/escena06_zocalo_costa.webm',
-  
-  '/game-assets/recorrido/criaturas/cardenal/cardenal_data.webm',
-  '/game-assets/recorrido/criaturas/cardenal/cardenal_glitch.webm',
-  '/game-assets/recorrido/criaturas/efedra/efedra_data.webm',
-  '/game-assets/recorrido/criaturas/efedra/efedra_glitch.webm',
-  '/game-assets/recorrido/criaturas/rana/rana_data.webm',
-  '/game-assets/recorrido/criaturas/rana/rana_glitch.webm',
-  '/game-assets/recorrido/criaturas/salvia/salvia_data.webm',
-  '/game-assets/recorrido/criaturas/salvia/salvia_glitch.webm',
-  '/game-assets/recorrido/criaturas/paloma/paloma_data.webm',
-  '/game-assets/recorrido/criaturas/paloma/paloma_glitch.webm',
-  '/game-assets/recorrido/criaturas/yesquero/yesquero_data.webm',
-  '/game-assets/recorrido/criaturas/yesquero/yesquero_glitch.webm',
-  '/game-assets/recorrido/criaturas/yarara/yarara_data.webm',
-  '/game-assets/recorrido/criaturas/yarara/yarara_glitch.webm',
-  '/game-assets/recorrido/criaturas/viraro/viraro_data.webm',
-  '/game-assets/recorrido/criaturas/viraro/viraro_glitch.webm',
-  '/game-assets/recorrido/criaturas/yacare/yacare_data.webm',
-  '/game-assets/recorrido/criaturas/yacare/yacare_glitch.webm',
-  '/game-assets/recorrido/criaturas/yaguarundi/yaguarundi_data.webm',
-  '/game-assets/recorrido/criaturas/yaguarundi/yaguarundi_glitch.webm',
-  '/game-assets/recorrido/criaturas/yatei/yatei_data.webm',
-  '/game-assets/recorrido/criaturas/yatei/yatei_glitch.webm',
-  '/game-assets/recorrido/criaturas/tortuga/tortuga_data.webm',
-  '/game-assets/recorrido/criaturas/tortuga/tortuga_glitch.webm',
-  '/game-assets/recorrido/criaturas/viraro/viraro_data.webm',
-  '/game-assets/recorrido/criaturas/viraro/viraro_glitch.webm',
-  '/game-assets/recorrido/criaturas/mburucuya/mburucuya_data.webm',
-  '/game-assets/recorrido/criaturas/mburucuya/mburucuya_glitch.webm',
-  '/game-assets/recorrido/criaturas/murcielago/murcielago_data.webm',
-  '/game-assets/recorrido/criaturas/murcielago/murcielago_glitch.webm',
-  '/game-assets/recorrido/criaturas/martin/martin_data.webm',
-  '/game-assets/recorrido/criaturas/martin/martin_glitch.webm',
-  '/game-assets/recorrido/criaturas/guazuncho/guazuncho_data.webm',
-  '/game-assets/recorrido/criaturas/guazuncho/guazuncho_glitch.webm',
-  '/game-assets/recorrido/criaturas/malvavisco/malvavisco_data.webm',
-  '/game-assets/recorrido/criaturas/malvavisco/malvavisco_glitch.webm',
-  '/game-assets/recorrido/criaturas/helecho/helecho_data.webm',
-  '/game-assets/recorrido/criaturas/helecho/helecho_glitch.webm',
-  '/game-assets/recorrido/criaturas/clavel/clavel_data.webm',
-  '/game-assets/recorrido/criaturas/clavel/clavel_glitch.webm',
-  '/game-assets/recorrido/criaturas/chaja/chaja_data.webm',
-  '/game-assets/recorrido/criaturas/chaja/chaja_glitch.webm',
-  '/game-assets/recorrido/criaturas/camalote/camalote_data.webm',
-  '/game-assets/recorrido/criaturas/camalote/camalote_glitch.webm',
-  '/game-assets/recorrido/criaturas/carpintero/carpintero_data.webm',
-  '/game-assets/recorrido/criaturas/carpintero/carpintero_glitch.webm',
-  '/game-assets/recorrido/criaturas/carancho/carancho_data.webm',
-  '/game-assets/recorrido/criaturas/carancho/carancho_glitch.webm',
-  '/game-assets/recorrido/criaturas/banderita/banderita_data.webm',
-  '/game-assets/recorrido/criaturas/banderita/banderita_glitch.webm',
-  '/game-assets/recorrido/criaturas/aguara/aguara_data.webm',
-  '/game-assets/recorrido/criaturas/aguara/aguara_glitch.webm',
-  '/game-assets/recorrido/cinematicas/carpa_flota.webm',
-  
-  '/game-assets/menu/logo_naranja_alpha.webm',
-  '/game-assets/menu/logo_naranja_alpha_test.webm',
-  '/game-assets/menu/cinematicas/logo_naranja.webm',
-  '/game-assets/menu/cinematicas/original/logo_naranja.webm',
-  '/game-assets/sub/others/surface.webm',
-  '/game-assets/transiciones/lab-a-subacua.webm',
-  '/game-assets/transiciones/hd/secuencia_inicio_recorrido2_VP9.webm',
-  '/game-assets/transiciones/hd/secuencia_inicio_recorrido2.webm'
+// Patterns to exclude from caching (backup/old/hd folders)
+const EXCLUDE_PATTERNS = [
+  '_old', '/dist/', '/.git/', '/node_modules/',
+  '/bak/', '/_backup/', '/old/', '/originals/',
+  '/hd/', '_old_data_files'
 ];
 
-// Filter out unwanted entries (backups / dist)
-const ALL_OFFLINE_URLS = RAW_OFFLINE_URLS.filter(u => !u.includes('_old') && !u.includes('/dist/'));
+function shouldExclude(url) {
+  return EXCLUDE_PATTERNS.some(pattern => url.includes(pattern));
+}
+
+// Complete list of media and other assets to cache when user requests "Guardar offline"
+// This list is loaded from offline-manifest.json and filtered.
+const ALL_OFFLINE_URLS_PROMISE = (async () => {
+  try {
+    const manifestResp = await fetch('/offline-manifest.json');
+    if (manifestResp && manifestResp.ok) {
+      const manifestList = await manifestResp.json();
+      if (Array.isArray(manifestList)) {
+        return manifestList.filter(u => !shouldExclude(u));
+      }
+    }
+  } catch (err) {
+    console.warn('[SW] Failed to load offline-manifest.json, falling back to empty list:', err);
+  }
+  return []; // Fallback to an empty array if manifest fails to load or is invalid
+})();
+
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -199,7 +115,7 @@ self.addEventListener('message', async (event) => {
     // Attempt to download and cache a list provided by the page
     const urls = Array.isArray(event.data.urls) ? event.data.urls : PRECACHE_URLS;
     // Filter out backup/old artifacts
-    const filteredUrls = Array.isArray(urls) ? urls.filter(u => !String(u).includes('_old') && !String(u).includes('/dist/')) : urls;
+    const filteredUrls = Array.isArray(urls) ? urls.filter(u => !shouldExclude(String(u))) : urls;
     // Use an async IIFE for clarity and to avoid nested Promise/paren bugs
     event.waitUntil((async () => {
       const cache = await caches.open(CACHE_NAME);
@@ -227,7 +143,19 @@ self.addEventListener('message', async (event) => {
     })());
   }
 
+  if (event.data.type === 'CANCEL_CACHE') {
+    // Signal to cancel ongoing cache operation
+    self.cancelCacheOperation = true;
+    // Abort the current fetch immediately
+    if (self.currentAbortController) {
+      self.currentAbortController.abort();
+    }
+  }
+
   if (event.data.type === 'CACHE_OFFLINE') {
+    // Reset cancellation flag
+    self.cancelCacheOperation = false;
+
     // Cache a predefined list (or the list provided) and post progress messages to clients
     let urls = Array.isArray(event.data.urls) ? event.data.urls : null;
     if (!urls) {
@@ -243,46 +171,183 @@ self.addEventListener('message', async (event) => {
         // ignore and fallback
       }
     }
-    if (!urls) urls = ALL_OFFLINE_URLS;
+    if (!urls) {
+      // Fallback to the promise-loaded manifest
+      urls = await ALL_OFFLINE_URLS_PROMISE;
+    }
     // Ensure we don't cache backups or dist artifacts
     if (Array.isArray(urls)) {
-      urls = urls.filter(u => !String(u).includes('_old') && !String(u).includes('/dist/'));
+      urls = urls.filter(u => !shouldExclude(String(u)));
     }
 
     event.waitUntil((async () => {
       const cache = await caches.open(CACHE_NAME);
-      let cachedCount = 0;
+
+      // Load cached file manifest from cache storage (for resume capability)
+      let cachedManifest = new Set();
+      try {
+        const manifestCache = await caches.open(CACHE_NAME + '-manifest');
+        const manifestResp = await manifestCache.match('/cached-files-manifest');
+        if (manifestResp) {
+          const data = await manifestResp.json();
+          cachedManifest = new Set(data.files || []);
+        }
+      } catch (err) {
+        console.warn('[SW] Failed to load cached manifest:', err);
+      }
+
+      let cachedCount = cachedManifest.size;
+      let cachedBytes = 0;
       const total = urls.length;
 
-      for (const url of urls) {
-        try {
-          const req = new Request(url, { credentials: 'same-origin' });
-          const resp = await fetch(req);
-          // Only cache full 200 responses; skip partial (206) or other non-200.
-          if (resp && resp.status === 200) {
-            try {
-              await cache.put(req, resp.clone());
-            } catch (err) {
-              // Might happen if response is partial or storage quota exceeded
-              const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
-              clientsList.forEach(c => c.postMessage({ type: 'CACHE_ERROR', url, error: err.message }));
-              continue;
-            }
-            cachedCount++;
-            const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
-            clientsList.forEach(c => c.postMessage({ type: 'CACHE_PROGRESS', cached: cachedCount, total, url }));
-          } else {
-            const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
-            clientsList.forEach(c => c.postMessage({ type: 'CACHE_ERROR', url, status: resp ? resp.status : 'no-response' }));
-          }
-        } catch (err) {
+      // Filter out already cached files
+      const urlsToCache = urls.filter(url => !cachedManifest.has(url));
+
+      // If resuming, notify client
+      if (cachedManifest.size > 0) {
+        const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
+        clientsList.forEach(c => c.postMessage({
+          type: 'CACHE_RESUME',
+          cached: cachedCount,
+          total,
+          resuming: true
+        }));
+      }
+
+      for (const url of urlsToCache) {
+        // Check for cancellation
+        if (self.cancelCacheOperation) {
           const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
-          clientsList.forEach(c => c.postMessage({ type: 'CACHE_ERROR', url, error: err.message }));
+          clientsList.forEach(c => c.postMessage({
+            type: 'CACHE_CANCELLED',
+            cached: cachedCount,
+            total
+          }));
+          return; // Exit early
+        }
+
+        // Retry logic: try up to 2 times
+        let attempts = 0;
+        let success = false;
+        const maxAttempts = 2;
+
+        while (attempts < maxAttempts && !success) {
+          attempts++;
+
+          try {
+            // Create new AbortController for this request
+            self.currentAbortController = new AbortController();
+
+            // Timeout: 60s for most files, logic to detect large files if we wished
+            const timeoutId = setTimeout(() => {
+              if (self.currentAbortController) self.currentAbortController.abort();
+            }, 60000); // 60 seconds timeout
+
+            const req = new Request(url, {
+              credentials: 'same-origin',
+              signal: self.currentAbortController.signal
+            });
+
+            const resp = await fetch(req);
+            clearTimeout(timeoutId);
+            self.currentAbortController = null; // Clear on success/complete
+
+            // Only cache full 200 responses; skip partial (206) or other non-200.
+            if (resp && resp.status === 200) {
+              const contentLength = parseInt(resp.headers.get('content-length') || '0', 10);
+
+              try {
+                await cache.put(req, resp.clone());
+              } catch (err) {
+                // Might happen if response is partial or storage quota exceeded
+                console.warn('[SW] Cache put error:', err);
+                const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
+                clientsList.forEach(c => c.postMessage({
+                  type: 'CACHE_ERROR',
+                  url,
+                  error: err.message,
+                  skipping: true
+                }));
+                break; // Skip this file, move to next
+              }
+
+              cachedCount++;
+              cachedBytes += contentLength;
+
+              // Add to cached manifest
+              cachedManifest.add(url);
+
+              // Save progress to manifest cache
+              try {
+                const manifestCache = await caches.open(CACHE_NAME + '-manifest');
+                const manifestData = { files: Array.from(cachedManifest), timestamp: Date.now() };
+                await manifestCache.put('/cached-files-manifest',
+                  new Response(JSON.stringify(manifestData), {
+                    headers: { 'Content-Type': 'application/json' }
+                  })
+                );
+              } catch (err) {
+                console.warn('[SW] Failed to save manifest:', err);
+              }
+
+              const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
+              clientsList.forEach(c => c.postMessage({
+                type: 'CACHE_PROGRESS',
+                cached: cachedCount,
+                total,
+                url,
+                fileSize: contentLength,
+                cachedBytes
+              }));
+
+              success = true; // Mark as successful
+            } else {
+              // Non-200 response
+              // For large videos, sometimes ranges cause 206. But SW cache.put requires 200 usually.
+              if (attempts >= maxAttempts) {
+                const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
+                clientsList.forEach(c => c.postMessage({
+                  type: 'CACHE_ERROR',
+                  url,
+                  status: resp ? resp.status : 'no-response',
+                  skipping: true
+                }));
+              }
+              // Will retry if attempts < maxAttempts
+            }
+          } catch (err) {
+            // Fetch failed (timeout, network error, cancellation)
+
+            // Check if it was a user cancellation
+            if (err.name === 'AbortError' && self.cancelCacheOperation) {
+              const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
+              clientsList.forEach(c => c.postMessage({
+                type: 'CACHE_CANCELLED',
+                cached: cachedCount,
+                total
+              }));
+              return; // Stop everything
+            }
+
+            if (attempts >= maxAttempts) {
+              // Final attempt failed, skip this file
+              const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
+              clientsList.forEach(c => c.postMessage({
+                type: 'CACHE_ERROR',
+                url,
+                error: (err.name === 'AbortError') ? 'Timeout (60s)' : err.message,
+                skipping: true
+              }));
+            } else {
+              // Will retry
+              console.warn(`[SW] Fetch failed for ${url}, attempt ${attempts}/${maxAttempts}:`, err);
+            }
+          }
         }
       }
 
       const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
-      clientsList.forEach(c => c.postMessage({ type: 'CACHE_COMPLETE', cached: cachedCount, total }));
+      clientsList.forEach(c => c.postMessage({ type: 'CACHE_COMPLETE', cached: cachedCount, total, totalBytes: cachedBytes }));
     })());
   }
 });
