@@ -19,6 +19,8 @@ export default defineConfig({
       targets: [
         { src: 'game-assets', dest: '.' },
         { src: 'game/styles', dest: 'game/styles' },
+        { src: 'game/data', dest: 'game/data' }, // species JSON and other data files
+        { src: 'isla splat', dest: 'isla splat' }, // Supersplat viewer assets with space in folder name
         { src: 'service-worker.js', dest: '.' } // Copy service worker to root of dist
       ]
     })
