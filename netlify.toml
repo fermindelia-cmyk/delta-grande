@@ -1,9 +1,16 @@
 [build]
-  command = "python build.py"
+  command = "npm run build"
   publish = "dist"
 
 [dev]
   command = "python -m http.server"
+
+# Prevent caching of service worker to ensure updates are always fetched
+[[headers]]
+  for = "/service-worker.js"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
+    Service-Worker-Allowed = "/"
 
 [[headers]]
   for = "/*"

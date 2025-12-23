@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
+import { versionInjectionPlugin } from './vite-plugin-version.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,12 +12,14 @@ export default defineConfig({
   base: './', // Use relative paths so `dist/` can be opened or hosted anywhere
   publicDir: 'assets', // Serve assets from the 'assets' folder
   plugins: [
-    // Copy additional static folders (game-assets, game/styles) into `dist/`.
-    // `game-assets` will be available at `dist/game-assets/...` at runtime.
+    // Inject BUILD_VERSION into all files during dev and build
+    versionInjectionPlugin(),
+    // Copy additional static folders (game-assets, game/styles, service-worker) into `dist/`.
     viteStaticCopy({
       targets: [
         { src: 'game-assets', dest: '.' },
-        { src: 'game/styles', dest: 'game/styles' }
+        { src: 'game/styles', dest: 'game/styles' },
+        { src: 'service-worker.js', dest: '.' } // Copy service worker to root of dist
       ]
     })
   ],
@@ -34,7 +37,10 @@ export default defineConfig({
     open: true,
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'require-corp'
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      // Prevent caching of service worker during development
+      'Service-Worker-Allowed': '/',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
     }
   }
 });

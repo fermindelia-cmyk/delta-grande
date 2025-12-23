@@ -1161,6 +1161,20 @@ export class RecorridoScene extends BaseScene {
 
     // 👇 NO resetear flechaClicked aquí - se resetea después de la transición completa
 
+    // 👇 Rehabilitar clicks de especie al entrar a un stage nuevo
+    this.speciesClickDisabled = false;
+
+    // 👇 Asegurar que el videoOverlay esté oculto al cargar un nuevo stage
+    const videoOverlay = document.getElementById('videoOverlay');
+    if (videoOverlay) {
+      videoOverlay.style.display = 'none';
+      const speciesDataVideo = document.getElementById('speciesDataVideo');
+      if (speciesDataVideo) {
+        speciesDataVideo.pause();
+        speciesDataVideo.currentTime = 0;
+      }
+    }
+
     // Detener audio de transición si está reproduciéndose (solo si no estamos en modo preload)
     if (this.transitionAudio && !options.keepTransitionAudio) {
       this.transitionAudio.pause();
@@ -1189,6 +1203,7 @@ export class RecorridoScene extends BaseScene {
 
     // 👇 Get current species from SpeciesManager
     this.currentSpecies = this.speciesManager.getCurrentSpecies();
+    const currentSpeciesDiscovered = this.currentSpecies?.id ? this.speciesManager.isSpeciesFound(this.currentSpecies.id) : false;
 
     // 🔍 LOG: Información detallada de la escena y especie
 
@@ -1843,6 +1858,25 @@ export class RecorridoScene extends BaseScene {
       this.collectShaderMaterials(this.stageModel);
     }
 
+    // 👀 Si la especie de este stage ya fue descubierta, mostrar la flecha de inmediato
+    if (currentSpeciesDiscovered && this.flechaObjects && this.flechaObjects.length > 0) {
+      this.flechaClicked = false;
+      if (this.flechaObject) {
+        this.flechaObject.visible = true;
+      }
+      this.flechaObjects.forEach((flechaObj, index) => {
+        flechaObj.visible = true;
+        const action = this.flechaAnimationActions[index];
+        if (action) {
+          action.reset();
+          const reverseIndex = (this.flechaObjects.length - 1) - index;
+          const frameOffset = reverseIndex * 2;
+          action.time = frameOffset / 30;
+          action.play();
+        }
+      });
+    }
+
 
     if (st.forward) {
       this.lon = st.forward.yaw;
@@ -1860,7 +1894,7 @@ export class RecorridoScene extends BaseScene {
 
     // 🔊 Load species spatial audio - SOLO si la especie NO ha sido descubierta
     if (this.currentSpecies?.id) {
-      const wasDiscovered = this.speciesManager.isSpeciesFound(this.currentSpecies.id);
+      const wasDiscovered = currentSpeciesDiscovered;
 
       if (!wasDiscovered) {
         // Solo reproducir audio si la especie NO ha sido descubierta
@@ -2261,8 +2295,24 @@ export class RecorridoScene extends BaseScene {
 
     // Then check glitch object (test all points in hitbox)
     if (!this.glitchObject) {
+      // 🔧 Fallback: intentar reasignar el glitch si no quedó seteado
+      const fallbackName = this.currentSpecies?.meshNames?.glitch;
+      if (fallbackName && this.stageModel) {
+        let found = null;
+        this.stageModel.traverse(child => {
+          if (!found && child.isMesh && child.name === fallbackName) {
+            found = child;
+          }
+        });
+        if (found) {
+          this.glitchObject = found;
+          // Si estaba invisible por error, mostrarlo
+          this.glitchObject.visible = true;
+          console.warn('[RecorridoScene] glitchObject se reasignó por fallback', fallbackName);
+        }
+      }
 
-      return;
+      if (!this.glitchObject) return;
     }
 
     let bestHit = null;
@@ -3982,18 +4032,17 @@ export class RecorridoScene extends BaseScene {
       btnContinue.style.background = 'transparent';
     };
     btnContinue.onclick = () => {
-      // Advance round and reload first stage
-      if (this.speciesManager.advanceRound()) {
-        overlay.style.opacity = '0';
-        setTimeout(() => {
-          overlay.remove();
-          this.loadStage(0);
-        }, 500);
-      } else {
-        // If no more rounds (finished game?), maybe go to menu or show another message
-        // For now, just go to menu if max round reached
-        window.location.href = '/index.html';
-      }
+      const advanced = this.speciesManager.advanceRound();
+      overlay.style.opacity = '0';
+      setTimeout(() => {
+        overlay.remove();
+        if (advanced) {
+          // Usar la transición dedicada antes de volver al recorrido
+          location.hash = '#recorrido-transition';
+        } else {
+          window.location.href = '/index.html';
+        }
+      }, 500);
     };
 
     const btnMenu = document.createElement('button');
@@ -4630,274 +4679,300 @@ export class RecorridoScene extends BaseScene {
 
       };
 
-      // Monitor barrida frames
-      const checkBarridaFrame = () => {
-        const currentTime = barridaVideo.currentTime;
-        const currentFrame = Math.floor(currentTime * FRAME_RATE);
+      // Start the transition video (guarded so we can call from multiple triggers)
+      const startTransitionVideo = () => {
+        if (transitionVideoStarted) return;
+        transitionVideoStarted = true;
 
 
+        // 👇 Ajustar z-index del video overlay para que esté DEBAJO de la barrida
+        const videoOverlay = document.getElementById('videoOverlay');
+        if (videoOverlay) {
+          videoOverlay.style.zIndex = '10000'; // Debajo de barrida (10002) pero encima del texto (10003 se usa solo para transition-text-overlay)
 
-        // At frame 50 (or when we pass it), start the transition video underneath
-        if (!transitionVideoStarted && currentFrame >= BARRIDA_TRIGGER_FRAME) {
-          transitionVideoStarted = true;
+        }
 
+        if (this._stopTransitionSequence) {
+          this._stopTransitionSequence();
+        }
 
-          // 👇 Ajustar z-index del video overlay para que esté DEBAJO de la barrida
-          const videoOverlay = document.getElementById('videoOverlay');
-          if (videoOverlay) {
-            videoOverlay.style.zIndex = '10000'; // Debajo de barrida (10002) pero encima del texto (10003 se usa solo para transition-text-overlay)
+        // Add error visibility hooks so we know if the media is missing or blocked
+        const transitionEl = document.getElementById('transition_video');
+        if (transitionEl && !transitionEl._recorridoErrorHook) {
+          transitionEl._recorridoErrorHook = true;
+          transitionEl.addEventListener('error', (err) => {
+            console.error('[RecorridoScene] Transition video error', err?.message || err, {
+              networkState: transitionEl.networkState,
+              readyState: transitionEl.readyState,
+              src: transitionEl.currentSrc || transitionEl.src
+            });
+          });
+        }
 
-          }
+        UI.showVideo({
+          src: transitionVideoSrc,
+          controls: false,
+          // Keep muted so autoplay isn't blocked; audio is handled separately
+          muted: true,
+          immersive: false,
+          onended: () => {
 
-          if (this._stopTransitionSequence) {
-            this._stopTransitionSequence();
-          }
-
-          UI.showVideo({
-            src: transitionVideoSrc,
-            controls: false,
-            muted: false,
-            immersive: false,
-            onended: () => {
-
-              // Ocultar el video cuando termina, la segunda barrida ya está encima
-              if (this._stopTransitionSequence) {
-                this._stopTransitionSequence();
-              }
-              UI.hideVideo();
+            // Ocultar el video cuando termina, la segunda barrida ya está encima
+            if (this._stopTransitionSequence) {
+              this._stopTransitionSequence();
             }
-          }).then(async (transitionVideo) => {
+            UI.hideVideo();
+          }
+        }).then(async (transitionVideo) => {
 
 
 
 
 
-            const videoOverlayEl = document.getElementById('videoOverlay');
-            if (videoOverlayEl) {
-              // 🎞️ Use a pre-created sequence overlay element when possible (added to game/index.html)
-              const seqOverlayId = 'sequenceOverlay';
-              const seqVideoId = 'sequenceOverlayVideo';
+          const videoOverlayEl = document.getElementById('videoOverlay');
+          if (videoOverlayEl) {
+            // 🎞️ Use a pre-created sequence overlay element when possible (added to game/index.html)
+            const seqOverlayId = 'sequenceOverlay';
+            const seqVideoId = 'sequenceOverlayVideo';
 
-              // Try to find the elements inside the video overlay, then globally as fallback
-              let sequenceOverlay = videoOverlayEl.querySelector(`#${seqOverlayId}`) || document.getElementById(seqOverlayId);
-              let sequenceVideo = videoOverlayEl.querySelector(`#${seqVideoId}`) || document.getElementById(seqVideoId);
+            // Try to find the elements inside the video overlay, then globally as fallback
+            let sequenceOverlay = videoOverlayEl.querySelector(`#${seqOverlayId}`) || document.getElementById(seqOverlayId);
+            let sequenceVideo = videoOverlayEl.querySelector(`#${seqVideoId}`) || document.getElementById(seqVideoId);
 
-              // If not present (older builds), create them as a fallback and mark ownership
-              if (!sequenceOverlay || !sequenceVideo) {
-                sequenceOverlay = document.createElement('div');
-                sequenceOverlay.id = seqOverlayId;
-                sequenceOverlay.style.cssText = `position: absolute; inset: 0; pointer-events: none; z-index: 10001;`;
+            // If not present (older builds), create them as a fallback and mark ownership
+            if (!sequenceOverlay || !sequenceVideo) {
+              sequenceOverlay = document.createElement('div');
+              sequenceOverlay.id = seqOverlayId;
+              sequenceOverlay.style.cssText = `position: absolute; inset: 0; pointer-events: none; z-index: 10001;`;
 
-                sequenceVideo = document.createElement('video');
-                sequenceVideo.id = seqVideoId;
-                sequenceVideo.src = '/game-assets/recorrido/interfaz/loading-text-box-animation.webm';
-                sequenceVideo.muted = true;
-                sequenceVideo.loop = false;
-                sequenceVideo.playsInline = true;
-                sequenceVideo.style.cssText = `position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;`;
-
-                sequenceOverlay.appendChild(sequenceVideo);
-                videoOverlayEl.appendChild(sequenceOverlay);
-                sequenceOverlay._createdByScript = true;
-              }
-
-              // Ensure visible and ready
-              sequenceOverlay.style.display = 'block';
-              sequenceOverlay.style.visibility = 'visible';
+              sequenceVideo = document.createElement('video');
+              sequenceVideo.id = seqVideoId;
+              sequenceVideo.src = '/game-assets/recorrido/interfaz/loading-text-box-animation.webm';
               sequenceVideo.muted = true;
               sequenceVideo.loop = false;
               sequenceVideo.playsInline = true;
-              if (!sequenceVideo.src) sequenceVideo.src = '/game-assets/recorrido/interfaz/loading-text-box-animation.webm';
+              sequenceVideo.style.cssText = `position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;`;
 
-              // Reproducir el video overlay y mantener en el último frame al terminar
-              sequenceVideo.addEventListener('ended', () => {
-                // Mantener el último frame visible (ya que loop=false)
+              sequenceOverlay.appendChild(sequenceVideo);
+              videoOverlayEl.appendChild(sequenceOverlay);
+              sequenceOverlay._createdByScript = true;
+            }
 
-              }, { once: true });
+            // Ensure visible and ready
+            sequenceOverlay.style.display = 'block';
+            sequenceOverlay.style.visibility = 'visible';
+            sequenceVideo.muted = true;
+            sequenceVideo.loop = false;
+            sequenceVideo.playsInline = true;
+            if (!sequenceVideo.src) sequenceVideo.src = '/game-assets/recorrido/interfaz/loading-text-box-animation.webm';
 
-              // 👇 Esperar a que el video esté listo antes de reproducirlo
-              const tryPlaySequenceVideo = () => {
-                if (sequenceVideo.readyState >= 2) {
+            // Reproducir el video overlay y mantener en el último frame al terminar
+            sequenceVideo.addEventListener('ended', () => {
+              // Mantener el último frame visible (ya que loop=false)
+
+            }, { once: true });
+
+            // 👇 Esperar a que el video esté listo antes de reproducirlo
+            const tryPlaySequenceVideo = () => {
+              if (sequenceVideo.readyState >= 2) {
+                const playPromise = sequenceVideo.play();
+                if (playPromise) {
+                  playPromise.catch(err => {
+                    console.warn('[RecorridoScene] Transition overlay video play failed', err);
+                  });
+                }
+              } else {
+                sequenceVideo.addEventListener('loadeddata', () => {
                   const playPromise = sequenceVideo.play();
                   if (playPromise) {
                     playPromise.catch(err => {
                       console.warn('[RecorridoScene] Transition overlay video play failed', err);
                     });
                   }
-                } else {
-                  sequenceVideo.addEventListener('loadeddata', () => {
-                    const playPromise = sequenceVideo.play();
-                    if (playPromise) {
-                      playPromise.catch(err => {
-                        console.warn('[RecorridoScene] Transition overlay video play failed', err);
-                      });
-                    }
-                  }, { once: true });
-                }
-              };
-              tryPlaySequenceVideo();
-
-              const detachOverlay = () => {
-                try {
-                  sequenceVideo.pause();
-                } catch { }
-                // If we created the element here, remove it entirely to free resources.
-                if (sequenceOverlay._createdByScript) {
-                  try { sequenceVideo.removeAttribute('src'); sequenceVideo.load(); } catch { }
-                  try { sequenceOverlay.remove(); } catch { }
-                } else {
-                  // Otherwise just hide it but keep the last frame loaded in the DOM
-                  try { sequenceOverlay.style.display = 'none'; } catch { }
-                }
-              };
-
-              let handleVideoEnded = null;
-              let handleVideoPause = null;
-
-              const cleanupListeners = () => {
-                if (handleVideoEnded) {
-                  transitionVideo.removeEventListener('ended', handleVideoEnded);
-                  handleVideoEnded = null;
-                }
-                if (handleVideoPause) {
-                  transitionVideo.removeEventListener('pause', handleVideoPause);
-                  handleVideoPause = null;
-                }
-              };
-
-              const stopSequence = () => {
-                cleanupListeners();
-                detachOverlay();
-              };
-
-              handleVideoEnded = () => {
-                stopSequence();
-                this._stopTransitionSequence = null;
-              };
-
-              handleVideoPause = () => {
-                if (videoOverlayEl.style.display === 'none') {
-                  stopSequence();
-                  this._stopTransitionSequence = null;
-                }
-              };
-
-              transitionVideo.addEventListener('ended', handleVideoEnded, { once: true });
-              transitionVideo.addEventListener('pause', handleVideoPause);
-
-              this._stopTransitionSequence = () => {
-                stopSequence();
-                this._stopTransitionSequence = null;
-              };
-            }
-
-            // 👇 Si es la tercera sección (nextSceneIndex === 3), agregar listener para ir a InstruccionesTransitionScene
-            // if (nextSceneIndex === 3) {
-            //   const handleVideoClick = () => {
-            //
-
-            //     // Limpiar todo
-            //     if (this.transitionAudio) {
-            //       this.transitionAudio.pause();
-            //       this.transitionAudio = null;
-            //     }
-
-            //     // Remover listeners
-            //     transitionVideo.removeEventListener('click', handleVideoClick);
-
-            //     // Limpiar overlays
-            //     try {
-            //       barridaOverlay.remove();
-            //     } catch (e) {
-            //       console.error('[RecorridoScene] Failed to remove barrida overlay', e);
-            //     }
-
-            //     // Ocultar video
-            //     import('../core/UI.js').then(({ UI }) => {
-            //       UI.hideVideo();
-            //     });
-
-            //     // Navegar a InstruccionesTransitionScene
-            //     this.app.router.goTo('instrucciones-transition');
-            //   };
-
-            //   transitionVideo.addEventListener('click', handleVideoClick);
-            //
-            // }
-
-            // �👉 Precargar la siguiente escena INMEDIATAMENTE (sin pausar transitionAudio)
-
-            nextStagePromise = this.nextStage({ keepTransitionAudio: true });
-
-            // Monitor transition video to trigger second barrida 19 frames before end
-            const monitorTransition = () => {
-              if (!transitionVideo || transitionVideo.paused) return;
-
-              const timeRemaining = transitionVideo.duration - transitionVideo.currentTime;
-              const framesRemaining = Math.floor(timeRemaining * FRAME_RATE);
-
-              // 19 frames before end, play barrida again
-              if (!secondBarridaStarted && framesRemaining <= BARRIDA_TRIGGER_FRAME && framesRemaining > 0) {
-                secondBarridaStarted = true;
-
-                showBarridaOverlay();
-                barridaVideo.currentTime = 0;
-
-
-                // Listen for second barrida end
-                barridaVideo.addEventListener('ended', handleSecondBarridaEnd, { once: true });
-
-                // 🛡️ Safety fallback: Monitor second barrida and force cleanup if needed
-                const monitorSecondBarrida = () => {
-                  if (!barridaVideo || barridaVideo.paused || barridaVideo.ended) {
-                    return;
-                  }
-
-                  const timeLeft = barridaVideo.duration - barridaVideo.currentTime;
-
-                  if (timeLeft > 0) {
-                    requestAnimationFrame(monitorSecondBarrida);
-                  } else {
-                    // Forzar cleanup si el evento 'ended' no dispara
-
-                    setTimeout(handleSecondBarridaEnd, 100);
-                  }
-                };
-
-                const secondPlay = barridaVideo.play();
-                if (secondPlay && typeof secondPlay.then === 'function') {
-                  secondPlay.then(() => {
-                    monitorSecondBarrida();
-                  }).catch(err => {
-                    console.error('[RecorridoScene] Failed to play second barrida:', err);
-                    // If play fails, clean up anyway
-                    handleSecondBarridaEnd();
-                  });
-                } else {
-                  console.warn('[RecorridoScene] Second barrida play promise unavailable, continuing');
-                  monitorSecondBarrida();
-                }
+                }, { once: true });
               }
+            };
+            tryPlaySequenceVideo();
 
-              if (timeRemaining > 0) {
-                requestAnimationFrame(monitorTransition);
+            const detachOverlay = () => {
+              try {
+                sequenceVideo.pause();
+              } catch { }
+              // If we created the element here, remove it entirely to free resources.
+              if (sequenceOverlay._createdByScript) {
+                try { sequenceVideo.removeAttribute('src'); sequenceVideo.load(); } catch { }
+                try { sequenceOverlay.remove(); } catch { }
+              } else {
+                // Otherwise just hide it but keep the last frame loaded in the DOM
+                try { sequenceOverlay.style.display = 'none'; } catch { }
               }
             };
 
-            if (transitionVideo.readyState >= 1) {
-              monitorTransition();
-            } else {
-              transitionVideo.addEventListener('loadedmetadata', () => {
-                monitorTransition();
-              }, { once: true });
+            let handleVideoEnded = null;
+            let handleVideoPause = null;
+
+            const cleanupListeners = () => {
+              if (handleVideoEnded) {
+                transitionVideo.removeEventListener('ended', handleVideoEnded);
+                handleVideoEnded = null;
+              }
+              if (handleVideoPause) {
+                transitionVideo.removeEventListener('pause', handleVideoPause);
+                handleVideoPause = null;
+              }
+            };
+
+            const stopSequence = () => {
+              cleanupListeners();
+              detachOverlay();
+            };
+
+            handleVideoEnded = () => {
+              stopSequence();
+              this._stopTransitionSequence = null;
+            };
+
+            handleVideoPause = () => {
+              if (videoOverlayEl.style.display === 'none') {
+                stopSequence();
+                this._stopTransitionSequence = null;
+              }
+            };
+
+            transitionVideo.addEventListener('ended', handleVideoEnded, { once: true });
+            transitionVideo.addEventListener('pause', handleVideoPause);
+
+            this._stopTransitionSequence = () => {
+              stopSequence();
+              this._stopTransitionSequence = null;
+            };
+          }
+
+          // 👇 Si es la tercera sección (nextSceneIndex === 3), agregar listener para ir a InstruccionesTransitionScene
+          // if (nextSceneIndex === 3) {
+          //   const handleVideoClick = () => {
+          //
+
+          //     // Limpiar todo
+          //     if (this.transitionAudio) {
+          //       this.transitionAudio.pause();
+          //       this.transitionAudio = null;
+          //     }
+
+          //     // Remover listeners
+          //     transitionVideo.removeEventListener('click', handleVideoClick);
+
+          //     // Limpiar overlays
+          //     try {
+          //       barridaOverlay.remove();
+          //     } catch (e) {
+          //       console.error('[RecorridoScene] Failed to remove barrida overlay', e);
+          //     }
+
+          //     // Ocultar video
+          //     import('../core/UI.js').then(({ UI }) => {
+          //       UI.hideVideo();
+          //     });
+
+          //     // Navegar a InstruccionesTransitionScene
+          //     this.app.router.goTo('instrucciones-transition');
+          //   };
+
+          //   transitionVideo.addEventListener('click', handleVideoClick);
+          //
+          // }
+
+          // �👉 Precargar la siguiente escena INMEDIATAMENTE (sin pausar transitionAudio)
+
+          nextStagePromise = this.nextStage({ keepTransitionAudio: true });
+
+          // Monitor transition video to trigger second barrida 19 frames before end
+          const monitorTransition = () => {
+            if (!transitionVideo || transitionVideo.paused) return;
+
+            const timeRemaining = transitionVideo.duration - transitionVideo.currentTime;
+            const framesRemaining = Math.floor(timeRemaining * FRAME_RATE);
+
+            // 19 frames before end, play barrida again
+            if (!secondBarridaStarted && framesRemaining <= BARRIDA_TRIGGER_FRAME && framesRemaining > 0) {
+              secondBarridaStarted = true;
+
+              showBarridaOverlay();
+              barridaVideo.currentTime = 0;
+
+
+              // Listen for second barrida end
+              barridaVideo.addEventListener('ended', handleSecondBarridaEnd, { once: true });
+
+              // 🛡️ Safety fallback: Monitor second barrida and force cleanup if needed
+              const monitorSecondBarrida = () => {
+                if (!barridaVideo || barridaVideo.paused || barridaVideo.ended) {
+                  return;
+                }
+
+                const timeLeft = barridaVideo.duration - barridaVideo.currentTime;
+
+                if (timeLeft > 0) {
+                  requestAnimationFrame(monitorSecondBarrida);
+                } else {
+                  // Forzar cleanup si el evento 'ended' no dispara
+
+                  setTimeout(handleSecondBarridaEnd, 100);
+                }
+              };
+
+              const secondPlay = barridaVideo.play();
+              if (secondPlay && typeof secondPlay.then === 'function') {
+                secondPlay.then(() => {
+                  monitorSecondBarrida();
+                }).catch(err => {
+                  console.error('[RecorridoScene] Failed to play second barrida:', err);
+                  // If play fails, clean up anyway
+                  handleSecondBarridaEnd();
+                });
+              } else {
+                console.warn('[RecorridoScene] Second barrida play promise unavailable, continuing');
+                monitorSecondBarrida();
+              }
             }
-          });
+
+            if (timeRemaining > 0) {
+              requestAnimationFrame(monitorTransition);
+            }
+          };
+
+          if (transitionVideo.readyState >= 1) {
+            monitorTransition();
+          } else {
+            transitionVideo.addEventListener('loadedmetadata', () => {
+              monitorTransition();
+            }, { once: true });
+          }
+        });
+      };
+
+      // Monitor barrida frames
+      const checkBarridaFrame = () => {
+        const currentTime = barridaVideo.currentTime;
+        const currentFrame = Math.floor(currentTime * FRAME_RATE);
+
+        // At frame 19 (or when we pass it), start the transition video underneath
+        if (currentFrame >= BARRIDA_TRIGGER_FRAME) {
+          startTransitionVideo();
         }
 
         if (!barridaVideo.paused && !barridaVideo.ended && !transitionVideoStarted) {
           requestAnimationFrame(checkBarridaFrame);
         }
       };
+
+      // Fallback: if frame-based trigger misses (e.g., dropped frames), start after 800ms
+      setTimeout(() => {
+        if (!transitionVideoStarted) {
+          console.warn('[RecorridoScene] Fallback starting transition video');
+          startTransitionVideo();
+        }
+      }, 800);
 
       // Start playing barrida
       const initialPlay = barridaVideo.play();

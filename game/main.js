@@ -24,7 +24,7 @@ const app = new App('#app');
 UI.init({
   app,
   videoOverlayEl: document.getElementById('videoOverlay'),
-  videoEl: document.getElementById('labVideo')
+  videoEl: document.getElementById('transition_video') // Changed from labVideo to transition_video for transitions
 });
 
 

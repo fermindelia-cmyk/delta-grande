@@ -1,6 +1,8 @@
 // service-worker.js
 // Offline support for Delta Grande game — cache shell and game-assets on first use
-const CACHE_NAME = 'delta-grande-v1';
+// BUILD_VERSION will be replaced at build time with a unique identifier
+const BUILD_VERSION = '__BUILD_VERSION__';
+const CACHE_NAME = `delta-grande-${BUILD_VERSION}`;
 const PRECACHE_URLS = [
   '/game/index.html',
   '/game/',
@@ -128,10 +130,15 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
+  // On activation, delete ALL old caches to ensure fresh start on new deployments
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(
-      keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
-    )).then(() => self.clients.claim())
+    caches.keys().then((keys) => {
+      console.log('[SW] Activating with version:', BUILD_VERSION);
+      console.log('[SW] Deleting old caches:', keys.filter((k) => k !== CACHE_NAME));
+      return Promise.all(
+        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
+      );
+    }).then(() => self.clients.claim())
   );
 });
 
