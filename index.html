@@ -2227,7 +2227,8 @@
             const birdsVideo = document.getElementById('birds-video');
             const ua = navigator.userAgent || '';
             const isSafari = /Safari/.test(ua) && !/Chrome|CriOS|FxiOS|Edg/i.test(ua);
-            const disableBirds = isSafari; // Safari cannot show WebM alpha
+            const isIPadPro = /iPad/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            const disableBirds = isSafari || isIPadPro; // Safari and iPad Pro cannot show WebM alpha
             const splatContainer = document.getElementById('splat-container');
             const sparkCanvas = document.getElementById('spark-canvas');
             const sparkCtx = sparkCanvas ? sparkCanvas.getContext('2d') : null;
@@ -2242,6 +2243,19 @@
 
             if (disableBirds && birdsOverlay) {
                 birdsOverlay.style.display = 'none';
+            }
+
+            // Replace logo video with static image on iPad Pro
+            if (isIPadPro) {
+                const logoNaranja = document.querySelector('.logo-naranja');
+                const logoVideo = logoNaranja ? logoNaranja.querySelector('video') : null;
+                if (logoVideo && logoNaranja) {
+                    const img = document.createElement('img');
+                    img.src = 'logo2.webp';
+                    img.alt = 'Logo';
+                    img.style.cssText = logoVideo.style.cssText;
+                    logoNaranja.replaceChild(img, logoVideo);
+                }
             }
 
             const sparkState = {
@@ -2724,8 +2738,31 @@
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('/service-worker.js').then((reg) => {
                     console.log('ServiceWorker registrado:', reg);
+                    
+                    // Listen for updates but don't auto-reload
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        if (newWorker) {
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New service worker available, but don't force reload
+                                    console.log('[App] New service worker available. Refresh to update.');
+                                }
+                            });
+                        }
+                    });
                 }).catch((err) => {
                     console.warn('ServiceWorker registro fallido:', err);
+                });
+                
+                // Prevent refresh loop: only reload once when a new SW takes control
+                let refreshing = false;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (!refreshing) {
+                        refreshing = true;
+                        console.log('[App] Controller changed, reloading once...');
+                        window.location.reload();
+                    }
                 });
             }
 

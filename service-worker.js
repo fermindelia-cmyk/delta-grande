@@ -40,8 +40,10 @@ const ALL_OFFLINE_URLS_PROMISE = (async () => {
 
 
 self.addEventListener('install', (event) => {
+  console.log('[SW] Installing version:', BUILD_VERSION);
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
+    // Don't skipWaiting() automatically - let user refresh manually
   );
 });
 
@@ -50,11 +52,17 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       console.log('[SW] Activating with version:', BUILD_VERSION);
-      console.log('[SW] Deleting old caches:', keys.filter((k) => k !== CACHE_NAME));
-      return Promise.all(
-        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
-      );
-    }).then(() => self.clients.claim())
+      const oldCaches = keys.filter((k) => k !== CACHE_NAME);
+      if (oldCaches.length > 0) {
+        console.log('[SW] Deleting old caches:', oldCaches);
+      }
+      return Promise.all(oldCaches.map((k) => caches.delete(k)));
+    }).then(() => {
+      console.log('[SW] Service Worker activated');
+      // Only claim clients if there are no controlling service workers
+      // This prevents force-reload loops
+      return self.clients.claim();
+    })
   );
 });
 
