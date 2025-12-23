@@ -30,7 +30,7 @@
             margin: 0;
             font-family: "new-science", system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
             background-color: #000;
-            background-image: url('assets/web-bgs/D+fondo_para_web_01.webp');
+            background-image: url('web-bgs/D+fondo_para_web_01.webp');
             /* Make the background cover the full viewport and move with the page scroll */
             background-position: top center;
             background-repeat: no-repeat;
@@ -252,7 +252,7 @@
             content: '';
             position: absolute;
             inset: -14%;
-            background: url('assets/nube.png') center center / contain no-repeat;
+            background: url('nube.png') center center / contain no-repeat;
             mix-blend-mode: lighten;
             opacity: 0;
             filter: hue-rotate(-8deg) saturate(1.05) brightness(1.06);
@@ -267,7 +267,7 @@
             content: '';
             position: absolute;
             inset: -14%;
-            background: url('assets/nube.png') center center / contain no-repeat;
+            background: url('nube.png') center center / contain no-repeat;
             mix-blend-mode: lighten;
             opacity: 0;
             filter: hue-rotate(-8deg) saturate(1.05) brightness(1.04);
@@ -470,7 +470,7 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: url('assets/marco-videos.webp') center center / 100% 100% no-repeat;
+            background: url('marco-videos.webp') center center / 100% 100% no-repeat;
             border-radius: inherit;
             pointer-events: none;
             z-index: 4;
@@ -1257,11 +1257,11 @@
 <body class="is-loading">
     <!-- Top-left ER horizontal logo -->
     <div class="er-logo">
-        <img src="assets/LOGO_ER_horizontal.png" alt="ER" loading="eager" />
+        <img src="LOGO_ER_horizontal.png" alt="ER" loading="eager" />
     </div>
     <div id="page-loader" aria-live="polite" aria-label="Cargando Delta+">
         <video autoplay muted playsinline preload="auto">
-            <source src="assets/D+_loader04.webm" type="video/webm">
+            <source src="D+_loader04.webm" type="video/webm">
         </video>
     </div>
     <div id="entry-gate" aria-hidden="true">
@@ -1284,7 +1284,7 @@
                 <div id="splat-overlay" style="position: absolute; inset: 0; z-index: 10;"></div>
                 <div id="birds-overlay" aria-hidden="true">
                     <video id="birds-video" muted loop playsinline preload="auto">
-                        <source src="assets/birds.webm" type="video/webm">
+                        <source src="birds.webm" type="video/webm">
                     </video>
                 </div>
                 <canvas id="spark-canvas" aria-hidden="true"></canvas>
@@ -1303,7 +1303,7 @@
                 Cargando isla...
             </div> -->
             <div class="sound-selector" aria-hidden="false" role="group" aria-label="Selector de sonido">
-                <img src="assets/selectores/selector-sonido-off.png" alt="Selector de sonido" id="sound-toggle">
+                <img src="selectores/selector-sonido-off.png" alt="Selector de sonido" id="sound-toggle">
                 <div class="waveform-container" id="waveform">
                     <div class="waveform-bar"></div>
                     <div class="waveform-bar"></div>
@@ -1331,7 +1331,7 @@
 
         <div class="logo-naranja" aria-hidden="false">
             <video autoplay loop muted playsinline aria-hidden="true">
-                <source src="assets/logo_naranja_alpha.webm" type="video/webm">
+                <source src="logo_naranja_alpha.webm" type="video/webm">
             </video>
         </div>
 
@@ -1395,7 +1395,7 @@
     <section class="video-section">
         <!-- Juegos banner -->
         <div style="text-align: center; margin-bottom: 40px;">
-            <img src="assets/ui/juegos banner.png" alt="Juegos" style="max-width: 300px; width: 100%; height: auto;">
+            <img src="ui/juegos banner.png" alt="Juegos" style="max-width: 300px; width: 100%; height: auto;">
         </div>
         <!-- Content container with video and news -->
         <div class="content-container">
@@ -1406,7 +1406,7 @@
                         <div class="video-wrapper">
                             <div class="video-shell">
                                 <video autoplay loop muted playsinline>
-                                    <source src="assets/mapa_gigante.webm" type="video/webm">
+                                    <source src="mapa_gigante.webm" type="video/webm">
                                 </video>
                             </div>
                         </div>
@@ -1429,43 +1429,43 @@
     <script>
         (function () {
             const cardImages = [
-                'assets/cards_webp/aguara.webp',
-                'assets/cards_webp/armado.webp',
-                'assets/cards_webp/banderita.webp',
-                'assets/cards_webp/camalote.webp',
-                'assets/cards_webp/carancho.webp',
-                'assets/cards_webp/cardenal.webp',
-                'assets/cards_webp/carpintero.webp',
-                'assets/cards_webp/ceibo.webp',
-                'assets/cards_webp/chaja.webp',
-                'assets/cards_webp/clavel.webp',
-                'assets/cards_webp/culebra.webp',
-                'assets/cards_webp/dorado.webp',
-                'assets/cards_webp/efedra.webp',
-                'assets/cards_webp/espinillo.webp',
-                'assets/cards_webp/guazuncho.webp',
-                'assets/cards_webp/malvavisco.webp',
-                'assets/cards_webp/martin.webp',
-                'assets/cards_webp/mburucuya.webp',
-                'assets/cards_webp/murcielago.webp',
-                'assets/cards_webp/ombu.webp',
-                'assets/cards_webp/pacu.webp',
-                'assets/cards_webp/paloma.webp',
-                'assets/cards_webp/palometa.webp',
-                'assets/cards_webp/rana.webp',
-                'assets/cards_webp/raya.webp',
-                'assets/cards_webp/salvia.webp',
-                'assets/cards_webp/suelda.webp',
-                'assets/cards_webp/surubi.webp',
-                'assets/cards_webp/tembetari.webp',
-                'assets/cards_webp/tortuga.webp',
-                'assets/cards_webp/vieja.webp',
-                'assets/cards_webp/viraro.webp',
-                'assets/cards_webp/yacare.webp',
-                'assets/cards_webp/yaguarundi.webp',
-                'assets/cards_webp/yarara.webp',
-                'assets/cards_webp/yatei.webp',
-                'assets/cards_webp/yesquero.webp'
+                'cards_webp/aguara.webp',
+                'cards_webp/armado.webp',
+                'cards_webp/banderita.webp',
+                'cards_webp/camalote.webp',
+                'cards_webp/carancho.webp',
+                'cards_webp/cardenal.webp',
+                'cards_webp/carpintero.webp',
+                'cards_webp/ceibo.webp',
+                'cards_webp/chaja.webp',
+                'cards_webp/clavel.webp',
+                'cards_webp/culebra.webp',
+                'cards_webp/dorado.webp',
+                'cards_webp/efedra.webp',
+                'cards_webp/espinillo.webp',
+                'cards_webp/guazuncho.webp',
+                'cards_webp/malvavisco.webp',
+                'cards_webp/martin.webp',
+                'cards_webp/mburucuya.webp',
+                'cards_webp/murcielago.webp',
+                'cards_webp/ombu.webp',
+                'cards_webp/pacu.webp',
+                'cards_webp/paloma.webp',
+                'cards_webp/palometa.webp',
+                'cards_webp/rana.webp',
+                'cards_webp/raya.webp',
+                'cards_webp/salvia.webp',
+                'cards_webp/suelda.webp',
+                'cards_webp/surubi.webp',
+                'cards_webp/tembetari.webp',
+                'cards_webp/tortuga.webp',
+                'cards_webp/vieja.webp',
+                'cards_webp/viraro.webp',
+                'cards_webp/yacare.webp',
+                'cards_webp/yaguarundi.webp',
+                'cards_webp/yarara.webp',
+                'cards_webp/yatei.webp',
+                'cards_webp/yesquero.webp'
             ];
 
             function shuffle(arr) {
@@ -1871,7 +1871,7 @@
 
             // Background video
             const bgVideo = document.createElement('video');
-            bgVideo.src = 'assets/web-bgs/web-bg01.webm';
+            bgVideo.src = 'web-bgs/web-bg01.webm';
             bgVideo.style.cssText = `
                 position: absolute;
                 top: 0;
@@ -1889,7 +1889,7 @@
             bgVideo.onerror = () => {
                 console.warn('Video failed to load, falling back to image');
                 bgVideo.style.display = 'none';
-                overlay.style.backgroundImage = "url('assets/web-bgs/D+fondo_para_web_01.webp')";
+                overlay.style.backgroundImage = "url('web-bgs/D+fondo_para_web_01.webp')";
                 overlay.style.backgroundSize = 'cover';
                 overlay.style.backgroundPosition = 'center';
             };
@@ -2647,9 +2647,9 @@
         (function () {
             const root = document.getElementById('bg-transition-root');
             const BG_IMAGES = [
-                '/assets/web-bgs/D+fondo_para_web_01.webp',
-                '/assets/web-bgs/D+fondo_para_web_02.webp',
-                '/assets/web-bgs/D+fondo_para_web_03.webp'
+                '/web-bgs/D+fondo_para_web_01.webp',
+                '/web-bgs/D+fondo_para_web_02.webp',
+                '/web-bgs/D+fondo_para_web_03.webp'
             ];
             const DISPLAY_MS = 2000;
             const FADE_MS = 2000;
@@ -2943,10 +2943,10 @@
 
             // map channel -> image filename
             const channelImage = {
-                dialog: 'assets/selectores/selector-sonido-dialogo.png',
-                music: 'assets/selectores/selector-sonido-musica.png',
-                ambient: 'assets/selectores/selector-sonido-ambiente.png',
-                off: 'assets/selectores/selector-sonido-off.png'
+                dialog: 'selectores/selector-sonido-dialogo.png',
+                music: 'selectores/selector-sonido-musica.png',
+                ambient: 'selectores/selector-sonido-ambiente.png',
+                off: 'selectores/selector-sonido-off.png'
             };
 
             // helper to update selector image based on current state
@@ -3043,15 +3043,15 @@
                         }
                     };
 
-                    const SRC_MUSIC = 'assets/web_musica.ogg';
-                    const SRC_AMBIENT = 'assets/delta-web-ambiente.mp3';
+                    const SRC_MUSIC = 'web_musica.ogg';
+                    const SRC_AMBIENT = 'delta-web-ambiente.mp3';
 
                     // 3. Logic Branches based on selection
                     if (k === 'dialog') {
                         // RELATOS MODE
                         // 1. Play Random Story (100%)
                         const randomFile = relatosFiles[Math.floor(Math.random() * relatosFiles.length)];
-                        await play('dialog', 1.0, `assets/relatos/${randomFile}`, false, true);
+                        await play('dialog', 1.0, `relatos/${randomFile}`, false, true);
 
                         // 2. Ambient BG (50%)
                         await play('ambient', 0.5, SRC_AMBIENT, true, false);
@@ -3120,7 +3120,7 @@
                     await window.enableGlobalAudio(true);
                 }
 
-                audio.src = 'assets/delta-web-ambiente.mp3';
+                audio.src = 'delta-web-ambiente.mp3';
                 audio.loop = true;
                 try {
                     await audio.play();
@@ -3357,8 +3357,8 @@
 
 
         // Preload background music and SFX to avoid playback delay on first click
-        const PRELOAD_BG_SRC = '/assets/web_musica.ogg';
-        const PRELOAD_SFX_SRC = '/assets/exito.mp3';
+        const PRELOAD_BG_SRC = '/web_musica.ogg';
+        const PRELOAD_SFX_SRC = '/exito.mp3';
 
         // Prepare SFX element and preload it
         const sfxEl = new Audio(PRELOAD_SFX_SRC);

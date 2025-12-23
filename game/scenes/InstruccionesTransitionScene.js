@@ -77,7 +77,7 @@ export class InstruccionesTransitionScene extends BaseScene {
       pointer-events: auto;
       opacity: 1;
       overflow: hidden;
-      background-image: url('../assets/web-bgs/D+fondo_para_web_01.webp');
+      background-image: url('../web-bgs/D+fondo_para_web_01.webp');
       background-position: top center;
       background-repeat: no-repeat;
       background-size: cover;
@@ -90,7 +90,7 @@ export class InstruccionesTransitionScene extends BaseScene {
     cloud1.style.cssText = `
       position: absolute;
       inset: -14%;
-      background: url('../assets/nube.png') center center / contain no-repeat;
+      background: url('../nube.png') center center / contain no-repeat;
       mix-blend-mode: lighten;
       opacity: 0.3;
       filter: hue-rotate(-8deg) saturate(1.05) brightness(1.06);
@@ -104,7 +104,7 @@ export class InstruccionesTransitionScene extends BaseScene {
     cloud2.style.cssText = `
       position: absolute;
       inset: -14%;
-      background: url('../assets/nube.png') center center / contain no-repeat;
+      background: url('../nube.png') center center / contain no-repeat;
       mix-blend-mode: lighten;
       opacity: 0.26;
       filter: hue-rotate(-8deg) saturate(1.05) brightness(1.04);
@@ -116,7 +116,7 @@ export class InstruccionesTransitionScene extends BaseScene {
 
     // Agregar sonido ambiente
     const ambientSound = document.createElement('audio');
-    ambientSound.src = '../assets/delta-web-ambiente.mp3';
+    ambientSound.src = '../delta-web-ambiente.mp3';
     ambientSound.loop = true;
     ambientSound.volume = 0.5;
     ambientSound.play().catch((err) => {
