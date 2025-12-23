@@ -25,7 +25,7 @@ function shouldExclude(url) {
 // This list is loaded from offline-manifest.json and filtered.
 const ALL_OFFLINE_URLS_PROMISE = (async () => {
   try {
-    const manifestResp = await fetch('/offline-manifest.json');
+    const manifestResp = await fetch(`/offline-manifest.json?v=${BUILD_VERSION}`);
     if (manifestResp && manifestResp.ok) {
       const manifestList = await manifestResp.json();
       if (Array.isArray(manifestList)) {

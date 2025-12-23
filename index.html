@@ -4193,26 +4193,25 @@
         const APP_VERSION = '__BUILD_VERSION__';
         
         if ('serviceWorker' in navigator) {
+            // Reload on controller change (SW update)
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (refreshing) return;
+                refreshing = true;
+                console.log('[App] Controller changed, reloading...');
+                window.location.reload();
+            });
+
             window.addEventListener('load', async () => {
                 try {
                     const storedVersion = localStorage.getItem('app_version');
                     
                     if (storedVersion && storedVersion !== APP_VERSION) {
-                        console.log('[App] Version changed, clearing caches...');
-                        
-                        // Unregister all service workers
-                        const registrations = await navigator.serviceWorker.getRegistrations();
-                        await Promise.all(registrations.map(reg => reg.unregister()));
-                        
-                        // Clear all caches
-                        const cacheNames = await caches.keys();
-                        await Promise.all(cacheNames.map(name => caches.delete(name)));
-                        
+                        console.log('[App] Version changed, clearing storage...');
+                        // Clear local/session storage if version changed
+                        // Note: Caches are cleared by the new Service Worker on activation
                         localStorage.clear();
                         sessionStorage.clear();
-                        localStorage.setItem('app_version', APP_VERSION);
-                        window.location.reload(true);
-                        return;
                     }
                     
                     localStorage.setItem('app_version', APP_VERSION);
