@@ -18,7 +18,7 @@ def build():
         'game',
         'assets',
         'game-assets',
-        'isla_splat'
+        'isla splat'
     ]
 
     # Additional root-level files / patterns to include in the final build
