@@ -1359,18 +1359,18 @@
             tierra.</p>
     </div>
 
-    <!-- Second video section with framed YouTube video (background video removed to show body image) -->
-    <section class="video-section">
+    <!-- Second video section with framed mp4 video (background video removed to show body image) -->
+    <section class="video-section" id="main-video-section">
         <!-- Video frame container -->
         <div class="video-frame-container">
             <div class="video-frame">
                 <div class="video-wrapper">
                     <div class="video-shell">
-                        <iframe src="https://www.youtube.com/embed/ANyR_fuIF-g?rel=0&modestbranding=1&playsinline=1"
-                            title="Video"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                            allowfullscreen>
-                        </iframe>
+                        <video id="main-mp4-video" 
+                            src="assets/video/poema.mp4"
+                            playsinline
+                            muted>
+                        </video>
                     </div>
                 </div>
                 <span class="frame-corner top-left"></span>
@@ -3238,6 +3238,72 @@
         let isDragging = false;
         let previousMouseX = 0;
         let dragMoved = false;
+
+        // Video autoplay and audio management
+        const mainVideo = document.getElementById('main-mp4-video');
+        let videoHasPlayed = false;
+        let savedAmbientVolume = 0;
+        let savedMusicVolume = 0;
+
+        if (mainVideo) {
+            // Create IntersectionObserver to detect when video is fully in view
+            const videoObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && entry.intersectionRatio >= 0.95) {
+                        // Video is fully in view
+                        if (!videoHasPlayed) {
+                            // Save current volumes
+                            savedAmbientVolume = audioLayers.ambient.volume;
+                            savedMusicVolume = audioLayers.music.volume;
+
+                            // Fade out background audio
+                            fadeAudio(audioLayers.ambient, 0, 500);
+                            fadeAudio(audioLayers.music, 0, 500);
+
+                            // Unmute and play video after audio fadeout
+                            setTimeout(() => {
+                                mainVideo.muted = false;
+                                mainVideo.play().catch(e => console.log('Video autoplay failed:', e));
+                            }, 500);
+
+                            videoHasPlayed = true;
+                        }
+                    } else if (!entry.isIntersecting && videoHasPlayed) {
+                        // Video left viewport - restore background audio
+                        mainVideo.pause();
+                        fadeAudio(audioLayers.ambient, savedAmbientVolume, 500);
+                        fadeAudio(audioLayers.music, savedMusicVolume, 500);
+                        videoHasPlayed = false;
+                    }
+                });
+            }, {
+                threshold: [0, 0.5, 0.95, 1.0]
+            });
+
+            videoObserver.observe(mainVideo);
+
+            // Helper function to fade audio volume
+            function fadeAudio(audioElement, targetVolume, duration) {
+                if (!audioElement) return;
+                
+                const startVolume = audioElement.volume;
+                const volumeDiff = targetVolume - startVolume;
+                const steps = 20;
+                const stepDuration = duration / steps;
+                let currentStep = 0;
+
+                const fadeInterval = setInterval(() => {
+                    currentStep++;
+                    const progress = currentStep / steps;
+                    audioElement.volume = Math.max(0, Math.min(1, startVolume + (volumeDiff * progress)));
+
+                    if (currentStep >= steps) {
+                        clearInterval(fadeInterval);
+                        audioElement.volume = targetVolume;
+                    }
+                }, stepDuration);
+            }
+        }
 
         // Click detection
         let mouseDownTime = 0;
