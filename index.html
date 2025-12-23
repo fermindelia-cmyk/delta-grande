@@ -2976,6 +2976,13 @@
                 'ruben-angel-alarcon.mp3'
             ];
 
+            const musicFiles = [
+                '02-carnaval.mp3',
+                '10-lluvia.mp3',
+                '11-dorado.mp3',
+                '13-verano.mp3'
+            ];
+
             // Wire click handlers
             // Wire click handlers
             Object.keys(hotspots).forEach((k) => {
@@ -3067,14 +3074,29 @@
 
                     } else if (k === 'music') {
                         // MUSIC MODE
-                        // 1. Music (100%)
-                        await play('music', 1.0, SRC_MUSIC, true, false);
+                        // 1. Music (100%) - Play random music from music folder
+                        const randomMusic = musicFiles[Math.floor(Math.random() * musicFiles.length)];
+                        await play('music', 1.0, `music/${randomMusic}`, false, true);
 
                         // 2. Ambient BG (50%)
                         await play('ambient', 0.5, SRC_AMBIENT, true, false);
 
                         // 3. Stop Dialog
                         stop('dialog');
+                        
+                        // 4. Setup auto-advance to next random song when current ends
+                        const musicLayer = layers.music;
+                        if (musicLayer) {
+                            musicLayer.onended = async () => {
+                                // Only continue if music mode is still active
+                                if (state.music) {
+                                    const nextMusic = musicFiles[Math.floor(Math.random() * musicFiles.length)];
+                                    await play('music', 1.0, `music/${nextMusic}`, false, true);
+                                    // Re-attach the onended handler for the next song
+                                    musicLayer.onended = arguments.callee;
+                                }
+                            };
+                        }
 
                     } else if (k === 'ambient') {
                         // AMBIENT MODE

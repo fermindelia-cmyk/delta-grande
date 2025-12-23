@@ -2013,10 +2013,10 @@ export class SimuladorScene extends BaseScene {
 
   _prepareTexture(texture) {
     if (!texture) return;
-    if ('colorSpace' in texture && THREE && typeof THREE.SRGBColorSpace !== 'undefined') {
+    if ('colorSpace' in texture && THREE && THREE.SRGBColorSpace) {
       texture.colorSpace = THREE.SRGBColorSpace;
-    } else if ('encoding' in texture && THREE && typeof THREE.sRGBEncoding !== 'undefined') {
-      // texture.encoding = THREE.sRGBEncoding; // Deprecated in newer Three.js
+    } else if ('encoding' in texture) {
+      // Fallback for older Three.js - texture.encoding = THREE.sRGBEncoding
       texture.colorSpace = THREE.SRGBColorSpace;
     }
     texture.needsUpdate = true;
