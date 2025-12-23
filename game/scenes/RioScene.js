@@ -610,7 +610,7 @@ const DEFAULT_PARAMS = {
 
   /** Lightweight “steam” / mist patches just above the water */
   mist: {
-    enabled: true,
+    enabled: false,
     color: 0xC9CED6,
     opacity: 0.55,         // 0..1
     height: 0.5,          // meters above surface
@@ -618,6 +618,7 @@ const DEFAULT_PARAMS = {
     sizeRange: [8, 20],    // meters (min, max) per patch
     windDirDeg: 15,        // world wind heading (deg, 0 = +X)
     windSpeed: 0.01,       // meters/sec
+    softness: 0.5,         // Soft particles depth blend width
     jitterAmp: 0.2,        // small local bobbing in meters
     underwaterOpacity: 0.0,
     fadeSec: 2,
@@ -3443,6 +3444,13 @@ export class RioScene extends BaseScene {
     this.camera.far  = 90;   // try 80–150; lower = faster
     this.camera.updateProjectionMatrix();
 
+    // --- Depth target for soft particles ---
+    this.depthTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
+    this.depthTarget.texture.minFilter = THREE.NearestFilter;
+    this.depthTarget.texture.magFilter = THREE.NearestFilter;
+    this.depthTarget.depthTexture = new THREE.DepthTexture();
+    this.depthTarget.depthTexture.type = THREE.UnsignedShortType;
+
     // Build tiling & water after model is in the scene
     if (this.model) {
       this.scene.updateMatrixWorld(true);
@@ -3629,6 +3637,9 @@ export class RioScene extends BaseScene {
     this.audioListener = new THREE.AudioListener();
     this.camera.add(this.audioListener);
     this.audioListener.setMasterVolume(1.0);
+
+    // Ensure depth target and shader resolution are synced
+    this.onResize(window.innerWidth, window.innerHeight);
 
     const soundPaths = {
       surface: '/game-assets/sub/sonido/exterior.mp3',
@@ -5493,16 +5504,83 @@ export class RioScene extends BaseScene {
     const tex = this._makeSoftCircleTexture(256);
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
 
-    // Shared material
-    const mat = new THREE.MeshBasicMaterial({
-      map: tex,
-      color: new THREE.Color(M.color ?? 0xC9CED6),
+    // Shared material (Soft Particles Shader)
+    const mat = new THREE.ShaderMaterial({
+      uniforms: {
+        tDiffuse: { value: tex },
+        tDepth: { value: null },
+        cameraNear: { value: this.camera.near },
+        cameraFar: { value: this.camera.far },
+        resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+        opacity: { value: M.opacity ?? 0.55 },
+        color: { value: new THREE.Color(M.color ?? 0xC9CED6) },
+        softness: { value: M.softness ?? 0.5 }
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        varying vec4 vProjPos;
+        void main() {
+          vUv = uv;
+          vProjPos = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          gl_Position = vProjPos;
+        }
+      `,
+      fragmentShader: `
+        #include <packing>
+        varying vec2 vUv;
+        varying vec4 vProjPos;
+
+        uniform sampler2D tDiffuse;
+        uniform sampler2D tDepth;
+        uniform float cameraNear;
+        uniform float cameraFar;
+        uniform vec2 resolution;
+        uniform float opacity;
+        uniform vec3 color;
+        uniform float softness;
+
+        float getLinearDepth(vec2 coord) {
+          float fragCoordZ = texture2D(tDepth, coord).x;
+          // This converts the non-linear 0-1 depth from the buffer to world units
+          float viewZ = perspectiveDepthToViewZ(fragCoordZ, cameraNear, cameraFar);
+          return viewZToOrthographicDepth(viewZ, cameraNear, cameraFar);
+        }
+
+        void main() {
+          vec2 screenUv = gl_FragCoord.xy / resolution;
+          
+          // 1. Get Scene Depth (Depth of objects behind the mist)
+          float sceneDepth = getLinearDepth(screenUv);
+          
+          // 2. Get Current Depth (Depth of the mist pixel itself)
+          // Normalized 0.0 to 1.0
+          float currentDepth = vProjPos.z / vProjPos.w * 0.5 + 0.5;
+
+          // A. Intersection Softness (Fade against water/objects)
+          // If sceneDepth is 1.0 (sky), we ignore softness so mist doesn't vanish against the sky
+          float diff = (sceneDepth >= 1.0) ? 1.0 : (sceneDepth - currentDepth);
+          float softAlpha = clamp(diff * cameraFar / softness, 0.0, 1.0);
+
+          // B. Near Camera Fade (Fade out as it gets close to the lens)
+          // We use viewZ to find the actual distance in meters from the camera
+          float viewZ = vProjPos.z / vProjPos.w * (cameraFar - cameraNear) - cameraFar;
+          float distToCam = abs(viewZ); 
+          float nearFade = clamp((distToCam - cameraNear) / 1.5, 0.0, 1.0); // 1.5 meters fade range
+
+          // 3. Final Color Assembly
+          vec4 texColor = texture2D(tDiffuse, vUv);
+          
+          // Multiply: Texture Alpha * Uniform Opacity * Intersection Fade * Near Camera Fade
+          float finalAlpha = texColor.a * opacity * softAlpha * nearFade;
+          
+          gl_FragColor = vec4(color, finalAlpha);
+        }
+      `,
       transparent: true,
-      opacity: M.opacity ?? 0.55,
       depthWrite: false,
       depthTest: true,
-      blending: THREE.NormalBlending,
-      side: THREE.DoubleSide        // <— see from above *and* below
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide
     });
 
     // Geometry: flat, horizontal quads (face upward)
@@ -5577,10 +5655,11 @@ export class RioScene extends BaseScene {
     // Smoothly approach target (exponential ease)
     const fade = Math.max(0.001, mist.fadeSec ?? 0.25);
     const k    = 1 - Math.exp(-dt / fade);
-    this._mist.mat.opacity = THREE.MathUtils.lerp(this._mist.mat.opacity, targetOpacity, k);
+    this._mist.mat.uniforms.opacity.value = THREE.MathUtils.lerp(this._mist.mat.uniforms.opacity.value, targetOpacity, k);
 
     // Keep color live-updatable
-    this._mist.mat.color.set(mist.color ?? 0xC9CED6);
+    this._mist.mat.uniforms.color.value.set(mist.color ?? 0xC9CED6);
+    this._mist.mat.uniforms.softness.value = mist.softness ?? 0.5;
 
     // Drift / bob
     const speed = (mist.windSpeed ?? this._mist.speed); // live-updatable
@@ -6477,6 +6556,29 @@ export class RioScene extends BaseScene {
     if (this.surfaceFX?.bubbleSystem) {
       this.surfaceFX.bubbleSystem.update(dt);
     }
+
+    // --- Soft Particles Depth Pass ---
+    if (this.params.mist?.enabled && this.depthTarget && this.app.renderer) {
+      const renderer = this.app.renderer;
+      
+      // 1. Hide mist and render everything else to a texture
+      this.mistGroup.visible = false;
+      renderer.setRenderTarget(this.depthTarget);
+      renderer.clear();
+      renderer.render(this.scene, this.camera);
+
+      // 2. Prepare uniforms for the next pass
+      if (this._mist && this._mist.mat && this._mist.mat.uniforms.tDepth) {
+        this._mist.mat.uniforms.tDepth.value = this.depthTarget.depthTexture;
+        this._mist.mat.uniforms.cameraNear.value = this.camera.near;
+        this._mist.mat.uniforms.cameraFar.value = this.camera.far;
+        this._mist.mat.uniforms.resolution.value.set(window.innerWidth, window.innerHeight);
+      }
+      
+      // 3. Show mist again so the main app renderer will draw it
+      this.mistGroup.visible = true;
+      renderer.setRenderTarget(null);
+    }
   }
 
   updateFish(dt) {
@@ -6768,6 +6870,12 @@ export class RioScene extends BaseScene {
 
   onResize(w, h) {
     super.onResize(w, h);
+    if (this.depthTarget) {
+      this.depthTarget.setSize(w, h);
+    }
+    if (this._mist && this._mist.mat && this._mist.mat.uniforms.resolution) {
+      this._mist.mat.uniforms.resolution.value.set(w, h);
+    }
     this.camera.lookAt(this.camera.position.clone().add(this.forward));
     if (this.model) {
       this.scene.updateMatrixWorld(true);
