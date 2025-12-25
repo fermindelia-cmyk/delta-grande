@@ -2,87 +2,87 @@
   "meta": {
     "pages": [
       {
-        "image": "sheet_00.webp",
+        "image": "sheet_1024_00.webp",
         "size": {
-          "w": 2048,
-          "h": 1836
+          "w": 1024,
+          "h": 918
         }
       },
       {
-        "image": "sheet_01.webp",
+        "image": "sheet_1024_01.webp",
         "size": {
-          "w": 2048,
-          "h": 1836
+          "w": 1024,
+          "h": 918
         }
       },
       {
-        "image": "sheet_02.webp",
+        "image": "sheet_1024_02.webp",
         "size": {
-          "w": 2048,
-          "h": 1836
+          "w": 1024,
+          "h": 918
         }
       },
       {
-        "image": "sheet_03.webp",
+        "image": "sheet_1024_03.webp",
         "size": {
-          "w": 2048,
-          "h": 1836
+          "w": 1024,
+          "h": 918
         }
       },
       {
-        "image": "sheet_04.webp",
+        "image": "sheet_1024_04.webp",
         "size": {
-          "w": 2048,
-          "h": 1836
+          "w": 1024,
+          "h": 918
         }
       },
       {
-        "image": "sheet_05.webp",
+        "image": "sheet_1024_05.webp",
         "size": {
-          "w": 2048,
-          "h": 1836
+          "w": 1024,
+          "h": 918
         }
       },
       {
-        "image": "sheet_06.webp",
+        "image": "sheet_1024_06.webp",
         "size": {
-          "w": 2048,
-          "h": 1836
+          "w": 1024,
+          "h": 918
         }
       },
       {
-        "image": "sheet_07.webp",
+        "image": "sheet_1024_07.webp",
         "size": {
-          "w": 2048,
-          "h": 1836
+          "w": 1024,
+          "h": 918
         }
       },
       {
-        "image": "sheet_08.webp",
+        "image": "sheet_1024_08.webp",
         "size": {
-          "w": 2048,
-          "h": 1836
+          "w": 1024,
+          "h": 918
         }
       },
       {
-        "image": "sheet_09.webp",
+        "image": "sheet_1024_09.webp",
         "size": {
-          "w": 2048,
-          "h": 1836
+          "w": 1024,
+          "h": 918
         }
       },
       {
-        "image": "sheet_10.webp",
+        "image": "sheet_1024_10.webp",
         "size": {
-          "w": 2048,
-          "h": 1836
+          "w": 1024,
+          "h": 918
         }
       },
       {
-        "image": "sheet_11.webp",
+        "image": "sheet_1024_11.webp",
         "size": {
-          "w": 2048,
-          "h": 1836
+          "w": 1024,
+          "h": 918
         }
       }
     ],
@@ -97,7 +97,7 @@
       "w": 1920,
       "h": 1724
     },
-    "scale": 0.26666666666666666
+    "scale": 0.13333333333333333
   },
   "frames": [
     {
@@ -106,8 +106,8 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -126,10 +126,10 @@
       "filename": "BASE data especie_00001.png",
       "page": 0,
       "frame": {
-        "x": 512,
+        "x": 256,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -148,10 +148,10 @@
       "filename": "BASE data especie_00002.png",
       "page": 0,
       "frame": {
-        "x": 1024,
+        "x": 512,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -170,10 +170,10 @@
       "filename": "BASE data especie_00003.png",
       "page": 0,
       "frame": {
-        "x": 1536,
+        "x": 768,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -193,9 +193,9 @@
       "page": 0,
       "frame": {
         "x": 0,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -214,10 +214,10 @@
       "filename": "BASE data especie_00005.png",
       "page": 0,
       "frame": {
-        "x": 512,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -236,10 +236,10 @@
       "filename": "BASE data especie_00006.png",
       "page": 0,
       "frame": {
-        "x": 1024,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -258,10 +258,10 @@
       "filename": "BASE data especie_00007.png",
       "page": 0,
       "frame": {
-        "x": 1536,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -281,9 +281,9 @@
       "page": 0,
       "frame": {
         "x": 0,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -302,10 +302,10 @@
       "filename": "BASE data especie_00009.png",
       "page": 0,
       "frame": {
-        "x": 512,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -324,10 +324,10 @@
       "filename": "BASE data especie_00010.png",
       "page": 0,
       "frame": {
-        "x": 1024,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -346,10 +346,10 @@
       "filename": "BASE data especie_00011.png",
       "page": 0,
       "frame": {
-        "x": 1536,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -369,9 +369,9 @@
       "page": 0,
       "frame": {
         "x": 0,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -390,10 +390,10 @@
       "filename": "BASE data especie_00013.png",
       "page": 0,
       "frame": {
-        "x": 512,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -412,10 +412,10 @@
       "filename": "BASE data especie_00014.png",
       "page": 0,
       "frame": {
-        "x": 1024,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -434,10 +434,10 @@
       "filename": "BASE data especie_00015.png",
       "page": 0,
       "frame": {
-        "x": 1536,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -458,8 +458,8 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -478,10 +478,10 @@
       "filename": "BASE data especie_00017.png",
       "page": 1,
       "frame": {
-        "x": 512,
+        "x": 256,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -500,10 +500,10 @@
       "filename": "BASE data especie_00018.png",
       "page": 1,
       "frame": {
-        "x": 1024,
+        "x": 512,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -522,10 +522,10 @@
       "filename": "BASE data especie_00019.png",
       "page": 1,
       "frame": {
-        "x": 1536,
+        "x": 768,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -545,9 +545,9 @@
       "page": 1,
       "frame": {
         "x": 0,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -566,10 +566,10 @@
       "filename": "BASE data especie_00021.png",
       "page": 1,
       "frame": {
-        "x": 512,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -588,10 +588,10 @@
       "filename": "BASE data especie_00022.png",
       "page": 1,
       "frame": {
-        "x": 1024,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -610,10 +610,10 @@
       "filename": "BASE data especie_00023.png",
       "page": 1,
       "frame": {
-        "x": 1536,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -633,9 +633,9 @@
       "page": 1,
       "frame": {
         "x": 0,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -654,10 +654,10 @@
       "filename": "BASE data especie_00025.png",
       "page": 1,
       "frame": {
-        "x": 512,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -676,10 +676,10 @@
       "filename": "BASE data especie_00026.png",
       "page": 1,
       "frame": {
-        "x": 1024,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -698,10 +698,10 @@
       "filename": "BASE data especie_00027.png",
       "page": 1,
       "frame": {
-        "x": 1536,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -721,9 +721,9 @@
       "page": 1,
       "frame": {
         "x": 0,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -742,10 +742,10 @@
       "filename": "BASE data especie_00029.png",
       "page": 1,
       "frame": {
-        "x": 512,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -764,10 +764,10 @@
       "filename": "BASE data especie_00030.png",
       "page": 1,
       "frame": {
-        "x": 1024,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -786,10 +786,10 @@
       "filename": "BASE data especie_00031.png",
       "page": 1,
       "frame": {
-        "x": 1536,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -810,8 +810,8 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -830,10 +830,10 @@
       "filename": "BASE data especie_00033.png",
       "page": 2,
       "frame": {
-        "x": 512,
+        "x": 256,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -852,10 +852,10 @@
       "filename": "BASE data especie_00034.png",
       "page": 2,
       "frame": {
-        "x": 1024,
+        "x": 512,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -874,10 +874,10 @@
       "filename": "BASE data especie_00035.png",
       "page": 2,
       "frame": {
-        "x": 1536,
+        "x": 768,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -897,9 +897,9 @@
       "page": 2,
       "frame": {
         "x": 0,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -918,10 +918,10 @@
       "filename": "BASE data especie_00037.png",
       "page": 2,
       "frame": {
-        "x": 512,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -940,10 +940,10 @@
       "filename": "BASE data especie_00038.png",
       "page": 2,
       "frame": {
-        "x": 1024,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -962,10 +962,10 @@
       "filename": "BASE data especie_00039.png",
       "page": 2,
       "frame": {
-        "x": 1536,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -985,9 +985,9 @@
       "page": 2,
       "frame": {
         "x": 0,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -1006,10 +1006,10 @@
       "filename": "BASE data especie_00041.png",
       "page": 2,
       "frame": {
-        "x": 512,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -1028,10 +1028,10 @@
       "filename": "BASE data especie_00042.png",
       "page": 2,
       "frame": {
-        "x": 1024,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -1050,10 +1050,10 @@
       "filename": "BASE data especie_00043.png",
       "page": 2,
       "frame": {
-        "x": 1536,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -1073,9 +1073,9 @@
       "page": 2,
       "frame": {
         "x": 0,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1094,10 +1094,10 @@
       "filename": "BASE data especie_00045.png",
       "page": 2,
       "frame": {
-        "x": 512,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1116,10 +1116,10 @@
       "filename": "BASE data especie_00046.png",
       "page": 2,
       "frame": {
-        "x": 1024,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1138,10 +1138,10 @@
       "filename": "BASE data especie_00047.png",
       "page": 2,
       "frame": {
-        "x": 1536,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1162,8 +1162,8 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1182,10 +1182,10 @@
       "filename": "BASE data especie_00049.png",
       "page": 3,
       "frame": {
-        "x": 512,
+        "x": 256,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1204,10 +1204,10 @@
       "filename": "BASE data especie_00050.png",
       "page": 3,
       "frame": {
-        "x": 1024,
+        "x": 512,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1226,10 +1226,10 @@
       "filename": "BASE data especie_00051.png",
       "page": 3,
       "frame": {
-        "x": 1536,
+        "x": 768,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1249,9 +1249,9 @@
       "page": 3,
       "frame": {
         "x": 0,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -1270,10 +1270,10 @@
       "filename": "BASE data especie_00053.png",
       "page": 3,
       "frame": {
-        "x": 512,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -1292,10 +1292,10 @@
       "filename": "BASE data especie_00054.png",
       "page": 3,
       "frame": {
-        "x": 1024,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -1314,10 +1314,10 @@
       "filename": "BASE data especie_00055.png",
       "page": 3,
       "frame": {
-        "x": 1536,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -1337,9 +1337,9 @@
       "page": 3,
       "frame": {
         "x": 0,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -1358,10 +1358,10 @@
       "filename": "BASE data especie_00057.png",
       "page": 3,
       "frame": {
-        "x": 512,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -1380,10 +1380,10 @@
       "filename": "BASE data especie_00058.png",
       "page": 3,
       "frame": {
-        "x": 1024,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -1402,10 +1402,10 @@
       "filename": "BASE data especie_00059.png",
       "page": 3,
       "frame": {
-        "x": 1536,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -1425,9 +1425,9 @@
       "page": 3,
       "frame": {
         "x": 0,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1446,10 +1446,10 @@
       "filename": "BASE data especie_00061.png",
       "page": 3,
       "frame": {
-        "x": 512,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1468,10 +1468,10 @@
       "filename": "BASE data especie_00062.png",
       "page": 3,
       "frame": {
-        "x": 1024,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1490,10 +1490,10 @@
       "filename": "BASE data especie_00063.png",
       "page": 3,
       "frame": {
-        "x": 1536,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1514,8 +1514,8 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1534,10 +1534,10 @@
       "filename": "BASE data especie_00065.png",
       "page": 4,
       "frame": {
-        "x": 512,
+        "x": 256,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1556,10 +1556,10 @@
       "filename": "BASE data especie_00066.png",
       "page": 4,
       "frame": {
-        "x": 1024,
+        "x": 512,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1578,10 +1578,10 @@
       "filename": "BASE data especie_00067.png",
       "page": 4,
       "frame": {
-        "x": 1536,
+        "x": 768,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1601,9 +1601,9 @@
       "page": 4,
       "frame": {
         "x": 0,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -1622,10 +1622,10 @@
       "filename": "BASE data especie_00069.png",
       "page": 4,
       "frame": {
-        "x": 512,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -1644,10 +1644,10 @@
       "filename": "BASE data especie_00070.png",
       "page": 4,
       "frame": {
-        "x": 1024,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -1666,10 +1666,10 @@
       "filename": "BASE data especie_00071.png",
       "page": 4,
       "frame": {
-        "x": 1536,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -1689,9 +1689,9 @@
       "page": 4,
       "frame": {
         "x": 0,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -1710,10 +1710,10 @@
       "filename": "BASE data especie_00073.png",
       "page": 4,
       "frame": {
-        "x": 512,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -1732,10 +1732,10 @@
       "filename": "BASE data especie_00074.png",
       "page": 4,
       "frame": {
-        "x": 1024,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -1754,10 +1754,10 @@
       "filename": "BASE data especie_00075.png",
       "page": 4,
       "frame": {
-        "x": 1536,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -1777,9 +1777,9 @@
       "page": 4,
       "frame": {
         "x": 0,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1798,10 +1798,10 @@
       "filename": "BASE data especie_00077.png",
       "page": 4,
       "frame": {
-        "x": 512,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1820,10 +1820,10 @@
       "filename": "BASE data especie_00078.png",
       "page": 4,
       "frame": {
-        "x": 1024,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1842,10 +1842,10 @@
       "filename": "BASE data especie_00079.png",
       "page": 4,
       "frame": {
-        "x": 1536,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1866,8 +1866,8 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1886,10 +1886,10 @@
       "filename": "BASE data especie_00081.png",
       "page": 5,
       "frame": {
-        "x": 512,
+        "x": 256,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1908,10 +1908,10 @@
       "filename": "BASE data especie_00082.png",
       "page": 5,
       "frame": {
-        "x": 1024,
+        "x": 512,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1930,10 +1930,10 @@
       "filename": "BASE data especie_00083.png",
       "page": 5,
       "frame": {
-        "x": 1536,
+        "x": 768,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -1953,9 +1953,9 @@
       "page": 5,
       "frame": {
         "x": 0,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -1974,10 +1974,10 @@
       "filename": "BASE data especie_00085.png",
       "page": 5,
       "frame": {
-        "x": 512,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -1996,10 +1996,10 @@
       "filename": "BASE data especie_00086.png",
       "page": 5,
       "frame": {
-        "x": 1024,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -2018,10 +2018,10 @@
       "filename": "BASE data especie_00087.png",
       "page": 5,
       "frame": {
-        "x": 1536,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -2041,9 +2041,9 @@
       "page": 5,
       "frame": {
         "x": 0,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -2062,10 +2062,10 @@
       "filename": "BASE data especie_00089.png",
       "page": 5,
       "frame": {
-        "x": 512,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -2084,10 +2084,10 @@
       "filename": "BASE data especie_00090.png",
       "page": 5,
       "frame": {
-        "x": 1024,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -2106,10 +2106,10 @@
       "filename": "BASE data especie_00091.png",
       "page": 5,
       "frame": {
-        "x": 1536,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -2129,9 +2129,9 @@
       "page": 5,
       "frame": {
         "x": 0,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2150,10 +2150,10 @@
       "filename": "BASE data especie_00093.png",
       "page": 5,
       "frame": {
-        "x": 512,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2172,10 +2172,10 @@
       "filename": "BASE data especie_00094.png",
       "page": 5,
       "frame": {
-        "x": 1024,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2194,10 +2194,10 @@
       "filename": "BASE data especie_00095.png",
       "page": 5,
       "frame": {
-        "x": 1536,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2218,8 +2218,8 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2238,10 +2238,10 @@
       "filename": "BASE data especie_00097.png",
       "page": 6,
       "frame": {
-        "x": 512,
+        "x": 256,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2260,10 +2260,10 @@
       "filename": "BASE data especie_00098.png",
       "page": 6,
       "frame": {
-        "x": 1024,
+        "x": 512,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2282,10 +2282,10 @@
       "filename": "BASE data especie_00099.png",
       "page": 6,
       "frame": {
-        "x": 1536,
+        "x": 768,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2305,9 +2305,9 @@
       "page": 6,
       "frame": {
         "x": 0,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -2326,10 +2326,10 @@
       "filename": "BASE data especie_00101.png",
       "page": 6,
       "frame": {
-        "x": 512,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -2348,10 +2348,10 @@
       "filename": "BASE data especie_00102.png",
       "page": 6,
       "frame": {
-        "x": 1024,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -2370,10 +2370,10 @@
       "filename": "BASE data especie_00103.png",
       "page": 6,
       "frame": {
-        "x": 1536,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -2393,9 +2393,9 @@
       "page": 6,
       "frame": {
         "x": 0,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -2414,10 +2414,10 @@
       "filename": "BASE data especie_00105.png",
       "page": 6,
       "frame": {
-        "x": 512,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -2436,10 +2436,10 @@
       "filename": "BASE data especie_00106.png",
       "page": 6,
       "frame": {
-        "x": 1024,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -2458,10 +2458,10 @@
       "filename": "BASE data especie_00107.png",
       "page": 6,
       "frame": {
-        "x": 1536,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -2481,9 +2481,9 @@
       "page": 6,
       "frame": {
         "x": 0,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2502,10 +2502,10 @@
       "filename": "BASE data especie_00109.png",
       "page": 6,
       "frame": {
-        "x": 512,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2524,10 +2524,10 @@
       "filename": "BASE data especie_00110.png",
       "page": 6,
       "frame": {
-        "x": 1024,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2546,10 +2546,10 @@
       "filename": "BASE data especie_00111.png",
       "page": 6,
       "frame": {
-        "x": 1536,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2570,8 +2570,8 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2590,10 +2590,10 @@
       "filename": "BASE data especie_00113.png",
       "page": 7,
       "frame": {
-        "x": 512,
+        "x": 256,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2612,10 +2612,10 @@
       "filename": "BASE data especie_00114.png",
       "page": 7,
       "frame": {
-        "x": 1024,
+        "x": 512,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2634,10 +2634,10 @@
       "filename": "BASE data especie_00115.png",
       "page": 7,
       "frame": {
-        "x": 1536,
+        "x": 768,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2657,9 +2657,9 @@
       "page": 7,
       "frame": {
         "x": 0,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -2678,10 +2678,10 @@
       "filename": "BASE data especie_00117.png",
       "page": 7,
       "frame": {
-        "x": 512,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -2700,10 +2700,10 @@
       "filename": "BASE data especie_00118.png",
       "page": 7,
       "frame": {
-        "x": 1024,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -2722,10 +2722,10 @@
       "filename": "BASE data especie_00119.png",
       "page": 7,
       "frame": {
-        "x": 1536,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -2745,9 +2745,9 @@
       "page": 7,
       "frame": {
         "x": 0,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -2766,10 +2766,10 @@
       "filename": "BASE data especie_00121.png",
       "page": 7,
       "frame": {
-        "x": 512,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -2788,10 +2788,10 @@
       "filename": "BASE data especie_00122.png",
       "page": 7,
       "frame": {
-        "x": 1024,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -2810,10 +2810,10 @@
       "filename": "BASE data especie_00123.png",
       "page": 7,
       "frame": {
-        "x": 1536,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -2833,9 +2833,9 @@
       "page": 7,
       "frame": {
         "x": 0,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2854,10 +2854,10 @@
       "filename": "BASE data especie_00125.png",
       "page": 7,
       "frame": {
-        "x": 512,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2876,10 +2876,10 @@
       "filename": "BASE data especie_00126.png",
       "page": 7,
       "frame": {
-        "x": 1024,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2898,10 +2898,10 @@
       "filename": "BASE data especie_00127.png",
       "page": 7,
       "frame": {
-        "x": 1536,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2922,8 +2922,8 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2942,10 +2942,10 @@
       "filename": "BASE data especie_00129.png",
       "page": 8,
       "frame": {
-        "x": 512,
+        "x": 256,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2964,10 +2964,10 @@
       "filename": "BASE data especie_00130.png",
       "page": 8,
       "frame": {
-        "x": 1024,
+        "x": 512,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -2986,10 +2986,10 @@
       "filename": "BASE data especie_00131.png",
       "page": 8,
       "frame": {
-        "x": 1536,
+        "x": 768,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -3009,9 +3009,9 @@
       "page": 8,
       "frame": {
         "x": 0,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3030,10 +3030,10 @@
       "filename": "BASE data especie_00133.png",
       "page": 8,
       "frame": {
-        "x": 512,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3052,10 +3052,10 @@
       "filename": "BASE data especie_00134.png",
       "page": 8,
       "frame": {
-        "x": 1024,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3074,10 +3074,10 @@
       "filename": "BASE data especie_00135.png",
       "page": 8,
       "frame": {
-        "x": 1536,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3097,9 +3097,9 @@
       "page": 8,
       "frame": {
         "x": 0,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3118,10 +3118,10 @@
       "filename": "BASE data especie_00137.png",
       "page": 8,
       "frame": {
-        "x": 512,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3140,10 +3140,10 @@
       "filename": "BASE data especie_00138.png",
       "page": 8,
       "frame": {
-        "x": 1024,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3162,10 +3162,10 @@
       "filename": "BASE data especie_00139.png",
       "page": 8,
       "frame": {
-        "x": 1536,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3185,9 +3185,9 @@
       "page": 8,
       "frame": {
         "x": 0,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -3206,10 +3206,10 @@
       "filename": "BASE data especie_00141.png",
       "page": 8,
       "frame": {
-        "x": 512,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -3228,10 +3228,10 @@
       "filename": "BASE data especie_00142.png",
       "page": 8,
       "frame": {
-        "x": 1024,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -3250,10 +3250,10 @@
       "filename": "BASE data especie_00143.png",
       "page": 8,
       "frame": {
-        "x": 1536,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -3274,8 +3274,8 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -3294,10 +3294,10 @@
       "filename": "BASE data especie_00145.png",
       "page": 9,
       "frame": {
-        "x": 512,
+        "x": 256,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -3316,10 +3316,10 @@
       "filename": "BASE data especie_00146.png",
       "page": 9,
       "frame": {
-        "x": 1024,
+        "x": 512,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -3338,10 +3338,10 @@
       "filename": "BASE data especie_00147.png",
       "page": 9,
       "frame": {
-        "x": 1536,
+        "x": 768,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -3361,9 +3361,9 @@
       "page": 9,
       "frame": {
         "x": 0,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3382,10 +3382,10 @@
       "filename": "BASE data especie_00149.png",
       "page": 9,
       "frame": {
-        "x": 512,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3404,10 +3404,10 @@
       "filename": "BASE data especie_00150.png",
       "page": 9,
       "frame": {
-        "x": 1024,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3426,10 +3426,10 @@
       "filename": "BASE data especie_00151.png",
       "page": 9,
       "frame": {
-        "x": 1536,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3449,9 +3449,9 @@
       "page": 9,
       "frame": {
         "x": 0,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3470,10 +3470,10 @@
       "filename": "BASE data especie_00153.png",
       "page": 9,
       "frame": {
-        "x": 512,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3492,10 +3492,10 @@
       "filename": "BASE data especie_00154.png",
       "page": 9,
       "frame": {
-        "x": 1024,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3514,10 +3514,10 @@
       "filename": "BASE data especie_00155.png",
       "page": 9,
       "frame": {
-        "x": 1536,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3537,9 +3537,9 @@
       "page": 9,
       "frame": {
         "x": 0,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -3558,10 +3558,10 @@
       "filename": "BASE data especie_00157.png",
       "page": 9,
       "frame": {
-        "x": 512,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -3580,10 +3580,10 @@
       "filename": "BASE data especie_00158.png",
       "page": 9,
       "frame": {
-        "x": 1024,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -3602,10 +3602,10 @@
       "filename": "BASE data especie_00159.png",
       "page": 9,
       "frame": {
-        "x": 1536,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -3626,8 +3626,8 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -3646,10 +3646,10 @@
       "filename": "BASE data especie_00161.png",
       "page": 10,
       "frame": {
-        "x": 512,
+        "x": 256,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -3668,10 +3668,10 @@
       "filename": "BASE data especie_00162.png",
       "page": 10,
       "frame": {
-        "x": 1024,
+        "x": 512,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -3690,10 +3690,10 @@
       "filename": "BASE data especie_00163.png",
       "page": 10,
       "frame": {
-        "x": 1536,
+        "x": 768,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -3713,9 +3713,9 @@
       "page": 10,
       "frame": {
         "x": 0,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3734,10 +3734,10 @@
       "filename": "BASE data especie_00165.png",
       "page": 10,
       "frame": {
-        "x": 512,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3756,10 +3756,10 @@
       "filename": "BASE data especie_00166.png",
       "page": 10,
       "frame": {
-        "x": 1024,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3778,10 +3778,10 @@
       "filename": "BASE data especie_00167.png",
       "page": 10,
       "frame": {
-        "x": 1536,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3801,9 +3801,9 @@
       "page": 10,
       "frame": {
         "x": 0,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3822,10 +3822,10 @@
       "filename": "BASE data especie_00169.png",
       "page": 10,
       "frame": {
-        "x": 512,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3844,10 +3844,10 @@
       "filename": "BASE data especie_00170.png",
       "page": 10,
       "frame": {
-        "x": 1024,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3866,10 +3866,10 @@
       "filename": "BASE data especie_00171.png",
       "page": 10,
       "frame": {
-        "x": 1536,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -3889,9 +3889,9 @@
       "page": 10,
       "frame": {
         "x": 0,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -3910,10 +3910,10 @@
       "filename": "BASE data especie_00173.png",
       "page": 10,
       "frame": {
-        "x": 512,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -3932,10 +3932,10 @@
       "filename": "BASE data especie_00174.png",
       "page": 10,
       "frame": {
-        "x": 1024,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -3954,10 +3954,10 @@
       "filename": "BASE data especie_00175.png",
       "page": 10,
       "frame": {
-        "x": 1536,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -3978,8 +3978,8 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -3998,10 +3998,10 @@
       "filename": "BASE data especie_00177.png",
       "page": 11,
       "frame": {
-        "x": 512,
+        "x": 256,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -4020,10 +4020,10 @@
       "filename": "BASE data especie_00178.png",
       "page": 11,
       "frame": {
-        "x": 1024,
+        "x": 512,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -4042,10 +4042,10 @@
       "filename": "BASE data especie_00179.png",
       "page": 11,
       "frame": {
-        "x": 1536,
+        "x": 768,
         "y": 0,
-        "w": 512,
-        "h": 459
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -4065,9 +4065,9 @@
       "page": 11,
       "frame": {
         "x": 0,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -4086,10 +4086,10 @@
       "filename": "BASE data especie_00181.png",
       "page": 11,
       "frame": {
-        "x": 512,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -4108,10 +4108,10 @@
       "filename": "BASE data especie_00182.png",
       "page": 11,
       "frame": {
-        "x": 1024,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -4130,10 +4130,10 @@
       "filename": "BASE data especie_00183.png",
       "page": 11,
       "frame": {
-        "x": 1536,
-        "y": 459,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 230,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -4153,9 +4153,9 @@
       "page": 11,
       "frame": {
         "x": 0,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -4174,10 +4174,10 @@
       "filename": "BASE data especie_00185.png",
       "page": 11,
       "frame": {
-        "x": 512,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -4196,10 +4196,10 @@
       "filename": "BASE data especie_00186.png",
       "page": 11,
       "frame": {
-        "x": 1024,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -4218,10 +4218,10 @@
       "filename": "BASE data especie_00187.png",
       "page": 11,
       "frame": {
-        "x": 1536,
-        "y": 918,
-        "w": 512,
-        "h": 459
+        "x": 768,
+        "y": 459,
+        "w": 256,
+        "h": 229
       },
       "rotated": false,
       "trimmed": false,
@@ -4241,9 +4241,9 @@
       "page": 11,
       "frame": {
         "x": 0,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -4262,10 +4262,10 @@
       "filename": "BASE data especie_00189.png",
       "page": 11,
       "frame": {
-        "x": 512,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 256,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,
@@ -4284,10 +4284,10 @@
       "filename": "BASE data especie_00190.png",
       "page": 11,
       "frame": {
-        "x": 1024,
-        "y": 1377,
-        "w": 512,
-        "h": 459
+        "x": 512,
+        "y": 688,
+        "w": 256,
+        "h": 230
       },
       "rotated": false,
       "trimmed": false,

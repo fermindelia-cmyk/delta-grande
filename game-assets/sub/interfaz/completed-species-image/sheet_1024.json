@@ -2,59 +2,59 @@
   "meta": {
     "pages": [
       {
-        "image": "sheet_00.webp",
+        "image": "sheet_1024_00.webp",
         "size": {
-          "w": 2016,
-          "h": 2048
+          "w": 1008,
+          "h": 1024
         }
       },
       {
-        "image": "sheet_01.webp",
+        "image": "sheet_1024_01.webp",
         "size": {
-          "w": 2016,
-          "h": 2048
+          "w": 1008,
+          "h": 1024
         }
       },
       {
-        "image": "sheet_02.webp",
+        "image": "sheet_1024_02.webp",
         "size": {
-          "w": 2016,
-          "h": 2048
+          "w": 1008,
+          "h": 1024
         }
       },
       {
-        "image": "sheet_03.webp",
+        "image": "sheet_1024_03.webp",
         "size": {
-          "w": 2016,
-          "h": 2048
+          "w": 1008,
+          "h": 1024
         }
       },
       {
-        "image": "sheet_04.webp",
+        "image": "sheet_1024_04.webp",
         "size": {
-          "w": 2016,
-          "h": 2048
+          "w": 1008,
+          "h": 1024
         }
       },
       {
-        "image": "sheet_05.webp",
+        "image": "sheet_1024_05.webp",
         "size": {
-          "w": 2016,
-          "h": 2048
+          "w": 1008,
+          "h": 1024
         }
       },
       {
-        "image": "sheet_06.webp",
+        "image": "sheet_1024_06.webp",
         "size": {
-          "w": 2016,
-          "h": 2048
+          "w": 1008,
+          "h": 1024
         }
       },
       {
-        "image": "sheet_07.webp",
+        "image": "sheet_1024_07.webp",
         "size": {
-          "w": 2016,
-          "h": 2048
+          "w": 1008,
+          "h": 1024
         }
       }
     ],
@@ -69,7 +69,7 @@
       "w": 709,
       "h": 720
     },
-    "scale": 0.7111111111111111
+    "scale": 0.35555555555555557
   },
   "frames": [
     {
@@ -78,8 +78,8 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -98,10 +98,10 @@
       "filename": "VNT pre_01_00001.png",
       "page": 0,
       "frame": {
-        "x": 504,
+        "x": 252,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -120,10 +120,10 @@
       "filename": "VNT pre_01_00002.png",
       "page": 0,
       "frame": {
-        "x": 1008,
+        "x": 504,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -142,10 +142,10 @@
       "filename": "VNT pre_01_00003.png",
       "page": 0,
       "frame": {
-        "x": 1512,
+        "x": 756,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -165,9 +165,9 @@
       "page": 0,
       "frame": {
         "x": 0,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -186,10 +186,10 @@
       "filename": "VNT pre_01_00005.png",
       "page": 0,
       "frame": {
-        "x": 504,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 252,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -208,10 +208,10 @@
       "filename": "VNT pre_01_00006.png",
       "page": 0,
       "frame": {
-        "x": 1008,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 504,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -230,10 +230,10 @@
       "filename": "VNT pre_01_00007.png",
       "page": 0,
       "frame": {
-        "x": 1512,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 756,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -253,9 +253,9 @@
       "page": 0,
       "frame": {
         "x": 0,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -274,10 +274,10 @@
       "filename": "VNT pre_01_00009.png",
       "page": 0,
       "frame": {
-        "x": 504,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "x": 252,
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -296,10 +296,10 @@
       "filename": "VNT pre_01_00010.png",
       "page": 0,
       "frame": {
-        "x": 1008,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "x": 504,
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -318,10 +318,10 @@
       "filename": "VNT pre_01_00011.png",
       "page": 0,
       "frame": {
-        "x": 1512,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "x": 756,
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -341,9 +341,9 @@
       "page": 0,
       "frame": {
         "x": 0,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -362,10 +362,10 @@
       "filename": "VNT pre_01_00013.png",
       "page": 0,
       "frame": {
-        "x": 504,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "x": 252,
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -384,10 +384,10 @@
       "filename": "VNT pre_01_00014.png",
       "page": 0,
       "frame": {
-        "x": 1008,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "x": 504,
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -406,10 +406,10 @@
       "filename": "VNT pre_01_00015.png",
       "page": 0,
       "frame": {
-        "x": 1512,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "x": 756,
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -430,8 +430,8 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -450,10 +450,10 @@
       "filename": "VNT pre_01_00017.png",
       "page": 1,
       "frame": {
-        "x": 504,
+        "x": 252,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -472,10 +472,10 @@
       "filename": "VNT pre_01_00018.png",
       "page": 1,
       "frame": {
-        "x": 1008,
+        "x": 504,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -494,10 +494,10 @@
       "filename": "VNT pre_01_00019.png",
       "page": 1,
       "frame": {
-        "x": 1512,
+        "x": 756,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -517,9 +517,9 @@
       "page": 1,
       "frame": {
         "x": 0,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -538,10 +538,10 @@
       "filename": "VNT pre_01_00021.png",
       "page": 1,
       "frame": {
-        "x": 504,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 252,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -560,10 +560,10 @@
       "filename": "VNT pre_01_00022.png",
       "page": 1,
       "frame": {
-        "x": 1008,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 504,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -582,10 +582,10 @@
       "filename": "VNT pre_01_00023.png",
       "page": 1,
       "frame": {
-        "x": 1512,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 756,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -605,9 +605,9 @@
       "page": 1,
       "frame": {
         "x": 0,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -626,10 +626,10 @@
       "filename": "VNT pre_01_00025.png",
       "page": 1,
       "frame": {
-        "x": 504,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "x": 252,
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -648,10 +648,10 @@
       "filename": "VNT pre_01_00026.png",
       "page": 1,
       "frame": {
-        "x": 1008,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "x": 504,
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -670,10 +670,10 @@
       "filename": "VNT pre_01_00027.png",
       "page": 1,
       "frame": {
-        "x": 1512,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "x": 756,
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -693,9 +693,9 @@
       "page": 1,
       "frame": {
         "x": 0,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -714,10 +714,10 @@
       "filename": "VNT pre_01_00029.png",
       "page": 1,
       "frame": {
-        "x": 504,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "x": 252,
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -736,10 +736,10 @@
       "filename": "VNT pre_01_00030.png",
       "page": 1,
       "frame": {
-        "x": 1008,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "x": 504,
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -758,10 +758,10 @@
       "filename": "VNT pre_01_00031.png",
       "page": 1,
       "frame": {
-        "x": 1512,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "x": 756,
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -782,8 +782,8 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -802,10 +802,10 @@
       "filename": "VNT pre_01_00033.png",
       "page": 2,
       "frame": {
-        "x": 504,
+        "x": 252,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -824,10 +824,10 @@
       "filename": "VNT pre_01_00034.png",
       "page": 2,
       "frame": {
-        "x": 1008,
+        "x": 504,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -846,10 +846,10 @@
       "filename": "VNT pre_01_00035.png",
       "page": 2,
       "frame": {
-        "x": 1512,
+        "x": 756,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -869,9 +869,9 @@
       "page": 2,
       "frame": {
         "x": 0,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -890,10 +890,10 @@
       "filename": "VNT pre_01_00037.png",
       "page": 2,
       "frame": {
-        "x": 504,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 252,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -912,10 +912,10 @@
       "filename": "VNT pre_01_00038.png",
       "page": 2,
       "frame": {
-        "x": 1008,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 504,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -934,10 +934,10 @@
       "filename": "VNT pre_01_00039.png",
       "page": 2,
       "frame": {
-        "x": 1512,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 756,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -957,9 +957,9 @@
       "page": 2,
       "frame": {
         "x": 0,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -978,10 +978,10 @@
       "filename": "VNT pre_01_00041.png",
       "page": 2,
       "frame": {
-        "x": 504,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "x": 252,
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1000,10 +1000,10 @@
       "filename": "VNT pre_01_00042.png",
       "page": 2,
       "frame": {
-        "x": 1008,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "x": 504,
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1022,10 +1022,10 @@
       "filename": "VNT pre_01_00043.png",
       "page": 2,
       "frame": {
-        "x": 1512,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "x": 756,
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1045,9 +1045,9 @@
       "page": 2,
       "frame": {
         "x": 0,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1066,10 +1066,10 @@
       "filename": "VNT pre_01_00045.png",
       "page": 2,
       "frame": {
-        "x": 504,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "x": 252,
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1088,10 +1088,10 @@
       "filename": "VNT pre_01_00046.png",
       "page": 2,
       "frame": {
-        "x": 1008,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "x": 504,
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1110,10 +1110,10 @@
       "filename": "VNT pre_01_00047.png",
       "page": 2,
       "frame": {
-        "x": 1512,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "x": 756,
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1134,8 +1134,8 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1154,10 +1154,10 @@
       "filename": "VNT pre_01_00049.png",
       "page": 3,
       "frame": {
-        "x": 504,
+        "x": 252,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1176,10 +1176,10 @@
       "filename": "VNT pre_01_00050.png",
       "page": 3,
       "frame": {
-        "x": 1008,
+        "x": 504,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1198,10 +1198,10 @@
       "filename": "VNT pre_01_00051.png",
       "page": 3,
       "frame": {
-        "x": 1512,
+        "x": 756,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1221,9 +1221,9 @@
       "page": 3,
       "frame": {
         "x": 0,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1242,10 +1242,10 @@
       "filename": "VNT pre_01_00053.png",
       "page": 3,
       "frame": {
-        "x": 504,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 252,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1264,10 +1264,10 @@
       "filename": "VNT pre_01_00054.png",
       "page": 3,
       "frame": {
-        "x": 1008,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 504,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1286,10 +1286,10 @@
       "filename": "VNT pre_01_00055.png",
       "page": 3,
       "frame": {
-        "x": 1512,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 756,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1309,9 +1309,9 @@
       "page": 3,
       "frame": {
         "x": 0,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1330,10 +1330,10 @@
       "filename": "VNT pre_01_00057.png",
       "page": 3,
       "frame": {
-        "x": 504,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "x": 252,
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1352,10 +1352,10 @@
       "filename": "VNT pre_01_00058.png",
       "page": 3,
       "frame": {
-        "x": 1008,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "x": 504,
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1374,10 +1374,10 @@
       "filename": "VNT pre_01_00059.png",
       "page": 3,
       "frame": {
-        "x": 1512,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "x": 756,
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1397,9 +1397,9 @@
       "page": 3,
       "frame": {
         "x": 0,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1418,10 +1418,10 @@
       "filename": "VNT pre_01_00061.png",
       "page": 3,
       "frame": {
-        "x": 504,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "x": 252,
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1440,10 +1440,10 @@
       "filename": "VNT pre_01_00062.png",
       "page": 3,
       "frame": {
-        "x": 1008,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "x": 504,
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1462,10 +1462,10 @@
       "filename": "VNT pre_01_00063.png",
       "page": 3,
       "frame": {
-        "x": 1512,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "x": 756,
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1486,8 +1486,8 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1506,10 +1506,10 @@
       "filename": "VNT pre_01_00065.png",
       "page": 4,
       "frame": {
-        "x": 504,
+        "x": 252,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1528,10 +1528,10 @@
       "filename": "VNT pre_01_00066.png",
       "page": 4,
       "frame": {
-        "x": 1008,
+        "x": 504,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1550,10 +1550,10 @@
       "filename": "VNT pre_01_00067.png",
       "page": 4,
       "frame": {
-        "x": 1512,
+        "x": 756,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1573,9 +1573,9 @@
       "page": 4,
       "frame": {
         "x": 0,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1594,10 +1594,10 @@
       "filename": "VNT pre_01_00069.png",
       "page": 4,
       "frame": {
-        "x": 504,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 252,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1616,10 +1616,10 @@
       "filename": "VNT pre_01_00070.png",
       "page": 4,
       "frame": {
-        "x": 1008,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 504,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1638,10 +1638,10 @@
       "filename": "VNT pre_01_00071.png",
       "page": 4,
       "frame": {
-        "x": 1512,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 756,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1661,9 +1661,9 @@
       "page": 4,
       "frame": {
         "x": 0,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1682,10 +1682,10 @@
       "filename": "VNT pre_01_00073.png",
       "page": 4,
       "frame": {
-        "x": 504,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "x": 252,
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1704,10 +1704,10 @@
       "filename": "VNT pre_01_00074.png",
       "page": 4,
       "frame": {
-        "x": 1008,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "x": 504,
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1726,10 +1726,10 @@
       "filename": "VNT pre_01_00075.png",
       "page": 4,
       "frame": {
-        "x": 1512,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "x": 756,
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1749,9 +1749,9 @@
       "page": 4,
       "frame": {
         "x": 0,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1770,10 +1770,10 @@
       "filename": "VNT pre_01_00077.png",
       "page": 4,
       "frame": {
-        "x": 504,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "x": 252,
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1792,10 +1792,10 @@
       "filename": "VNT pre_01_00078.png",
       "page": 4,
       "frame": {
-        "x": 1008,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "x": 504,
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1814,10 +1814,10 @@
       "filename": "VNT pre_01_00079.png",
       "page": 4,
       "frame": {
-        "x": 1512,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "x": 756,
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1838,8 +1838,8 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1858,10 +1858,10 @@
       "filename": "VNT pre_01_00081.png",
       "page": 5,
       "frame": {
-        "x": 504,
+        "x": 252,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1880,10 +1880,10 @@
       "filename": "VNT pre_01_00082.png",
       "page": 5,
       "frame": {
-        "x": 1008,
+        "x": 504,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1902,10 +1902,10 @@
       "filename": "VNT pre_01_00083.png",
       "page": 5,
       "frame": {
-        "x": 1512,
+        "x": 756,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1925,9 +1925,9 @@
       "page": 5,
       "frame": {
         "x": 0,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1946,10 +1946,10 @@
       "filename": "VNT pre_01_00085.png",
       "page": 5,
       "frame": {
-        "x": 504,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 252,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1968,10 +1968,10 @@
       "filename": "VNT pre_01_00086.png",
       "page": 5,
       "frame": {
-        "x": 1008,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 504,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -1990,10 +1990,10 @@
       "filename": "VNT pre_01_00087.png",
       "page": 5,
       "frame": {
-        "x": 1512,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 756,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2013,9 +2013,9 @@
       "page": 5,
       "frame": {
         "x": 0,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2034,10 +2034,10 @@
       "filename": "VNT pre_01_00089.png",
       "page": 5,
       "frame": {
-        "x": 504,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "x": 252,
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2056,10 +2056,10 @@
       "filename": "VNT pre_01_00090.png",
       "page": 5,
       "frame": {
-        "x": 1008,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "x": 504,
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2078,10 +2078,10 @@
       "filename": "VNT pre_01_00091.png",
       "page": 5,
       "frame": {
-        "x": 1512,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "x": 756,
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2101,9 +2101,9 @@
       "page": 5,
       "frame": {
         "x": 0,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2122,10 +2122,10 @@
       "filename": "VNT pre_01_00093.png",
       "page": 5,
       "frame": {
-        "x": 504,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "x": 252,
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2144,10 +2144,10 @@
       "filename": "VNT pre_01_00094.png",
       "page": 5,
       "frame": {
-        "x": 1008,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "x": 504,
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2166,10 +2166,10 @@
       "filename": "VNT pre_01_00095.png",
       "page": 5,
       "frame": {
-        "x": 1512,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "x": 756,
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2190,8 +2190,8 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2210,10 +2210,10 @@
       "filename": "VNT pre_01_00097.png",
       "page": 6,
       "frame": {
-        "x": 504,
+        "x": 252,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2232,10 +2232,10 @@
       "filename": "VNT pre_01_00098.png",
       "page": 6,
       "frame": {
-        "x": 1008,
+        "x": 504,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2254,10 +2254,10 @@
       "filename": "VNT pre_01_00099.png",
       "page": 6,
       "frame": {
-        "x": 1512,
+        "x": 756,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2277,9 +2277,9 @@
       "page": 6,
       "frame": {
         "x": 0,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2298,10 +2298,10 @@
       "filename": "VNT pre_01_00101.png",
       "page": 6,
       "frame": {
-        "x": 504,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 252,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2320,10 +2320,10 @@
       "filename": "VNT pre_01_00102.png",
       "page": 6,
       "frame": {
-        "x": 1008,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 504,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2342,10 +2342,10 @@
       "filename": "VNT pre_01_00103.png",
       "page": 6,
       "frame": {
-        "x": 1512,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 756,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2365,9 +2365,9 @@
       "page": 6,
       "frame": {
         "x": 0,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2386,10 +2386,10 @@
       "filename": "VNT pre_01_00105.png",
       "page": 6,
       "frame": {
-        "x": 504,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "x": 252,
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2408,10 +2408,10 @@
       "filename": "VNT pre_01_00106.png",
       "page": 6,
       "frame": {
-        "x": 1008,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "x": 504,
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2430,10 +2430,10 @@
       "filename": "VNT pre_01_00107.png",
       "page": 6,
       "frame": {
-        "x": 1512,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "x": 756,
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2453,9 +2453,9 @@
       "page": 6,
       "frame": {
         "x": 0,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2474,10 +2474,10 @@
       "filename": "VNT pre_01_00109.png",
       "page": 6,
       "frame": {
-        "x": 504,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "x": 252,
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2496,10 +2496,10 @@
       "filename": "VNT pre_01_00110.png",
       "page": 6,
       "frame": {
-        "x": 1008,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "x": 504,
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2518,10 +2518,10 @@
       "filename": "VNT pre_01_00111.png",
       "page": 6,
       "frame": {
-        "x": 1512,
-        "y": 1536,
-        "w": 504,
-        "h": 512
+        "x": 756,
+        "y": 768,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2542,8 +2542,8 @@
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2562,10 +2562,10 @@
       "filename": "VNT pre_01_00113.png",
       "page": 7,
       "frame": {
-        "x": 504,
+        "x": 252,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2584,10 +2584,10 @@
       "filename": "VNT pre_01_00114.png",
       "page": 7,
       "frame": {
-        "x": 1008,
+        "x": 504,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2606,10 +2606,10 @@
       "filename": "VNT pre_01_00115.png",
       "page": 7,
       "frame": {
-        "x": 1512,
+        "x": 756,
         "y": 0,
-        "w": 504,
-        "h": 512
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2629,9 +2629,9 @@
       "page": 7,
       "frame": {
         "x": 0,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2650,10 +2650,10 @@
       "filename": "VNT pre_01_00117.png",
       "page": 7,
       "frame": {
-        "x": 504,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 252,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2672,10 +2672,10 @@
       "filename": "VNT pre_01_00118.png",
       "page": 7,
       "frame": {
-        "x": 1008,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 504,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2694,10 +2694,10 @@
       "filename": "VNT pre_01_00119.png",
       "page": 7,
       "frame": {
-        "x": 1512,
-        "y": 512,
-        "w": 504,
-        "h": 512
+        "x": 756,
+        "y": 256,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,
@@ -2717,9 +2717,9 @@
       "page": 7,
       "frame": {
         "x": 0,
-        "y": 1024,
-        "w": 504,
-        "h": 512
+        "y": 512,
+        "w": 252,
+        "h": 256
       },
       "rotated": false,
       "trimmed": false,

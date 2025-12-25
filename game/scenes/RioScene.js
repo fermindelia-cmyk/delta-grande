@@ -2278,9 +2278,12 @@ class CompletedOverlay {
 
     this._initialized = false;
     this._loadingPromise = null;
+    this._sequencesPromise = null;
     this._activeKey = null;
     this._startTimes = { name: 0, image: 0, info: 0 };
     this._frameDuration = (params.fps && params.fps > 0) ? (1 / params.fps) : (1 / 30);
+
+    this._imageLoadToken = 0;
 
     this._speciesCache = new Map(); // key -> { imageSrc, infoText, displayName }
 
@@ -2297,9 +2300,11 @@ class CompletedOverlay {
     return {
       key,
       cfg,
+      sequence: null, // { kind: 'sheet'|'frames', ... }
       frames: [],
       aspect: 1,
       wrap: null,
+      bgClipEl: null,
       imgEl: null,
       contentEl: null,
       lastFrameIndex: -1,
@@ -2324,23 +2329,58 @@ class CompletedOverlay {
   }
 
   async _init() {
-    await this._loadSequences();
     this._createDom();
     this.updateLayout();
     window.addEventListener('resize', this._onResize, { passive: true });
+
+    // Load background sequences asynchronously so overlay activation never blocks.
+    this._sequencesPromise = this._loadSequences()
+      .then(() => {
+        // Recompute layout once we know aspect ratios
+        this.updateLayout();
+        // If overlay is already active, ensure first frames are applied immediately.
+        Object.values(this.components).forEach((comp) => {
+          if (comp.state === 'playing') {
+            this._setComponentFrame(comp, this._loopFrameIndex(comp));
+          }
+        });
+      })
+      .catch((err) => console.error('[completedOverlay] sequence preload failed', err));
   }
 
   async _loadSequences() {
     const loadComponent = async (comp) => {
       const cfg = comp.cfg || {};
       if (!cfg.dir) return;
-      const frames = await this.preloadSequence(cfg.dir, cfg.prefix, cfg.pad, cfg.startIndex, cfg.maxFramesProbe);
-      if (frames && frames.length) {
-        comp.frames = frames;
-        const first = frames[0];
-        comp.aspect = (first.naturalWidth && first.naturalHeight)
+
+      const seq = await this.preloadSequence(cfg.dir, cfg.prefix, cfg.pad, cfg.startIndex, cfg.maxFramesProbe);
+
+      // Back-compat: allow preloadSequence to return Image[]
+      const normalized = Array.isArray(seq)
+        ? { kind: 'frames', frames: seq }
+        : seq;
+
+      comp.sequence = normalized || null;
+
+      if (normalized?.kind === 'frames') {
+        comp.frames = normalized.frames || [];
+        const first = comp.frames[0];
+        comp.aspect = (first?.naturalWidth && first?.naturalHeight)
           ? (first.naturalWidth / first.naturalHeight)
           : 1;
+      } else if (normalized?.kind === 'sheet') {
+        comp.frames = []; // not used for sheet playback
+        const meta = normalized.meta || {};
+        const o = meta.original_frame_size;
+        const frame0 = normalized.frames?.[0]?.frame;
+        const w = (o?.w ?? frame0?.w ?? 1);
+        const h = (o?.h ?? frame0?.h ?? 1);
+        comp.aspect = (w > 0 && h > 0) ? (w / h) : 1;
+
+        // Ensure the sheet src is set once.
+        if (comp.imgEl && normalized.sheetSrc) {
+          comp.imgEl.src = normalized.sheetSrc;
+        }
       } else {
         comp.frames = [];
         comp.aspect = 1;
@@ -2360,6 +2400,12 @@ class CompletedOverlay {
       loadComponent(this.components.image),
       loadComponent(this.components.info)
     ]);
+  }
+
+  async waitForSequences() {
+    if (this._sequencesPromise) {
+      await this._sequencesPromise;
+    }
   }
 
   _createDom() {
@@ -2388,6 +2434,14 @@ class CompletedOverlay {
           user-select: none;
           -webkit-user-select: none;
           -ms-user-select: none;
+        }
+        .completed-overlay-bg-clip {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
         }
         .completed-overlay-space {
           position: fixed;
@@ -2460,7 +2514,11 @@ class CompletedOverlay {
     nameComp.wrap = this._makeWrapDiv('species-name');
     nameComp.wrap.addEventListener('click', (e) => e.stopPropagation());
     nameComp.imgEl = this._makeBgImg();
-    nameComp.wrap.appendChild(nameComp.imgEl);
+    const nameClip = document.createElement('div');
+    nameClip.className = 'completed-overlay-bg-clip';
+    nameClip.appendChild(nameComp.imgEl);
+    nameComp.bgClipEl = nameClip;
+    nameComp.wrap.appendChild(nameClip);
   nameComp.wrap.style.zIndex = '30';
 
     const nameText = document.createElement('div');
@@ -2475,7 +2533,11 @@ class CompletedOverlay {
     imageComp.wrap = this._makeWrapDiv('species-image');
     imageComp.wrap.addEventListener('click', (e) => e.stopPropagation());
     imageComp.imgEl = this._makeBgImg();
-    imageComp.wrap.appendChild(imageComp.imgEl);
+    const imageClip = document.createElement('div');
+    imageClip.className = 'completed-overlay-bg-clip';
+    imageClip.appendChild(imageComp.imgEl);
+    imageComp.bgClipEl = imageClip;
+    imageComp.wrap.appendChild(imageClip);
   imageComp.wrap.style.zIndex = '10';
 
     const imageInner = document.createElement('div');
@@ -2499,7 +2561,11 @@ class CompletedOverlay {
     infoComp.wrap = this._makeWrapDiv('species-info');
     infoComp.wrap.addEventListener('click', (e) => e.stopPropagation());
     infoComp.imgEl = this._makeBgImg();
-    infoComp.wrap.appendChild(infoComp.imgEl);
+    const infoClip = document.createElement('div');
+    infoClip.className = 'completed-overlay-bg-clip';
+    infoClip.appendChild(infoComp.imgEl);
+    infoComp.bgClipEl = infoClip;
+    infoComp.wrap.appendChild(infoClip);
   infoComp.wrap.style.zIndex = '40';
   infoComp.wrap.style.pointerEvents = 'auto';
 
@@ -2528,8 +2594,13 @@ class CompletedOverlay {
   _makeBgImg() {
     const img = document.createElement('img');
     img.className = 'completed-overlay-bg';
-    img.style.objectFit = 'cover';
+    img.style.objectFit = 'unset';
     img.style.pointerEvents = 'none';
+    img.style.position = 'absolute';
+    img.style.left = '0px';
+    img.style.top = '0px';
+    img.style.transformOrigin = '0 0';
+    img.style.willChange = 'transform';
     return img;
   }
 
@@ -2576,15 +2647,72 @@ class CompletedOverlay {
   }
 
   _setComponentFrame(comp, index) {
-    if (!comp.imgEl || !comp.frames.length) return;
-    const clamped = Math.max(0, Math.min(index, comp.frames.length - 1));
-    if (clamped === comp.lastFrameIndex) return;
-    comp.lastFrameIndex = clamped;
-    comp.imgEl.src = comp.frames[clamped].src;
+    if (!comp.imgEl) return;
+    const seq = comp.sequence;
+    if (!seq) return;
+
+    if (seq.kind === 'frames') {
+      if (!comp.frames.length) return;
+      const clamped = Math.max(0, Math.min(index, comp.frames.length - 1));
+      if (clamped === comp.lastFrameIndex) return;
+      comp.lastFrameIndex = clamped;
+      comp.imgEl.style.left = '0px';
+      comp.imgEl.style.top = '0px';
+      comp.imgEl.style.width = '100%';
+      comp.imgEl.style.height = '100%';
+      comp.imgEl.style.position = 'absolute';
+      comp.imgEl.style.objectFit = 'cover';
+      comp.imgEl.src = comp.frames[clamped].src;
+      return;
+    }
+
+    if (seq.kind === 'sheet') {
+      const total = Math.max(0, Number(seq.totalFrames) || (seq.frames?.length || 0));
+      if (!total) return;
+      const clamped = Math.max(0, Math.min(index, total - 1));
+      if (clamped === comp.lastFrameIndex) return;
+      comp.lastFrameIndex = clamped;
+
+      const entry = seq.frames?.[clamped];
+      const frame = entry?.frame;
+      if (!frame) return;
+
+      const pageIndex = Number.isFinite(entry?.page) ? entry.page : 0;
+      const pages = seq.pages || [];
+      const page = pages[pageIndex] || pages[0] || null;
+      if (!page) return;
+
+      if (page.src && comp.imgEl.src !== page.src) {
+        comp.imgEl.src = page.src;
+      }
+
+      const rect = comp._layoutRect;
+      if (!rect || rect.width <= 0 || rect.height <= 0) return;
+
+      const sheetSize = page.size || { w: 1, h: 1 };
+      const scaleX = rect.width / Math.max(1, frame.w);
+      const scaleY = rect.height / Math.max(1, frame.h);
+
+      // Avoid per-frame layout by keeping the page at natural size
+      // and using transforms for crop positioning.
+      const sizeKey = `${sheetSize.w}x${sheetSize.h}`;
+      if (comp._sheetSizeKey !== sizeKey) {
+        comp._sheetSizeKey = sizeKey;
+        comp.imgEl.style.width = `${Math.round(sheetSize.w)}px`;
+        comp.imgEl.style.height = `${Math.round(sheetSize.h)}px`;
+      }
+
+      const tx = Math.round(-frame.x * scaleX);
+      const ty = Math.round(-frame.y * scaleY);
+      comp.imgEl.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${scaleX}, ${scaleY})`;
+    }
   }
 
   _loopFrameIndex(comp) {
-    const total = comp.frames.length;
+    const seq = comp.sequence;
+    const total = (seq?.kind === 'sheet')
+      ? Math.max(0, Number(seq.totalFrames) || (seq.frames?.length || 0))
+      : comp.frames.length;
     if (!total) return 0;
     let idx = comp.frameIndex;
     if (idx < total) return idx;
@@ -2670,11 +2798,34 @@ class CompletedOverlay {
   _applyImageContent(imageSrc) {
     const comp = this.components.image;
     if (!comp.contentEl) return;
-    if (imageSrc) {
-      comp.contentEl.src = imageSrc;
-    } else {
-      comp.contentEl.removeAttribute('src');
-    }
+    const imgEl = comp.contentEl;
+
+    // Prevent stale previous species image from staying visible while new src loads.
+    this._imageLoadToken += 1;
+    const token = this._imageLoadToken;
+
+    imgEl.style.visibility = 'hidden';
+    imgEl.removeAttribute('src');
+
+    if (!imageSrc) return;
+
+    const probe = new Image();
+    probe.decoding = 'async';
+    probe.onload = async () => {
+      if (token !== this._imageLoadToken) return;
+      try {
+        if (probe.decode) await probe.decode();
+      } catch (_) {}
+      if (token !== this._imageLoadToken) return;
+      imgEl.src = imageSrc;
+      imgEl.style.visibility = 'visible';
+    };
+    probe.onerror = () => {
+      if (token !== this._imageLoadToken) return;
+      // Keep hidden on error rather than showing a previous species.
+      imgEl.style.visibility = 'hidden';
+    };
+    probe.src = imageSrc;
   }
 
   _applyInfoContent(infoText) {
@@ -3296,6 +3447,136 @@ export class RioScene extends BaseScene {
     };
   }
 
+  async _preloadSheetSequence(dir) {
+    if (!dir) return null;
+    const base = String(dir).replace(/\/+$/, '');
+    const jsonCandidates = [`${base}/sheet_1024.json`, `${base}/sheet.json`];
+    let sheet;
+    for (const jsonUrl of jsonCandidates) {
+      try {
+        const res = await fetch(jsonUrl, { cache: 'force-cache' });
+        if (!res.ok) continue;
+        sheet = await res.json();
+        break;
+      } catch (_) {
+        // try next candidate
+      }
+    }
+    if (!sheet) return null;
+
+    const meta = sheet?.meta;
+    const frames = sheet?.frames;
+    if (!meta || !Array.isArray(frames) || !frames.length) return null;
+
+    const loadAndDecode = async (src) => {
+      const image = await new Promise((resolve) => {
+        const im = new Image();
+        im.decoding = 'async';
+        im.onload = () => resolve(im);
+        im.onerror = () => resolve(null);
+        im.src = src;
+      });
+      if (!image) return null;
+      try {
+        if (image.decode) await image.decode();
+      } catch (_) {}
+      return image;
+    };
+
+    const warmupForGpu = async (pageSrcs) => {
+      // decode() prepares CPU-side decode but doesn't always force GPU upload.
+      // Paint tiny fully-transparent <img>s during the loading screen to avoid show-time spikes.
+      if (!pageSrcs || !pageSrcs.length) return;
+      if (typeof document === 'undefined') return;
+      if (typeof requestAnimationFrame !== 'function') return;
+
+      const holder = document.createElement('div');
+      Object.assign(holder.style, {
+        position: 'fixed',
+        left: '0px',
+        top: '0px',
+        width: '1px',
+        height: '1px',
+        opacity: '0',
+        pointerEvents: 'none',
+        zIndex: '-1',
+        overflow: 'hidden'
+      });
+
+      for (const src of pageSrcs) {
+        const im = document.createElement('img');
+        im.decoding = 'async';
+        im.src = src;
+        im.width = 1;
+        im.height = 1;
+        holder.appendChild(im);
+      }
+
+      document.body.appendChild(holder);
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      holder.remove();
+    };
+
+    // Multi-atlas format: meta.pages = [{ image, size:{w,h} }, ...]
+    // Legacy format: meta.image = 'sheet.webp' and meta.size
+    const pages = [];
+    const rawPages = Array.isArray(meta.pages) ? meta.pages : null;
+    if (rawPages && rawPages.length) {
+      const pageSrcs = [];
+      for (const p of rawPages) {
+        const name = p?.image;
+        if (!name) continue;
+        const src = `${base}/${encodeURIComponent(name)}`;
+        const image = await loadAndDecode(src);
+        if (!image) return null;
+        pageSrcs.push(src);
+        pages.push({
+          src,
+          image,
+          size: p?.size || { w: image.naturalWidth || 1, h: image.naturalHeight || 1 }
+        });
+      }
+
+      await warmupForGpu(pageSrcs);
+      if (typeof window !== 'undefined' && window.__DEBUG_COMPLETED_OVERLAY_SHEETS) {
+        console.info('[completedOverlay] multi-atlas pages loaded', { dir: base, pages: pageSrcs });
+      }
+    } else {
+      const sheetImageName = meta.image || 'sheet.webp';
+      const src = `${base}/${encodeURIComponent(sheetImageName)}`;
+      const image = await loadAndDecode(src);
+      if (!image) return null;
+      pages.push({
+        src,
+        image,
+        size: meta?.size || { w: image.naturalWidth || 1, h: image.naturalHeight || 1 }
+      });
+
+      // Normalize legacy frames to page 0.
+      for (const f of frames) {
+        if (typeof f.page !== 'number') f.page = 0;
+      }
+    }
+
+    const totalFrames = Math.max(0, Number(meta.frame_count) || frames.length || 0);
+    return {
+      kind: 'sheet',
+      pages,
+      meta,
+      frames,
+      totalFrames
+    };
+  }
+
+  async _preloadCompletedOverlaySequence(dir, prefix, pad, startIndex, maxProbe) {
+    // Prefer spritesheets (sheet.json + sheet.webp) to avoid hundreds of PNG requests.
+    const sheet = await this._preloadSheetSequence(dir);
+    if (sheet) return sheet;
+
+    const frames = await this._preloadFrameSequence(dir, prefix, pad, startIndex, maxProbe);
+    return { kind: 'frames', frames };
+  }
+
   /* --------------------------------- Lifecycle --------------------------------- */
 
   async mount() {
@@ -3506,6 +3787,15 @@ export class RioScene extends BaseScene {
         await this.deck.build();
       });
 
+      // Completed overlay atlases (decode during loading screen to avoid GPU spike later)
+      await this._trackLoadingStep('Cargando overlay de especies completadas', async () => {
+        this._initCompletedOverlay();
+        if (this.completedOverlay) {
+          await this.completedOverlay.prepare();
+          await this.completedOverlay.waitForSequences();
+        }
+      });
+
       // ---- Depth Ruler Overlay (DOM) ----
       this.ruler = { el: null, naturalW: 0, naturalH: 0, img: null };
       if (this.params.rulerUI?.enabled) {
@@ -3603,6 +3893,7 @@ export class RioScene extends BaseScene {
       this.deck.container.style.opacity = 0;
       this.deck.container.style.pointerEvents = 'none';
     }
+    // If deck is disabled, still init the overlay so it can be toggled later.
     this._initCompletedOverlay();
     this._deckSelectionTime = performance.now() * 0.001;
     // Spawn fish by abundance
@@ -4691,7 +4982,7 @@ export class RioScene extends BaseScene {
     const overlayParams = this.params.completedOverlay;
     this.completedOverlay = new CompletedOverlay(overlayParams, {
       preloadSequence: (dir, prefix, pad, startIndex, maxProbe) =>
-        this._preloadFrameSequence(dir, prefix, pad, startIndex, maxProbe),
+        this._preloadCompletedOverlaySequence(dir, prefix, pad, startIndex, maxProbe),
       fontFallback: this.params.deckUI?.fonts?.family || 'system-ui, sans-serif'
     });
     const prep = this.completedOverlay.prepare();

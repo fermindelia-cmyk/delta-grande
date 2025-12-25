@@ -1,127 +1,31 @@
 {
   "meta": {
-    "pages": [
-      {
-        "image": "sheet_00.webp",
-        "size": {
-          "w": 2048,
-          "h": 1918
-        }
-      },
-      {
-        "image": "sheet_01.webp",
-        "size": {
-          "w": 2048,
-          "h": 1918
-        }
-      },
-      {
-        "image": "sheet_02.webp",
-        "size": {
-          "w": 2048,
-          "h": 1918
-        }
-      },
-      {
-        "image": "sheet_03.webp",
-        "size": {
-          "w": 2048,
-          "h": 1918
-        }
-      },
-      {
-        "image": "sheet_04.webp",
-        "size": {
-          "w": 2048,
-          "h": 1918
-        }
-      },
-      {
-        "image": "sheet_05.webp",
-        "size": {
-          "w": 2048,
-          "h": 1918
-        }
-      },
-      {
-        "image": "sheet_06.webp",
-        "size": {
-          "w": 2048,
-          "h": 1918
-        }
-      },
-      {
-        "image": "sheet_07.webp",
-        "size": {
-          "w": 2048,
-          "h": 1918
-        }
-      },
-      {
-        "image": "sheet_08.webp",
-        "size": {
-          "w": 2048,
-          "h": 1918
-        }
-      },
-      {
-        "image": "sheet_09.webp",
-        "size": {
-          "w": 2048,
-          "h": 1918
-        }
-      },
-      {
-        "image": "sheet_10.webp",
-        "size": {
-          "w": 2048,
-          "h": 1918
-        }
-      },
-      {
-        "image": "sheet_11.webp",
-        "size": {
-          "w": 2048,
-          "h": 1918
-        }
-      },
-      {
-        "image": "sheet_12.webp",
-        "size": {
-          "w": 2048,
-          "h": 1918
-        }
-      },
-      {
-        "image": "sheet_13.webp",
-        "size": {
-          "w": 2048,
-          "h": 1918
-        }
-      }
-    ],
+    "image": "sheet_2048.webp",
+    "size": {
+      "w": 2048,
+      "h": 1041
+    },
+    "scale": 0.05333333333333334,
     "frame_count": 376,
-    "cols": 4,
-    "rows": 7,
+    "cols": 20,
+    "rows": 19,
     "frame_size": {
-      "w": 512,
-      "h": 274
+      "w": 102,
+      "h": 55
     },
     "original_frame_size": {
       "w": 1920,
       "h": 1030
-    },
-    "scale": 0.26666666666666666
+    }
   },
   "frames": [
     {
       "filename": "BASE especie nombre_00000.png",
-      "page": 0,
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 512,
-        "h": 274
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -138,12 +42,11 @@
     },
     {
       "filename": "BASE especie nombre_00001.png",
-      "page": 0,
       "frame": {
-        "x": 512,
+        "x": 102,
         "y": 0,
-        "w": 512,
-        "h": 274
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -160,12 +63,11 @@
     },
     {
       "filename": "BASE especie nombre_00002.png",
-      "page": 0,
       "frame": {
-        "x": 1024,
+        "x": 205,
         "y": 0,
-        "w": 512,
-        "h": 274
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -182,12 +84,11 @@
     },
     {
       "filename": "BASE especie nombre_00003.png",
-      "page": 0,
       "frame": {
-        "x": 1536,
+        "x": 307,
         "y": 0,
-        "w": 512,
-        "h": 274
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -204,12 +105,11 @@
     },
     {
       "filename": "BASE especie nombre_00004.png",
-      "page": 0,
       "frame": {
-        "x": 0,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 410,
+        "y": 0,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -226,12 +126,11 @@
     },
     {
       "filename": "BASE especie nombre_00005.png",
-      "page": 0,
       "frame": {
         "x": 512,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "y": 0,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -248,12 +147,11 @@
     },
     {
       "filename": "BASE especie nombre_00006.png",
-      "page": 0,
       "frame": {
-        "x": 1024,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 614,
+        "y": 0,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -270,12 +168,11 @@
     },
     {
       "filename": "BASE especie nombre_00007.png",
-      "page": 0,
       "frame": {
-        "x": 1536,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 717,
+        "y": 0,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -292,12 +189,11 @@
     },
     {
       "filename": "BASE especie nombre_00008.png",
-      "page": 0,
       "frame": {
-        "x": 0,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 819,
+        "y": 0,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -314,12 +210,11 @@
     },
     {
       "filename": "BASE especie nombre_00009.png",
-      "page": 0,
       "frame": {
-        "x": 512,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 922,
+        "y": 0,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -336,12 +231,11 @@
     },
     {
       "filename": "BASE especie nombre_00010.png",
-      "page": 0,
       "frame": {
         "x": 1024,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "y": 0,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -358,12 +252,11 @@
     },
     {
       "filename": "BASE especie nombre_00011.png",
-      "page": 0,
       "frame": {
-        "x": 1536,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1126,
+        "y": 0,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -380,12 +273,11 @@
     },
     {
       "filename": "BASE especie nombre_00012.png",
-      "page": 0,
       "frame": {
-        "x": 0,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 1229,
+        "y": 0,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -402,12 +294,11 @@
     },
     {
       "filename": "BASE especie nombre_00013.png",
-      "page": 0,
       "frame": {
-        "x": 512,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 1331,
+        "y": 0,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -424,12 +315,11 @@
     },
     {
       "filename": "BASE especie nombre_00014.png",
-      "page": 0,
       "frame": {
-        "x": 1024,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 1434,
+        "y": 0,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -446,12 +336,11 @@
     },
     {
       "filename": "BASE especie nombre_00015.png",
-      "page": 0,
       "frame": {
         "x": 1536,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "y": 0,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -468,12 +357,11 @@
     },
     {
       "filename": "BASE especie nombre_00016.png",
-      "page": 0,
       "frame": {
-        "x": 0,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1638,
+        "y": 0,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -490,12 +378,11 @@
     },
     {
       "filename": "BASE especie nombre_00017.png",
-      "page": 0,
       "frame": {
-        "x": 512,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1741,
+        "y": 0,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -512,12 +399,11 @@
     },
     {
       "filename": "BASE especie nombre_00018.png",
-      "page": 0,
       "frame": {
-        "x": 1024,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1843,
+        "y": 0,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -534,12 +420,11 @@
     },
     {
       "filename": "BASE especie nombre_00019.png",
-      "page": 0,
       "frame": {
-        "x": 1536,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1946,
+        "y": 0,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -556,12 +441,11 @@
     },
     {
       "filename": "BASE especie nombre_00020.png",
-      "page": 0,
       "frame": {
         "x": 0,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "y": 55,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -578,12 +462,11 @@
     },
     {
       "filename": "BASE especie nombre_00021.png",
-      "page": 0,
       "frame": {
-        "x": 512,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 102,
+        "y": 55,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -600,12 +483,11 @@
     },
     {
       "filename": "BASE especie nombre_00022.png",
-      "page": 0,
       "frame": {
-        "x": 1024,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 205,
+        "y": 55,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -622,12 +504,11 @@
     },
     {
       "filename": "BASE especie nombre_00023.png",
-      "page": 0,
       "frame": {
-        "x": 1536,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 307,
+        "y": 55,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -644,12 +525,11 @@
     },
     {
       "filename": "BASE especie nombre_00024.png",
-      "page": 0,
       "frame": {
-        "x": 0,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 410,
+        "y": 55,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -666,12 +546,11 @@
     },
     {
       "filename": "BASE especie nombre_00025.png",
-      "page": 0,
       "frame": {
         "x": 512,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "y": 55,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -688,12 +567,11 @@
     },
     {
       "filename": "BASE especie nombre_00026.png",
-      "page": 0,
       "frame": {
-        "x": 1024,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 614,
+        "y": 55,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -710,12 +588,11 @@
     },
     {
       "filename": "BASE especie nombre_00027.png",
-      "page": 0,
       "frame": {
-        "x": 1536,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 717,
+        "y": 55,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -732,12 +609,11 @@
     },
     {
       "filename": "BASE especie nombre_00028.png",
-      "page": 1,
       "frame": {
-        "x": 0,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 819,
+        "y": 55,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -754,12 +630,11 @@
     },
     {
       "filename": "BASE especie nombre_00029.png",
-      "page": 1,
       "frame": {
-        "x": 512,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 922,
+        "y": 55,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -776,12 +651,11 @@
     },
     {
       "filename": "BASE especie nombre_00030.png",
-      "page": 1,
       "frame": {
         "x": 1024,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "y": 55,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -798,12 +672,11 @@
     },
     {
       "filename": "BASE especie nombre_00031.png",
-      "page": 1,
       "frame": {
-        "x": 1536,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 1126,
+        "y": 55,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -820,12 +693,11 @@
     },
     {
       "filename": "BASE especie nombre_00032.png",
-      "page": 1,
       "frame": {
-        "x": 0,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 1229,
+        "y": 55,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -842,12 +714,11 @@
     },
     {
       "filename": "BASE especie nombre_00033.png",
-      "page": 1,
       "frame": {
-        "x": 512,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 1331,
+        "y": 55,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -864,12 +735,11 @@
     },
     {
       "filename": "BASE especie nombre_00034.png",
-      "page": 1,
       "frame": {
-        "x": 1024,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 1434,
+        "y": 55,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -886,12 +756,11 @@
     },
     {
       "filename": "BASE especie nombre_00035.png",
-      "page": 1,
       "frame": {
         "x": 1536,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "y": 55,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -908,12 +777,11 @@
     },
     {
       "filename": "BASE especie nombre_00036.png",
-      "page": 1,
       "frame": {
-        "x": 0,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1638,
+        "y": 55,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -930,12 +798,11 @@
     },
     {
       "filename": "BASE especie nombre_00037.png",
-      "page": 1,
       "frame": {
-        "x": 512,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1741,
+        "y": 55,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -952,12 +819,11 @@
     },
     {
       "filename": "BASE especie nombre_00038.png",
-      "page": 1,
       "frame": {
-        "x": 1024,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1843,
+        "y": 55,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -974,12 +840,11 @@
     },
     {
       "filename": "BASE especie nombre_00039.png",
-      "page": 1,
       "frame": {
-        "x": 1536,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1946,
+        "y": 55,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -996,12 +861,11 @@
     },
     {
       "filename": "BASE especie nombre_00040.png",
-      "page": 1,
       "frame": {
         "x": 0,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "y": 110,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1018,12 +882,11 @@
     },
     {
       "filename": "BASE especie nombre_00041.png",
-      "page": 1,
       "frame": {
-        "x": 512,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 102,
+        "y": 110,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1040,12 +903,11 @@
     },
     {
       "filename": "BASE especie nombre_00042.png",
-      "page": 1,
       "frame": {
-        "x": 1024,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 205,
+        "y": 110,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1062,12 +924,11 @@
     },
     {
       "filename": "BASE especie nombre_00043.png",
-      "page": 1,
       "frame": {
-        "x": 1536,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 307,
+        "y": 110,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1084,12 +945,11 @@
     },
     {
       "filename": "BASE especie nombre_00044.png",
-      "page": 1,
       "frame": {
-        "x": 0,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 410,
+        "y": 110,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1106,12 +966,11 @@
     },
     {
       "filename": "BASE especie nombre_00045.png",
-      "page": 1,
       "frame": {
         "x": 512,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "y": 110,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1128,12 +987,11 @@
     },
     {
       "filename": "BASE especie nombre_00046.png",
-      "page": 1,
       "frame": {
-        "x": 1024,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 614,
+        "y": 110,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1150,12 +1008,11 @@
     },
     {
       "filename": "BASE especie nombre_00047.png",
-      "page": 1,
       "frame": {
-        "x": 1536,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 717,
+        "y": 110,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1172,12 +1029,11 @@
     },
     {
       "filename": "BASE especie nombre_00048.png",
-      "page": 1,
       "frame": {
-        "x": 0,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 819,
+        "y": 110,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1194,12 +1050,11 @@
     },
     {
       "filename": "BASE especie nombre_00049.png",
-      "page": 1,
       "frame": {
-        "x": 512,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 922,
+        "y": 110,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1216,12 +1071,11 @@
     },
     {
       "filename": "BASE especie nombre_00050.png",
-      "page": 1,
       "frame": {
         "x": 1024,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "y": 110,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1238,12 +1092,11 @@
     },
     {
       "filename": "BASE especie nombre_00051.png",
-      "page": 1,
       "frame": {
-        "x": 1536,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 1126,
+        "y": 110,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1260,12 +1113,11 @@
     },
     {
       "filename": "BASE especie nombre_00052.png",
-      "page": 1,
       "frame": {
-        "x": 0,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 1229,
+        "y": 110,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1282,12 +1134,11 @@
     },
     {
       "filename": "BASE especie nombre_00053.png",
-      "page": 1,
       "frame": {
-        "x": 512,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 1331,
+        "y": 110,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1304,12 +1155,11 @@
     },
     {
       "filename": "BASE especie nombre_00054.png",
-      "page": 1,
       "frame": {
-        "x": 1024,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 1434,
+        "y": 110,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1326,12 +1176,11 @@
     },
     {
       "filename": "BASE especie nombre_00055.png",
-      "page": 1,
       "frame": {
         "x": 1536,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "y": 110,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1348,12 +1197,11 @@
     },
     {
       "filename": "BASE especie nombre_00056.png",
-      "page": 2,
       "frame": {
-        "x": 0,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 1638,
+        "y": 110,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1370,12 +1218,11 @@
     },
     {
       "filename": "BASE especie nombre_00057.png",
-      "page": 2,
       "frame": {
-        "x": 512,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 1741,
+        "y": 110,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1392,12 +1239,11 @@
     },
     {
       "filename": "BASE especie nombre_00058.png",
-      "page": 2,
       "frame": {
-        "x": 1024,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 1843,
+        "y": 110,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1414,12 +1260,11 @@
     },
     {
       "filename": "BASE especie nombre_00059.png",
-      "page": 2,
       "frame": {
-        "x": 1536,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 1946,
+        "y": 110,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1436,12 +1281,11 @@
     },
     {
       "filename": "BASE especie nombre_00060.png",
-      "page": 2,
       "frame": {
         "x": 0,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "y": 164,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1458,12 +1302,11 @@
     },
     {
       "filename": "BASE especie nombre_00061.png",
-      "page": 2,
       "frame": {
-        "x": 512,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 102,
+        "y": 164,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1480,12 +1323,11 @@
     },
     {
       "filename": "BASE especie nombre_00062.png",
-      "page": 2,
       "frame": {
-        "x": 1024,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 205,
+        "y": 164,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1502,12 +1344,11 @@
     },
     {
       "filename": "BASE especie nombre_00063.png",
-      "page": 2,
       "frame": {
-        "x": 1536,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 307,
+        "y": 164,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1524,12 +1365,11 @@
     },
     {
       "filename": "BASE especie nombre_00064.png",
-      "page": 2,
       "frame": {
-        "x": 0,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 410,
+        "y": 164,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1546,12 +1386,11 @@
     },
     {
       "filename": "BASE especie nombre_00065.png",
-      "page": 2,
       "frame": {
         "x": 512,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "y": 164,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1568,12 +1407,11 @@
     },
     {
       "filename": "BASE especie nombre_00066.png",
-      "page": 2,
       "frame": {
-        "x": 1024,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 614,
+        "y": 164,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1590,12 +1428,11 @@
     },
     {
       "filename": "BASE especie nombre_00067.png",
-      "page": 2,
       "frame": {
-        "x": 1536,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 717,
+        "y": 164,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1612,12 +1449,11 @@
     },
     {
       "filename": "BASE especie nombre_00068.png",
-      "page": 2,
       "frame": {
-        "x": 0,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 819,
+        "y": 164,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1634,12 +1470,11 @@
     },
     {
       "filename": "BASE especie nombre_00069.png",
-      "page": 2,
       "frame": {
-        "x": 512,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 922,
+        "y": 164,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1656,12 +1491,11 @@
     },
     {
       "filename": "BASE especie nombre_00070.png",
-      "page": 2,
       "frame": {
         "x": 1024,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "y": 164,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1678,12 +1512,11 @@
     },
     {
       "filename": "BASE especie nombre_00071.png",
-      "page": 2,
       "frame": {
-        "x": 1536,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 1126,
+        "y": 164,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1700,12 +1533,11 @@
     },
     {
       "filename": "BASE especie nombre_00072.png",
-      "page": 2,
       "frame": {
-        "x": 0,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1229,
+        "y": 164,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1722,12 +1554,11 @@
     },
     {
       "filename": "BASE especie nombre_00073.png",
-      "page": 2,
       "frame": {
-        "x": 512,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1331,
+        "y": 164,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1744,12 +1575,11 @@
     },
     {
       "filename": "BASE especie nombre_00074.png",
-      "page": 2,
       "frame": {
-        "x": 1024,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1434,
+        "y": 164,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1766,12 +1596,11 @@
     },
     {
       "filename": "BASE especie nombre_00075.png",
-      "page": 2,
       "frame": {
         "x": 1536,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "y": 164,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1788,12 +1617,11 @@
     },
     {
       "filename": "BASE especie nombre_00076.png",
-      "page": 2,
       "frame": {
-        "x": 0,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 1638,
+        "y": 164,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1810,12 +1638,11 @@
     },
     {
       "filename": "BASE especie nombre_00077.png",
-      "page": 2,
       "frame": {
-        "x": 512,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 1741,
+        "y": 164,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1832,12 +1659,11 @@
     },
     {
       "filename": "BASE especie nombre_00078.png",
-      "page": 2,
       "frame": {
-        "x": 1024,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 1843,
+        "y": 164,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1854,12 +1680,11 @@
     },
     {
       "filename": "BASE especie nombre_00079.png",
-      "page": 2,
       "frame": {
-        "x": 1536,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 1946,
+        "y": 164,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1876,12 +1701,11 @@
     },
     {
       "filename": "BASE especie nombre_00080.png",
-      "page": 2,
       "frame": {
         "x": 0,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "y": 219,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1898,12 +1722,11 @@
     },
     {
       "filename": "BASE especie nombre_00081.png",
-      "page": 2,
       "frame": {
-        "x": 512,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 102,
+        "y": 219,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1920,12 +1743,11 @@
     },
     {
       "filename": "BASE especie nombre_00082.png",
-      "page": 2,
       "frame": {
-        "x": 1024,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 205,
+        "y": 219,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1942,12 +1764,11 @@
     },
     {
       "filename": "BASE especie nombre_00083.png",
-      "page": 2,
       "frame": {
-        "x": 1536,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 307,
+        "y": 219,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1964,12 +1785,11 @@
     },
     {
       "filename": "BASE especie nombre_00084.png",
-      "page": 3,
       "frame": {
-        "x": 0,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 410,
+        "y": 219,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -1986,12 +1806,11 @@
     },
     {
       "filename": "BASE especie nombre_00085.png",
-      "page": 3,
       "frame": {
         "x": 512,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "y": 219,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2008,12 +1827,11 @@
     },
     {
       "filename": "BASE especie nombre_00086.png",
-      "page": 3,
       "frame": {
-        "x": 1024,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 614,
+        "y": 219,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2030,12 +1848,11 @@
     },
     {
       "filename": "BASE especie nombre_00087.png",
-      "page": 3,
       "frame": {
-        "x": 1536,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 717,
+        "y": 219,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2052,12 +1869,11 @@
     },
     {
       "filename": "BASE especie nombre_00088.png",
-      "page": 3,
       "frame": {
-        "x": 0,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 819,
+        "y": 219,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2074,12 +1890,11 @@
     },
     {
       "filename": "BASE especie nombre_00089.png",
-      "page": 3,
       "frame": {
-        "x": 512,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 922,
+        "y": 219,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2096,12 +1911,11 @@
     },
     {
       "filename": "BASE especie nombre_00090.png",
-      "page": 3,
       "frame": {
         "x": 1024,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "y": 219,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2118,12 +1932,11 @@
     },
     {
       "filename": "BASE especie nombre_00091.png",
-      "page": 3,
       "frame": {
-        "x": 1536,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 1126,
+        "y": 219,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2140,12 +1953,11 @@
     },
     {
       "filename": "BASE especie nombre_00092.png",
-      "page": 3,
       "frame": {
-        "x": 0,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1229,
+        "y": 219,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2162,12 +1974,11 @@
     },
     {
       "filename": "BASE especie nombre_00093.png",
-      "page": 3,
       "frame": {
-        "x": 512,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1331,
+        "y": 219,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2184,12 +1995,11 @@
     },
     {
       "filename": "BASE especie nombre_00094.png",
-      "page": 3,
       "frame": {
-        "x": 1024,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1434,
+        "y": 219,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2206,12 +2016,11 @@
     },
     {
       "filename": "BASE especie nombre_00095.png",
-      "page": 3,
       "frame": {
         "x": 1536,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "y": 219,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2228,12 +2037,11 @@
     },
     {
       "filename": "BASE especie nombre_00096.png",
-      "page": 3,
       "frame": {
-        "x": 0,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 1638,
+        "y": 219,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2250,12 +2058,11 @@
     },
     {
       "filename": "BASE especie nombre_00097.png",
-      "page": 3,
       "frame": {
-        "x": 512,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 1741,
+        "y": 219,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2272,12 +2079,11 @@
     },
     {
       "filename": "BASE especie nombre_00098.png",
-      "page": 3,
       "frame": {
-        "x": 1024,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 1843,
+        "y": 219,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2294,12 +2100,11 @@
     },
     {
       "filename": "BASE especie nombre_00099.png",
-      "page": 3,
       "frame": {
-        "x": 1536,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 1946,
+        "y": 219,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2316,12 +2121,11 @@
     },
     {
       "filename": "BASE especie nombre_00100.png",
-      "page": 3,
       "frame": {
         "x": 0,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "y": 274,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2338,12 +2142,11 @@
     },
     {
       "filename": "BASE especie nombre_00101.png",
-      "page": 3,
       "frame": {
-        "x": 512,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 102,
+        "y": 274,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2360,12 +2163,11 @@
     },
     {
       "filename": "BASE especie nombre_00102.png",
-      "page": 3,
       "frame": {
-        "x": 1024,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 205,
+        "y": 274,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2382,12 +2184,11 @@
     },
     {
       "filename": "BASE especie nombre_00103.png",
-      "page": 3,
       "frame": {
-        "x": 1536,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 307,
+        "y": 274,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2404,12 +2205,11 @@
     },
     {
       "filename": "BASE especie nombre_00104.png",
-      "page": 3,
       "frame": {
-        "x": 0,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 410,
+        "y": 274,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2426,12 +2226,11 @@
     },
     {
       "filename": "BASE especie nombre_00105.png",
-      "page": 3,
       "frame": {
         "x": 512,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "y": 274,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2448,12 +2247,11 @@
     },
     {
       "filename": "BASE especie nombre_00106.png",
-      "page": 3,
       "frame": {
-        "x": 1024,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 614,
+        "y": 274,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2470,12 +2268,11 @@
     },
     {
       "filename": "BASE especie nombre_00107.png",
-      "page": 3,
       "frame": {
-        "x": 1536,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 717,
+        "y": 274,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2492,12 +2289,11 @@
     },
     {
       "filename": "BASE especie nombre_00108.png",
-      "page": 3,
       "frame": {
-        "x": 0,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 819,
+        "y": 274,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2514,12 +2310,11 @@
     },
     {
       "filename": "BASE especie nombre_00109.png",
-      "page": 3,
       "frame": {
-        "x": 512,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 922,
+        "y": 274,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2536,12 +2331,11 @@
     },
     {
       "filename": "BASE especie nombre_00110.png",
-      "page": 3,
       "frame": {
         "x": 1024,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "y": 274,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2558,12 +2352,11 @@
     },
     {
       "filename": "BASE especie nombre_00111.png",
-      "page": 3,
       "frame": {
-        "x": 1536,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 1126,
+        "y": 274,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2580,12 +2373,11 @@
     },
     {
       "filename": "BASE especie nombre_00112.png",
-      "page": 4,
       "frame": {
-        "x": 0,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 1229,
+        "y": 274,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2602,12 +2394,11 @@
     },
     {
       "filename": "BASE especie nombre_00113.png",
-      "page": 4,
       "frame": {
-        "x": 512,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 1331,
+        "y": 274,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2624,12 +2415,11 @@
     },
     {
       "filename": "BASE especie nombre_00114.png",
-      "page": 4,
       "frame": {
-        "x": 1024,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 1434,
+        "y": 274,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2646,12 +2436,11 @@
     },
     {
       "filename": "BASE especie nombre_00115.png",
-      "page": 4,
       "frame": {
         "x": 1536,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "y": 274,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2668,12 +2457,11 @@
     },
     {
       "filename": "BASE especie nombre_00116.png",
-      "page": 4,
       "frame": {
-        "x": 0,
+        "x": 1638,
         "y": 274,
-        "w": 512,
-        "h": 274
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2690,12 +2478,11 @@
     },
     {
       "filename": "BASE especie nombre_00117.png",
-      "page": 4,
       "frame": {
-        "x": 512,
+        "x": 1741,
         "y": 274,
-        "w": 512,
-        "h": 274
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2712,12 +2499,11 @@
     },
     {
       "filename": "BASE especie nombre_00118.png",
-      "page": 4,
       "frame": {
-        "x": 1024,
+        "x": 1843,
         "y": 274,
-        "w": 512,
-        "h": 274
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2734,12 +2520,11 @@
     },
     {
       "filename": "BASE especie nombre_00119.png",
-      "page": 4,
       "frame": {
-        "x": 1536,
+        "x": 1946,
         "y": 274,
-        "w": 512,
-        "h": 274
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2756,12 +2541,11 @@
     },
     {
       "filename": "BASE especie nombre_00120.png",
-      "page": 4,
       "frame": {
         "x": 0,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "y": 329,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2778,12 +2562,11 @@
     },
     {
       "filename": "BASE especie nombre_00121.png",
-      "page": 4,
       "frame": {
-        "x": 512,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 102,
+        "y": 329,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2800,12 +2583,11 @@
     },
     {
       "filename": "BASE especie nombre_00122.png",
-      "page": 4,
       "frame": {
-        "x": 1024,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 205,
+        "y": 329,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2822,12 +2604,11 @@
     },
     {
       "filename": "BASE especie nombre_00123.png",
-      "page": 4,
       "frame": {
-        "x": 1536,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 307,
+        "y": 329,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2844,12 +2625,11 @@
     },
     {
       "filename": "BASE especie nombre_00124.png",
-      "page": 4,
       "frame": {
-        "x": 0,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 410,
+        "y": 329,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2866,12 +2646,11 @@
     },
     {
       "filename": "BASE especie nombre_00125.png",
-      "page": 4,
       "frame": {
         "x": 512,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "y": 329,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2888,12 +2667,11 @@
     },
     {
       "filename": "BASE especie nombre_00126.png",
-      "page": 4,
       "frame": {
-        "x": 1024,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 614,
+        "y": 329,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2910,12 +2688,11 @@
     },
     {
       "filename": "BASE especie nombre_00127.png",
-      "page": 4,
       "frame": {
-        "x": 1536,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 717,
+        "y": 329,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2932,12 +2709,11 @@
     },
     {
       "filename": "BASE especie nombre_00128.png",
-      "page": 4,
       "frame": {
-        "x": 0,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 819,
+        "y": 329,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2954,12 +2730,11 @@
     },
     {
       "filename": "BASE especie nombre_00129.png",
-      "page": 4,
       "frame": {
-        "x": 512,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 922,
+        "y": 329,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2976,12 +2751,11 @@
     },
     {
       "filename": "BASE especie nombre_00130.png",
-      "page": 4,
       "frame": {
         "x": 1024,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "y": 329,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -2998,12 +2772,11 @@
     },
     {
       "filename": "BASE especie nombre_00131.png",
-      "page": 4,
       "frame": {
-        "x": 1536,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1126,
+        "y": 329,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3020,12 +2793,11 @@
     },
     {
       "filename": "BASE especie nombre_00132.png",
-      "page": 4,
       "frame": {
-        "x": 0,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 1229,
+        "y": 329,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3042,12 +2814,11 @@
     },
     {
       "filename": "BASE especie nombre_00133.png",
-      "page": 4,
       "frame": {
-        "x": 512,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 1331,
+        "y": 329,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3064,12 +2835,11 @@
     },
     {
       "filename": "BASE especie nombre_00134.png",
-      "page": 4,
       "frame": {
-        "x": 1024,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 1434,
+        "y": 329,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3086,12 +2856,11 @@
     },
     {
       "filename": "BASE especie nombre_00135.png",
-      "page": 4,
       "frame": {
         "x": 1536,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "y": 329,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3108,12 +2877,11 @@
     },
     {
       "filename": "BASE especie nombre_00136.png",
-      "page": 4,
       "frame": {
-        "x": 0,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 1638,
+        "y": 329,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3130,12 +2898,11 @@
     },
     {
       "filename": "BASE especie nombre_00137.png",
-      "page": 4,
       "frame": {
-        "x": 512,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 1741,
+        "y": 329,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3152,12 +2919,11 @@
     },
     {
       "filename": "BASE especie nombre_00138.png",
-      "page": 4,
       "frame": {
-        "x": 1024,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 1843,
+        "y": 329,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3174,12 +2940,11 @@
     },
     {
       "filename": "BASE especie nombre_00139.png",
-      "page": 4,
       "frame": {
-        "x": 1536,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 1946,
+        "y": 329,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3196,12 +2961,11 @@
     },
     {
       "filename": "BASE especie nombre_00140.png",
-      "page": 5,
       "frame": {
         "x": 0,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "y": 384,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3218,12 +2982,11 @@
     },
     {
       "filename": "BASE especie nombre_00141.png",
-      "page": 5,
       "frame": {
-        "x": 512,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 102,
+        "y": 384,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3240,12 +3003,11 @@
     },
     {
       "filename": "BASE especie nombre_00142.png",
-      "page": 5,
       "frame": {
-        "x": 1024,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 205,
+        "y": 384,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3262,12 +3024,11 @@
     },
     {
       "filename": "BASE especie nombre_00143.png",
-      "page": 5,
       "frame": {
-        "x": 1536,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 307,
+        "y": 384,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3284,12 +3045,11 @@
     },
     {
       "filename": "BASE especie nombre_00144.png",
-      "page": 5,
       "frame": {
-        "x": 0,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 410,
+        "y": 384,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3306,12 +3066,11 @@
     },
     {
       "filename": "BASE especie nombre_00145.png",
-      "page": 5,
       "frame": {
         "x": 512,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "y": 384,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3328,12 +3087,11 @@
     },
     {
       "filename": "BASE especie nombre_00146.png",
-      "page": 5,
       "frame": {
-        "x": 1024,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 614,
+        "y": 384,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3350,12 +3108,11 @@
     },
     {
       "filename": "BASE especie nombre_00147.png",
-      "page": 5,
       "frame": {
-        "x": 1536,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 717,
+        "y": 384,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3372,12 +3129,11 @@
     },
     {
       "filename": "BASE especie nombre_00148.png",
-      "page": 5,
       "frame": {
-        "x": 0,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 819,
+        "y": 384,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3394,12 +3150,11 @@
     },
     {
       "filename": "BASE especie nombre_00149.png",
-      "page": 5,
       "frame": {
-        "x": 512,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 922,
+        "y": 384,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3416,12 +3171,11 @@
     },
     {
       "filename": "BASE especie nombre_00150.png",
-      "page": 5,
       "frame": {
         "x": 1024,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "y": 384,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3438,12 +3192,11 @@
     },
     {
       "filename": "BASE especie nombre_00151.png",
-      "page": 5,
       "frame": {
-        "x": 1536,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1126,
+        "y": 384,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3460,12 +3213,11 @@
     },
     {
       "filename": "BASE especie nombre_00152.png",
-      "page": 5,
       "frame": {
-        "x": 0,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 1229,
+        "y": 384,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3482,12 +3234,11 @@
     },
     {
       "filename": "BASE especie nombre_00153.png",
-      "page": 5,
       "frame": {
-        "x": 512,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 1331,
+        "y": 384,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3504,12 +3255,11 @@
     },
     {
       "filename": "BASE especie nombre_00154.png",
-      "page": 5,
       "frame": {
-        "x": 1024,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 1434,
+        "y": 384,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3526,12 +3276,11 @@
     },
     {
       "filename": "BASE especie nombre_00155.png",
-      "page": 5,
       "frame": {
         "x": 1536,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "y": 384,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3548,12 +3297,11 @@
     },
     {
       "filename": "BASE especie nombre_00156.png",
-      "page": 5,
       "frame": {
-        "x": 0,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1638,
+        "y": 384,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3570,12 +3318,11 @@
     },
     {
       "filename": "BASE especie nombre_00157.png",
-      "page": 5,
       "frame": {
-        "x": 512,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1741,
+        "y": 384,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3592,12 +3339,11 @@
     },
     {
       "filename": "BASE especie nombre_00158.png",
-      "page": 5,
       "frame": {
-        "x": 1024,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1843,
+        "y": 384,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3614,12 +3360,11 @@
     },
     {
       "filename": "BASE especie nombre_00159.png",
-      "page": 5,
       "frame": {
-        "x": 1536,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1946,
+        "y": 384,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3636,12 +3381,11 @@
     },
     {
       "filename": "BASE especie nombre_00160.png",
-      "page": 5,
       "frame": {
         "x": 0,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "y": 438,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3658,12 +3402,11 @@
     },
     {
       "filename": "BASE especie nombre_00161.png",
-      "page": 5,
       "frame": {
-        "x": 512,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 102,
+        "y": 438,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3680,12 +3423,11 @@
     },
     {
       "filename": "BASE especie nombre_00162.png",
-      "page": 5,
       "frame": {
-        "x": 1024,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 205,
+        "y": 438,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3702,12 +3444,11 @@
     },
     {
       "filename": "BASE especie nombre_00163.png",
-      "page": 5,
       "frame": {
-        "x": 1536,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 307,
+        "y": 438,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3724,12 +3465,11 @@
     },
     {
       "filename": "BASE especie nombre_00164.png",
-      "page": 5,
       "frame": {
-        "x": 0,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 410,
+        "y": 438,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3746,12 +3486,11 @@
     },
     {
       "filename": "BASE especie nombre_00165.png",
-      "page": 5,
       "frame": {
         "x": 512,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "y": 438,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3768,12 +3507,11 @@
     },
     {
       "filename": "BASE especie nombre_00166.png",
-      "page": 5,
       "frame": {
-        "x": 1024,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 614,
+        "y": 438,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3790,12 +3528,11 @@
     },
     {
       "filename": "BASE especie nombre_00167.png",
-      "page": 5,
       "frame": {
-        "x": 1536,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 717,
+        "y": 438,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3812,12 +3549,11 @@
     },
     {
       "filename": "BASE especie nombre_00168.png",
-      "page": 6,
       "frame": {
-        "x": 0,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 819,
+        "y": 438,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3834,12 +3570,11 @@
     },
     {
       "filename": "BASE especie nombre_00169.png",
-      "page": 6,
       "frame": {
-        "x": 512,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 922,
+        "y": 438,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3856,12 +3591,11 @@
     },
     {
       "filename": "BASE especie nombre_00170.png",
-      "page": 6,
       "frame": {
         "x": 1024,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "y": 438,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3878,12 +3612,11 @@
     },
     {
       "filename": "BASE especie nombre_00171.png",
-      "page": 6,
       "frame": {
-        "x": 1536,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 1126,
+        "y": 438,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3900,12 +3633,11 @@
     },
     {
       "filename": "BASE especie nombre_00172.png",
-      "page": 6,
       "frame": {
-        "x": 0,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 1229,
+        "y": 438,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3922,12 +3654,11 @@
     },
     {
       "filename": "BASE especie nombre_00173.png",
-      "page": 6,
       "frame": {
-        "x": 512,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 1331,
+        "y": 438,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3944,12 +3675,11 @@
     },
     {
       "filename": "BASE especie nombre_00174.png",
-      "page": 6,
       "frame": {
-        "x": 1024,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 1434,
+        "y": 438,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3966,12 +3696,11 @@
     },
     {
       "filename": "BASE especie nombre_00175.png",
-      "page": 6,
       "frame": {
         "x": 1536,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "y": 438,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -3988,12 +3717,11 @@
     },
     {
       "filename": "BASE especie nombre_00176.png",
-      "page": 6,
       "frame": {
-        "x": 0,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1638,
+        "y": 438,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4010,12 +3738,11 @@
     },
     {
       "filename": "BASE especie nombre_00177.png",
-      "page": 6,
       "frame": {
-        "x": 512,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1741,
+        "y": 438,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4032,12 +3759,11 @@
     },
     {
       "filename": "BASE especie nombre_00178.png",
-      "page": 6,
       "frame": {
-        "x": 1024,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1843,
+        "y": 438,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4054,12 +3780,11 @@
     },
     {
       "filename": "BASE especie nombre_00179.png",
-      "page": 6,
       "frame": {
-        "x": 1536,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1946,
+        "y": 438,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4076,12 +3801,11 @@
     },
     {
       "filename": "BASE especie nombre_00180.png",
-      "page": 6,
       "frame": {
         "x": 0,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "y": 493,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4098,12 +3822,11 @@
     },
     {
       "filename": "BASE especie nombre_00181.png",
-      "page": 6,
       "frame": {
-        "x": 512,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 102,
+        "y": 493,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4120,12 +3843,11 @@
     },
     {
       "filename": "BASE especie nombre_00182.png",
-      "page": 6,
       "frame": {
-        "x": 1024,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 205,
+        "y": 493,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4142,12 +3864,11 @@
     },
     {
       "filename": "BASE especie nombre_00183.png",
-      "page": 6,
       "frame": {
-        "x": 1536,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 307,
+        "y": 493,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4164,12 +3885,11 @@
     },
     {
       "filename": "BASE especie nombre_00184.png",
-      "page": 6,
       "frame": {
-        "x": 0,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 410,
+        "y": 493,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4186,12 +3906,11 @@
     },
     {
       "filename": "BASE especie nombre_00185.png",
-      "page": 6,
       "frame": {
         "x": 512,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "y": 493,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4208,12 +3927,11 @@
     },
     {
       "filename": "BASE especie nombre_00186.png",
-      "page": 6,
       "frame": {
-        "x": 1024,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 614,
+        "y": 493,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4230,12 +3948,11 @@
     },
     {
       "filename": "BASE especie nombre_00187.png",
-      "page": 6,
       "frame": {
-        "x": 1536,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 717,
+        "y": 493,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4252,12 +3969,11 @@
     },
     {
       "filename": "BASE especie nombre_00188.png",
-      "page": 6,
       "frame": {
-        "x": 0,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 819,
+        "y": 493,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4274,12 +3990,11 @@
     },
     {
       "filename": "BASE especie nombre_00189.png",
-      "page": 6,
       "frame": {
-        "x": 512,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 922,
+        "y": 493,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4296,12 +4011,11 @@
     },
     {
       "filename": "BASE especie nombre_00190.png",
-      "page": 6,
       "frame": {
         "x": 1024,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "y": 493,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4318,12 +4032,11 @@
     },
     {
       "filename": "BASE especie nombre_00191.png",
-      "page": 6,
       "frame": {
-        "x": 1536,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 1126,
+        "y": 493,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4340,12 +4053,11 @@
     },
     {
       "filename": "BASE especie nombre_00192.png",
-      "page": 6,
       "frame": {
-        "x": 0,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 1229,
+        "y": 493,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4362,12 +4074,11 @@
     },
     {
       "filename": "BASE especie nombre_00193.png",
-      "page": 6,
       "frame": {
-        "x": 512,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 1331,
+        "y": 493,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4384,12 +4095,11 @@
     },
     {
       "filename": "BASE especie nombre_00194.png",
-      "page": 6,
       "frame": {
-        "x": 1024,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 1434,
+        "y": 493,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4406,12 +4116,11 @@
     },
     {
       "filename": "BASE especie nombre_00195.png",
-      "page": 6,
       "frame": {
         "x": 1536,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "y": 493,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4428,12 +4137,11 @@
     },
     {
       "filename": "BASE especie nombre_00196.png",
-      "page": 7,
       "frame": {
-        "x": 0,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 1638,
+        "y": 493,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4450,12 +4158,11 @@
     },
     {
       "filename": "BASE especie nombre_00197.png",
-      "page": 7,
       "frame": {
-        "x": 512,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 1741,
+        "y": 493,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4472,12 +4179,11 @@
     },
     {
       "filename": "BASE especie nombre_00198.png",
-      "page": 7,
       "frame": {
-        "x": 1024,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 1843,
+        "y": 493,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4494,12 +4200,11 @@
     },
     {
       "filename": "BASE especie nombre_00199.png",
-      "page": 7,
       "frame": {
-        "x": 1536,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 1946,
+        "y": 493,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4516,12 +4221,11 @@
     },
     {
       "filename": "BASE especie nombre_00200.png",
-      "page": 7,
       "frame": {
         "x": 0,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "y": 548,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4538,12 +4242,11 @@
     },
     {
       "filename": "BASE especie nombre_00201.png",
-      "page": 7,
       "frame": {
-        "x": 512,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 102,
+        "y": 548,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4560,12 +4263,11 @@
     },
     {
       "filename": "BASE especie nombre_00202.png",
-      "page": 7,
       "frame": {
-        "x": 1024,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 205,
+        "y": 548,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4582,12 +4284,11 @@
     },
     {
       "filename": "BASE especie nombre_00203.png",
-      "page": 7,
       "frame": {
-        "x": 1536,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 307,
+        "y": 548,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4604,12 +4305,11 @@
     },
     {
       "filename": "BASE especie nombre_00204.png",
-      "page": 7,
       "frame": {
-        "x": 0,
+        "x": 410,
         "y": 548,
-        "w": 512,
-        "h": 274
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4626,12 +4326,11 @@
     },
     {
       "filename": "BASE especie nombre_00205.png",
-      "page": 7,
       "frame": {
         "x": 512,
         "y": 548,
-        "w": 512,
-        "h": 274
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4648,12 +4347,11 @@
     },
     {
       "filename": "BASE especie nombre_00206.png",
-      "page": 7,
       "frame": {
-        "x": 1024,
+        "x": 614,
         "y": 548,
-        "w": 512,
-        "h": 274
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4670,12 +4368,11 @@
     },
     {
       "filename": "BASE especie nombre_00207.png",
-      "page": 7,
       "frame": {
-        "x": 1536,
+        "x": 717,
         "y": 548,
-        "w": 512,
-        "h": 274
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4692,12 +4389,11 @@
     },
     {
       "filename": "BASE especie nombre_00208.png",
-      "page": 7,
       "frame": {
-        "x": 0,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 819,
+        "y": 548,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4714,12 +4410,11 @@
     },
     {
       "filename": "BASE especie nombre_00209.png",
-      "page": 7,
       "frame": {
-        "x": 512,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 922,
+        "y": 548,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4736,12 +4431,11 @@
     },
     {
       "filename": "BASE especie nombre_00210.png",
-      "page": 7,
       "frame": {
         "x": 1024,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "y": 548,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4758,12 +4452,11 @@
     },
     {
       "filename": "BASE especie nombre_00211.png",
-      "page": 7,
       "frame": {
-        "x": 1536,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 1126,
+        "y": 548,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4780,12 +4473,11 @@
     },
     {
       "filename": "BASE especie nombre_00212.png",
-      "page": 7,
       "frame": {
-        "x": 0,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1229,
+        "y": 548,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4802,12 +4494,11 @@
     },
     {
       "filename": "BASE especie nombre_00213.png",
-      "page": 7,
       "frame": {
-        "x": 512,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1331,
+        "y": 548,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4824,12 +4515,11 @@
     },
     {
       "filename": "BASE especie nombre_00214.png",
-      "page": 7,
       "frame": {
-        "x": 1024,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1434,
+        "y": 548,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4846,12 +4536,11 @@
     },
     {
       "filename": "BASE especie nombre_00215.png",
-      "page": 7,
       "frame": {
         "x": 1536,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "y": 548,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4868,12 +4557,11 @@
     },
     {
       "filename": "BASE especie nombre_00216.png",
-      "page": 7,
       "frame": {
-        "x": 0,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 1638,
+        "y": 548,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4890,12 +4578,11 @@
     },
     {
       "filename": "BASE especie nombre_00217.png",
-      "page": 7,
       "frame": {
-        "x": 512,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 1741,
+        "y": 548,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4912,12 +4599,11 @@
     },
     {
       "filename": "BASE especie nombre_00218.png",
-      "page": 7,
       "frame": {
-        "x": 1024,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 1843,
+        "y": 548,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4934,12 +4620,11 @@
     },
     {
       "filename": "BASE especie nombre_00219.png",
-      "page": 7,
       "frame": {
-        "x": 1536,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 1946,
+        "y": 548,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4956,12 +4641,11 @@
     },
     {
       "filename": "BASE especie nombre_00220.png",
-      "page": 7,
       "frame": {
         "x": 0,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "y": 603,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -4978,12 +4662,11 @@
     },
     {
       "filename": "BASE especie nombre_00221.png",
-      "page": 7,
       "frame": {
-        "x": 512,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 102,
+        "y": 603,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5000,12 +4683,11 @@
     },
     {
       "filename": "BASE especie nombre_00222.png",
-      "page": 7,
       "frame": {
-        "x": 1024,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 205,
+        "y": 603,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5022,12 +4704,11 @@
     },
     {
       "filename": "BASE especie nombre_00223.png",
-      "page": 7,
       "frame": {
-        "x": 1536,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 307,
+        "y": 603,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5044,12 +4725,11 @@
     },
     {
       "filename": "BASE especie nombre_00224.png",
-      "page": 8,
       "frame": {
-        "x": 0,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 410,
+        "y": 603,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5066,12 +4746,11 @@
     },
     {
       "filename": "BASE especie nombre_00225.png",
-      "page": 8,
       "frame": {
         "x": 512,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "y": 603,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5088,12 +4767,11 @@
     },
     {
       "filename": "BASE especie nombre_00226.png",
-      "page": 8,
       "frame": {
-        "x": 1024,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 614,
+        "y": 603,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5110,12 +4788,11 @@
     },
     {
       "filename": "BASE especie nombre_00227.png",
-      "page": 8,
       "frame": {
-        "x": 1536,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 717,
+        "y": 603,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5132,12 +4809,11 @@
     },
     {
       "filename": "BASE especie nombre_00228.png",
-      "page": 8,
       "frame": {
-        "x": 0,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 819,
+        "y": 603,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5154,12 +4830,11 @@
     },
     {
       "filename": "BASE especie nombre_00229.png",
-      "page": 8,
       "frame": {
-        "x": 512,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 922,
+        "y": 603,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5176,12 +4851,11 @@
     },
     {
       "filename": "BASE especie nombre_00230.png",
-      "page": 8,
       "frame": {
         "x": 1024,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "y": 603,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5198,12 +4872,11 @@
     },
     {
       "filename": "BASE especie nombre_00231.png",
-      "page": 8,
       "frame": {
-        "x": 1536,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 1126,
+        "y": 603,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5220,12 +4893,11 @@
     },
     {
       "filename": "BASE especie nombre_00232.png",
-      "page": 8,
       "frame": {
-        "x": 0,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1229,
+        "y": 603,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5242,12 +4914,11 @@
     },
     {
       "filename": "BASE especie nombre_00233.png",
-      "page": 8,
       "frame": {
-        "x": 512,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1331,
+        "y": 603,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5264,12 +4935,11 @@
     },
     {
       "filename": "BASE especie nombre_00234.png",
-      "page": 8,
       "frame": {
-        "x": 1024,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1434,
+        "y": 603,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5286,12 +4956,11 @@
     },
     {
       "filename": "BASE especie nombre_00235.png",
-      "page": 8,
       "frame": {
         "x": 1536,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "y": 603,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5308,12 +4977,11 @@
     },
     {
       "filename": "BASE especie nombre_00236.png",
-      "page": 8,
       "frame": {
-        "x": 0,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 1638,
+        "y": 603,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5330,12 +4998,11 @@
     },
     {
       "filename": "BASE especie nombre_00237.png",
-      "page": 8,
       "frame": {
-        "x": 512,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 1741,
+        "y": 603,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5352,12 +5019,11 @@
     },
     {
       "filename": "BASE especie nombre_00238.png",
-      "page": 8,
       "frame": {
-        "x": 1024,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 1843,
+        "y": 603,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5374,12 +5040,11 @@
     },
     {
       "filename": "BASE especie nombre_00239.png",
-      "page": 8,
       "frame": {
-        "x": 1536,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 1946,
+        "y": 603,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5396,12 +5061,11 @@
     },
     {
       "filename": "BASE especie nombre_00240.png",
-      "page": 8,
       "frame": {
         "x": 0,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "y": 658,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5418,12 +5082,11 @@
     },
     {
       "filename": "BASE especie nombre_00241.png",
-      "page": 8,
       "frame": {
-        "x": 512,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 102,
+        "y": 658,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5440,12 +5103,11 @@
     },
     {
       "filename": "BASE especie nombre_00242.png",
-      "page": 8,
       "frame": {
-        "x": 1024,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 205,
+        "y": 658,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5462,12 +5124,11 @@
     },
     {
       "filename": "BASE especie nombre_00243.png",
-      "page": 8,
       "frame": {
-        "x": 1536,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 307,
+        "y": 658,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5484,12 +5145,11 @@
     },
     {
       "filename": "BASE especie nombre_00244.png",
-      "page": 8,
       "frame": {
-        "x": 0,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 410,
+        "y": 658,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5506,12 +5166,11 @@
     },
     {
       "filename": "BASE especie nombre_00245.png",
-      "page": 8,
       "frame": {
         "x": 512,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "y": 658,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5528,12 +5187,11 @@
     },
     {
       "filename": "BASE especie nombre_00246.png",
-      "page": 8,
       "frame": {
-        "x": 1024,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 614,
+        "y": 658,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5550,12 +5208,11 @@
     },
     {
       "filename": "BASE especie nombre_00247.png",
-      "page": 8,
       "frame": {
-        "x": 1536,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 717,
+        "y": 658,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5572,12 +5229,11 @@
     },
     {
       "filename": "BASE especie nombre_00248.png",
-      "page": 8,
       "frame": {
-        "x": 0,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 819,
+        "y": 658,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5594,12 +5250,11 @@
     },
     {
       "filename": "BASE especie nombre_00249.png",
-      "page": 8,
       "frame": {
-        "x": 512,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 922,
+        "y": 658,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5616,12 +5271,11 @@
     },
     {
       "filename": "BASE especie nombre_00250.png",
-      "page": 8,
       "frame": {
         "x": 1024,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "y": 658,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5638,12 +5292,11 @@
     },
     {
       "filename": "BASE especie nombre_00251.png",
-      "page": 8,
       "frame": {
-        "x": 1536,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 1126,
+        "y": 658,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5660,12 +5313,11 @@
     },
     {
       "filename": "BASE especie nombre_00252.png",
-      "page": 9,
       "frame": {
-        "x": 0,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 1229,
+        "y": 658,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5682,12 +5334,11 @@
     },
     {
       "filename": "BASE especie nombre_00253.png",
-      "page": 9,
       "frame": {
-        "x": 512,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 1331,
+        "y": 658,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5704,12 +5355,11 @@
     },
     {
       "filename": "BASE especie nombre_00254.png",
-      "page": 9,
       "frame": {
-        "x": 1024,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 1434,
+        "y": 658,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5726,12 +5376,11 @@
     },
     {
       "filename": "BASE especie nombre_00255.png",
-      "page": 9,
       "frame": {
         "x": 1536,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "y": 658,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5748,12 +5397,11 @@
     },
     {
       "filename": "BASE especie nombre_00256.png",
-      "page": 9,
       "frame": {
-        "x": 0,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 1638,
+        "y": 658,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5770,12 +5418,11 @@
     },
     {
       "filename": "BASE especie nombre_00257.png",
-      "page": 9,
       "frame": {
-        "x": 512,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 1741,
+        "y": 658,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5792,12 +5439,11 @@
     },
     {
       "filename": "BASE especie nombre_00258.png",
-      "page": 9,
       "frame": {
-        "x": 1024,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 1843,
+        "y": 658,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5814,12 +5460,11 @@
     },
     {
       "filename": "BASE especie nombre_00259.png",
-      "page": 9,
       "frame": {
-        "x": 1536,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 1946,
+        "y": 658,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5836,12 +5481,11 @@
     },
     {
       "filename": "BASE especie nombre_00260.png",
-      "page": 9,
       "frame": {
         "x": 0,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "y": 712,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5858,12 +5502,11 @@
     },
     {
       "filename": "BASE especie nombre_00261.png",
-      "page": 9,
       "frame": {
-        "x": 512,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 102,
+        "y": 712,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5880,12 +5523,11 @@
     },
     {
       "filename": "BASE especie nombre_00262.png",
-      "page": 9,
       "frame": {
-        "x": 1024,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 205,
+        "y": 712,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5902,12 +5544,11 @@
     },
     {
       "filename": "BASE especie nombre_00263.png",
-      "page": 9,
       "frame": {
-        "x": 1536,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 307,
+        "y": 712,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5924,12 +5565,11 @@
     },
     {
       "filename": "BASE especie nombre_00264.png",
-      "page": 9,
       "frame": {
-        "x": 0,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 410,
+        "y": 712,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5946,12 +5586,11 @@
     },
     {
       "filename": "BASE especie nombre_00265.png",
-      "page": 9,
       "frame": {
         "x": 512,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "y": 712,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5968,12 +5607,11 @@
     },
     {
       "filename": "BASE especie nombre_00266.png",
-      "page": 9,
       "frame": {
-        "x": 1024,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 614,
+        "y": 712,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -5990,12 +5628,11 @@
     },
     {
       "filename": "BASE especie nombre_00267.png",
-      "page": 9,
       "frame": {
-        "x": 1536,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 717,
+        "y": 712,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6012,12 +5649,11 @@
     },
     {
       "filename": "BASE especie nombre_00268.png",
-      "page": 9,
       "frame": {
-        "x": 0,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 819,
+        "y": 712,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6034,12 +5670,11 @@
     },
     {
       "filename": "BASE especie nombre_00269.png",
-      "page": 9,
       "frame": {
-        "x": 512,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 922,
+        "y": 712,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6056,12 +5691,11 @@
     },
     {
       "filename": "BASE especie nombre_00270.png",
-      "page": 9,
       "frame": {
         "x": 1024,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "y": 712,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6078,12 +5712,11 @@
     },
     {
       "filename": "BASE especie nombre_00271.png",
-      "page": 9,
       "frame": {
-        "x": 1536,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1126,
+        "y": 712,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6100,12 +5733,11 @@
     },
     {
       "filename": "BASE especie nombre_00272.png",
-      "page": 9,
       "frame": {
-        "x": 0,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 1229,
+        "y": 712,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6122,12 +5754,11 @@
     },
     {
       "filename": "BASE especie nombre_00273.png",
-      "page": 9,
       "frame": {
-        "x": 512,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 1331,
+        "y": 712,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6144,12 +5775,11 @@
     },
     {
       "filename": "BASE especie nombre_00274.png",
-      "page": 9,
       "frame": {
-        "x": 1024,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 1434,
+        "y": 712,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6166,12 +5796,11 @@
     },
     {
       "filename": "BASE especie nombre_00275.png",
-      "page": 9,
       "frame": {
         "x": 1536,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "y": 712,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6188,12 +5817,11 @@
     },
     {
       "filename": "BASE especie nombre_00276.png",
-      "page": 9,
       "frame": {
-        "x": 0,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 1638,
+        "y": 712,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6210,12 +5838,11 @@
     },
     {
       "filename": "BASE especie nombre_00277.png",
-      "page": 9,
       "frame": {
-        "x": 512,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 1741,
+        "y": 712,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6232,12 +5859,11 @@
     },
     {
       "filename": "BASE especie nombre_00278.png",
-      "page": 9,
       "frame": {
-        "x": 1024,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 1843,
+        "y": 712,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6254,12 +5880,11 @@
     },
     {
       "filename": "BASE especie nombre_00279.png",
-      "page": 9,
       "frame": {
-        "x": 1536,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 1946,
+        "y": 712,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6276,12 +5901,11 @@
     },
     {
       "filename": "BASE especie nombre_00280.png",
-      "page": 10,
       "frame": {
         "x": 0,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "y": 767,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6298,12 +5922,11 @@
     },
     {
       "filename": "BASE especie nombre_00281.png",
-      "page": 10,
       "frame": {
-        "x": 512,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 102,
+        "y": 767,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6320,12 +5943,11 @@
     },
     {
       "filename": "BASE especie nombre_00282.png",
-      "page": 10,
       "frame": {
-        "x": 1024,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 205,
+        "y": 767,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6342,12 +5964,11 @@
     },
     {
       "filename": "BASE especie nombre_00283.png",
-      "page": 10,
       "frame": {
-        "x": 1536,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 307,
+        "y": 767,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6364,12 +5985,11 @@
     },
     {
       "filename": "BASE especie nombre_00284.png",
-      "page": 10,
       "frame": {
-        "x": 0,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 410,
+        "y": 767,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6386,12 +6006,11 @@
     },
     {
       "filename": "BASE especie nombre_00285.png",
-      "page": 10,
       "frame": {
         "x": 512,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "y": 767,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6408,12 +6027,11 @@
     },
     {
       "filename": "BASE especie nombre_00286.png",
-      "page": 10,
       "frame": {
-        "x": 1024,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 614,
+        "y": 767,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6430,12 +6048,11 @@
     },
     {
       "filename": "BASE especie nombre_00287.png",
-      "page": 10,
       "frame": {
-        "x": 1536,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 717,
+        "y": 767,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6452,12 +6069,11 @@
     },
     {
       "filename": "BASE especie nombre_00288.png",
-      "page": 10,
       "frame": {
-        "x": 0,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 819,
+        "y": 767,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6474,12 +6090,11 @@
     },
     {
       "filename": "BASE especie nombre_00289.png",
-      "page": 10,
       "frame": {
-        "x": 512,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 922,
+        "y": 767,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6496,12 +6111,11 @@
     },
     {
       "filename": "BASE especie nombre_00290.png",
-      "page": 10,
       "frame": {
         "x": 1024,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "y": 767,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6518,12 +6132,11 @@
     },
     {
       "filename": "BASE especie nombre_00291.png",
-      "page": 10,
       "frame": {
-        "x": 1536,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1126,
+        "y": 767,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6540,12 +6153,11 @@
     },
     {
       "filename": "BASE especie nombre_00292.png",
-      "page": 10,
       "frame": {
-        "x": 0,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 1229,
+        "y": 767,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6562,12 +6174,11 @@
     },
     {
       "filename": "BASE especie nombre_00293.png",
-      "page": 10,
       "frame": {
-        "x": 512,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 1331,
+        "y": 767,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6584,12 +6195,11 @@
     },
     {
       "filename": "BASE especie nombre_00294.png",
-      "page": 10,
       "frame": {
-        "x": 1024,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 1434,
+        "y": 767,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6606,12 +6216,11 @@
     },
     {
       "filename": "BASE especie nombre_00295.png",
-      "page": 10,
       "frame": {
         "x": 1536,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "y": 767,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6628,12 +6237,11 @@
     },
     {
       "filename": "BASE especie nombre_00296.png",
-      "page": 10,
       "frame": {
-        "x": 0,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1638,
+        "y": 767,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6650,12 +6258,11 @@
     },
     {
       "filename": "BASE especie nombre_00297.png",
-      "page": 10,
       "frame": {
-        "x": 512,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1741,
+        "y": 767,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6672,12 +6279,11 @@
     },
     {
       "filename": "BASE especie nombre_00298.png",
-      "page": 10,
       "frame": {
-        "x": 1024,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1843,
+        "y": 767,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6694,12 +6300,11 @@
     },
     {
       "filename": "BASE especie nombre_00299.png",
-      "page": 10,
       "frame": {
-        "x": 1536,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1946,
+        "y": 767,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6716,12 +6321,11 @@
     },
     {
       "filename": "BASE especie nombre_00300.png",
-      "page": 10,
       "frame": {
         "x": 0,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "y": 822,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6738,12 +6342,11 @@
     },
     {
       "filename": "BASE especie nombre_00301.png",
-      "page": 10,
       "frame": {
-        "x": 512,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 102,
+        "y": 822,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6760,12 +6363,11 @@
     },
     {
       "filename": "BASE especie nombre_00302.png",
-      "page": 10,
       "frame": {
-        "x": 1024,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 205,
+        "y": 822,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6782,12 +6384,11 @@
     },
     {
       "filename": "BASE especie nombre_00303.png",
-      "page": 10,
       "frame": {
-        "x": 1536,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 307,
+        "y": 822,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6804,12 +6405,11 @@
     },
     {
       "filename": "BASE especie nombre_00304.png",
-      "page": 10,
       "frame": {
-        "x": 0,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 410,
+        "y": 822,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6826,12 +6426,11 @@
     },
     {
       "filename": "BASE especie nombre_00305.png",
-      "page": 10,
       "frame": {
         "x": 512,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "y": 822,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6848,12 +6447,11 @@
     },
     {
       "filename": "BASE especie nombre_00306.png",
-      "page": 10,
       "frame": {
-        "x": 1024,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 614,
+        "y": 822,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6870,12 +6468,11 @@
     },
     {
       "filename": "BASE especie nombre_00307.png",
-      "page": 10,
       "frame": {
-        "x": 1536,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 717,
+        "y": 822,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6892,12 +6489,11 @@
     },
     {
       "filename": "BASE especie nombre_00308.png",
-      "page": 11,
       "frame": {
-        "x": 0,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 819,
+        "y": 822,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6914,12 +6510,11 @@
     },
     {
       "filename": "BASE especie nombre_00309.png",
-      "page": 11,
       "frame": {
-        "x": 512,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 922,
+        "y": 822,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6936,12 +6531,11 @@
     },
     {
       "filename": "BASE especie nombre_00310.png",
-      "page": 11,
       "frame": {
         "x": 1024,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "y": 822,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6958,12 +6552,11 @@
     },
     {
       "filename": "BASE especie nombre_00311.png",
-      "page": 11,
       "frame": {
-        "x": 1536,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 1126,
+        "y": 822,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -6980,12 +6573,11 @@
     },
     {
       "filename": "BASE especie nombre_00312.png",
-      "page": 11,
       "frame": {
-        "x": 0,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 1229,
+        "y": 822,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7002,12 +6594,11 @@
     },
     {
       "filename": "BASE especie nombre_00313.png",
-      "page": 11,
       "frame": {
-        "x": 512,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 1331,
+        "y": 822,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7024,12 +6615,11 @@
     },
     {
       "filename": "BASE especie nombre_00314.png",
-      "page": 11,
       "frame": {
-        "x": 1024,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 1434,
+        "y": 822,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7046,12 +6636,11 @@
     },
     {
       "filename": "BASE especie nombre_00315.png",
-      "page": 11,
       "frame": {
         "x": 1536,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "y": 822,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7068,12 +6657,11 @@
     },
     {
       "filename": "BASE especie nombre_00316.png",
-      "page": 11,
       "frame": {
-        "x": 0,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1638,
+        "y": 822,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7090,12 +6678,11 @@
     },
     {
       "filename": "BASE especie nombre_00317.png",
-      "page": 11,
       "frame": {
-        "x": 512,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1741,
+        "y": 822,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7112,12 +6699,11 @@
     },
     {
       "filename": "BASE especie nombre_00318.png",
-      "page": 11,
       "frame": {
-        "x": 1024,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1843,
+        "y": 822,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7134,12 +6720,11 @@
     },
     {
       "filename": "BASE especie nombre_00319.png",
-      "page": 11,
       "frame": {
-        "x": 1536,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1946,
+        "y": 822,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7156,12 +6741,11 @@
     },
     {
       "filename": "BASE especie nombre_00320.png",
-      "page": 11,
       "frame": {
         "x": 0,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "y": 877,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7178,12 +6762,11 @@
     },
     {
       "filename": "BASE especie nombre_00321.png",
-      "page": 11,
       "frame": {
-        "x": 512,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 102,
+        "y": 877,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7200,12 +6783,11 @@
     },
     {
       "filename": "BASE especie nombre_00322.png",
-      "page": 11,
       "frame": {
-        "x": 1024,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 205,
+        "y": 877,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7222,12 +6804,11 @@
     },
     {
       "filename": "BASE especie nombre_00323.png",
-      "page": 11,
       "frame": {
-        "x": 1536,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 307,
+        "y": 877,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7244,12 +6825,11 @@
     },
     {
       "filename": "BASE especie nombre_00324.png",
-      "page": 11,
       "frame": {
-        "x": 0,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 410,
+        "y": 877,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7266,12 +6846,11 @@
     },
     {
       "filename": "BASE especie nombre_00325.png",
-      "page": 11,
       "frame": {
         "x": 512,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "y": 877,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7288,12 +6867,11 @@
     },
     {
       "filename": "BASE especie nombre_00326.png",
-      "page": 11,
       "frame": {
-        "x": 1024,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 614,
+        "y": 877,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7310,12 +6888,11 @@
     },
     {
       "filename": "BASE especie nombre_00327.png",
-      "page": 11,
       "frame": {
-        "x": 1536,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 717,
+        "y": 877,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7332,12 +6909,11 @@
     },
     {
       "filename": "BASE especie nombre_00328.png",
-      "page": 11,
       "frame": {
-        "x": 0,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 819,
+        "y": 877,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7354,12 +6930,11 @@
     },
     {
       "filename": "BASE especie nombre_00329.png",
-      "page": 11,
       "frame": {
-        "x": 512,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 922,
+        "y": 877,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7376,12 +6951,11 @@
     },
     {
       "filename": "BASE especie nombre_00330.png",
-      "page": 11,
       "frame": {
         "x": 1024,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "y": 877,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7398,12 +6972,11 @@
     },
     {
       "filename": "BASE especie nombre_00331.png",
-      "page": 11,
       "frame": {
-        "x": 1536,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 1126,
+        "y": 877,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7420,12 +6993,11 @@
     },
     {
       "filename": "BASE especie nombre_00332.png",
-      "page": 11,
       "frame": {
-        "x": 0,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 1229,
+        "y": 877,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7442,12 +7014,11 @@
     },
     {
       "filename": "BASE especie nombre_00333.png",
-      "page": 11,
       "frame": {
-        "x": 512,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 1331,
+        "y": 877,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7464,12 +7035,11 @@
     },
     {
       "filename": "BASE especie nombre_00334.png",
-      "page": 11,
       "frame": {
-        "x": 1024,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 1434,
+        "y": 877,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7486,12 +7056,11 @@
     },
     {
       "filename": "BASE especie nombre_00335.png",
-      "page": 11,
       "frame": {
         "x": 1536,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "y": 877,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7508,12 +7077,11 @@
     },
     {
       "filename": "BASE especie nombre_00336.png",
-      "page": 12,
       "frame": {
-        "x": 0,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 1638,
+        "y": 877,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7530,12 +7098,11 @@
     },
     {
       "filename": "BASE especie nombre_00337.png",
-      "page": 12,
       "frame": {
-        "x": 512,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 1741,
+        "y": 877,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7552,12 +7119,11 @@
     },
     {
       "filename": "BASE especie nombre_00338.png",
-      "page": 12,
       "frame": {
-        "x": 1024,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 1843,
+        "y": 877,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7574,12 +7140,11 @@
     },
     {
       "filename": "BASE especie nombre_00339.png",
-      "page": 12,
       "frame": {
-        "x": 1536,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 1946,
+        "y": 877,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7596,12 +7161,11 @@
     },
     {
       "filename": "BASE especie nombre_00340.png",
-      "page": 12,
       "frame": {
         "x": 0,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "y": 932,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7618,12 +7182,11 @@
     },
     {
       "filename": "BASE especie nombre_00341.png",
-      "page": 12,
       "frame": {
-        "x": 512,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 102,
+        "y": 932,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7640,12 +7203,11 @@
     },
     {
       "filename": "BASE especie nombre_00342.png",
-      "page": 12,
       "frame": {
-        "x": 1024,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 205,
+        "y": 932,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7662,12 +7224,11 @@
     },
     {
       "filename": "BASE especie nombre_00343.png",
-      "page": 12,
       "frame": {
-        "x": 1536,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 307,
+        "y": 932,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7684,12 +7245,11 @@
     },
     {
       "filename": "BASE especie nombre_00344.png",
-      "page": 12,
       "frame": {
-        "x": 0,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 410,
+        "y": 932,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7706,12 +7266,11 @@
     },
     {
       "filename": "BASE especie nombre_00345.png",
-      "page": 12,
       "frame": {
         "x": 512,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "y": 932,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7728,12 +7287,11 @@
     },
     {
       "filename": "BASE especie nombre_00346.png",
-      "page": 12,
       "frame": {
-        "x": 1024,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 614,
+        "y": 932,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7750,12 +7308,11 @@
     },
     {
       "filename": "BASE especie nombre_00347.png",
-      "page": 12,
       "frame": {
-        "x": 1536,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 717,
+        "y": 932,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7772,12 +7329,11 @@
     },
     {
       "filename": "BASE especie nombre_00348.png",
-      "page": 12,
       "frame": {
-        "x": 0,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 819,
+        "y": 932,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7794,12 +7350,11 @@
     },
     {
       "filename": "BASE especie nombre_00349.png",
-      "page": 12,
       "frame": {
-        "x": 512,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 922,
+        "y": 932,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7816,12 +7371,11 @@
     },
     {
       "filename": "BASE especie nombre_00350.png",
-      "page": 12,
       "frame": {
         "x": 1024,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "y": 932,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7838,12 +7392,11 @@
     },
     {
       "filename": "BASE especie nombre_00351.png",
-      "page": 12,
       "frame": {
-        "x": 1536,
-        "y": 822,
-        "w": 512,
-        "h": 274
+        "x": 1126,
+        "y": 932,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7860,12 +7413,11 @@
     },
     {
       "filename": "BASE especie nombre_00352.png",
-      "page": 12,
       "frame": {
-        "x": 0,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1229,
+        "y": 932,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7882,12 +7434,11 @@
     },
     {
       "filename": "BASE especie nombre_00353.png",
-      "page": 12,
       "frame": {
-        "x": 512,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1331,
+        "y": 932,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7904,12 +7455,11 @@
     },
     {
       "filename": "BASE especie nombre_00354.png",
-      "page": 12,
       "frame": {
-        "x": 1024,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "x": 1434,
+        "y": 932,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7926,12 +7476,11 @@
     },
     {
       "filename": "BASE especie nombre_00355.png",
-      "page": 12,
       "frame": {
         "x": 1536,
-        "y": 1096,
-        "w": 512,
-        "h": 274
+        "y": 932,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7948,12 +7497,11 @@
     },
     {
       "filename": "BASE especie nombre_00356.png",
-      "page": 12,
       "frame": {
-        "x": 0,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 1638,
+        "y": 932,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7970,12 +7518,11 @@
     },
     {
       "filename": "BASE especie nombre_00357.png",
-      "page": 12,
       "frame": {
-        "x": 512,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 1741,
+        "y": 932,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -7992,12 +7539,11 @@
     },
     {
       "filename": "BASE especie nombre_00358.png",
-      "page": 12,
       "frame": {
-        "x": 1024,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 1843,
+        "y": 932,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -8014,12 +7560,11 @@
     },
     {
       "filename": "BASE especie nombre_00359.png",
-      "page": 12,
       "frame": {
-        "x": 1536,
-        "y": 1370,
-        "w": 512,
-        "h": 274
+        "x": 1946,
+        "y": 932,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -8036,12 +7581,11 @@
     },
     {
       "filename": "BASE especie nombre_00360.png",
-      "page": 12,
       "frame": {
         "x": 0,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "y": 986,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -8058,12 +7602,11 @@
     },
     {
       "filename": "BASE especie nombre_00361.png",
-      "page": 12,
       "frame": {
-        "x": 512,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 102,
+        "y": 986,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -8080,12 +7623,11 @@
     },
     {
       "filename": "BASE especie nombre_00362.png",
-      "page": 12,
       "frame": {
-        "x": 1024,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 205,
+        "y": 986,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -8102,12 +7644,11 @@
     },
     {
       "filename": "BASE especie nombre_00363.png",
-      "page": 12,
       "frame": {
-        "x": 1536,
-        "y": 1644,
-        "w": 512,
-        "h": 274
+        "x": 307,
+        "y": 986,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -8124,12 +7665,11 @@
     },
     {
       "filename": "BASE especie nombre_00364.png",
-      "page": 13,
       "frame": {
-        "x": 0,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 410,
+        "y": 986,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -8146,12 +7686,11 @@
     },
     {
       "filename": "BASE especie nombre_00365.png",
-      "page": 13,
       "frame": {
         "x": 512,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "y": 986,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -8168,12 +7707,11 @@
     },
     {
       "filename": "BASE especie nombre_00366.png",
-      "page": 13,
       "frame": {
-        "x": 1024,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 614,
+        "y": 986,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -8190,12 +7728,11 @@
     },
     {
       "filename": "BASE especie nombre_00367.png",
-      "page": 13,
       "frame": {
-        "x": 1536,
-        "y": 0,
-        "w": 512,
-        "h": 274
+        "x": 717,
+        "y": 986,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -8212,12 +7749,11 @@
     },
     {
       "filename": "BASE especie nombre_00368.png",
-      "page": 13,
       "frame": {
-        "x": 0,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 819,
+        "y": 986,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -8234,12 +7770,11 @@
     },
     {
       "filename": "BASE especie nombre_00369.png",
-      "page": 13,
       "frame": {
-        "x": 512,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 922,
+        "y": 986,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -8256,12 +7791,11 @@
     },
     {
       "filename": "BASE especie nombre_00370.png",
-      "page": 13,
       "frame": {
         "x": 1024,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "y": 986,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -8278,12 +7812,11 @@
     },
     {
       "filename": "BASE especie nombre_00371.png",
-      "page": 13,
       "frame": {
-        "x": 1536,
-        "y": 274,
-        "w": 512,
-        "h": 274
+        "x": 1126,
+        "y": 986,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -8300,12 +7833,11 @@
     },
     {
       "filename": "BASE especie nombre_00372.png",
-      "page": 13,
       "frame": {
-        "x": 0,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1229,
+        "y": 986,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -8322,12 +7854,11 @@
     },
     {
       "filename": "BASE especie nombre_00373.png",
-      "page": 13,
       "frame": {
-        "x": 512,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1331,
+        "y": 986,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -8344,12 +7875,11 @@
     },
     {
       "filename": "BASE especie nombre_00374.png",
-      "page": 13,
       "frame": {
-        "x": 1024,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "x": 1434,
+        "y": 986,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
@@ -8366,12 +7896,11 @@
     },
     {
       "filename": "BASE especie nombre_00375.png",
-      "page": 13,
       "frame": {
         "x": 1536,
-        "y": 548,
-        "w": 512,
-        "h": 274
+        "y": 986,
+        "w": 102,
+        "h": 55
       },
       "rotated": false,
       "trimmed": false,
