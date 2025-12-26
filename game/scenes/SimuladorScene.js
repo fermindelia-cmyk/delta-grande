@@ -3560,12 +3560,81 @@ export class SimuladorScene extends BaseScene {
     loaderMesh.renderOrder = 10;
     this.scene.add(loaderMesh);
 
+    // Create death mesh (red progress ring + exclamation)
+    const deathMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        progress: { value: 0.0 },
+        color: { value: new THREE.Color(0xFF4D4D) }
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        varying vec2 vUv;
+        uniform float progress;
+        uniform vec3 color;
+
+        float smooth01(float edge0, float edge1, float x) {
+          float t = clamp((x - edge0) / max(1e-5, (edge1 - edge0)), 0.0, 1.0);
+          return t * t * (3.0 - 2.0 * t);
+        }
+
+        void main() {
+          vec2 center = vec2(0.5);
+          vec2 diff = vUv - center;
+          float dist = length(diff);
+
+          // Ring
+          float angle = atan(diff.y, diff.x);
+          float a = (angle + 3.14159) / (2.0 * 3.14159);
+          float ring = smooth01(0.30, 0.35, dist) * (1.0 - smooth01(0.45, 0.50, dist));
+          float arcMask = step(a, progress);
+          float ringAlpha = ring * arcMask;
+
+          // Exclamation mark
+          // Map to -1..1 space
+          vec2 p = (vUv - 0.5) * 2.0;
+          float aa = 0.02;
+
+          float barHalfW = 0.08;
+          float barBottom = -0.05;
+          float barTop = 0.55;
+          float barX = 1.0 - smooth01(barHalfW, barHalfW + aa, abs(p.x));
+          float barY = smooth01(barBottom, barBottom + aa, p.y) * (1.0 - smooth01(barTop - aa, barTop, p.y));
+          float bar = barX * barY;
+
+          vec2 dotCenter = vec2(0.0, -0.55);
+          float dotR = 0.12;
+          float dot = 1.0 - smooth01(dotR, dotR + aa, length(p - dotCenter));
+
+          float exclamAlpha = max(bar, dot);
+
+          float alpha = max(ringAlpha, exclamAlpha);
+          if (alpha <= 0.001) discard;
+          gl_FragColor = vec4(color, alpha);
+        }
+      `,
+      transparent: true,
+      depthTest: false,
+      depthWrite: false
+    });
+
+    const deathMesh = new THREE.Mesh(loaderGeometry.clone(), deathMaterial);
+    deathMesh.visible = false;
+    deathMesh.renderOrder = 11;
+    this.scene.add(deathMesh);
+
     const anchorX = this.worldWidth > 0 ? clamp(x / this.worldWidth, 0, 1) : 0;
     const plant = {
       id: `${seed.id}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
       seed,
       mesh,
       loaderMesh,
+      deathMesh,
       x,
       baseY,
       anchorX,
@@ -3573,6 +3642,9 @@ export class SimuladorScene extends BaseScene {
       stageTimer: 0,
       waterIntakeTimer: 0,
       readyToGrow: false,
+      submergedTimer: 0,
+      deathTimer: 0,
+      deathActive: false,
       currentStageHeight: initialHeight,
       currentStageHalfWidth: Math.max(initialWidth * 0.5, stageInfo?.radius || 0.01),
       competitionBlocked: false,
@@ -3803,14 +3875,54 @@ export class SimuladorScene extends BaseScene {
         plant.stageTimer = 0;
       }
 
-  const waterHeight = this._heightAt(this._waterHeights, waterSegments, plant.x);
-  const plantBase = plant.baseY;
-  const isSubmerged = waterHeight >= plantBase + subOffset;
-  const isAboveWater = waterHeight <= plantBase - emerOffset;
-  const isMaxStage = plant.stageIndex >= this._plantStages.length - 1;
+      const waterHeight = this._heightAt(this._waterHeights, waterSegments, plant.x);
+      const plantBase = plant.baseY;
+      const isSubmerged = waterHeight >= plantBase + subOffset;
+      const isAboveWater = waterHeight <= plantBase - emerOffset;
+      const isMaxStage = plant.stageIndex >= this._plantStages.length - 1;
 
       // Water Intake Logic
-      const intakeDuration = this.params.plantGrowth?.waterIntakeDuration ?? 5.0;
+      const intakeDuration = Math.max(0.05, this.params.plantGrowth?.waterIntakeDuration ?? 5.0);
+
+      // --- Underwater death logic ---
+      // Fixed schedule for ALL plants:
+      // start death circle after (intakeDuration + 5s) submerged, then die after another intakeDuration.
+      const deathDelayAfterSubmerge = intakeDuration + 5.0;
+      const deathProgressDuration = intakeDuration;
+
+      if (isSubmerged) {
+        plant.submergedTimer = (plant.submergedTimer || 0) + dt;
+        const t = plant.submergedTimer;
+
+        if (t >= deathDelayAfterSubmerge) {
+          plant.deathActive = true;
+          plant.deathTimer = clamp(t - deathDelayAfterSubmerge, 0, deathProgressDuration);
+
+          if (plant.deathMesh) {
+            plant.deathMesh.visible = true;
+            plant.deathMesh.material.uniforms.progress.value = plant.deathTimer / deathProgressDuration;
+            const centerY = plant.baseY - 0.09;
+            plant.deathMesh.position.set(plant.mesh.position.x, centerY, 0.11);
+            const loaderScale = 0.035;
+            plant.deathMesh.scale.set(loaderScale, loaderScale, 1);
+          }
+
+          if (plant.deathTimer >= deathProgressDuration) {
+            this._removePlant(plant, { playSound: false });
+            i -= 1;
+            continue;
+          }
+        } else {
+          plant.deathActive = false;
+          plant.deathTimer = 0;
+          if (plant.deathMesh) plant.deathMesh.visible = false;
+        }
+      } else {
+        plant.submergedTimer = 0;
+        plant.deathTimer = 0;
+        plant.deathActive = false;
+        if (plant.deathMesh) plant.deathMesh.visible = false;
+      }
       
       if (isSubmerged && !isMaxStage) {
         // While submerged, accumulate water intake
@@ -3822,7 +3934,7 @@ export class SimuladorScene extends BaseScene {
             }
         }
         
-        // Show loader if not fully charged
+        // Show loader if not fully charged (and no death circle active yet)
         if (plant.loaderMesh && !plant.readyToGrow) {
             plant.loaderMesh.visible = true;
             plant.loaderMesh.material.uniforms.progress.value = plant.waterIntakeTimer / intakeDuration;
@@ -3972,11 +4084,13 @@ export class SimuladorScene extends BaseScene {
     return closest;
   }
 
-  _removePlant(plant) {
+  _removePlant(plant, { playSound = true } = {}) {
     if (!plant) return;
     const index = this._plants.indexOf(plant);
     if (index === -1) return;
-    this._playRemovePlantSound();
+    if (playSound) {
+      this._playRemovePlantSound();
+    }
     this._clearPlantSequenceCallbacks(plant);
     this._releasePlantAnimation(plant);
     if (plant.mesh) {
@@ -3986,6 +4100,11 @@ export class SimuladorScene extends BaseScene {
       this.scene.remove(plant.loaderMesh);
       if (plant.loaderMesh.geometry) plant.loaderMesh.geometry.dispose();
       if (plant.loaderMesh.material) plant.loaderMesh.material.dispose();
+    }
+    if (plant.deathMesh) {
+      this.scene.remove(plant.deathMesh);
+      if (plant.deathMesh.geometry) plant.deathMesh.geometry.dispose();
+      if (plant.deathMesh.material) plant.deathMesh.material.dispose();
     }
     if (plant.glowMesh) {
       this.scene.remove(plant.glowMesh);
