@@ -717,6 +717,8 @@ export class SimuladorScene extends BaseScene {
     this._isReady = false;
     this._uiRectEntries = [];
 
+    this._depthMeter = null;
+
     this._tutorial = { active: false, paused: false, queue: [], current: null };
     this._tutorialCompleted = new Set();
     this._tutorialOverlay = null;
@@ -831,6 +833,8 @@ export class SimuladorScene extends BaseScene {
     if (this._lastPointerInfo) {
       this._refreshCursor();
     }
+
+    this._updateDepthMeterPointer();
   }
 
   onResize(width, height) {
@@ -5264,6 +5268,8 @@ export class SimuladorScene extends BaseScene {
 
     this._ensureTutorialOverlay(root);
 
+    this._createDepthMeter(root);
+
     this._createProgressBar(root);
 
     this.app.root.appendChild(root);
@@ -5306,6 +5312,8 @@ export class SimuladorScene extends BaseScene {
     }
     this._updateGoalMessageLayout(metrics);
     this._updateTutorialLayout();
+
+    this._layoutDepthMeter(metrics);
   }
 
   _computeUILayoutMetrics() {
@@ -5340,6 +5348,300 @@ export class SimuladorScene extends BaseScene {
     goalEl.style.maxWidth = `${toPx(design.maxWidth)}px`;
     goalEl.style.fontSize = `${toPx(design.fontSize)}px`;
     goalEl.style.borderRadius = `${toPx(design.borderRadius)}px`;
+  }
+
+  _createDepthMeter(root) {
+    if (!root || this._depthMeter) return;
+    const { colors, ui } = this.params;
+
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.top = '0';
+    container.style.bottom = '0';
+    container.style.left = '0';
+    container.style.opacity = '0.38';
+    container.style.pointerEvents = 'none';
+    container.style.userSelect = 'none';
+    container.style.webkitUserSelect = 'none';
+    container.style.zIndex = '12';
+
+    const canvas = document.createElement('canvas');
+    canvas.style.position = 'absolute';
+    canvas.style.inset = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.pointerEvents = 'none';
+    canvas.style.display = 'block';
+    container.appendChild(canvas);
+
+    const labels = document.createElement('div');
+    labels.style.position = 'absolute';
+    labels.style.inset = '0';
+    labels.style.pointerEvents = 'none';
+    container.appendChild(labels);
+
+    const pointerSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    pointerSvg.setAttribute('viewBox', '0 0 10 10');
+    pointerSvg.style.position = 'absolute';
+    pointerSvg.style.pointerEvents = 'none';
+    pointerSvg.style.display = 'block';
+    pointerSvg.style.overflow = 'visible';
+    const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    // Tip at the right: points to the right.
+    poly.setAttribute('points', '10,5 0,0 0,10');
+    poly.setAttribute('fill', colors.uiAccent || '#ffd166');
+    pointerSvg.appendChild(poly);
+    container.appendChild(pointerSvg);
+
+    root.appendChild(container);
+
+    this._depthMeter = {
+      container,
+      canvas,
+      ctx: canvas.getContext('2d'),
+      labels,
+      pointerSvg,
+      design: {
+        leftOffsetVW: 1.2,
+        widthVW: 14,
+        fontSizeVW: 1.15,
+        pointerSizeVW: 1.6,
+        labelPaddingVW: 0.35,
+        labelPaddingVH: 0.15,
+        labelOffsetVW: 0.9,
+        spineOffsetRatio: 0.42,
+        majorTickRatio: 0.36,
+        minorTickRatio: 0.22
+      },
+      colors: {
+        text: colors.uiText,
+        lines: colors.uiText,
+        accent: colors.uiAccent
+      },
+      ui
+    };
+
+    this._layoutDepthMeter(this._computeUILayoutMetrics());
+  }
+
+  _layoutDepthMeter(metrics) {
+    const meter = this._depthMeter;
+    if (!meter?.container || !meter.canvas || !meter.ctx) return;
+    const root = this._uiRoot || this.app?.root;
+    if (!root) return;
+
+    const data = metrics || this._computeUILayoutMetrics();
+    if (!data) return;
+
+    const { viewportH, baseH, scale } = data;
+    const toPx = (vwValue) => (vwValue / 100) * baseH * scale;
+
+    const left = toPx(meter.design.leftOffsetVW);
+    const width = Math.max(40, toPx(meter.design.widthVW));
+    meter.container.style.left = `${Math.round(left)}px`;
+    meter.container.style.width = `${Math.round(width)}px`;
+
+    // Meter range (in "mts" relative to nivel medio).
+    // IMPORTANT: scale does not depend on these limits.
+    const meterMin = -10;
+    const meterMax = 35;
+
+    // Fixed scale: a constant pixels-per-meter based on viewport height.
+    // This ensures changing meterMin/meterMax doesn't change spacing.
+    const pxPer10m = Math.max(70, Math.round(viewportH * 0.14));
+    const pxPerM = pxPer10m / 10;
+
+    const trackHeight = Math.max(80, Math.round((meterMax - meterMin) * pxPerM));
+
+    // Align "0 mts" with the average water level height in screen space.
+    const medium = this._waterLevels?.medium ?? 0;
+    const camTop = this.camera?.top ?? 5;
+    const camBottom = this.camera?.bottom ?? -5;
+    const yMediumScreen = ((medium - camTop) / (camBottom - camTop)) * viewportH;
+
+    // The "0 mts" mark is at (meterMax - 0) * pxPerM from the top of the container.
+    const trackTop = Math.round(yMediumScreen - (meterMax * pxPerM));
+
+    meter.container.style.top = `${trackTop}px`;
+    meter.container.style.height = `${trackHeight}px`;
+    meter.container.style.bottom = 'auto';
+
+    const pointerSize = Math.max(10, toPx(meter.design.pointerSizeVW));
+    meter.pointerSvg.style.width = `${Math.round(pointerSize)}px`;
+    meter.pointerSvg.style.height = `${Math.round(pointerSize)}px`;
+
+    // Resize canvas to match CSS pixels.
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const cssW = Math.max(1, meter.container.clientWidth);
+    const cssH = Math.max(1, meter.container.clientHeight);
+    const nextW = Math.floor(cssW * dpr);
+    const nextH = Math.floor(cssH * dpr);
+    if (meter.canvas.width !== nextW || meter.canvas.height !== nextH) {
+      meter.canvas.width = nextW;
+      meter.canvas.height = nextH;
+    }
+
+    meter._layout = {
+      viewportH: cssH,
+      viewportW: cssW,
+      spineX: cssW * meter.design.spineOffsetRatio,
+      majorLen: cssW * meter.design.majorTickRatio,
+      minorLen: cssW * meter.design.minorTickRatio,
+      labelX: cssW * (meter.design.spineOffsetRatio + 0.08),
+      fontSizePx: Math.max(11, toPx(meter.design.fontSizeVW)),
+      labelPadX: Math.max(2, toPx(meter.design.labelPaddingVW)),
+      labelPadY: Math.max(1, toPx(meter.design.labelPaddingVH)),
+      labelOffsetX: Math.max(4, toPx(meter.design.labelOffsetVW)),
+      pointerSizePx: pointerSize,
+      dpr,
+      meterMin,
+      meterMax,
+      pxPerM
+    };
+
+    this._redrawDepthMeter();
+    this._updateDepthMeterPointer();
+  }
+
+  _redrawDepthMeter() {
+    const meter = this._depthMeter;
+    const layout = meter?._layout;
+    if (!meter?.ctx || !layout) return;
+
+    const ctx = meter.ctx;
+    const dpr = layout.dpr;
+    const w = meter.canvas.width;
+    const h = meter.canvas.height;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const spineX = layout.spineX;
+    const majorLen = layout.majorLen;
+    const minorLen = layout.minorLen;
+    const lineWidth = Math.max(1, Math.round(1.25 * dpr)) / dpr;
+    const faintLineWidth = Math.max(1, Math.round(0.9 * dpr)) / dpr;
+
+    // Vertical spine (bounded track)
+    ctx.strokeStyle = meter.colors.lines || 'rgba(248,250,252,0.9)';
+    ctx.globalAlpha = 0.42;
+    ctx.lineWidth = faintLineWidth;
+    ctx.beginPath();
+    ctx.moveTo(spineX, 0);
+    ctx.lineTo(spineX, layout.viewportH);
+    ctx.stroke();
+
+    const medium = this._waterLevels?.medium ?? 0;
+    const delta = this.params?.water?.levelDelta ?? 0.25;
+    if (!Number.isFinite(delta) || delta === 0) return;
+
+    // Fixed range in meters, relative to "nivel medio".
+    // Render marks from -10 to +29, but only label multiples of 10.
+    const meterMin = layout.meterMin ?? -10;
+    const meterMax = layout.meterMax ?? 35;
+
+    // Clear and rebuild labels each layout pass.
+    while (meter.labels.firstChild) meter.labels.removeChild(meter.labels.firstChild);
+
+    const makeLabel = (text, yPx) => {
+      const el = document.createElement('div');
+      el.textContent = text;
+      el.style.position = 'absolute';
+      // Place labels to the right of the tick lines to avoid overlap.
+      el.style.left = `${Math.round(spineX + majorLen + layout.labelOffsetX)}px`;
+      el.style.top = `${Math.round(yPx)}px`;
+      el.style.transform = 'translateY(-50%)';
+      el.style.whiteSpace = 'nowrap';
+      el.style.color = meter.colors.text;
+      el.style.fontSize = `${Math.round(layout.fontSizePx)}px`;
+      el.style.lineHeight = '1.1';
+      el.style.fontWeight = '600';
+      el.style.padding = `${Math.round(layout.labelPadY)}px ${Math.round(layout.labelPadX)}px`;
+      el.style.borderRadius = `${Math.round(layout.labelPadX)}px`;
+      el.style.background = 'transparent';
+      if (this._uiFontFamily) {
+        el.style.fontFamily = this._uiFontFamily;
+      }
+      meter.labels.appendChild(el);
+    };
+
+    const pxPerM = layout.pxPerM ?? (layout.viewportH / Math.max(1e-6, (meterMax - meterMin)));
+    const metersToScreenY = (metersRelToMedium) => (meterMax - metersRelToMedium) * pxPerM;
+
+    // Ticks
+    ctx.globalAlpha = 0.75;
+    ctx.strokeStyle = meter.colors.lines || 'rgba(248,250,252,0.9)';
+    ctx.lineWidth = lineWidth;
+
+    for (let m = meterMin; m <= meterMax; m++) {
+      const yMajor = metersToScreenY(m);
+      if (yMajor < -40 || yMajor > layout.viewportH + 40) continue;
+
+      // Major tick
+      ctx.beginPath();
+      ctx.moveTo(spineX, yMajor);
+      ctx.lineTo(spineX + majorLen, yMajor);
+      ctx.stroke();
+
+      // Label
+      if (m === 0) {
+        makeLabel('0 mts: nivel medio', yMajor);
+      } else if (m % 10 === 0) {
+        const sign = m > 0 ? '+' : '';
+        makeLabel(`${sign}${m} mts`, yMajor);
+      }
+
+      // Minor ticks between this and next major
+      if (m < meterMax) {
+        ctx.globalAlpha = 0.35;
+        ctx.lineWidth = faintLineWidth;
+        const subdivisions = 10;
+        const denom = subdivisions + 1; // 10 internal ticks
+        for (let i = 1; i <= subdivisions; i++) {
+          const frac = i / denom;
+          const yMinor = metersToScreenY(m + frac);
+          if (yMinor < -20 || yMinor > layout.viewportH + 20) continue;
+          ctx.beginPath();
+          ctx.moveTo(spineX, yMinor);
+          ctx.lineTo(spineX + minorLen, yMinor);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 0.75;
+        ctx.lineWidth = lineWidth;
+      }
+    }
+  }
+
+  _updateDepthMeterPointer() {
+    const meter = this._depthMeter;
+    const layout = meter?._layout;
+    if (!meter?.pointerSvg || !layout) return;
+
+    const low = this._waterLevels?.low ?? 0;
+    const medium = this._waterLevels?.medium ?? 0;
+    const high = this._waterLevels?.high ?? 0;
+    const aboveDen = high - medium;
+    const belowDen = medium - low;
+    const meterMin = layout.meterMin ?? -10;
+    const meterMax = layout.meterMax ?? 35;
+    const pxPerM = layout.pxPerM ?? (layout.viewportH / Math.max(1e-6, (meterMax - meterMin)));
+
+    // Map water level to "meter units":
+    // -10..0 spans low→medium, 0..10 spans medium→high.
+    let meters = 0;
+    if (this._currentWaterLevel >= medium) {
+      meters = aboveDen !== 0 ? (10 * (this._currentWaterLevel - medium)) / aboveDen : 0;
+    } else {
+      meters = belowDen !== 0 ? (10 * (this._currentWaterLevel - medium)) / belowDen : 0;
+    }
+
+    const clampedMeters = clamp(meters, meterMin, meterMax);
+    const yPx = (meterMax - clampedMeters) * pxPerM;
+
+    // Triangle sits just to the left of the spine, pointing right into it.
+    const left = layout.spineX - layout.pointerSizePx;
+    meter.pointerSvg.style.left = `${Math.round(left)}px`;
+    meter.pointerSvg.style.top = `${Math.round(yPx - layout.pointerSizePx / 2)}px`;
   }
 
   _ensureTutorialOverlay(root) {
@@ -6351,6 +6653,7 @@ export class SimuladorScene extends BaseScene {
     this._seedButtons = {};
     this._cursorEl = null;
     this._goalMessageEl = null;
+    this._depthMeter = null;
     this._lastPointerInfo = null;
     this._activeTool = null;
     this._removeEnabled = false;
