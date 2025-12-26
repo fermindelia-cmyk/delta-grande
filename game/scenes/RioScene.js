@@ -3162,42 +3162,149 @@ class CompletedOverlay {
 }
 
 class FactOverlay {
-  constructor() {
+  constructor(options = {}) {
+    const completedCfg = DEFAULT_PARAMS?.completedOverlay || {};
+    const infoCfg = completedCfg?.speciesInfo || {};
+
+    const {
+      bgSrc = resolvePublicAsset('game-assets/sub/interfaz/caption_bg.webp'),
+      fontFamily = completedCfg.fontFamily || `ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace`,
+      textColor = infoCfg.textColor || '#E6C200',
+      fontSizePx = infoCfg.fontSizePx || 18,
+      lineHeight = infoCfg.lineHeight || 1.35,
+      showMs = 4000,
+      // Background sizing: width is viewport-relative (responsive), with a minimum.
+      // Keep aspect ratio (no stretching).
+      widthVw = 0.20,
+      minWidthPx = 280,
+      maxWidthPx = 720,
+      paddingPx = 22
+    } = options;
+
+    this.options = { bgSrc, fontFamily, textColor, fontSizePx, lineHeight, showMs, widthVw, minWidthPx, maxWidthPx, paddingPx };
+
     this.container = document.createElement('div');
     this.container.id = 'fact-overlay';
     Object.assign(this.container.style, {
       position: 'absolute',
-      bottom: '15%',
+      bottom: '5%',
       left: '50%',
       transform: 'translateX(-50%)',
-      backgroundColor: 'rgba(0, 0, 0, 0.7)',
-      color: 'white',
-      padding: '10px 20px',
-      borderRadius: '5px',
-      fontFamily: 'Arial, sans-serif',
-      fontSize: '18px',
-      textAlign: 'center',
       zIndex: '1000',
       opacity: '0',
       transition: 'opacity 0.5s ease-in-out',
       pointerEvents: 'none',
-      maxWidth: '80%'
+      overflow: 'hidden',
+      userSelect: 'none',
+      WebkitUserSelect: 'none'
     });
+
+    // Background image (same asset used for completed species name)
+    this.bgImg = document.createElement('img');
+    this.bgImg.alt = '';
+    this.bgImg.decoding = 'async';
+    this.bgImg.src = bgSrc;
+    Object.assign(this.bgImg.style, {
+      display: 'block',
+      width: `min(90vw, clamp(${minWidthPx}px, ${Math.round(widthVw * 100)}vw, ${maxWidthPx}px))`,
+      height: 'auto'
+    });
+
+    // Text overlay (centered; clipped; with safe padding)
+    this.textEl = document.createElement('div');
+    Object.assign(this.textEl.style, {
+      position: 'absolute',
+      inset: '0',
+      display: 'grid',
+      placeItems: 'center',
+      textAlign: 'center',
+      color: textColor,
+      fontFamily,
+      fontWeight: '600',
+      lineHeight: String(lineHeight),
+      whiteSpace: 'normal',
+      overflowWrap: 'anywhere',
+      wordBreak: 'break-word',
+      overflow: 'hidden',
+      padding: `clamp(${Math.max(12, Math.floor(paddingPx * 1.05))}px, 2.1vh, ${paddingPx + 12}px) clamp(${Math.round((paddingPx + 14) * 1.5)}px, ${Math.round(3.2 * 1.5 * 10) / 10}vw, ${Math.round((paddingPx + 28) * 1.5)}px)`
+    });
+
+    this.container.appendChild(this.bgImg);
+    this.container.appendChild(this.textEl);
     document.body.appendChild(this.container);
+
+    // When the image loads, we can fit text reliably.
+    this.bgImg.addEventListener('load', () => {
+      this._fitText();
+    }, { once: true });
+
     this.timeout = null;
+
+    // Keep it responsive on window resizes.
+    this._onResize = () => {
+      this._fitText();
+    };
+    window.addEventListener('resize', this._onResize, { passive: true });
+  }
+
+  _fitText() {
+    if (!this.textEl || !this.container) return;
+    const { fontSizePx } = this.options;
+
+    // Start a bit smaller than the completed-species info font.
+    // This keeps captions readable but prevents frequent top/bottom overflow.
+    let size = Math.max(8, Math.floor((fontSizePx ?? 18) * 0.85));
+    this.textEl.style.fontSize = `${size}px`;
+
+    // Compare against the actual text box size.
+    // Note: scrollWidth/scrollHeight include padding, and clientWidth/clientHeight
+    // represent the visible box (also includes padding). This is the most robust
+    // way to ensure we never overflow top/bottom.
+    for (let i = 0; i < 120; i++) {
+      const tooWide = this.textEl.scrollWidth > this.textEl.clientWidth;
+      const tooTall = this.textEl.scrollHeight > this.textEl.clientHeight;
+      if (!tooWide && !tooTall) break;
+      size = Math.max(8, size - 1);
+      this.textEl.style.fontSize = `${size}px`;
+      if (size === 8) break;
+    }
+  }
+
+  hide({ immediate = false } = {}) {
+    if (this.timeout) {
+      clearTimeout(this.timeout);
+      this.timeout = null;
+    }
+    if (!this.container) return;
+    if (immediate) {
+      const prev = this.container.style.transition;
+      this.container.style.transition = 'none';
+      this.container.style.opacity = '0';
+      // Restore transition next frame so future shows fade normally.
+      requestAnimationFrame(() => {
+        if (this.container) this.container.style.transition = prev || 'opacity 0.5s ease-in-out';
+      });
+      return;
+    }
+    this.container.style.opacity = '0';
   }
 
   show(text) {
     if (this.timeout) clearTimeout(this.timeout);
-    this.container.textContent = text;
+    this.textEl.textContent = String(text ?? '');
+    this._fitText();
+    // Extra passes to ensure layout settles (responsive width + font load).
+    requestAnimationFrame(() => this._fitText());
+    setTimeout(() => this._fitText(), 0);
     this.container.style.opacity = '1';
     this.timeout = setTimeout(() => {
       this.container.style.opacity = '0';
-    }, 4000);
+    }, this.options.showMs);
   }
 
   destroy() {
     if (this.timeout) clearTimeout(this.timeout);
+    if (this._onResize) window.removeEventListener('resize', this._onResize);
     if (this.container.parentNode) {
       this.container.parentNode.removeChild(this.container);
     }
@@ -3235,7 +3342,13 @@ export class RioScene extends BaseScene {
     this.clickMouse = new THREE.Vector2();
 
     // Fact overlay system
-    this.factOverlay = new FactOverlay();
+    this.factOverlay = new FactOverlay({
+      bgSrc: resolvePublicAsset('game-assets/sub/interfaz/caption_bg.webp'),
+      fontFamily: this.params?.completedOverlay?.fontFamily,
+      textColor: this.params?.completedOverlay?.speciesInfo?.textColor,
+      fontSizePx: Math.round((this.params?.completedOverlay?.speciesInfo?.fontSizePx ?? 18) * 0.85),
+      lineHeight: this.params?.completedOverlay?.speciesInfo?.lineHeight,
+    });
     this.fishClickCount = 0;
     this.speciesFactIndices = {};
 
@@ -5043,6 +5156,10 @@ export class RioScene extends BaseScene {
         if (this.deck?.cards[this.deck.currentIndex]?.key !== card.key) {
           return; // selection changed while loading
         }
+
+        // Hide any caption immediately so it never overlaps the completed overlay UI.
+        this.factOverlay?.hide?.({ immediate: false });
+
         await this.completedOverlay.activate({
           speciesKey: card.key,
           displayName: assets.displayName,
@@ -6265,6 +6382,7 @@ export class RioScene extends BaseScene {
   _handleFishClickForFacts() {
     if (!this.deck) return;
     // Don't show facts if the completed species overlay is active
+    if (this._completedOverlayState?.loading || this._completedOverlayState?.activeKey) return;
     if (this.completedOverlay && this.completedOverlay._activeKey) return;
 
     this.fishClickCount++;
