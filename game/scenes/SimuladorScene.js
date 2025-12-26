@@ -652,6 +652,7 @@ export class SimuladorScene extends BaseScene {
     this._plantSequenceCache = new Map();
     this._plantMaterialCache = new Map();
     this._removeEnabled = false;
+    this._sedimentEnabled = true;
 
     this._audioTimers = new Set();
     this._ambientAudio = null;
@@ -4076,11 +4077,24 @@ export class SimuladorScene extends BaseScene {
       });
     }
     this._removeEnabled = this._currentStageIndex > 0;
+    this._sedimentEnabled = this._currentStageIndex < 1;
+
+    const pickDefaultTool = () => {
+      if (this._sedimentEnabled) return 'sediment';
+      if (this._removeEnabled) return 'remove';
+      const iterator = this._availableSeedIds.values();
+      const next = iterator.next();
+      return next.done ? null : next.value;
+    };
+
+    if (!this._sedimentEnabled && this._activeTool === 'sediment') {
+      this._activeTool = pickDefaultTool();
+    }
     if (!this._isToolAvailable(this._activeTool)) {
-      this._activeTool = 'sediment';
+      this._activeTool = pickDefaultTool();
     }
     if (!this._activeTool) {
-      this._activeTool = 'sediment';
+      this._activeTool = pickDefaultTool();
     }
     this._syncToolButtons();
     this._restartStageHints();
@@ -6231,7 +6245,7 @@ export class SimuladorScene extends BaseScene {
       }
     };
 
-    highlightButton(this._buttons.sediment, activeId === 'sediment', true);
+    highlightButton(this._buttons.sediment, activeId === 'sediment', this._sedimentEnabled);
     highlightButton(this._buttons.remove, activeId === 'remove', this._removeEnabled);
 
     const unavailableFilter = 'grayscale(100%) brightness(0.65)';
@@ -6314,7 +6328,7 @@ export class SimuladorScene extends BaseScene {
   _isToolAvailable(toolId) {
     if (!toolId) return false;
     if (toolId === 'sediment') {
-      return true;
+      return this._sedimentEnabled;
     }
     if (toolId === 'remove') {
       return this._removeEnabled;
