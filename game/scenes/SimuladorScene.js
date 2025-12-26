@@ -283,7 +283,7 @@ export const DEFAULT_PARAMS = Object.freeze({
       }),
       Object.freeze({
         id: 'distichlis',
-        label: 'Distichlis',
+        label: 'Paja Brava',
         color: '#4e7d5a',
         width: 0.03,
         height: 0.13,
@@ -528,7 +528,8 @@ export const DEFAULT_PARAMS = Object.freeze({
         allowedSeedGroups: Object.freeze(['colonizers']),
         hints: Object.freeze([
           'Estabilizá la isla sembrando las especies colonizadoras.',
-          'En el Delta las plantas crecen cuando cambia el nivel del agua; probá mover la crecida.',
+          'En el Delta las plantas crecen cuando cambia el nivel del agua; probá modificar la altura del río.',
+          'Si las plantas pasan mucho tiempo bajo el agua morirán; ¡mantené el nivel del agua bajo control!',
           'Plantá al menos una semilla de cada especie colonizadora y hacelas crecer hasta la etapa final.'
         ])
       }),
@@ -5912,6 +5913,7 @@ export class SimuladorScene extends BaseScene {
       { type: 'modal', text: '¡Bienvenido al Simulador Delta+! El objetivo de este juego es crear una isla como las que pueden encontrarse en el Delta del Paraná.' },
       { type: 'modal', text: 'Las islas del Delta del Paraná, aunque suene increíble, empiezan así: tan solo un banco de arena en el fondo del río.' },
       { type: 'modal', text: 'A medida que se deposita sedimento, ese banco va creciendo hasta emerger sobre el nivel del agua, permitiendo que algunas especies vegetales colonicen esa tierra y la fijen...' },
+      { type: 'modal', text: 'Te proponemos que construyas una nueva isla, aportando sedimento, semillas de distintas especies vegetales y cambiando el nivel del agua para que nuevas plantas puedan crecer.' },
       { type: 'modal', text: '¿Te animás a probar?' },
       { type: 'highlight', target: 'sediment', text: 'Cuando la herramienta Sedimento está activa, podés presionar bajo el agua para hacer crecer el banco de arena.' },
       { type: 'highlight', target: 'weather', text: 'Podés subir o bajar el nivel del agua si lo necesitás.' }
@@ -5924,9 +5926,10 @@ export class SimuladorScene extends BaseScene {
     if (stageId === 'colonization') {
       const steps = [
         { type: 'modal', text: 'Lograste llevar el banco de arena por sobre el nivel promedio del agua. ¡Buen trabajo! Eso permite que algunas especies vegetales empiecen a colonizar el suelo.' },
-        { type: 'modal', text: 'Las semillas solo pueden sembrarse y crecer cuando la isla está sobre el agua, pero necesitan agua para sobrevivir.' },
+        { type: 'modal', text: 'Las semillas solo pueden instalarse y crecer cuando la isla está sobre el agua, pero necesitan agua para sobrevivir.' },
+        { type: 'modal', text: '¡Cuidado! Si las plantas pasan demasiado tiempo bajo el agua, morirán y tendrás que empezar su crecimiento desde cero.' },
         { type: 'modal', text: 'Hacé crecer completamente a todas las especies disponibles para avanzar.' },
-        { type: 'highlight', target: 'seeder', text: 'Elegí las semillas que quieras sembrar y tocá el suelo para sembrar.' },
+        { type: 'highlight', target: 'seeder', text: 'Elegí las semillas que quieras hacer crecer y tocá el suelo para que crezcan en ese lugar.' },
         { type: 'highlight', target: 'remove', text: 'Si querés eliminar semillas o plantas ya crecidas, podés hacerlo utilizando la herramienta Pala.' }
       ];
       this._startTutorialSequence('colonization', steps);
@@ -5934,7 +5937,7 @@ export class SimuladorScene extends BaseScene {
 
     if (stageId === 'expansion') {
       const steps = [
-        { type: 'modal', text: 'Ahora podés sembrar las semillas no colonizadoras. Completá el ecosistema de la isla.' }
+        { type: 'modal', text: 'Ahora podés instalar las semillas no colonizadoras. Completá el ecosistema de la isla.' }
       ];
       this._startTutorialSequence('expansion', steps);
     }
