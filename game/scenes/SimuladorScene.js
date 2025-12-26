@@ -588,7 +588,7 @@ export const DEFAULT_PARAMS = Object.freeze({
   plantCompetition: Object.freeze({
     neighborRadius: 0.02,
     minNeighbors: 2,
-    minPlantDistance: 0.016
+    minPlantDistance: 0.03
   })
 });
 
@@ -3493,6 +3493,7 @@ export class SimuladorScene extends BaseScene {
         const dy = plant.baseY - worldY;
         if (Math.hypot(dx, dy) < minDistanceWorld) {
             this._showGoalMessage('¡Demasiado cerca de otra planta!');
+            setTimeout(() => this._hideGoalMessage(), 1500);
             return false;
         }
     }
