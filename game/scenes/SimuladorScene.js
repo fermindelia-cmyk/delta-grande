@@ -4106,10 +4106,6 @@ export class SimuladorScene extends BaseScene {
 
   _updateSeedLabels() {
     const stage = this._stages[this._currentStageIndex];
-    // If not plantCounts, we might still want to show counts if we want to be consistent, 
-    // but the requirement was "target amount". If there is no target, maybe just show name?
-    // Or maybe we should look at the cumulative goal if we are in stage 3?
-    // The user said "current amount of planted plants from that species and the target amount".
     
     // Let's try to find the goal for this species in the current stage.
     let speciesGoals = {};
@@ -4123,17 +4119,15 @@ export class SimuladorScene extends BaseScene {
         const seedDef = buttonData.seed;
         const baseLabel = seedDef.label || seedId;
         
-        if (speciesGoals[seedId] !== undefined) {
-            const target = speciesGoals[seedId];
-            // Count planted plants of this species (any stage)
-            const current = this._plants.filter(p => 
-                p.seed?.id === seedId
-            ).length;
-            
-            buttonData.label.textContent = `${baseLabel} (${current}/${target})`;
-        } else {
-            buttonData.label.textContent = baseLabel;
-        }
+        // Always show count, defaulting target to 0 if not defined in current stage
+        const target = speciesGoals[seedId] !== undefined ? speciesGoals[seedId] : 0;
+        
+        // Count planted plants of this species (any stage)
+        const current = this._plants.filter(p => 
+            p.seed?.id === seedId
+        ).length;
+        
+        buttonData.label.textContent = `${baseLabel} (${current}/${target})`;
     }
   }
 
@@ -6294,6 +6288,7 @@ export class SimuladorScene extends BaseScene {
     if (activeId !== 'sediment') {
       this._pointerDown = false;
     }
+    this._updateSeedLabels();
     this._updateSeedLabelDisplay(activeId);
     this._refreshCursor();
   }
@@ -6313,9 +6308,6 @@ export class SimuladorScene extends BaseScene {
       const hiddenTransform = labelEl.dataset.hiddenTransform || fallbackHidden;
       const visibleTransform = labelEl.dataset.visibleTransform || fallbackVisible;
       if (shouldShow) {
-        if (entry.seed?.label) {
-          labelEl.textContent = entry.seed.label;
-        }
         labelEl.style.opacity = '1';
         labelEl.style.transform = visibleTransform;
       } else {
