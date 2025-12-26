@@ -1467,6 +1467,18 @@ class Deck {
     window.addEventListener('resize', () => this.updateLayout(), { passive: true });
   }
 
+  getProgressSnapshot() {
+    const total = this.cards.reduce((acc, card) => acc + (Number(card.winCount) || 0), 0);
+    const tagged = this.cards.reduce((acc, card) => acc + (Number(card.count) || 0), 0);
+    const progress = total > 0 ? tagged / total : 0;
+    return {
+      tagged,
+      total,
+      progress,
+      pct: Math.round(Math.max(0, Math.min(1, progress)) * 100)
+    };
+  }
+
   async build() {
     // Clear existing
     this.container.innerHTML = '';
@@ -1649,6 +1661,9 @@ class Deck {
     // Finally, reveal the UI; intro logic still controls opacity afterwards
     this.container.style.visibility = 'visible';
     this.logoEl.style.visibility = 'visible';
+
+    // Notify initial progress (typically 0%)
+    this.callbacks?.onProgress?.(this.getProgressSnapshot());
   }
 
   // === public API ===
@@ -1721,12 +1736,14 @@ class Deck {
         if (newCount !== cur.count) {
           cur.count = newCount;
           cur.numbersEl.textContent = `${cur.count}\n${cur.winCount}`;
+          this.callbacks?.onProgress?.(this.getProgressSnapshot());
         }
         if (cur.count >= cur.winCount && !cur.completed) {
           cur.completed = true;
           cur.element.classList.add('completed');
           this.callbacks?.onSpeciesCompleted?.();
           this.checkGameWin();
+          this.callbacks?.onProgress?.(this.getProgressSnapshot());
         }
       } else if (!cur.revealed) {
         this.setRevealed(this.currentIndex);
@@ -3452,6 +3469,14 @@ export class RioScene extends BaseScene {
     this._deckTagHintVisible = false;
     this._deckTagHintLastKey = '';
 
+    // Rio tag progress bar (DOM overlay, top-left)
+    this._tagProgress = {
+      container: null,
+      labelEl: null,
+      barFillEl: null,
+      completed: false
+    };
+
   // Completed overlay state
   this.completedOverlay = null;
   this._completedOverlayState = { activeKey: null, loading: false };
@@ -3960,12 +3985,17 @@ export class RioScene extends BaseScene {
     
     // Build the Deck UI (hidden until intro ends)
     if (this.params.debug.deck) {
+      this._createTagProgressOverlay();
       this.deck = new Deck(SPECIES, this.speciesObjs, this.params.deckUI, {
-        onSpeciesCompleted: () => this.playSfx('completed')
+        onSpeciesCompleted: () => this.playSfx('completed'),
+        onProgress: (snapshot) => this._updateTagProgressOverlay(snapshot)
       });
       await this._trackLoadingStep('Cargando UI del deck y sprites asociados', async () => {
         await this.deck.build();
       });
+
+      // Ensure the bar is correct after build
+      this._updateTagProgressOverlay();
 
       // Completed overlay atlases (decode during loading screen to avoid GPU spike later)
       await this._trackLoadingStep('Cargando overlay de especies completadas', async () => {
@@ -4257,6 +4287,7 @@ export class RioScene extends BaseScene {
     this._destroyTimerOverlay();
     this._destroyCursorOverlay();
     this._destroyDeckTagHint();
+    this._destroyTagProgressOverlay();
   this._destroySurfaceVideoFX();
 
     this.disposeShoreHaze();
@@ -4672,6 +4703,110 @@ export class RioScene extends BaseScene {
     this.ruler = null;
   }
 
+  /* ========================= Tag Progress Bar (DOM) ========================= */
+
+  _createTagProgressOverlay() {
+    if (this._tagProgress?.container) return;
+
+    const container = document.createElement('div');
+    container.id = 'rio-tag-progress';
+    Object.assign(container.style, {
+      position: 'fixed',
+      left: '40px',
+      top: '40px',
+      width: '20vw',
+      padding: '10px 14px',
+      background: 'rgba(10, 34, 61, 0.6)',
+      borderRadius: '12px',
+      backdropFilter: 'blur(4px)',
+      display: 'none',
+      flexDirection: 'column',
+      gap: '0px',
+      pointerEvents: 'none',
+      zIndex: '9996',
+      userSelect: 'none',
+      WebkitUserSelect: 'none',
+      msUserSelect: 'none'
+    });
+
+    const barContainer = document.createElement('div');
+    Object.assign(barContainer.style, {
+      width: '100%',
+      height: 'clamp(18px, 1.6vw, 26px)',
+      background: 'rgba(0, 0, 0, 0.4)',
+      borderRadius: '6px',
+      overflow: 'hidden',
+      position: 'relative'
+    });
+    container.appendChild(barContainer);
+
+    const barFill = document.createElement('div');
+    Object.assign(barFill.style, {
+      width: '0%',
+      height: '100%',
+      background: (this.params?.deckUI?.colors?.silhouetteSelected || '#FFD400'),
+      transition: 'width 0.3s ease-out, background-color 0.25s ease-out'
+    });
+    barContainer.appendChild(barFill);
+
+    const barText = document.createElement('div');
+    barText.textContent = 'Progreso 0%';
+    Object.assign(barText.style, {
+      position: 'absolute',
+      inset: '0',
+      display: 'grid',
+      placeItems: 'center',
+      color: '#f8fafc',
+      fontSize: 'clamp(11px, 1.0vw, 16px)',
+      fontWeight: '700',
+      lineHeight: '1',
+      textShadow: '0 2px 8px rgba(0,0,0,0.55)',
+      pointerEvents: 'none',
+      userSelect: 'none',
+      WebkitUserSelect: 'none',
+      msUserSelect: 'none'
+    });
+    const fontFamily = this.params?.deckUI?.fonts?.family;
+    if (fontFamily) {
+      barText.style.fontFamily = fontFamily;
+    }
+    barContainer.appendChild(barText);
+
+    document.body.appendChild(container);
+
+    this._tagProgress.container = container;
+    this._tagProgress.labelEl = barText;
+    this._tagProgress.barFillEl = barFill;
+    this._tagProgress.completed = false;
+  }
+
+  _updateTagProgressOverlay(snapshot = null) {
+    if (!this._tagProgress?.barFillEl || !this._tagProgress?.labelEl) return;
+
+    const s = snapshot || (this.deck?.getProgressSnapshot ? this.deck.getProgressSnapshot() : null);
+    const pct = Math.max(0, Math.min(100, Math.round((s?.progress ?? 0) * 100)));
+    this._tagProgress.barFillEl.style.width = `${pct}%`;
+    this._tagProgress.labelEl.textContent = `Progreso ${pct}%`;
+
+    const isComplete = pct >= 100;
+    if (isComplete !== this._tagProgress.completed) {
+      this._tagProgress.completed = isComplete;
+      this._tagProgress.barFillEl.style.background = isComplete ? '#00FF6A' : (this.params?.deckUI?.colors?.silhouetteSelected || '#FFD400');
+    }
+  }
+
+  _destroyTagProgressOverlay() {
+    if (this._tagProgress?.container && this._tagProgress.container.parentNode) {
+      this._tagProgress.container.parentNode.removeChild(this._tagProgress.container);
+    }
+    if (this._tagProgress) {
+      this._tagProgress.container = null;
+      this._tagProgress.labelEl = null;
+      this._tagProgress.barFillEl = null;
+      this._tagProgress.completed = false;
+    }
+  }
+
     /* ========================= Timer Overlay (DOM) ========================= */
 
   _createTimerOverlay() {
@@ -4842,6 +4977,11 @@ export class RioScene extends BaseScene {
     this._updateTimerText(); // immediate paint
     this._cursorEnabled = true;
     this._updateCursorVisibility();
+
+    // Show tag progress only when gameplay starts (after intro)
+    if (this.deck && this._tagProgress?.container) {
+      this._tagProgress.container.style.display = 'flex';
+    }
   }
 
   _stopTimer() {
