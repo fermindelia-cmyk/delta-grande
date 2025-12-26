@@ -140,6 +140,11 @@ class BubbleSystem {
     container.appendChild(this.canvas);
     this.bubbles = [];
     this.active = false;
+    this.intensity = 0; // 0..1
+    this.maxBubbles = 0;
+    this._maxSpawnPerFrame = 60;
+    this._fadeInSec = 0.12;
+    this._fadeOutSec = 0.18;
     this.resize();
     this._onResize = () => this.resize();
     window.addEventListener('resize', this._onResize);
@@ -153,31 +158,45 @@ class BubbleSystem {
   resize() {
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
+    // Area-based cap so “full intensity” can cover the screen across resolutions.
+    // Tuned so 1080p lands around ~400 bubbles.
+    const area = Math.max(1, this.canvas.width * this.canvas.height);
+    this.maxBubbles = clamp(Math.round(area / 5200), 180, 900);
   }
 
-  start() {
-    this.active = true;
-    // Initial burst
-    for (let i = 0; i < 60; i++) {
-      const b = this.createBubble();
-      b.y = Math.random() * this.canvas.height; // distribute initially
-      this.bubbles.push(b);
+  setIntensity(value) {
+    const v = clamp(Number(value) || 0, 0, 1);
+    this.intensity = v;
+    this.active = v > 0;
+
+    // Requirement: outside the margin, bubbles drop to 0 immediately.
+    if (!this.active) {
+      this.bubbles.length = 0;
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
   }
 
-  stop() {
-    this.active = false;
-  }
-
   createBubble() {
-    const radius = Math.random() * 12 + 4;
+    // Wider size range (with bias toward smaller bubbles), so a few feel close to camera.
+    const minRadius = 4;
+    const maxRadius = 196;
+
+    const pBig = 0.03; // ~3% giants
+    const t = (Math.random() < pBig)
+      ? (1 - Math.pow(Math.random(), 6)) // hug the max
+      : Math.pow(Math.random(), 3.5);    // mostly small
+
+    const radius = minRadius + t * (maxRadius - minRadius);
     return {
       x: Math.random() * this.canvas.width,
       y: this.canvas.height + radius + Math.random() * 200,
       vx: (Math.random() - 0.5) * 1.5,
       vy: -Math.random() * 8 - 4,
       radius: radius,
-      alpha: Math.random() * 0.4 + 0.1,
+      alphaBase: Math.random() * 0.4 + 0.1,
+      alpha: 0,
+      ageSec: 0,
+      lifeSec: Math.random() * 0.9 + 0.7,
       wobble: Math.random() * Math.PI * 2,
       wobbleSpeed: Math.random() * 0.1 + 0.05,
       wobbleAmp: Math.random() * 3 + 1
@@ -187,10 +206,49 @@ class BubbleSystem {
   update(dt) {
     if (!this.active && this.bubbles.length === 0) return;
 
+    const smoothstep01 = (t) => {
+      const x = clamp(t, 0, 1);
+      return x * x * (3 - 2 * x);
+    };
+
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Keep bubble density proportional to intensity.
+    if (this.active) {
+      const target = Math.round(this.maxBubbles * this.intensity);
+      const need = target - this.bubbles.length;
+      if (need > 0) {
+        const spawn = Math.min(need, this._maxSpawnPerFrame);
+        for (let i = 0; i < spawn; i++) {
+          const b = this.createBubble();
+          // Spawn across the screen so it fills immediately near surface.
+          b.y = Math.random() * this.canvas.height;
+          this.bubbles.push(b);
+        }
+      } else if (need < 0) {
+        // As intensity drops but still > 0, thin out quickly.
+        this.bubbles.length = target;
+      }
+    }
 
     for (let i = this.bubbles.length - 1; i >= 0; i--) {
       const b = this.bubbles[i];
+
+      b.ageSec += dt;
+      const fadeIn = smoothstep01(b.ageSec / Math.max(0.0001, this._fadeInSec));
+      const fadeOut = smoothstep01((b.lifeSec - b.ageSec) / Math.max(0.0001, this._fadeOutSec));
+      // Also scale alpha with overall intensity so entering/leaving is smoother.
+      b.alpha = b.alphaBase * fadeIn * fadeOut * clamp(this.intensity, 0, 1);
+
+      if (b.ageSec >= b.lifeSec) {
+        if (this.active) {
+          Object.assign(b, this.createBubble());
+        } else {
+          this.bubbles.splice(i, 1);
+          continue;
+        }
+      }
+
       b.x += b.vx + Math.sin(b.wobble) * b.wobbleAmp;
       b.y += b.vy;
       b.wobble += b.wobbleSpeed;
@@ -3440,9 +3498,9 @@ export class RioScene extends BaseScene {
         #rio-inside-overlay {
           position: fixed;
           inset: 0;
-          background: #021b2b;          /* color de “sólido”; cambiá si querés */
+          background: transparent;
           opacity: 0;                   /* oculto por defecto */
-          transition: opacity 120ms ease;
+          transition: opacity 200ms ease;
           pointer-events: none;
           z-index: 100002;              /* por encima de todo lo in-escena */
           user-select: none; -webkit-user-select: none; -ms-user-select: none;
@@ -3456,8 +3514,8 @@ export class RioScene extends BaseScene {
     inside.id = 'rio-inside-overlay';
     document.body.appendChild(inside);
     this._insideOverlay = inside;
-    const c = this.getUnderwaterSurfaceColor();
-    this._insideOverlay.style.backgroundColor = `#${c.getHexString()}`;
+    // No background for the surface transition; bubbles only.
+    this._insideOverlay.style.backgroundColor = 'transparent';
 
   this.surfaceFX = null;
   this._insideOverlayPrevInside = false;
@@ -3834,7 +3892,10 @@ export class RioScene extends BaseScene {
     }
 
 
-    this.camera.near = 0.1;
+    // When the camera gets very close to the water plane, a near clip of 0.1
+    // can clip the surface itself, revealing the underwater scene or causing
+    // the depth-only occluder to “punch a hole” (gray).
+    this.camera.near = 0.0002;
     this.camera.far  = 90;   // try 80–150; lower = faster
     this.camera.updateProjectionMatrix();
 
@@ -4307,6 +4368,9 @@ export class RioScene extends BaseScene {
         colorWrite: false,    // <- NO escribe color
         depthWrite: true,     // <- SÍ escribe z
         depthTest: true,
+        polygonOffset: true,
+        polygonOffsetFactor: 2,
+        polygonOffsetUnits: 2,
         side: THREE.FrontSide
       });
       this.waterOccluder = new THREE.Mesh(occGeo, occMat);
@@ -4320,9 +4384,12 @@ export class RioScene extends BaseScene {
     const sz = Math.max(baseWidthForward * 5.0, 1000);
     const yTop = this.params.surfaceLevel;
 
-    // Position occluder slightly BELOW the top surface
-    // This hides everything above the water when looking from below.
-    this.waterOccluder.position.set(100, yTop - 0.1, 0);
+    // Place the depth-only occluder slightly ABOVE the surface so it is
+    // always visible from below (FrontSide faces down) even when the camera
+    // is just a few centimeters under the surface.
+    // This avoids the “gray band” that appears when the camera is between the
+    // surface and an occluder placed below it.
+    this.waterOccluder.position.set(100, yTop + 0.02, 0);
     this.waterOccluder.scale.set(sx, sz, 1);
 
     // Superficie visible (opcional, solo cara superior, sin “segunda tapa”)
@@ -4333,6 +4400,9 @@ export class RioScene extends BaseScene {
         transparent: false,
         roughness: 0.9, metalness: 0.0,
         side: THREE.FrontSide, // solo desde arriba
+        polygonOffset: true,
+        polygonOffsetFactor: -1,
+        polygonOffsetUnits: -1,
         depthWrite: true, depthTest: true,
         fog: true
       });
@@ -4355,6 +4425,9 @@ export class RioScene extends BaseScene {
         emissiveIntensity: 0.4,
         transparent: false, // Opaque to avoid seeing the occluder/void behind it
         side: THREE.FrontSide, // facing down
+        polygonOffset: true,
+        polygonOffsetFactor: -2,
+        polygonOffsetUnits: -2,
         depthWrite: true,
         depthTest: true,
         fog: true
@@ -4363,8 +4436,10 @@ export class RioScene extends BaseScene {
       this.waterSurfaceBottom.frustumCulled = false;
       this.scene.add(this.waterSurfaceBottom);
     }
-    // Position bottom surface further down to avoid any precision issues with the occluder
-    this.waterSurfaceBottom.position.set(100, yTop - 0.2, 0); 
+    // Keep the underside surface very close to the surface so that when the
+    // camera is slightly below the surface it still sees a valid surface
+    // instead of the clear/fogged background.
+    this.waterSurfaceBottom.position.set(100, yTop - 0.01, 0);
     this.waterSurfaceBottom.scale.set(sx, 1, sz);
 
   }
@@ -6156,13 +6231,29 @@ export class RioScene extends BaseScene {
     this.surfaceFX = {
       enabled: !!cfg.enabled,
       playing: false,
-      bubbleSystem: null
+      bubbleSystem: null,
+      overlayEl: null
     };
 
-    if (!this.surfaceFX.enabled || !this._insideOverlay) return;
+    if (!this.surfaceFX.enabled) return;
 
-    const c = this.getUnderwaterSurfaceColor();
-    this.surfaceFX.bubbleSystem = new BubbleSystem(this._insideOverlay, c);
+    // Dedicated transparent overlay: bubbles only.
+    const overlay = document.createElement('div');
+    Object.assign(overlay.style, {
+      position: 'fixed',
+      inset: '0',
+      width: '100%',
+      height: '100%',
+      pointerEvents: 'none',
+      zIndex: '100003',
+      background: 'transparent'
+    });
+    document.body.appendChild(overlay);
+    this.surfaceFX.overlayEl = overlay;
+
+    const tint = this.getUnderwaterSurfaceColor();
+    this.surfaceFX.bubbleSystem = new BubbleSystem(overlay, tint);
+    this.surfaceFX.bubbleSystem.setIntensity(0);
   }
 
   _handleSurfaceVideoInsideToggle(isInside) {
@@ -6198,7 +6289,29 @@ export class RioScene extends BaseScene {
     const fx = this.surfaceFX;
     if (!fx) return;
     fx.bubbleSystem?.destroy();
+    if (fx.overlayEl && fx.overlayEl.parentNode) fx.overlayEl.parentNode.removeChild(fx.overlayEl);
     this.surfaceFX = null;
+  }
+
+  _computeSurfaceBubbleIntensity() {
+    // Bubbles appear as you approach the surface from either side.
+    // Above surface: fade out to 0 after +0.1m
+    // Below surface: fade out to 0 after -1.0m
+    const y = this.camera?.position?.y ?? 0;
+    const s = this.params?.surfaceLevel ?? 0;
+    const aboveMargin = 0.1;
+    const belowMargin = 1.0;
+
+    if (y > s + aboveMargin) return 0;
+    if (y < s - belowMargin) return 0;
+
+    if (y >= s) {
+      const d = y - s; // 0..aboveMargin
+      return clamp(1 - (d / Math.max(0.0001, aboveMargin)), 0, 1);
+    }
+
+    const d = s - y; // 0..belowMargin
+    return clamp(1 - (d / Math.max(0.0001, belowMargin)), 0, 1);
   }
 
 
@@ -6816,14 +6929,14 @@ export class RioScene extends BaseScene {
       this._wasInsideSolid = currentInside;
 
       let allowMovement = true;
-      if (this._surfaceTransitionActive) {
+      /* if (this._surfaceTransitionActive) {
         this._surfaceTransitionTime += dt;
-        if (this._surfaceTransitionTime >= 0.5) {
+        if (this._surfaceTransitionTime >= 0.2) {
           this._surfaceTransitionActive = false;
         } else {
           allowMovement = false;
         }
-      }
+      } */
 
       if (allowMovement) {
         // Apply camera transform
@@ -6909,11 +7022,16 @@ export class RioScene extends BaseScene {
     if (this._insideOverlay) {
       const inside = this.isCameraInsideSolid();
       if (inside !== this._insideOverlayPrevInside) {
-        this._handleSurfaceVideoInsideToggle(inside);
         this._insideOverlayPrevInside = inside;
       }
       if (this.mistGroup) this.mistGroup.visible = !inside;  // <-- re-enable when not inside
       this._applyInsideOverlayState(inside);
+    }
+
+    // Surface bubbles: intensity by distance to surface (no background).
+    if (this.surfaceFX?.bubbleSystem) {
+      const intensity = this._computeSurfaceBubbleIntensity();
+      this.surfaceFX.bubbleSystem.setIntensity(intensity);
     }
 
     if (this.skyDome) this.skyDome.position.copy(this.camera.position);
