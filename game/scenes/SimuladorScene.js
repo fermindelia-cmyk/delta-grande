@@ -187,6 +187,21 @@ export const DEFAULT_PARAMS = Object.freeze({
     plateauStart: 0.15,
     plateauEnd: 0.85,
     transitionWidth: 0.12,
+    growthCap: Object.freeze({
+      enabled: true,
+      // Maximum riverbed height within the island plateau (innerStart..innerEnd),
+      // expressed relative to the *average* (medium) water level.
+      // This keeps the final island surface more even and prevents sharp peaks.
+      baseAboveAverageWater: 0.02,
+      // Subtle parabola: slightly lower in the center, slightly higher at the sides.
+      sideLift: 0.17,
+      // Gentle x-variation so the cap isn't perfectly smooth/straight.
+      noiseAmplitude: 0.05,
+      noiseFrequency: 8.0,
+      // Blend the cap in/out near the plateau edges (still preserves existing transitions).
+      edgeBlendWidth: 0.0,
+      seed: 18.37
+    }),
     noise: Object.freeze({
       lowAmplitude: 0.008,
       lowFrequency: 6.0,
@@ -218,7 +233,7 @@ export const DEFAULT_PARAMS = Object.freeze({
     arrivalThreshold: 0.008,
     dissolveSpeed: 0.3,
     depositRadius: 0.06,
-    depositAmount: 0.007,
+    depositAmount: 0.057,
     particleSize: 0.015,
     minAlpha: 0.35
   }),
@@ -4490,6 +4505,51 @@ export class SimuladorScene extends BaseScene {
     const leftSpan = Math.max(1e-5, innerStart - outerStart);
     const rightSpan = Math.max(1e-5, outerEnd - innerEnd);
 
+    // --- Island growth ceiling (plateau-only): noisy parabola above average water level ---
+    const capCfg = riverbed.growthCap ?? {};
+    const capEnabled = capCfg.enabled !== false;
+    const islandSpan = Math.max(1e-5, innerEnd - innerStart);
+
+    const avgWaterLevel = (this._waterLevels?.medium ?? this.params.water?.baseLevel ?? 0);
+    const noiseAmp = Math.max(0, capCfg.noiseAmplitude ?? 0);
+    // Ensure the cap always stays above average water level (even with negative noise).
+    const baseAboveAverage = Math.max(noiseAmp + 0.02, capCfg.baseAboveAverageWater ?? 0.09);
+    const baseCap = avgWaterLevel + baseAboveAverage;
+    const sideLift = Math.max(0, capCfg.sideLift ?? 0);
+    const noiseFreq = Math.max(1e-4, capCfg.noiseFrequency ?? 1);
+    const capSeed = (typeof capCfg.seed === 'number' && Number.isFinite(capCfg.seed)) ? capCfg.seed : 0;
+
+    const plateauCapAtU = (u) => {
+      const uClamped = clamp(u, 0, 1);
+      const parabola = 4 * (uClamped - 0.5) * (uClamped - 0.5); // 0 at center, 1 at sides
+      const capNoise = this._noise2D(uClamped * noiseFreq + capSeed * 0.13, capSeed) * noiseAmp;
+      const profile = baseCap + sideLift * parabola + capNoise;
+      return clamp(profile, riverbed.bottom, riverbed.maxHeight);
+    };
+
+    const capAtIndex = (i, normalized) => {
+      if (!capEnabled) return riverbed.maxHeight;
+      if (normalized < outerStart || normalized > outerEnd) return riverbed.maxHeight;
+
+      const baseAtX = (this._riverbedBase?.[i] ?? riverbed.bottom);
+      const leftEdgeCap = plateauCapAtU(0);
+      const rightEdgeCap = plateauCapAtU(1);
+
+      // Plateau: parabolic (with subtle noise) maximum height.
+      if (normalized >= innerStart && normalized <= innerEnd) {
+        const u = (normalized - innerStart) / islandSpan;
+        return plateauCapAtU(u);
+      }
+
+      // Transition zones: smoothly blend down to the baseline so we don't get spikes.
+      if (normalized < innerStart) {
+        const t = saturate((normalized - outerStart) / leftSpan);
+        return lerp(baseAtX, leftEdgeCap, smoothstep(0, 1, t));
+      }
+      const t = saturate((outerEnd - normalized) / rightSpan);
+      return lerp(baseAtX, rightEdgeCap, smoothstep(0, 1, t));
+    };
+
     let changed = false;
     for (let i = 0; i <= segments; i++) {
       const px = this.worldWidth * (i / segments);
@@ -4512,7 +4572,9 @@ export class SimuladorScene extends BaseScene {
 
       const weight = Math.cos((dist / radius) * Math.PI * 0.5);
       const delta = amount * weight * weight * boundaryFactor;
-      const next = clamp(this._riverbedHeights[i] + delta, riverbed.bottom, riverbed.maxHeight);
+
+      const maxAtX = capAtIndex(i, normalized);
+      const next = clamp(this._riverbedHeights[i] + delta, riverbed.bottom, maxAtX);
       if (next !== this._riverbedHeights[i]) {
         this._riverbedHeights[i] = next;
         changed = true;
