@@ -1807,7 +1807,7 @@ export class SimuladorScene extends BaseScene {
       const idx = i * 3;
       positions[idx + 0] = x;
       positions[idx + 1] = y;
-      positions[idx + 2] = 0.06;
+      positions[idx + 2] = 0.8;
       alphas[i] = 1;
 
       const dir = (Math.random() * Math.PI * 2);
@@ -1840,8 +1840,6 @@ export class SimuladorScene extends BaseScene {
     if (!this._seedBursts.length) return;
     const { seeds } = this.params;
     const gravity = seeds.gravity;
-    const segmentsRiverbed = this.params.riverbed.segments;
-    const segmentsWater = this.params.water.surfaceSegments;
     const toRemove = [];
 
     for (let i = 0; i < this._seedBursts.length; i++) {
@@ -1854,27 +1852,18 @@ export class SimuladorScene extends BaseScene {
         const posIdx = j * 3;
         const velIdx = j * 2;
 
-        const vx = burst.velocities[velIdx + 0];
-        let vy = burst.velocities[velIdx + 1];
-        vy -= gravity * dt;
-        burst.velocities[velIdx + 1] = vy;
+        // Update velocity with gravity
+        burst.velocities[velIdx + 1] -= gravity * dt;
 
-        const nx = burst.positions[posIdx + 0] + vx * dt;
-        const ny = burst.positions[posIdx + 1] + vy * dt;
+        // Update positions based on velocity
+        burst.positions[posIdx + 0] += burst.velocities[velIdx + 0] * dt;
+        burst.positions[posIdx + 1] += burst.velocities[velIdx + 1] * dt;
 
-        const waterHeight = this._heightAt(this._waterHeights, segmentsWater, nx);
-        const riverbedHeight = this._heightAt(this._riverbedHeights, segmentsRiverbed, nx);
-        const barrier = Math.max(riverbedHeight, waterHeight);
+        // Instead of colliding, we just fade them out over time
+        // This ensures they are visible everywhere
+        burst.alphas[j] = 1.0 - (burst.life / 1.5); // Fades out over 1.5 seconds
 
-        if (ny <= barrier) {
-          burst.alphas[j] = 0;
-          burst.positions[posIdx + 0] = nx;
-          burst.positions[posIdx + 1] = barrier;
-          burst.positions[posIdx + 2] = 0.04;
-          burst.aliveCount -= 1;
-        } else {
-          burst.positions[posIdx + 0] = nx;
-          burst.positions[posIdx + 1] = ny;
+        if (burst.alphas[j] > 0) {
           anyAlive = true;
         }
       }
@@ -1882,11 +1871,13 @@ export class SimuladorScene extends BaseScene {
       burst.geometry.attributes.position.needsUpdate = true;
       burst.geometry.attributes.alpha.needsUpdate = true;
 
-      if (!anyAlive || burst.aliveCount <= 0 || burst.life >= 4) {
+      // Remove the burst once life exceeds a limit or all particles are faded
+      if (!anyAlive || burst.life >= 1.5) {
         toRemove.push(i);
       }
     }
 
+    // Cleanup code...
     for (let i = toRemove.length - 1; i >= 0; i--) {
       const idx = toRemove[i];
       const burst = this._seedBursts[idx];
