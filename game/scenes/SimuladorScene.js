@@ -140,7 +140,7 @@ export const DEFAULT_PARAMS = Object.freeze({
   }),
   water: Object.freeze({
     surfaceSegments: 200,
-    baseLevel: 0.35,
+    baseLevel: 0.0,
     levelDelta: 0.25,
     bottom: -0.4,
     smoothing: 2.2,
@@ -233,8 +233,8 @@ export const DEFAULT_PARAMS = Object.freeze({
     arrivalThreshold: 0.008,
     dissolveSpeed: 0.3,
     depositRadius: 0.06,
-    depositAmount: 0.057,
-    particleSize: 0.015,
+    depositAmount: 0.012,
+    particleSize: 0.03,
     minAlpha: 0.35
   }),
   seeds: Object.freeze({
@@ -501,14 +501,13 @@ export const DEFAULT_PARAMS = Object.freeze({
         introMessage: 'Formá el nuevo banco de arena depositando sedimentos.',
         completionMessage: 'La isla emergió sobre el agua: ¡nuevo hábitat disponible!',
         goal: Object.freeze({
-          type: 'riverbedCoverage',
-          coverage: 0.5,
-          minElevationAboveWater: 0.0
+          type: 'riverbedMaxHeight',
+          epsilon: 0.002
         }),
         allowedSeedGroups: Object.freeze([]),
         hints: Object.freeze([
           'Formá el banco de arena depositando sedimentos.',
-          'Elevá el banco por encima de la línea blanca del agua promedio.',
+          'Elevá el banco hasta su altura máxima.',
           'Elevá el nivel del agua para tener más espacio y seguir depositando sedimentos.'
         ])
       }),
@@ -6859,7 +6858,9 @@ export class SimuladorScene extends BaseScene {
     const goal = stage.goal;
     
     if (goal.type === 'riverbedCoverage') {
-        return this._calculateLandCoverage(goal);
+      return this._calculateLandCoverage(goal);
+    } else if (goal.type === 'riverbedMaxHeight') {
+      return this._calculateRiverbedMaxHeightProgress(goal);
     } else if (goal.type === 'plantCounts') {
         return this._calculatePlantProgress(goal);
     }
@@ -6882,6 +6883,88 @@ export class SimuladorScene extends BaseScene {
     
     const coverage = elevated / heights.length;
     return coverage / threshold;
+  }
+
+  _calculateRiverbedMaxHeightProgress(goal) {
+    const heights = this._riverbedHeights;
+    if (!heights?.length) return 0;
+
+    const riverbed = this.params.riverbed || {};
+    const segments = riverbed.segments ?? (heights.length - 1);
+    if (!Number.isFinite(segments) || segments <= 0) return 0;
+
+    const plateauStartRaw = clamp(riverbed.plateauStart ?? 0.2, 0, 1);
+    const plateauEndRaw = clamp(riverbed.plateauEnd ?? 0.8, 0, 1);
+    const innerStart = Math.min(plateauStartRaw, plateauEndRaw);
+    const innerEnd = Math.max(plateauStartRaw, plateauEndRaw);
+
+    const transitionWidth = Math.max(0.0001, riverbed.transitionWidth ?? 0.1);
+    const halfTransition = transitionWidth * 0.5;
+    const outerStart = clamp(innerStart - halfTransition, 0, 1);
+    const outerEnd = clamp(innerEnd + halfTransition, 0, 1);
+    const leftSpan = Math.max(1e-5, innerStart - outerStart);
+    const rightSpan = Math.max(1e-5, outerEnd - innerEnd);
+
+    const capCfg = riverbed.growthCap ?? {};
+    const capEnabled = capCfg.enabled !== false;
+    const islandSpan = Math.max(1e-5, innerEnd - innerStart);
+
+    const avgWaterLevel = (this._waterLevels?.medium ?? this.params.water?.baseLevel ?? 0);
+    const noiseAmp = Math.max(0, capCfg.noiseAmplitude ?? 0);
+    const baseAboveAverage = Math.max(noiseAmp + 0.02, capCfg.baseAboveAverageWater ?? 0.09);
+    const baseCap = avgWaterLevel + baseAboveAverage;
+    const sideLift = Math.max(0, capCfg.sideLift ?? 0);
+    const noiseFreq = Math.max(1e-4, capCfg.noiseFrequency ?? 1);
+    const capSeed = (typeof capCfg.seed === 'number' && Number.isFinite(capCfg.seed)) ? capCfg.seed : 0;
+
+    const plateauCapAtU = (u) => {
+      const uClamped = clamp(u, 0, 1);
+      const parabola = 4 * (uClamped - 0.5) * (uClamped - 0.5);
+      const capNoise = this._noise2D(uClamped * noiseFreq + capSeed * 0.13, capSeed) * noiseAmp;
+      const profile = baseCap + sideLift * parabola + capNoise;
+      return clamp(profile, riverbed.bottom, riverbed.maxHeight);
+    };
+
+    const capAtIndex = (i, normalized) => {
+      if (!capEnabled) return riverbed.maxHeight;
+      if (normalized < outerStart || normalized > outerEnd) return riverbed.maxHeight;
+
+      const baseAtX = (this._riverbedBase?.[i] ?? riverbed.bottom);
+      const leftEdgeCap = plateauCapAtU(0);
+      const rightEdgeCap = plateauCapAtU(1);
+
+      if (normalized >= innerStart && normalized <= innerEnd) {
+        const u = (normalized - innerStart) / islandSpan;
+        return plateauCapAtU(u);
+      }
+
+      if (normalized < innerStart) {
+        const t = saturate((normalized - outerStart) / leftSpan);
+        return lerp(baseAtX, leftEdgeCap, smoothstep(0, 1, t));
+      }
+      const t = saturate((outerEnd - normalized) / rightSpan);
+      return lerp(baseAtX, rightEdgeCap, smoothstep(0, 1, t));
+    };
+
+    const epsilon = Math.max(0, goal?.epsilon ?? 0.0015);
+    let total = 0;
+    let reached = 0;
+
+    for (let i = 0; i <= segments; i++) {
+      const normalized = i / segments;
+      if (normalized < outerStart || normalized > outerEnd) continue;
+      total += 1;
+
+      const maxAtX = capAtIndex(i, normalized);
+      if ((heights[i] ?? riverbed.bottom) >= maxAtX - epsilon) {
+        reached += 1;
+      }
+    }
+
+    if (total <= 0) return 1;
+    const progress = reached / total;
+    const threshold = 0.8;
+    return Math.min(1, progress / threshold);
   }
 
   _calculatePlantProgress(goal) {
