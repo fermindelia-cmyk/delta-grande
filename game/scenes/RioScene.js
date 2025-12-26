@@ -4,6 +4,7 @@ import { BaseScene } from '../core/BaseScene.js';
 import { AssetLoader } from '../core/AssetLoader.js';
 import { EventBus } from '../core/EventBus.js';
 import { UI } from '../core/UI.js';
+import { State } from '../core/State.js';
 
 const ensureTrailingSlash = (value = '') => (value.endsWith('/') ? value : `${value}/`);
 const computePublicBaseUrl = () => {
@@ -3446,6 +3447,11 @@ export class RioScene extends BaseScene {
     this._loadingProgressTotal = 0;
     this._loadingProgressCompleted = 0;
 
+    // Deck tutorial hint (one-time): points to selected deck card until 3 fish clicks.
+    this._deckTagHintEl = null;
+    this._deckTagHintVisible = false;
+    this._deckTagHintLastKey = '';
+
   // Completed overlay state
   this.completedOverlay = null;
   this._completedOverlayState = { activeKey: null, loading: false };
@@ -4250,6 +4256,7 @@ export class RioScene extends BaseScene {
     this._destroyIntroOverlay();
     this._destroyTimerOverlay();
     this._destroyCursorOverlay();
+    this._destroyDeckTagHint();
   this._destroySurfaceVideoFX();
 
     this.disposeShoreHaze();
@@ -6466,6 +6473,7 @@ export class RioScene extends BaseScene {
       // Walk up to find a mesh tagged with speciesKey
       while (obj) {
         if (obj.userData && obj.userData.speciesKey) {
+          this._recordDeckTagAttempt();
           this._handleFishClickForFacts();
           const agent = this._findAgentByObject(obj);
           const skipIncrement = !!agent?.tracked;
@@ -6513,6 +6521,135 @@ export class RioScene extends BaseScene {
         this.speciesFactIndices[speciesKey] = (this.speciesFactIndices[speciesKey] + 1) % facts.length;
       }
     }
+  }
+
+  _createDeckTagHint() {
+    if (this._deckTagHintEl) return this._deckTagHintEl;
+
+    const accent = this.params?.deckUI?.colors?.silhouetteSelected || '#FFD400';
+    const fontFamily = this.params?.deckUI?.fonts?.family || 'system-ui, sans-serif';
+
+    const el = document.createElement('div');
+    el.id = 'rio-deck-tag-hint';
+    Object.assign(el.style, {
+      position: 'fixed',
+      left: '0px',
+      top: '0px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      pointerEvents: 'none',
+      zIndex: '10002',
+      opacity: '0',
+      transition: 'opacity 200ms ease',
+      willChange: 'transform, opacity, left, top'
+    });
+
+    const text = document.createElement('div');
+    text.textContent = 'Encontrá y marcá peces de esta especie.';
+    Object.assign(text.style, {
+      fontFamily,
+      fontWeight: '800',
+      fontSize: '1.7vh',
+      lineHeight: '1.1',
+      color: '#ffffff',
+      background: 'rgba(0,0,0,0.35)',
+      padding: '0.7vh 1.0vh',
+      borderRadius: '999px',
+      whiteSpace: 'nowrap',
+      textShadow: '0 1px 2px rgba(0,0,0,0.65)'
+    });
+
+    const arrow = document.createElement('div');
+    arrow.setAttribute('aria-hidden', 'true');
+    Object.assign(arrow.style, {
+      width: '0',
+      height: '0',
+      borderTop: '10px solid transparent',
+      borderBottom: '10px solid transparent',
+      borderLeft: `16px solid ${accent}`,
+      filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.65))'
+    });
+
+    el.appendChild(text);
+    el.appendChild(arrow);
+    document.body.appendChild(el);
+
+    this._deckTagHintEl = el;
+    return el;
+  }
+
+  _showDeckTagHint() {
+    const el = this._createDeckTagHint();
+    this._deckTagHintVisible = true;
+    el.style.opacity = '1';
+    this._updateDeckTagHintPosition();
+  }
+
+  _hideDeckTagHint(remove = false) {
+    this._deckTagHintVisible = false;
+    if (!this._deckTagHintEl) return;
+    this._deckTagHintEl.style.opacity = '0';
+    if (remove) {
+      const el = this._deckTagHintEl;
+      this._deckTagHintEl = null;
+      this._deckTagHintLastKey = '';
+      setTimeout(() => {
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+      }, 220);
+    }
+  }
+
+  _destroyDeckTagHint() {
+    this._deckTagHintVisible = false;
+    this._deckTagHintLastKey = '';
+    if (this._deckTagHintEl && this._deckTagHintEl.parentNode) {
+      this._deckTagHintEl.parentNode.removeChild(this._deckTagHintEl);
+    }
+    this._deckTagHintEl = null;
+  }
+
+  _maybeShowDeckTagHint() {
+    if (!this.deck || !this.deck.container) return;
+    if (State.hasRioDeckTagHintDismissed()) return;
+    if (State.getRioDeckTagHintAttempts() >= 3) return;
+    this._showDeckTagHint();
+  }
+
+  _recordDeckTagAttempt() {
+    if (State.hasRioDeckTagHintDismissed()) return;
+    const attempts = State.getRioDeckTagHintAttempts();
+    if (attempts >= 3) return;
+    State.incrementRioDeckTagHintAttempts(3);
+    if (State.getRioDeckTagHintAttempts() >= 3 || State.hasRioDeckTagHintDismissed()) {
+      this._hideDeckTagHint(true);
+    }
+  }
+
+  _updateDeckTagHintPosition() {
+    if (!this._deckTagHintVisible || !this._deckTagHintEl || !this.deck?.container) return;
+
+    const selected = this.deck.container.querySelector('.deck-card-vert.selected');
+    if (!selected) return;
+
+    const r = selected.getBoundingClientRect();
+    const el = this._deckTagHintEl;
+
+    const key = `${Math.round(r.left)}|${Math.round(r.top)}|${Math.round(r.width)}|${Math.round(r.height)}`;
+    if (key === this._deckTagHintLastKey) return;
+    this._deckTagHintLastKey = key;
+
+    const hintRect = el.getBoundingClientRect();
+    const gap = 10;
+
+    let left = Math.round(r.left - hintRect.width - gap);
+    let top = Math.round(r.top + r.height * 0.5 - hintRect.height * 0.5);
+
+    left = clamp(left, 8, Math.max(8, window.innerWidth - hintRect.width - 8));
+    top = clamp(top, 8, Math.max(8, window.innerHeight - hintRect.height - 8));
+
+    el.style.left = `${left}px`;
+    el.style.top = `${top}px`;
   }
 
 
@@ -6844,6 +6981,9 @@ export class RioScene extends BaseScene {
           this.controlsEnabled = true;
           this._destroyIntroOverlay();
           this._startTimer();
+
+          // One-time instruction: point to the selected deck card until 3 fish clicks.
+          this._maybeShowDeckTagHint();
         }
       }
 
@@ -7038,6 +7178,9 @@ export class RioScene extends BaseScene {
     
     // Update the deck UI
     if (this.deck && this.params.debug.deckRender) this.deck.update(dt);
+
+    // Keep the deck tutorial hint anchored to the selected card.
+    this._updateDeckTagHintPosition();
 
     if (this.deck) {
       const idx = this.deck.currentIndex ?? 0;

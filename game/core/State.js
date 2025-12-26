@@ -8,6 +8,10 @@ achievements: [], // [{id, name, whenISO}]
 scores: { simulador: 0 },
 fishCounts: {}, // { speciesId: count }
 hasSeenIntro: false, // Track if user has seen the initial intro
+
+// RioScene: one-time deck tutorial hint (hide permanently after N fish clicks)
+rioDeckTagHintAttempts: 0,
+rioDeckTagHintDismissed: false,
 };
 
 
@@ -18,6 +22,39 @@ function commit(){ Save.save(data); }
 
 export const State = {
 get(){ return data; },
+
+
+getRioDeckTagHintAttempts(){
+	return Math.max(0, data.rioDeckTagHintAttempts | 0);
+},
+
+hasRioDeckTagHintDismissed(){
+	return data.rioDeckTagHintDismissed === true;
+},
+
+incrementRioDeckTagHintAttempts(maxAttempts = 3){
+	const max = Math.max(1, maxAttempts | 0);
+	const next = (data.rioDeckTagHintAttempts | 0) + 1;
+	data.rioDeckTagHintAttempts = Math.max(0, next);
+	if (data.rioDeckTagHintAttempts >= max) {
+		data.rioDeckTagHintDismissed = true;
+	}
+	commit();
+	EventBus.emit('rio:deckTagHint', {
+		attempts: data.rioDeckTagHintAttempts,
+		dismissed: data.rioDeckTagHintDismissed
+	});
+},
+
+dismissRioDeckTagHint(){
+	if (data.rioDeckTagHintDismissed === true) return;
+	data.rioDeckTagHintDismissed = true;
+	commit();
+	EventBus.emit('rio:deckTagHint', {
+		attempts: data.rioDeckTagHintAttempts,
+		dismissed: data.rioDeckTagHintDismissed
+	});
+},
 
 
 addItem(item){
