@@ -25,8 +25,11 @@ def build():
     # (favicons, service worker, webmanifest, offline manifest, etc.)
     extra_patterns = [
         'service-worker.js',
+        'sw-register.js',
+        'landing-ui.js',
+        'landing-style.css',
         'offline-manifest.json',
-        'manifest.webmanifest',
+        'site.webmanifest',
         'manifest.json',
         'favicon.ico',
         'favicon*.png',
@@ -44,6 +47,13 @@ def build():
         'environment_with_vegetation_decimated_better.glb',
         'environment - unzip to use.zip'
     ]
+
+    print("Generating offline manifest...")
+    try:
+        import generate_offline_manifest
+        generate_offline_manifest.generate_manifest(project_root, os.path.join(project_root, 'offline-manifest.json'))
+    except Exception as e:
+        print(f"Warning: Failed to generate offline manifest: {e}")
 
     print("Starting build...")
 
