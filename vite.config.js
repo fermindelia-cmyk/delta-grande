@@ -43,9 +43,17 @@ export default defineConfig({
   server: {
     open: true,
     headers: {
-      'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'require-corp',
+      // 'Cross-Origin-Opener-Policy': 'same-origin',
+      // 'Cross-Origin-Embedder-Policy': 'require-corp',
       // Prevent caching of service worker during development
+      'Service-Worker-Allowed': '/',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
+    }
+  },
+  preview: {
+    headers: {
+      // 'Cross-Origin-Opener-Policy': 'same-origin',
+      // 'Cross-Origin-Embedder-Policy': 'require-corp',
       'Service-Worker-Allowed': '/',
       'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
     }
