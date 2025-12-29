@@ -121,17 +121,20 @@
             <div class="video-frame">
                 <div class="video-wrapper">
                     <div class="video-shell">
-                        <iframe loading="lazy" src="https://www.youtube.com/embed/TPdIbiAK-04?modestbranding=1&rel=0&iv_load_policy=3"
-                            title="Video"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                            allowfullscreen>
-                        </iframe>
+                        <video id="poema-video" preload="metadata" playsinline muted>
+                            <source src="assets/video/poema.mp4" type="video/mp4">
+                            Tu navegador no soporta la reproducción de video.
+                        </video>
                     </div>
                 </div>
                 <span class="frame-corner top-left"></span>
                 <span class="frame-corner top-right"></span>
                 <span class="frame-corner bottom-left"></span>
                 <span class="frame-corner bottom-right"></span>
+            </div>
+            <div class="poema-controls">
+                <button type="button" class="pwa-button" id="poema-play-toggle" aria-pressed="true">Pausa</button>
+                <button type="button" class="pwa-button" id="poema-audio-toggle" aria-pressed="false">Habilitar audio</button>
             </div>
         </div>
     </section>

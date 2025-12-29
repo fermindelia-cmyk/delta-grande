@@ -1041,6 +1041,184 @@ window.addEventListener('keydown', (ev) => {
     }
 })();
 
+// Fade down global audio when the YouTube iframe section is in view
+(function() {
+    const targetSection = document.getElementById('main-video-section');
+    if (!targetSection) return;
+
+    const FADE_MS = 700;
+    let savedVolumes = null;
+    let dimmed = false;
+    let fadeId = null;
+
+    const getLayers = () => window.audioLayers || {
+        ambient: document.getElementById('audio-ambient'),
+        music: document.getElementById('audio-music'),
+        dialog: document.getElementById('audio-dialog')
+    };
+
+    const fadeTo = (targets) => {
+        if (fadeId) cancelAnimationFrame(fadeId);
+        const layers = getLayers();
+        const start = performance.now();
+        const startVolumes = {};
+
+        Object.keys(targets).forEach((name) => {
+            const layer = layers[name];
+            startVolumes[name] = layer ? layer.volume : 0;
+        });
+
+        const step = (now) => {
+            const t = Math.min((now - start) / FADE_MS, 1);
+            Object.keys(targets).forEach((name) => {
+                const layer = layers[name];
+                if (!layer) return;
+                const from = startVolumes[name];
+                const to = targets[name];
+                layer.volume = from + (to - from) * t;
+            });
+
+            if (t < 1) {
+                fadeId = requestAnimationFrame(step);
+            }
+        };
+
+        fadeId = requestAnimationFrame(step);
+    };
+
+    const dimAudio = () => {
+        if (dimmed) return;
+        const layers = getLayers();
+        savedVolumes = {};
+        Object.keys(layers).forEach((name) => {
+            const layer = layers[name];
+            if (layer) savedVolumes[name] = layer.volume;
+        });
+
+        const targets = {};
+        Object.keys(savedVolumes).forEach((name) => { targets[name] = 0; });
+        fadeTo(targets);
+        dimmed = true;
+    };
+
+    const restoreAudio = () => {
+        if (!dimmed || !savedVolumes) return;
+        fadeTo(savedVolumes);
+        dimmed = false;
+    };
+
+    const handleVisibilityFallback = () => {
+        const rect = targetSection.getBoundingClientRect();
+        const inView = rect.top < window.innerHeight * 0.75 && rect.bottom > window.innerHeight * 0.25;
+        if (inView) {
+            dimAudio();
+        } else {
+            restoreAudio();
+        }
+    };
+
+    if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    dimAudio();
+                } else {
+                    restoreAudio();
+                }
+            });
+        }, { threshold: 0.45 });
+
+        observer.observe(targetSection);
+    } else {
+        handleVisibilityFallback();
+        window.addEventListener('scroll', handleVisibilityFallback, { passive: true });
+        window.addEventListener('resize', handleVisibilityFallback);
+    }
+})();
+
+// Custom controls for the self-hosted Poema video
+(function() {
+    const video = document.getElementById('poema-video');
+    const playBtn = document.getElementById('poema-play-toggle');
+    const audioBtn = document.getElementById('poema-audio-toggle');
+    if (!video || !playBtn || !audioBtn) return;
+
+    // Keep muted by default; start paused until fully in view
+    video.muted = true;
+    video.pause();
+    video.currentTime = 0;
+
+    const updatePlayLabel = () => {
+        const playing = !video.paused && !video.ended;
+        playBtn.textContent = playing ? 'Pausa' : 'Reproducir';
+        playBtn.setAttribute('aria-pressed', playing ? 'true' : 'false');
+    };
+
+    const updateAudioLabel = () => {
+        const muted = video.muted;
+        audioBtn.textContent = muted ? 'Habilitar audio' : 'Deshabilitar audio';
+        audioBtn.setAttribute('aria-pressed', muted ? 'false' : 'true');
+    };
+
+    playBtn.addEventListener('click', () => {
+        if (video.paused || video.ended) {
+            video.play().catch(() => {});
+        } else {
+            video.pause();
+        }
+        updatePlayLabel();
+    });
+
+    audioBtn.addEventListener('click', () => {
+        video.muted = !video.muted;
+        updateAudioLabel();
+    });
+
+    video.addEventListener('play', updatePlayLabel);
+    video.addEventListener('pause', updatePlayLabel);
+    video.addEventListener('ended', updatePlayLabel);
+
+    const ensurePlayWhenVisible = () => {
+        const section = document.getElementById('main-video-section');
+        if (!section) return;
+
+        const attemptPlay = () => {
+            if (video.paused) video.play().catch(() => {});
+        };
+
+        const attemptPause = () => {
+            if (!video.paused) video.pause();
+        };
+
+        if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    const fullyInView = entry.intersectionRatio >= 0.9;
+                    if (fullyInView) {
+                        attemptPlay();
+                    } else if (!entry.isIntersecting || entry.intersectionRatio < 0.5) {
+                        attemptPause();
+                    }
+                });
+            }, { threshold: [0, 0.5, 0.9] });
+            observer.observe(section);
+        } else {
+            // Fallback: check once on load
+            const rect = section.getBoundingClientRect();
+            const inView = rect.top >= 0 && rect.bottom <= window.innerHeight;
+            if (inView) {
+                attemptPlay();
+            } else {
+                attemptPause();
+            }
+        }
+    };
+
+    ensurePlayWhenVisible();
+    updatePlayLabel();
+    updateAudioLabel();
+})();
+
 
 // Extracted scripts from index.html
 
@@ -1374,6 +1552,33 @@ window.addEventListener('keydown', (ev) => {
                     wasMobile = isMobile;
                     renderCards();
                 }
+            });
+        })();
+
+// --------------------------------------------------
+// "Contenidos" material button: download both PDFs on click
+        (() => {
+            const contenidosBtn = document.querySelector('.material-buttons-container .material-button[href="#"]');
+            if (!contenidosBtn) return;
+
+            const pdfs = [
+                { href: 'assets/pdfs/Actividades%20Primario.pdf', filename: 'Actividades Primario.pdf' },
+                { href: 'assets/pdfs/Actividades%20Secundario.pdf', filename: 'Actividades Secundario.pdf' }
+            ];
+
+            const triggerDownload = (href, filename) => {
+                const link = document.createElement('a');
+                link.href = href;
+                link.download = filename;
+                link.rel = 'noopener';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+            };
+
+            contenidosBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                pdfs.forEach(({ href, filename }) => triggerDownload(href, filename));
             });
         })();
 
