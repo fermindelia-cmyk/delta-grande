@@ -148,10 +148,6 @@
 
     <!-- Third video section with framed local video (background video removed to show body image) -->
     <section class="video-section">
-        <!-- Juegos banner -->
-        <div style="text-align: center; margin-bottom: 40px;">
-            <img src="ui/juegos banner.png" alt="Juegos" style="max-width: 300px; width: 100%; height: auto;">
-        </div>
         <!-- Content container with video and news -->
         <div class="content-container">
             <!-- Video frame container -->
@@ -161,7 +157,7 @@
                         <div class="video-wrapper">
                             <div class="video-shell">
                                 <video class="lazy-video" loop muted playsinline preload="none">
-                                    <source src="assets/mapa_gigante.webm" type="video/webm">
+                                    <source src="assets/mapa/mapa_gigante.mp4" type="video/mp4">
                                 </video>
                             </div>
                         </div>
@@ -169,6 +165,11 @@
                         <span class="frame-corner top-right"></span>
                         <span class="frame-corner bottom-left"></span>
                         <span class="frame-corner bottom-right"></span>
+
+                        <!-- Map Reference Chart Overlay -->
+                        <div class="map-reference-chart" aria-hidden="true">
+                            <img src="assets/mapa/refe_mapa.png" alt="Referencias del mapa" style="width: 100%; height: auto; display: block;">
+                        </div>
                     </div>
                 </a>
             </div>

@@ -1268,4 +1268,21 @@
             height: auto;
             display: block;
         }
+
+        /* Map Reference Chart */
+        .map-reference-chart {
+            position: absolute;
+            bottom: 62px;
+            right: 62px;
+            z-index: 10;
+            width: clamp(100px, 12.5vw, 175px);
+            pointer-events: none;
+            user-select: none;
+        }
+
+        @media (max-width: 768px) {
+            .map-reference-chart {
+                display: none;
+            }
+        }
     
