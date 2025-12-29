@@ -1378,6 +1378,33 @@ window.addEventListener('keydown', (ev) => {
         })();
 
 // --------------------------------------------------
+// "Contenidos" material button: download both PDFs on click
+        (() => {
+            const contenidosBtn = document.querySelector('.material-buttons-container .material-button[href="#"]');
+            if (!contenidosBtn) return;
+
+            const pdfs = [
+                { href: 'assets/pdfs/Actividades%20Primario.pdf', filename: 'Actividades Primario.pdf' },
+                { href: 'assets/pdfs/Actividades%20Secundario.pdf', filename: 'Actividades Secundario.pdf' }
+            ];
+
+            const triggerDownload = (href, filename) => {
+                const link = document.createElement('a');
+                link.href = href;
+                link.download = filename;
+                link.rel = 'noopener';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+            };
+
+            contenidosBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                pdfs.forEach(({ href, filename }) => triggerDownload(href, filename));
+            });
+        })();
+
+// --------------------------------------------------
 // Show the down arrow after a brief delay to hint scrolling
         (function () {
             const indicator = document.getElementById('scroll-indicator');

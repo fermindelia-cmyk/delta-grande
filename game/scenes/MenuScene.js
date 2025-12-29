@@ -260,7 +260,7 @@ export class MenuScene extends BaseScene {
       sceneLayer.style.cssText = `
         position: absolute;
         inset: 0;
-        background-image: url('/game-assets/menu/laboratorio_interior.png');
+        background-image: url('/game-assets/menu/laboratorio_interior.webp');
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
