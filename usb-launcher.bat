@@ -7,7 +7,7 @@ set PORT=4173
 set APP_DIR=%ROOT%app
 set SERVER_JS=%ROOT%usb-server.js
 set NODE_EXE=%ROOT%portable\node\node.exe
-set CHROME_EXE=%ROOT%portable\chromium\chrome.exe
+set CHROME_EXE=%ROOT%portable\chromium\GoogleChromePortable\GoogleChromePortable.exe
 set PROFILE_DIR=%ROOT%chromium-profile
 
 if not exist "%APP_DIR%" (
