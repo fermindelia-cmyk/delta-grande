@@ -18,7 +18,14 @@ export default defineConfig({
     viteStaticCopy({
       targets: [
         { src: 'game-assets', dest: '.' },
-        { src: 'game/styles', dest: 'game/styles' },
+        { src: 'game/styles', dest: 'game' },
+        { src: 'game/data', dest: 'game' },
+        { src: 'game/core', dest: 'game' },
+        { src: 'game/scenes', dest: 'game' },
+        { src: 'game/ui', dest: 'game' },
+        { src: 'game/utils', dest: 'game' },
+        { src: 'game/main.js', dest: 'game' },
+        { src: 'isla splat', dest: '.' }, // Supersplat viewer assets with space in folder name
         { src: 'service-worker.js', dest: '.' } // Copy service worker to root of dist
       ]
     })

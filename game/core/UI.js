@@ -16,6 +16,13 @@ export const UI = new class{
    */
   showVideo(opts = {}){
     const { src, controls=false, muted=true, immersive=true, playbackRate=1, onended } = opts;
+    console.log('[UI] showVideo called with src:', src);
+    
+    // Mark if this is a transition video
+    if (src && src.includes('transicion')) {
+      this._transitionVideoActive = true;
+      console.log('[UI] Transition video detected, setting protection flag');
+    }
 
     // Atributos y estilo para que no muestre controles y cubra pantalla
     this.videoEl.src = src || '';
@@ -24,10 +31,18 @@ export const UI = new class{
     this.videoEl.playsInline = true;
 
     this.videoOverlayEl.style.display = 'block';
+    console.log('[UI] videoOverlay display set to block, computed style:', window.getComputedStyle(this.videoOverlayEl).display);
     this.videoEl.playbackRate = playbackRate || 1;
 
     const done = () => {
       this.videoEl.onended = null;
+      
+      // Clear transition flag if it was set
+      if (this._transitionVideoActive) {
+        console.log('[UI] Transition video ended, clearing protection flag');
+        this._transitionVideoActive = false;
+      }
+      
       try { this.videoEl.pause(); } catch {}
 
       let awaitable = null;
@@ -85,10 +100,17 @@ export const UI = new class{
     });
 
     let playPromise = this.videoEl.play();
+    console.log('[UI] Video play() called, promise:', playPromise);
     if (!(playPromise && typeof playPromise.then === 'function')) {
       playPromise = Promise.resolve();
     } else {
-      playPromise = playPromise.catch(()=>{});
+      playPromise = playPromise.then(() => {
+        console.log('[UI] Video play() resolved successfully');
+        console.log('[UI] Video paused after play:', this.videoEl.paused);
+        console.log('[UI] Video currentTime after play:', this.videoEl.currentTime);
+      }).catch((err) => {
+        console.error('[UI] Video play() failed:', err);
+      });
     }
 
     // Intento opcional de fullscreen nativo (ignora si falla/iOS)
@@ -96,10 +118,22 @@ export const UI = new class{
       this.videoOverlayEl.requestFullscreen().catch(()=>{});
     }
 
-    return Promise.all([playPromise, playbackReady]).then(() => this.videoEl);
+    return Promise.all([playPromise, playbackReady]).then(() => {
+      console.log('[UI] Video playback ready, overlay display:', this.videoOverlayEl.style.display);
+      return this.videoEl;
+    });
   }
 
   hideVideo(){
+    console.log('[UI] hideVideo called, stack trace:');
+    console.trace();
+    
+    // Don't hide if transition is active
+    if (this._transitionVideoActive) {
+      console.warn('[UI] Ignoring hideVideo - transition video is active');
+      return;
+    }
+    
     try { this.videoEl.pause(); } catch {}
     // restaurar playbackRate por si se modificó
     try { this.videoEl.playbackRate = 1; } catch {}

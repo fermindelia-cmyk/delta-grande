@@ -12,11 +12,11 @@
 <body class="is-loading">
     <!-- Top-left ER horizontal logo -->
     <div class="er-logo">
-        <img src="assets/LOGO_ER_horizontal.png" alt="ER" loading="eager" />
+        <img src="LOGO_ER_horizontal.png" alt="ER" loading="eager" />
     </div>
     <div id="page-loader" aria-live="polite" aria-label="Cargando Delta+">
         <video autoplay muted playsinline preload="auto">
-            <source src="assets/D+_loader04.webm" type="video/webm">
+            <source src="D+_loader04.webm" type="video/webm">
         </video>
     </div>
     <div id="entry-gate" aria-hidden="true">
@@ -39,7 +39,7 @@
                 <div id="splat-overlay" style="position: absolute; inset: 0; z-index: 10;"></div>
                 <div id="birds-overlay" aria-hidden="true">
                     <video id="birds-video" muted loop playsinline preload="auto">
-                        <source src="assets/birds.webm" type="video/webm">
+                        <source src="birds.webm" type="video/webm">
                     </video>
                 </div>
                 <canvas id="spark-canvas" aria-hidden="true"></canvas>
@@ -58,7 +58,7 @@
                 Cargando isla...
             </div> -->
             <div class="sound-selector" aria-hidden="false" role="group" aria-label="Selector de sonido">
-                <img src="assets/selectores/selector-sonido-off.png" alt="Selector de sonido" id="sound-toggle">
+                <img src="selectores/selector-sonido-off.png" alt="Selector de sonido" id="sound-toggle">
                 <div class="waveform-container" id="waveform">
                     <div class="waveform-bar"></div>
                     <div class="waveform-bar"></div>
@@ -114,8 +114,8 @@
             tierra.</p>
     </div>
 
-    <!-- Second video section with framed YouTube video (background video removed to show body image) -->
-    <section class="video-section">
+    <!-- Second video section with framed mp4 video (background video removed to show body image) -->
+    <section class="video-section" id="main-video-section">
         <!-- Video frame container -->
         <div class="video-frame-container">
             <div class="video-frame">
@@ -150,7 +150,7 @@
     <section class="video-section">
         <!-- Juegos banner -->
         <div style="text-align: center; margin-bottom: 40px;">
-            <img src="assets/ui/juegos banner.png" alt="Juegos" style="max-width: 300px; width: 100%; height: auto;">
+            <img src="ui/juegos banner.png" alt="Juegos" style="max-width: 300px; width: 100%; height: auto;">
         </div>
         <!-- Content container with video and news -->
         <div class="content-container">

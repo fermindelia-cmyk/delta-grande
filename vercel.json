@@ -30,11 +30,5 @@
         }
       ]
     }
-  ],
-  "rewrites": [
-    {
-      "source": "/game",
-      "destination": "/game/index.html"
-    }
   ]
 }

@@ -14,20 +14,20 @@ export class AssetPreloader {
                 '../game-assets/recorrido/recorrido01.glb',
                 '../game-assets/recorrido/butter_flying.glb',
                 '../game-assets/recorrido/paneles/inventario.glb',
-                '../assets/isla.glb',
-                '../assets/island.glb'
+                '../isla.glb',
+                '../island.glb'
             ],
             
             // Videos principales
             videos: [
-                '../assets/island.mp4',
-                '../assets/island.webm',
-                '../assets/island_1.webm',
-                '../assets/island_2.webm',
-                '../assets/mapa_gigante.webm',
-                '../assets/web-bgs/web-bg01.webm',
-                '../assets/web-bgs/web-bg02.webm',
-                '../assets/web-bgs/web-bg03.webm',
+                '../island.mp4',
+                '../island.webm',
+                '../island_1.webm',
+                '../island_2.webm',
+                '../mapa_gigante.webm',
+                '../web-bgs/web-bg01.webm',
+                '../web-bgs/web-bg02.webm',
+                '../web-bgs/web-bg03.webm',
                 '../game-assets/menu/cinematicas/logo_naranja.webm',
                 '../game-assets/recorrido/cinematicas/carpa_flota.webm',
                 '../game-assets/transiciones/lab-a-subacua.webm',

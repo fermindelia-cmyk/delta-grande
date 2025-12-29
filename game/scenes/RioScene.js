@@ -4,6 +4,7 @@ import { BaseScene } from '../core/BaseScene.js';
 import { AssetLoader } from '../core/AssetLoader.js';
 import { EventBus } from '../core/EventBus.js';
 import { UI } from '../core/UI.js';
+import { State } from '../core/State.js';
 
 const ensureTrailingSlash = (value = '') => (value.endsWith('/') ? value : `${value}/`);
 const computePublicBaseUrl = () => {
@@ -140,6 +141,11 @@ class BubbleSystem {
     container.appendChild(this.canvas);
     this.bubbles = [];
     this.active = false;
+    this.intensity = 0; // 0..1
+    this.maxBubbles = 0;
+    this._maxSpawnPerFrame = 60;
+    this._fadeInSec = 0.12;
+    this._fadeOutSec = 0.18;
     this.resize();
     this._onResize = () => this.resize();
     window.addEventListener('resize', this._onResize);
@@ -153,31 +159,45 @@ class BubbleSystem {
   resize() {
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
+    // Area-based cap so “full intensity” can cover the screen across resolutions.
+    // Tuned so 1080p lands around ~400 bubbles.
+    const area = Math.max(1, this.canvas.width * this.canvas.height);
+    this.maxBubbles = clamp(Math.round(area / 5200), 180, 900);
   }
 
-  start() {
-    this.active = true;
-    // Initial burst
-    for (let i = 0; i < 60; i++) {
-      const b = this.createBubble();
-      b.y = Math.random() * this.canvas.height; // distribute initially
-      this.bubbles.push(b);
+  setIntensity(value) {
+    const v = clamp(Number(value) || 0, 0, 1);
+    this.intensity = v;
+    this.active = v > 0;
+
+    // Requirement: outside the margin, bubbles drop to 0 immediately.
+    if (!this.active) {
+      this.bubbles.length = 0;
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
   }
 
-  stop() {
-    this.active = false;
-  }
-
   createBubble() {
-    const radius = Math.random() * 12 + 4;
+    // Wider size range (with bias toward smaller bubbles), so a few feel close to camera.
+    const minRadius = 4;
+    const maxRadius = 196;
+
+    const pBig = 0.03; // ~3% giants
+    const t = (Math.random() < pBig)
+      ? (1 - Math.pow(Math.random(), 6)) // hug the max
+      : Math.pow(Math.random(), 3.5);    // mostly small
+
+    const radius = minRadius + t * (maxRadius - minRadius);
     return {
       x: Math.random() * this.canvas.width,
       y: this.canvas.height + radius + Math.random() * 200,
       vx: (Math.random() - 0.5) * 1.5,
       vy: -Math.random() * 8 - 4,
       radius: radius,
-      alpha: Math.random() * 0.4 + 0.1,
+      alphaBase: Math.random() * 0.4 + 0.1,
+      alpha: 0,
+      ageSec: 0,
+      lifeSec: Math.random() * 0.9 + 0.7,
       wobble: Math.random() * Math.PI * 2,
       wobbleSpeed: Math.random() * 0.1 + 0.05,
       wobbleAmp: Math.random() * 3 + 1
@@ -187,10 +207,49 @@ class BubbleSystem {
   update(dt) {
     if (!this.active && this.bubbles.length === 0) return;
 
+    const smoothstep01 = (t) => {
+      const x = clamp(t, 0, 1);
+      return x * x * (3 - 2 * x);
+    };
+
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Keep bubble density proportional to intensity.
+    if (this.active) {
+      const target = Math.round(this.maxBubbles * this.intensity);
+      const need = target - this.bubbles.length;
+      if (need > 0) {
+        const spawn = Math.min(need, this._maxSpawnPerFrame);
+        for (let i = 0; i < spawn; i++) {
+          const b = this.createBubble();
+          // Spawn across the screen so it fills immediately near surface.
+          b.y = Math.random() * this.canvas.height;
+          this.bubbles.push(b);
+        }
+      } else if (need < 0) {
+        // As intensity drops but still > 0, thin out quickly.
+        this.bubbles.length = target;
+      }
+    }
 
     for (let i = this.bubbles.length - 1; i >= 0; i--) {
       const b = this.bubbles[i];
+
+      b.ageSec += dt;
+      const fadeIn = smoothstep01(b.ageSec / Math.max(0.0001, this._fadeInSec));
+      const fadeOut = smoothstep01((b.lifeSec - b.ageSec) / Math.max(0.0001, this._fadeOutSec));
+      // Also scale alpha with overall intensity so entering/leaving is smoother.
+      b.alpha = b.alphaBase * fadeIn * fadeOut * clamp(this.intensity, 0, 1);
+
+      if (b.ageSec >= b.lifeSec) {
+        if (this.active) {
+          Object.assign(b, this.createBubble());
+        } else {
+          this.bubbles.splice(i, 1);
+          continue;
+        }
+      }
+
       b.x += b.vx + Math.sin(b.wobble) * b.wobbleAmp;
       b.y += b.vy;
       b.wobble += b.wobbleSpeed;
@@ -610,7 +669,7 @@ const DEFAULT_PARAMS = {
 
   /** Lightweight “steam” / mist patches just above the water */
   mist: {
-    enabled: true,
+    enabled: false,
     color: 0xC9CED6,
     opacity: 0.55,         // 0..1
     height: 0.5,          // meters above surface
@@ -618,6 +677,7 @@ const DEFAULT_PARAMS = {
     sizeRange: [8, 20],    // meters (min, max) per patch
     windDirDeg: 15,        // world wind heading (deg, 0 = +X)
     windSpeed: 0.01,       // meters/sec
+    softness: 0.5,         // Soft particles depth blend width
     jitterAmp: 0.2,        // small local bobbing in meters
     underwaterOpacity: 0.0,
     fadeSec: 2,
@@ -1407,6 +1467,18 @@ class Deck {
     window.addEventListener('resize', () => this.updateLayout(), { passive: true });
   }
 
+  getProgressSnapshot() {
+    const total = this.cards.reduce((acc, card) => acc + (Number(card.winCount) || 0), 0);
+    const tagged = this.cards.reduce((acc, card) => acc + (Number(card.count) || 0), 0);
+    const progress = total > 0 ? tagged / total : 0;
+    return {
+      tagged,
+      total,
+      progress,
+      pct: Math.round(Math.max(0, Math.min(1, progress)) * 100)
+    };
+  }
+
   async build() {
     // Clear existing
     this.container.innerHTML = '';
@@ -1589,6 +1661,9 @@ class Deck {
     // Finally, reveal the UI; intro logic still controls opacity afterwards
     this.container.style.visibility = 'visible';
     this.logoEl.style.visibility = 'visible';
+
+    // Notify initial progress (typically 0%)
+    this.callbacks?.onProgress?.(this.getProgressSnapshot());
   }
 
   // === public API ===
@@ -1661,12 +1736,14 @@ class Deck {
         if (newCount !== cur.count) {
           cur.count = newCount;
           cur.numbersEl.textContent = `${cur.count}\n${cur.winCount}`;
+          this.callbacks?.onProgress?.(this.getProgressSnapshot());
         }
         if (cur.count >= cur.winCount && !cur.completed) {
           cur.completed = true;
           cur.element.classList.add('completed');
           this.callbacks?.onSpeciesCompleted?.();
           this.checkGameWin();
+          this.callbacks?.onProgress?.(this.getProgressSnapshot());
         }
       } else if (!cur.revealed) {
         this.setRevealed(this.currentIndex);
@@ -2277,9 +2354,12 @@ class CompletedOverlay {
 
     this._initialized = false;
     this._loadingPromise = null;
+    this._sequencesPromise = null;
     this._activeKey = null;
     this._startTimes = { name: 0, image: 0, info: 0 };
     this._frameDuration = (params.fps && params.fps > 0) ? (1 / params.fps) : (1 / 30);
+
+    this._imageLoadToken = 0;
 
     this._speciesCache = new Map(); // key -> { imageSrc, infoText, displayName }
 
@@ -2296,9 +2376,11 @@ class CompletedOverlay {
     return {
       key,
       cfg,
+      sequence: null, // { kind: 'sheet'|'frames', ... }
       frames: [],
       aspect: 1,
       wrap: null,
+      bgClipEl: null,
       imgEl: null,
       contentEl: null,
       lastFrameIndex: -1,
@@ -2323,23 +2405,58 @@ class CompletedOverlay {
   }
 
   async _init() {
-    await this._loadSequences();
     this._createDom();
     this.updateLayout();
     window.addEventListener('resize', this._onResize, { passive: true });
+
+    // Load background sequences asynchronously so overlay activation never blocks.
+    this._sequencesPromise = this._loadSequences()
+      .then(() => {
+        // Recompute layout once we know aspect ratios
+        this.updateLayout();
+        // If overlay is already active, ensure first frames are applied immediately.
+        Object.values(this.components).forEach((comp) => {
+          if (comp.state === 'playing') {
+            this._setComponentFrame(comp, this._loopFrameIndex(comp));
+          }
+        });
+      })
+      .catch((err) => console.error('[completedOverlay] sequence preload failed', err));
   }
 
   async _loadSequences() {
     const loadComponent = async (comp) => {
       const cfg = comp.cfg || {};
       if (!cfg.dir) return;
-      const frames = await this.preloadSequence(cfg.dir, cfg.prefix, cfg.pad, cfg.startIndex, cfg.maxFramesProbe);
-      if (frames && frames.length) {
-        comp.frames = frames;
-        const first = frames[0];
-        comp.aspect = (first.naturalWidth && first.naturalHeight)
+
+      const seq = await this.preloadSequence(cfg.dir, cfg.prefix, cfg.pad, cfg.startIndex, cfg.maxFramesProbe);
+
+      // Back-compat: allow preloadSequence to return Image[]
+      const normalized = Array.isArray(seq)
+        ? { kind: 'frames', frames: seq }
+        : seq;
+
+      comp.sequence = normalized || null;
+
+      if (normalized?.kind === 'frames') {
+        comp.frames = normalized.frames || [];
+        const first = comp.frames[0];
+        comp.aspect = (first?.naturalWidth && first?.naturalHeight)
           ? (first.naturalWidth / first.naturalHeight)
           : 1;
+      } else if (normalized?.kind === 'sheet') {
+        comp.frames = []; // not used for sheet playback
+        const meta = normalized.meta || {};
+        const o = meta.original_frame_size;
+        const frame0 = normalized.frames?.[0]?.frame;
+        const w = (o?.w ?? frame0?.w ?? 1);
+        const h = (o?.h ?? frame0?.h ?? 1);
+        comp.aspect = (w > 0 && h > 0) ? (w / h) : 1;
+
+        // Ensure the sheet src is set once.
+        if (comp.imgEl && normalized.sheetSrc) {
+          comp.imgEl.src = normalized.sheetSrc;
+        }
       } else {
         comp.frames = [];
         comp.aspect = 1;
@@ -2359,6 +2476,12 @@ class CompletedOverlay {
       loadComponent(this.components.image),
       loadComponent(this.components.info)
     ]);
+  }
+
+  async waitForSequences() {
+    if (this._sequencesPromise) {
+      await this._sequencesPromise;
+    }
   }
 
   _createDom() {
@@ -2387,6 +2510,14 @@ class CompletedOverlay {
           user-select: none;
           -webkit-user-select: none;
           -ms-user-select: none;
+        }
+        .completed-overlay-bg-clip {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
         }
         .completed-overlay-space {
           position: fixed;
@@ -2459,7 +2590,11 @@ class CompletedOverlay {
     nameComp.wrap = this._makeWrapDiv('species-name');
     nameComp.wrap.addEventListener('click', (e) => e.stopPropagation());
     nameComp.imgEl = this._makeBgImg();
-    nameComp.wrap.appendChild(nameComp.imgEl);
+    const nameClip = document.createElement('div');
+    nameClip.className = 'completed-overlay-bg-clip';
+    nameClip.appendChild(nameComp.imgEl);
+    nameComp.bgClipEl = nameClip;
+    nameComp.wrap.appendChild(nameClip);
   nameComp.wrap.style.zIndex = '30';
 
     const nameText = document.createElement('div');
@@ -2474,7 +2609,11 @@ class CompletedOverlay {
     imageComp.wrap = this._makeWrapDiv('species-image');
     imageComp.wrap.addEventListener('click', (e) => e.stopPropagation());
     imageComp.imgEl = this._makeBgImg();
-    imageComp.wrap.appendChild(imageComp.imgEl);
+    const imageClip = document.createElement('div');
+    imageClip.className = 'completed-overlay-bg-clip';
+    imageClip.appendChild(imageComp.imgEl);
+    imageComp.bgClipEl = imageClip;
+    imageComp.wrap.appendChild(imageClip);
   imageComp.wrap.style.zIndex = '10';
 
     const imageInner = document.createElement('div');
@@ -2498,7 +2637,11 @@ class CompletedOverlay {
     infoComp.wrap = this._makeWrapDiv('species-info');
     infoComp.wrap.addEventListener('click', (e) => e.stopPropagation());
     infoComp.imgEl = this._makeBgImg();
-    infoComp.wrap.appendChild(infoComp.imgEl);
+    const infoClip = document.createElement('div');
+    infoClip.className = 'completed-overlay-bg-clip';
+    infoClip.appendChild(infoComp.imgEl);
+    infoComp.bgClipEl = infoClip;
+    infoComp.wrap.appendChild(infoClip);
   infoComp.wrap.style.zIndex = '40';
   infoComp.wrap.style.pointerEvents = 'auto';
 
@@ -2527,8 +2670,13 @@ class CompletedOverlay {
   _makeBgImg() {
     const img = document.createElement('img');
     img.className = 'completed-overlay-bg';
-    img.style.objectFit = 'cover';
+    img.style.objectFit = 'unset';
     img.style.pointerEvents = 'none';
+    img.style.position = 'absolute';
+    img.style.left = '0px';
+    img.style.top = '0px';
+    img.style.transformOrigin = '0 0';
+    img.style.willChange = 'transform';
     return img;
   }
 
@@ -2575,15 +2723,72 @@ class CompletedOverlay {
   }
 
   _setComponentFrame(comp, index) {
-    if (!comp.imgEl || !comp.frames.length) return;
-    const clamped = Math.max(0, Math.min(index, comp.frames.length - 1));
-    if (clamped === comp.lastFrameIndex) return;
-    comp.lastFrameIndex = clamped;
-    comp.imgEl.src = comp.frames[clamped].src;
+    if (!comp.imgEl) return;
+    const seq = comp.sequence;
+    if (!seq) return;
+
+    if (seq.kind === 'frames') {
+      if (!comp.frames.length) return;
+      const clamped = Math.max(0, Math.min(index, comp.frames.length - 1));
+      if (clamped === comp.lastFrameIndex) return;
+      comp.lastFrameIndex = clamped;
+      comp.imgEl.style.left = '0px';
+      comp.imgEl.style.top = '0px';
+      comp.imgEl.style.width = '100%';
+      comp.imgEl.style.height = '100%';
+      comp.imgEl.style.position = 'absolute';
+      comp.imgEl.style.objectFit = 'cover';
+      comp.imgEl.src = comp.frames[clamped].src;
+      return;
+    }
+
+    if (seq.kind === 'sheet') {
+      const total = Math.max(0, Number(seq.totalFrames) || (seq.frames?.length || 0));
+      if (!total) return;
+      const clamped = Math.max(0, Math.min(index, total - 1));
+      if (clamped === comp.lastFrameIndex) return;
+      comp.lastFrameIndex = clamped;
+
+      const entry = seq.frames?.[clamped];
+      const frame = entry?.frame;
+      if (!frame) return;
+
+      const pageIndex = Number.isFinite(entry?.page) ? entry.page : 0;
+      const pages = seq.pages || [];
+      const page = pages[pageIndex] || pages[0] || null;
+      if (!page) return;
+
+      if (page.src && comp.imgEl.src !== page.src) {
+        comp.imgEl.src = page.src;
+      }
+
+      const rect = comp._layoutRect;
+      if (!rect || rect.width <= 0 || rect.height <= 0) return;
+
+      const sheetSize = page.size || { w: 1, h: 1 };
+      const scaleX = rect.width / Math.max(1, frame.w);
+      const scaleY = rect.height / Math.max(1, frame.h);
+
+      // Avoid per-frame layout by keeping the page at natural size
+      // and using transforms for crop positioning.
+      const sizeKey = `${sheetSize.w}x${sheetSize.h}`;
+      if (comp._sheetSizeKey !== sizeKey) {
+        comp._sheetSizeKey = sizeKey;
+        comp.imgEl.style.width = `${Math.round(sheetSize.w)}px`;
+        comp.imgEl.style.height = `${Math.round(sheetSize.h)}px`;
+      }
+
+      const tx = Math.round(-frame.x * scaleX);
+      const ty = Math.round(-frame.y * scaleY);
+      comp.imgEl.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${scaleX}, ${scaleY})`;
+    }
   }
 
   _loopFrameIndex(comp) {
-    const total = comp.frames.length;
+    const seq = comp.sequence;
+    const total = (seq?.kind === 'sheet')
+      ? Math.max(0, Number(seq.totalFrames) || (seq.frames?.length || 0))
+      : comp.frames.length;
     if (!total) return 0;
     let idx = comp.frameIndex;
     if (idx < total) return idx;
@@ -2669,11 +2874,34 @@ class CompletedOverlay {
   _applyImageContent(imageSrc) {
     const comp = this.components.image;
     if (!comp.contentEl) return;
-    if (imageSrc) {
-      comp.contentEl.src = imageSrc;
-    } else {
-      comp.contentEl.removeAttribute('src');
-    }
+    const imgEl = comp.contentEl;
+
+    // Prevent stale previous species image from staying visible while new src loads.
+    this._imageLoadToken += 1;
+    const token = this._imageLoadToken;
+
+    imgEl.style.visibility = 'hidden';
+    imgEl.removeAttribute('src');
+
+    if (!imageSrc) return;
+
+    const probe = new Image();
+    probe.decoding = 'async';
+    probe.onload = async () => {
+      if (token !== this._imageLoadToken) return;
+      try {
+        if (probe.decode) await probe.decode();
+      } catch (_) {}
+      if (token !== this._imageLoadToken) return;
+      imgEl.src = imageSrc;
+      imgEl.style.visibility = 'visible';
+    };
+    probe.onerror = () => {
+      if (token !== this._imageLoadToken) return;
+      // Keep hidden on error rather than showing a previous species.
+      imgEl.style.visibility = 'hidden';
+    };
+    probe.src = imageSrc;
   }
 
   _applyInfoContent(infoText) {
@@ -3010,42 +3238,149 @@ class CompletedOverlay {
 }
 
 class FactOverlay {
-  constructor() {
+  constructor(options = {}) {
+    const completedCfg = DEFAULT_PARAMS?.completedOverlay || {};
+    const infoCfg = completedCfg?.speciesInfo || {};
+
+    const {
+      bgSrc = resolvePublicAsset('game-assets/sub/interfaz/caption_bg.webp'),
+      fontFamily = completedCfg.fontFamily || `ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace`,
+      textColor = infoCfg.textColor || '#E6C200',
+      fontSizePx = infoCfg.fontSizePx || 18,
+      lineHeight = infoCfg.lineHeight || 1.35,
+      showMs = 4000,
+      // Background sizing: width is viewport-relative (responsive), with a minimum.
+      // Keep aspect ratio (no stretching).
+      widthVw = 0.20,
+      minWidthPx = 280,
+      maxWidthPx = 720,
+      paddingPx = 22
+    } = options;
+
+    this.options = { bgSrc, fontFamily, textColor, fontSizePx, lineHeight, showMs, widthVw, minWidthPx, maxWidthPx, paddingPx };
+
     this.container = document.createElement('div');
     this.container.id = 'fact-overlay';
     Object.assign(this.container.style, {
       position: 'absolute',
-      bottom: '15%',
+      bottom: '5%',
       left: '50%',
       transform: 'translateX(-50%)',
-      backgroundColor: 'rgba(0, 0, 0, 0.7)',
-      color: 'white',
-      padding: '10px 20px',
-      borderRadius: '5px',
-      fontFamily: 'Arial, sans-serif',
-      fontSize: '18px',
-      textAlign: 'center',
       zIndex: '1000',
       opacity: '0',
       transition: 'opacity 0.5s ease-in-out',
       pointerEvents: 'none',
-      maxWidth: '80%'
+      overflow: 'hidden',
+      userSelect: 'none',
+      WebkitUserSelect: 'none'
     });
+
+    // Background image (same asset used for completed species name)
+    this.bgImg = document.createElement('img');
+    this.bgImg.alt = '';
+    this.bgImg.decoding = 'async';
+    this.bgImg.src = bgSrc;
+    Object.assign(this.bgImg.style, {
+      display: 'block',
+      width: `min(90vw, clamp(${minWidthPx}px, ${Math.round(widthVw * 100)}vw, ${maxWidthPx}px))`,
+      height: 'auto'
+    });
+
+    // Text overlay (centered; clipped; with safe padding)
+    this.textEl = document.createElement('div');
+    Object.assign(this.textEl.style, {
+      position: 'absolute',
+      inset: '0',
+      display: 'grid',
+      placeItems: 'center',
+      textAlign: 'center',
+      color: textColor,
+      fontFamily,
+      fontWeight: '600',
+      lineHeight: String(lineHeight),
+      whiteSpace: 'normal',
+      overflowWrap: 'anywhere',
+      wordBreak: 'break-word',
+      overflow: 'hidden',
+      padding: `clamp(${Math.max(12, Math.floor(paddingPx * 1.05))}px, 2.1vh, ${paddingPx + 12}px) clamp(${Math.round((paddingPx + 14) * 1.5)}px, ${Math.round(3.2 * 1.5 * 10) / 10}vw, ${Math.round((paddingPx + 28) * 1.5)}px)`
+    });
+
+    this.container.appendChild(this.bgImg);
+    this.container.appendChild(this.textEl);
     document.body.appendChild(this.container);
+
+    // When the image loads, we can fit text reliably.
+    this.bgImg.addEventListener('load', () => {
+      this._fitText();
+    }, { once: true });
+
     this.timeout = null;
+
+    // Keep it responsive on window resizes.
+    this._onResize = () => {
+      this._fitText();
+    };
+    window.addEventListener('resize', this._onResize, { passive: true });
+  }
+
+  _fitText() {
+    if (!this.textEl || !this.container) return;
+    const { fontSizePx } = this.options;
+
+    // Start a bit smaller than the completed-species info font.
+    // This keeps captions readable but prevents frequent top/bottom overflow.
+    let size = Math.max(8, Math.floor((fontSizePx ?? 18) * 0.85));
+    this.textEl.style.fontSize = `${size}px`;
+
+    // Compare against the actual text box size.
+    // Note: scrollWidth/scrollHeight include padding, and clientWidth/clientHeight
+    // represent the visible box (also includes padding). This is the most robust
+    // way to ensure we never overflow top/bottom.
+    for (let i = 0; i < 120; i++) {
+      const tooWide = this.textEl.scrollWidth > this.textEl.clientWidth;
+      const tooTall = this.textEl.scrollHeight > this.textEl.clientHeight;
+      if (!tooWide && !tooTall) break;
+      size = Math.max(8, size - 1);
+      this.textEl.style.fontSize = `${size}px`;
+      if (size === 8) break;
+    }
+  }
+
+  hide({ immediate = false } = {}) {
+    if (this.timeout) {
+      clearTimeout(this.timeout);
+      this.timeout = null;
+    }
+    if (!this.container) return;
+    if (immediate) {
+      const prev = this.container.style.transition;
+      this.container.style.transition = 'none';
+      this.container.style.opacity = '0';
+      // Restore transition next frame so future shows fade normally.
+      requestAnimationFrame(() => {
+        if (this.container) this.container.style.transition = prev || 'opacity 0.5s ease-in-out';
+      });
+      return;
+    }
+    this.container.style.opacity = '0';
   }
 
   show(text) {
     if (this.timeout) clearTimeout(this.timeout);
-    this.container.textContent = text;
+    this.textEl.textContent = String(text ?? '');
+    this._fitText();
+    // Extra passes to ensure layout settles (responsive width + font load).
+    requestAnimationFrame(() => this._fitText());
+    setTimeout(() => this._fitText(), 0);
     this.container.style.opacity = '1';
     this.timeout = setTimeout(() => {
       this.container.style.opacity = '0';
-    }, 4000);
+    }, this.options.showMs);
   }
 
   destroy() {
     if (this.timeout) clearTimeout(this.timeout);
+    if (this._onResize) window.removeEventListener('resize', this._onResize);
     if (this.container.parentNode) {
       this.container.parentNode.removeChild(this.container);
     }
@@ -3083,7 +3418,13 @@ export class RioScene extends BaseScene {
     this.clickMouse = new THREE.Vector2();
 
     // Fact overlay system
-    this.factOverlay = new FactOverlay();
+    this.factOverlay = new FactOverlay({
+      bgSrc: resolvePublicAsset('game-assets/sub/interfaz/caption_bg.webp'),
+      fontFamily: this.params?.completedOverlay?.fontFamily,
+      textColor: this.params?.completedOverlay?.speciesInfo?.textColor,
+      fontSizePx: Math.round((this.params?.completedOverlay?.speciesInfo?.fontSizePx ?? 18) * 0.85),
+      lineHeight: this.params?.completedOverlay?.speciesInfo?.lineHeight,
+    });
     this.fishClickCount = 0;
     this.speciesFactIndices = {};
 
@@ -3122,6 +3463,19 @@ export class RioScene extends BaseScene {
     this._loadingBarFillEl = null;
     this._loadingProgressTotal = 0;
     this._loadingProgressCompleted = 0;
+
+    // Deck tutorial hint (one-time): points to selected deck card until 3 fish clicks.
+    this._deckTagHintEl = null;
+    this._deckTagHintVisible = false;
+    this._deckTagHintLastKey = '';
+
+    // Rio tag progress bar (DOM overlay, top-left)
+    this._tagProgress = {
+      container: null,
+      labelEl: null,
+      barFillEl: null,
+      completed: false
+    };
 
   // Completed overlay state
   this.completedOverlay = null;
@@ -3175,9 +3529,9 @@ export class RioScene extends BaseScene {
         #rio-inside-overlay {
           position: fixed;
           inset: 0;
-          background: #021b2b;          /* color de “sólido”; cambiá si querés */
+          background: transparent;
           opacity: 0;                   /* oculto por defecto */
-          transition: opacity 120ms ease;
+          transition: opacity 200ms ease;
           pointer-events: none;
           z-index: 100002;              /* por encima de todo lo in-escena */
           user-select: none; -webkit-user-select: none; -ms-user-select: none;
@@ -3191,8 +3545,8 @@ export class RioScene extends BaseScene {
     inside.id = 'rio-inside-overlay';
     document.body.appendChild(inside);
     this._insideOverlay = inside;
-    const c = this.getUnderwaterSurfaceColor();
-    this._insideOverlay.style.backgroundColor = `#${c.getHexString()}`;
+    // No background for the surface transition; bubbles only.
+    this._insideOverlay.style.backgroundColor = 'transparent';
 
   this.surfaceFX = null;
   this._insideOverlayPrevInside = false;
@@ -3293,6 +3647,136 @@ export class RioScene extends BaseScene {
       targetY: 0,    // camera start.y
       overlayEl: null
     };
+  }
+
+  async _preloadSheetSequence(dir) {
+    if (!dir) return null;
+    const base = String(dir).replace(/\/+$/, '');
+    const jsonCandidates = [`${base}/sheet_1024.json`, `${base}/sheet.json`];
+    let sheet;
+    for (const jsonUrl of jsonCandidates) {
+      try {
+        const res = await fetch(jsonUrl, { cache: 'force-cache' });
+        if (!res.ok) continue;
+        sheet = await res.json();
+        break;
+      } catch (_) {
+        // try next candidate
+      }
+    }
+    if (!sheet) return null;
+
+    const meta = sheet?.meta;
+    const frames = sheet?.frames;
+    if (!meta || !Array.isArray(frames) || !frames.length) return null;
+
+    const loadAndDecode = async (src) => {
+      const image = await new Promise((resolve) => {
+        const im = new Image();
+        im.decoding = 'async';
+        im.onload = () => resolve(im);
+        im.onerror = () => resolve(null);
+        im.src = src;
+      });
+      if (!image) return null;
+      try {
+        if (image.decode) await image.decode();
+      } catch (_) {}
+      return image;
+    };
+
+    const warmupForGpu = async (pageSrcs) => {
+      // decode() prepares CPU-side decode but doesn't always force GPU upload.
+      // Paint tiny fully-transparent <img>s during the loading screen to avoid show-time spikes.
+      if (!pageSrcs || !pageSrcs.length) return;
+      if (typeof document === 'undefined') return;
+      if (typeof requestAnimationFrame !== 'function') return;
+
+      const holder = document.createElement('div');
+      Object.assign(holder.style, {
+        position: 'fixed',
+        left: '0px',
+        top: '0px',
+        width: '1px',
+        height: '1px',
+        opacity: '0',
+        pointerEvents: 'none',
+        zIndex: '-1',
+        overflow: 'hidden'
+      });
+
+      for (const src of pageSrcs) {
+        const im = document.createElement('img');
+        im.decoding = 'async';
+        im.src = src;
+        im.width = 1;
+        im.height = 1;
+        holder.appendChild(im);
+      }
+
+      document.body.appendChild(holder);
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      holder.remove();
+    };
+
+    // Multi-atlas format: meta.pages = [{ image, size:{w,h} }, ...]
+    // Legacy format: meta.image = 'sheet.webp' and meta.size
+    const pages = [];
+    const rawPages = Array.isArray(meta.pages) ? meta.pages : null;
+    if (rawPages && rawPages.length) {
+      const pageSrcs = [];
+      for (const p of rawPages) {
+        const name = p?.image;
+        if (!name) continue;
+        const src = `${base}/${encodeURIComponent(name)}`;
+        const image = await loadAndDecode(src);
+        if (!image) return null;
+        pageSrcs.push(src);
+        pages.push({
+          src,
+          image,
+          size: p?.size || { w: image.naturalWidth || 1, h: image.naturalHeight || 1 }
+        });
+      }
+
+      await warmupForGpu(pageSrcs);
+      if (typeof window !== 'undefined' && window.__DEBUG_COMPLETED_OVERLAY_SHEETS) {
+        console.info('[completedOverlay] multi-atlas pages loaded', { dir: base, pages: pageSrcs });
+      }
+    } else {
+      const sheetImageName = meta.image || 'sheet.webp';
+      const src = `${base}/${encodeURIComponent(sheetImageName)}`;
+      const image = await loadAndDecode(src);
+      if (!image) return null;
+      pages.push({
+        src,
+        image,
+        size: meta?.size || { w: image.naturalWidth || 1, h: image.naturalHeight || 1 }
+      });
+
+      // Normalize legacy frames to page 0.
+      for (const f of frames) {
+        if (typeof f.page !== 'number') f.page = 0;
+      }
+    }
+
+    const totalFrames = Math.max(0, Number(meta.frame_count) || frames.length || 0);
+    return {
+      kind: 'sheet',
+      pages,
+      meta,
+      frames,
+      totalFrames
+    };
+  }
+
+  async _preloadCompletedOverlaySequence(dir, prefix, pad, startIndex, maxProbe) {
+    // Prefer spritesheets (sheet.json + sheet.webp) to avoid hundreds of PNG requests.
+    const sheet = await this._preloadSheetSequence(dir);
+    if (sheet) return sheet;
+
+    const frames = await this._preloadFrameSequence(dir, prefix, pad, startIndex, maxProbe);
+    return { kind: 'frames', frames };
   }
 
   /* --------------------------------- Lifecycle --------------------------------- */
@@ -3439,9 +3923,19 @@ export class RioScene extends BaseScene {
     }
 
 
-    this.camera.near = 0.1;
+    // When the camera gets very close to the water plane, a near clip of 0.1
+    // can clip the surface itself, revealing the underwater scene or causing
+    // the depth-only occluder to “punch a hole” (gray).
+    this.camera.near = 0.0002;
     this.camera.far  = 90;   // try 80–150; lower = faster
     this.camera.updateProjectionMatrix();
+
+    // --- Depth target for soft particles ---
+    this.depthTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
+    this.depthTarget.texture.minFilter = THREE.NearestFilter;
+    this.depthTarget.texture.magFilter = THREE.NearestFilter;
+    this.depthTarget.depthTexture = new THREE.DepthTexture();
+    this.depthTarget.depthTexture.type = THREE.UnsignedShortType;
 
     // Build tiling & water after model is in the scene
     if (this.model) {
@@ -3491,11 +3985,25 @@ export class RioScene extends BaseScene {
     
     // Build the Deck UI (hidden until intro ends)
     if (this.params.debug.deck) {
+      this._createTagProgressOverlay();
       this.deck = new Deck(SPECIES, this.speciesObjs, this.params.deckUI, {
-        onSpeciesCompleted: () => this.playSfx('completed')
+        onSpeciesCompleted: () => this.playSfx('completed'),
+        onProgress: (snapshot) => this._updateTagProgressOverlay(snapshot)
       });
       await this._trackLoadingStep('Cargando UI del deck y sprites asociados', async () => {
         await this.deck.build();
+      });
+
+      // Ensure the bar is correct after build
+      this._updateTagProgressOverlay();
+
+      // Completed overlay atlases (decode during loading screen to avoid GPU spike later)
+      await this._trackLoadingStep('Cargando overlay de especies completadas', async () => {
+        this._initCompletedOverlay();
+        if (this.completedOverlay) {
+          await this.completedOverlay.prepare();
+          await this.completedOverlay.waitForSequences();
+        }
       });
 
       // ---- Depth Ruler Overlay (DOM) ----
@@ -3595,6 +4103,7 @@ export class RioScene extends BaseScene {
       this.deck.container.style.opacity = 0;
       this.deck.container.style.pointerEvents = 'none';
     }
+    // If deck is disabled, still init the overlay so it can be toggled later.
     this._initCompletedOverlay();
     this._deckSelectionTime = performance.now() * 0.001;
     // Spawn fish by abundance
@@ -3629,6 +4138,9 @@ export class RioScene extends BaseScene {
     this.audioListener = new THREE.AudioListener();
     this.camera.add(this.audioListener);
     this.audioListener.setMasterVolume(1.0);
+
+    // Ensure depth target and shader resolution are synced
+    this.onResize(window.innerWidth, window.innerHeight);
 
     const soundPaths = {
       surface: '/game-assets/sub/sonido/exterior.mp3',
@@ -3774,6 +4286,8 @@ export class RioScene extends BaseScene {
     this._destroyIntroOverlay();
     this._destroyTimerOverlay();
     this._destroyCursorOverlay();
+    this._destroyDeckTagHint();
+    this._destroyTagProgressOverlay();
   this._destroySurfaceVideoFX();
 
     this.disposeShoreHaze();
@@ -3892,6 +4406,9 @@ export class RioScene extends BaseScene {
         colorWrite: false,    // <- NO escribe color
         depthWrite: true,     // <- SÍ escribe z
         depthTest: true,
+        polygonOffset: true,
+        polygonOffsetFactor: 2,
+        polygonOffsetUnits: 2,
         side: THREE.FrontSide
       });
       this.waterOccluder = new THREE.Mesh(occGeo, occMat);
@@ -3905,9 +4422,12 @@ export class RioScene extends BaseScene {
     const sz = Math.max(baseWidthForward * 5.0, 1000);
     const yTop = this.params.surfaceLevel;
 
-    // Position occluder slightly BELOW the top surface
-    // This hides everything above the water when looking from below.
-    this.waterOccluder.position.set(100, yTop - 0.1, 0);
+    // Place the depth-only occluder slightly ABOVE the surface so it is
+    // always visible from below (FrontSide faces down) even when the camera
+    // is just a few centimeters under the surface.
+    // This avoids the “gray band” that appears when the camera is between the
+    // surface and an occluder placed below it.
+    this.waterOccluder.position.set(100, yTop + 0.02, 0);
     this.waterOccluder.scale.set(sx, sz, 1);
 
     // Superficie visible (opcional, solo cara superior, sin “segunda tapa”)
@@ -3918,6 +4438,9 @@ export class RioScene extends BaseScene {
         transparent: false,
         roughness: 0.9, metalness: 0.0,
         side: THREE.FrontSide, // solo desde arriba
+        polygonOffset: true,
+        polygonOffsetFactor: -1,
+        polygonOffsetUnits: -1,
         depthWrite: true, depthTest: true,
         fog: true
       });
@@ -3940,6 +4463,9 @@ export class RioScene extends BaseScene {
         emissiveIntensity: 0.4,
         transparent: false, // Opaque to avoid seeing the occluder/void behind it
         side: THREE.FrontSide, // facing down
+        polygonOffset: true,
+        polygonOffsetFactor: -2,
+        polygonOffsetUnits: -2,
         depthWrite: true,
         depthTest: true,
         fog: true
@@ -3948,8 +4474,10 @@ export class RioScene extends BaseScene {
       this.waterSurfaceBottom.frustumCulled = false;
       this.scene.add(this.waterSurfaceBottom);
     }
-    // Position bottom surface further down to avoid any precision issues with the occluder
-    this.waterSurfaceBottom.position.set(100, yTop - 0.2, 0); 
+    // Keep the underside surface very close to the surface so that when the
+    // camera is slightly below the surface it still sees a valid surface
+    // instead of the clear/fogged background.
+    this.waterSurfaceBottom.position.set(100, yTop - 0.01, 0);
     this.waterSurfaceBottom.scale.set(sx, 1, sz);
 
   }
@@ -4175,6 +4703,110 @@ export class RioScene extends BaseScene {
     this.ruler = null;
   }
 
+  /* ========================= Tag Progress Bar (DOM) ========================= */
+
+  _createTagProgressOverlay() {
+    if (this._tagProgress?.container) return;
+
+    const container = document.createElement('div');
+    container.id = 'rio-tag-progress';
+    Object.assign(container.style, {
+      position: 'fixed',
+      left: '40px',
+      top: '40px',
+      width: '20vw',
+      padding: '10px 14px',
+      background: 'rgba(10, 34, 61, 0.6)',
+      borderRadius: '12px',
+      backdropFilter: 'blur(4px)',
+      display: 'none',
+      flexDirection: 'column',
+      gap: '0px',
+      pointerEvents: 'none',
+      zIndex: '9996',
+      userSelect: 'none',
+      WebkitUserSelect: 'none',
+      msUserSelect: 'none'
+    });
+
+    const barContainer = document.createElement('div');
+    Object.assign(barContainer.style, {
+      width: '100%',
+      height: 'clamp(18px, 1.6vw, 26px)',
+      background: 'rgba(0, 0, 0, 0.4)',
+      borderRadius: '6px',
+      overflow: 'hidden',
+      position: 'relative'
+    });
+    container.appendChild(barContainer);
+
+    const barFill = document.createElement('div');
+    Object.assign(barFill.style, {
+      width: '0%',
+      height: '100%',
+      background: (this.params?.deckUI?.colors?.silhouetteSelected || '#FFD400'),
+      transition: 'width 0.3s ease-out, background-color 0.25s ease-out'
+    });
+    barContainer.appendChild(barFill);
+
+    const barText = document.createElement('div');
+    barText.textContent = 'Progreso 0%';
+    Object.assign(barText.style, {
+      position: 'absolute',
+      inset: '0',
+      display: 'grid',
+      placeItems: 'center',
+      color: '#f8fafc',
+      fontSize: 'clamp(11px, 1.0vw, 16px)',
+      fontWeight: '700',
+      lineHeight: '1',
+      textShadow: '0 2px 8px rgba(0,0,0,0.55)',
+      pointerEvents: 'none',
+      userSelect: 'none',
+      WebkitUserSelect: 'none',
+      msUserSelect: 'none'
+    });
+    const fontFamily = this.params?.deckUI?.fonts?.family;
+    if (fontFamily) {
+      barText.style.fontFamily = fontFamily;
+    }
+    barContainer.appendChild(barText);
+
+    document.body.appendChild(container);
+
+    this._tagProgress.container = container;
+    this._tagProgress.labelEl = barText;
+    this._tagProgress.barFillEl = barFill;
+    this._tagProgress.completed = false;
+  }
+
+  _updateTagProgressOverlay(snapshot = null) {
+    if (!this._tagProgress?.barFillEl || !this._tagProgress?.labelEl) return;
+
+    const s = snapshot || (this.deck?.getProgressSnapshot ? this.deck.getProgressSnapshot() : null);
+    const pct = Math.max(0, Math.min(100, Math.round((s?.progress ?? 0) * 100)));
+    this._tagProgress.barFillEl.style.width = `${pct}%`;
+    this._tagProgress.labelEl.textContent = `Progreso ${pct}%`;
+
+    const isComplete = pct >= 100;
+    if (isComplete !== this._tagProgress.completed) {
+      this._tagProgress.completed = isComplete;
+      this._tagProgress.barFillEl.style.background = isComplete ? '#00FF6A' : (this.params?.deckUI?.colors?.silhouetteSelected || '#FFD400');
+    }
+  }
+
+  _destroyTagProgressOverlay() {
+    if (this._tagProgress?.container && this._tagProgress.container.parentNode) {
+      this._tagProgress.container.parentNode.removeChild(this._tagProgress.container);
+    }
+    if (this._tagProgress) {
+      this._tagProgress.container = null;
+      this._tagProgress.labelEl = null;
+      this._tagProgress.barFillEl = null;
+      this._tagProgress.completed = false;
+    }
+  }
+
     /* ========================= Timer Overlay (DOM) ========================= */
 
   _createTimerOverlay() {
@@ -4345,6 +4977,11 @@ export class RioScene extends BaseScene {
     this._updateTimerText(); // immediate paint
     this._cursorEnabled = true;
     this._updateCursorVisibility();
+
+    // Show tag progress only when gameplay starts (after intro)
+    if (this.deck && this._tagProgress?.container) {
+      this._tagProgress.container.style.display = 'flex';
+    }
   }
 
   _stopTimer() {
@@ -4680,7 +5317,7 @@ export class RioScene extends BaseScene {
     const overlayParams = this.params.completedOverlay;
     this.completedOverlay = new CompletedOverlay(overlayParams, {
       preloadSequence: (dir, prefix, pad, startIndex, maxProbe) =>
-        this._preloadFrameSequence(dir, prefix, pad, startIndex, maxProbe),
+        this._preloadCompletedOverlaySequence(dir, prefix, pad, startIndex, maxProbe),
       fontFallback: this.params.deckUI?.fonts?.family || 'system-ui, sans-serif'
     });
     const prep = this.completedOverlay.prepare();
@@ -4741,6 +5378,10 @@ export class RioScene extends BaseScene {
         if (this.deck?.cards[this.deck.currentIndex]?.key !== card.key) {
           return; // selection changed while loading
         }
+
+        // Hide any caption immediately so it never overlaps the completed overlay UI.
+        this.factOverlay?.hide?.({ immediate: false });
+
         await this.completedOverlay.activate({
           speciesKey: card.key,
           displayName: assets.displayName,
@@ -5493,16 +6134,83 @@ export class RioScene extends BaseScene {
     const tex = this._makeSoftCircleTexture(256);
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
 
-    // Shared material
-    const mat = new THREE.MeshBasicMaterial({
-      map: tex,
-      color: new THREE.Color(M.color ?? 0xC9CED6),
+    // Shared material (Soft Particles Shader)
+    const mat = new THREE.ShaderMaterial({
+      uniforms: {
+        tDiffuse: { value: tex },
+        tDepth: { value: null },
+        cameraNear: { value: this.camera.near },
+        cameraFar: { value: this.camera.far },
+        resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+        opacity: { value: M.opacity ?? 0.55 },
+        color: { value: new THREE.Color(M.color ?? 0xC9CED6) },
+        softness: { value: M.softness ?? 0.5 }
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        varying vec4 vProjPos;
+        void main() {
+          vUv = uv;
+          vProjPos = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          gl_Position = vProjPos;
+        }
+      `,
+      fragmentShader: `
+        #include <packing>
+        varying vec2 vUv;
+        varying vec4 vProjPos;
+
+        uniform sampler2D tDiffuse;
+        uniform sampler2D tDepth;
+        uniform float cameraNear;
+        uniform float cameraFar;
+        uniform vec2 resolution;
+        uniform float opacity;
+        uniform vec3 color;
+        uniform float softness;
+
+        float getLinearDepth(vec2 coord) {
+          float fragCoordZ = texture2D(tDepth, coord).x;
+          // This converts the non-linear 0-1 depth from the buffer to world units
+          float viewZ = perspectiveDepthToViewZ(fragCoordZ, cameraNear, cameraFar);
+          return viewZToOrthographicDepth(viewZ, cameraNear, cameraFar);
+        }
+
+        void main() {
+          vec2 screenUv = gl_FragCoord.xy / resolution;
+          
+          // 1. Get Scene Depth (Depth of objects behind the mist)
+          float sceneDepth = getLinearDepth(screenUv);
+          
+          // 2. Get Current Depth (Depth of the mist pixel itself)
+          // Normalized 0.0 to 1.0
+          float currentDepth = vProjPos.z / vProjPos.w * 0.5 + 0.5;
+
+          // A. Intersection Softness (Fade against water/objects)
+          // If sceneDepth is 1.0 (sky), we ignore softness so mist doesn't vanish against the sky
+          float diff = (sceneDepth >= 1.0) ? 1.0 : (sceneDepth - currentDepth);
+          float softAlpha = clamp(diff * cameraFar / softness, 0.0, 1.0);
+
+          // B. Near Camera Fade (Fade out as it gets close to the lens)
+          // We use viewZ to find the actual distance in meters from the camera
+          float viewZ = vProjPos.z / vProjPos.w * (cameraFar - cameraNear) - cameraFar;
+          float distToCam = abs(viewZ); 
+          float nearFade = clamp((distToCam - cameraNear) / 1.5, 0.0, 1.0); // 1.5 meters fade range
+
+          // 3. Final Color Assembly
+          vec4 texColor = texture2D(tDiffuse, vUv);
+          
+          // Multiply: Texture Alpha * Uniform Opacity * Intersection Fade * Near Camera Fade
+          float finalAlpha = texColor.a * opacity * softAlpha * nearFade;
+          
+          gl_FragColor = vec4(color, finalAlpha);
+        }
+      `,
       transparent: true,
-      opacity: M.opacity ?? 0.55,
       depthWrite: false,
       depthTest: true,
-      blending: THREE.NormalBlending,
-      side: THREE.DoubleSide        // <— see from above *and* below
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide
     });
 
     // Geometry: flat, horizontal quads (face upward)
@@ -5577,10 +6285,11 @@ export class RioScene extends BaseScene {
     // Smoothly approach target (exponential ease)
     const fade = Math.max(0.001, mist.fadeSec ?? 0.25);
     const k    = 1 - Math.exp(-dt / fade);
-    this._mist.mat.opacity = THREE.MathUtils.lerp(this._mist.mat.opacity, targetOpacity, k);
+    this._mist.mat.uniforms.opacity.value = THREE.MathUtils.lerp(this._mist.mat.uniforms.opacity.value, targetOpacity, k);
 
     // Keep color live-updatable
-    this._mist.mat.color.set(mist.color ?? 0xC9CED6);
+    this._mist.mat.uniforms.color.value.set(mist.color ?? 0xC9CED6);
+    this._mist.mat.uniforms.softness.value = mist.softness ?? 0.5;
 
     // Drift / bob
     const speed = (mist.windSpeed ?? this._mist.speed); // live-updatable
@@ -5669,13 +6378,29 @@ export class RioScene extends BaseScene {
     this.surfaceFX = {
       enabled: !!cfg.enabled,
       playing: false,
-      bubbleSystem: null
+      bubbleSystem: null,
+      overlayEl: null
     };
 
-    if (!this.surfaceFX.enabled || !this._insideOverlay) return;
+    if (!this.surfaceFX.enabled) return;
 
-    const c = this.getUnderwaterSurfaceColor();
-    this.surfaceFX.bubbleSystem = new BubbleSystem(this._insideOverlay, c);
+    // Dedicated transparent overlay: bubbles only.
+    const overlay = document.createElement('div');
+    Object.assign(overlay.style, {
+      position: 'fixed',
+      inset: '0',
+      width: '100%',
+      height: '100%',
+      pointerEvents: 'none',
+      zIndex: '100003',
+      background: 'transparent'
+    });
+    document.body.appendChild(overlay);
+    this.surfaceFX.overlayEl = overlay;
+
+    const tint = this.getUnderwaterSurfaceColor();
+    this.surfaceFX.bubbleSystem = new BubbleSystem(overlay, tint);
+    this.surfaceFX.bubbleSystem.setIntensity(0);
   }
 
   _handleSurfaceVideoInsideToggle(isInside) {
@@ -5711,7 +6436,29 @@ export class RioScene extends BaseScene {
     const fx = this.surfaceFX;
     if (!fx) return;
     fx.bubbleSystem?.destroy();
+    if (fx.overlayEl && fx.overlayEl.parentNode) fx.overlayEl.parentNode.removeChild(fx.overlayEl);
     this.surfaceFX = null;
+  }
+
+  _computeSurfaceBubbleIntensity() {
+    // Bubbles appear as you approach the surface from either side.
+    // Above surface: fade out to 0 after +0.1m
+    // Below surface: fade out to 0 after -1.0m
+    const y = this.camera?.position?.y ?? 0;
+    const s = this.params?.surfaceLevel ?? 0;
+    const aboveMargin = 0.1;
+    const belowMargin = 1.0;
+
+    if (y > s + aboveMargin) return 0;
+    if (y < s - belowMargin) return 0;
+
+    if (y >= s) {
+      const d = y - s; // 0..aboveMargin
+      return clamp(1 - (d / Math.max(0.0001, aboveMargin)), 0, 1);
+    }
+
+    const d = s - y; // 0..belowMargin
+    return clamp(1 - (d / Math.max(0.0001, belowMargin)), 0, 1);
   }
 
 
@@ -5866,6 +6613,7 @@ export class RioScene extends BaseScene {
       // Walk up to find a mesh tagged with speciesKey
       while (obj) {
         if (obj.userData && obj.userData.speciesKey) {
+          this._recordDeckTagAttempt();
           this._handleFishClickForFacts();
           const agent = this._findAgentByObject(obj);
           const skipIncrement = !!agent?.tracked;
@@ -5895,6 +6643,7 @@ export class RioScene extends BaseScene {
   _handleFishClickForFacts() {
     if (!this.deck) return;
     // Don't show facts if the completed species overlay is active
+    if (this._completedOverlayState?.loading || this._completedOverlayState?.activeKey) return;
     if (this.completedOverlay && this.completedOverlay._activeKey) return;
 
     this.fishClickCount++;
@@ -5912,6 +6661,135 @@ export class RioScene extends BaseScene {
         this.speciesFactIndices[speciesKey] = (this.speciesFactIndices[speciesKey] + 1) % facts.length;
       }
     }
+  }
+
+  _createDeckTagHint() {
+    if (this._deckTagHintEl) return this._deckTagHintEl;
+
+    const accent = this.params?.deckUI?.colors?.silhouetteSelected || '#FFD400';
+    const fontFamily = this.params?.deckUI?.fonts?.family || 'system-ui, sans-serif';
+
+    const el = document.createElement('div');
+    el.id = 'rio-deck-tag-hint';
+    Object.assign(el.style, {
+      position: 'fixed',
+      left: '0px',
+      top: '0px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      pointerEvents: 'none',
+      zIndex: '10002',
+      opacity: '0',
+      transition: 'opacity 200ms ease',
+      willChange: 'transform, opacity, left, top'
+    });
+
+    const text = document.createElement('div');
+    text.textContent = 'Encontrá y marcá peces de esta especie.';
+    Object.assign(text.style, {
+      fontFamily,
+      fontWeight: '800',
+      fontSize: '1.7vh',
+      lineHeight: '1.1',
+      color: '#ffffff',
+      background: 'rgba(0,0,0,0.35)',
+      padding: '0.7vh 1.0vh',
+      borderRadius: '999px',
+      whiteSpace: 'nowrap',
+      textShadow: '0 1px 2px rgba(0,0,0,0.65)'
+    });
+
+    const arrow = document.createElement('div');
+    arrow.setAttribute('aria-hidden', 'true');
+    Object.assign(arrow.style, {
+      width: '0',
+      height: '0',
+      borderTop: '10px solid transparent',
+      borderBottom: '10px solid transparent',
+      borderLeft: `16px solid ${accent}`,
+      filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.65))'
+    });
+
+    el.appendChild(text);
+    el.appendChild(arrow);
+    document.body.appendChild(el);
+
+    this._deckTagHintEl = el;
+    return el;
+  }
+
+  _showDeckTagHint() {
+    const el = this._createDeckTagHint();
+    this._deckTagHintVisible = true;
+    el.style.opacity = '1';
+    this._updateDeckTagHintPosition();
+  }
+
+  _hideDeckTagHint(remove = false) {
+    this._deckTagHintVisible = false;
+    if (!this._deckTagHintEl) return;
+    this._deckTagHintEl.style.opacity = '0';
+    if (remove) {
+      const el = this._deckTagHintEl;
+      this._deckTagHintEl = null;
+      this._deckTagHintLastKey = '';
+      setTimeout(() => {
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+      }, 220);
+    }
+  }
+
+  _destroyDeckTagHint() {
+    this._deckTagHintVisible = false;
+    this._deckTagHintLastKey = '';
+    if (this._deckTagHintEl && this._deckTagHintEl.parentNode) {
+      this._deckTagHintEl.parentNode.removeChild(this._deckTagHintEl);
+    }
+    this._deckTagHintEl = null;
+  }
+
+  _maybeShowDeckTagHint() {
+    if (!this.deck || !this.deck.container) return;
+    if (State.hasRioDeckTagHintDismissed()) return;
+    if (State.getRioDeckTagHintAttempts() >= 3) return;
+    this._showDeckTagHint();
+  }
+
+  _recordDeckTagAttempt() {
+    if (State.hasRioDeckTagHintDismissed()) return;
+    const attempts = State.getRioDeckTagHintAttempts();
+    if (attempts >= 3) return;
+    State.incrementRioDeckTagHintAttempts(3);
+    if (State.getRioDeckTagHintAttempts() >= 3 || State.hasRioDeckTagHintDismissed()) {
+      this._hideDeckTagHint(true);
+    }
+  }
+
+  _updateDeckTagHintPosition() {
+    if (!this._deckTagHintVisible || !this._deckTagHintEl || !this.deck?.container) return;
+
+    const selected = this.deck.container.querySelector('.deck-card-vert.selected');
+    if (!selected) return;
+
+    const r = selected.getBoundingClientRect();
+    const el = this._deckTagHintEl;
+
+    const key = `${Math.round(r.left)}|${Math.round(r.top)}|${Math.round(r.width)}|${Math.round(r.height)}`;
+    if (key === this._deckTagHintLastKey) return;
+    this._deckTagHintLastKey = key;
+
+    const hintRect = el.getBoundingClientRect();
+    const gap = 10;
+
+    let left = Math.round(r.left - hintRect.width - gap);
+    let top = Math.round(r.top + r.height * 0.5 - hintRect.height * 0.5);
+
+    left = clamp(left, 8, Math.max(8, window.innerWidth - hintRect.width - 8));
+    top = clamp(top, 8, Math.max(8, window.innerHeight - hintRect.height - 8));
+
+    el.style.left = `${left}px`;
+    el.style.top = `${top}px`;
   }
 
 
@@ -6243,6 +7121,9 @@ export class RioScene extends BaseScene {
           this.controlsEnabled = true;
           this._destroyIntroOverlay();
           this._startTimer();
+
+          // One-time instruction: point to the selected deck card until 3 fish clicks.
+          this._maybeShowDeckTagHint();
         }
       }
 
@@ -6328,14 +7209,14 @@ export class RioScene extends BaseScene {
       this._wasInsideSolid = currentInside;
 
       let allowMovement = true;
-      if (this._surfaceTransitionActive) {
+      /* if (this._surfaceTransitionActive) {
         this._surfaceTransitionTime += dt;
-        if (this._surfaceTransitionTime >= 0.5) {
+        if (this._surfaceTransitionTime >= 0.2) {
           this._surfaceTransitionActive = false;
         } else {
           allowMovement = false;
         }
-      }
+      } */
 
       if (allowMovement) {
         // Apply camera transform
@@ -6421,17 +7302,25 @@ export class RioScene extends BaseScene {
     if (this._insideOverlay) {
       const inside = this.isCameraInsideSolid();
       if (inside !== this._insideOverlayPrevInside) {
-        this._handleSurfaceVideoInsideToggle(inside);
         this._insideOverlayPrevInside = inside;
       }
       if (this.mistGroup) this.mistGroup.visible = !inside;  // <-- re-enable when not inside
       this._applyInsideOverlayState(inside);
     }
 
+    // Surface bubbles: intensity by distance to surface (no background).
+    if (this.surfaceFX?.bubbleSystem) {
+      const intensity = this._computeSurfaceBubbleIntensity();
+      this.surfaceFX.bubbleSystem.setIntensity(intensity);
+    }
+
     if (this.skyDome) this.skyDome.position.copy(this.camera.position);
     
     // Update the deck UI
     if (this.deck && this.params.debug.deckRender) this.deck.update(dt);
+
+    // Keep the deck tutorial hint anchored to the selected card.
+    this._updateDeckTagHintPosition();
 
     if (this.deck) {
       const idx = this.deck.currentIndex ?? 0;
@@ -6476,6 +7365,29 @@ export class RioScene extends BaseScene {
     // Update bubble system
     if (this.surfaceFX?.bubbleSystem) {
       this.surfaceFX.bubbleSystem.update(dt);
+    }
+
+    // --- Soft Particles Depth Pass ---
+    if (this.params.mist?.enabled && this.depthTarget && this.app.renderer) {
+      const renderer = this.app.renderer;
+      
+      // 1. Hide mist and render everything else to a texture
+      this.mistGroup.visible = false;
+      renderer.setRenderTarget(this.depthTarget);
+      renderer.clear();
+      renderer.render(this.scene, this.camera);
+
+      // 2. Prepare uniforms for the next pass
+      if (this._mist && this._mist.mat && this._mist.mat.uniforms.tDepth) {
+        this._mist.mat.uniforms.tDepth.value = this.depthTarget.depthTexture;
+        this._mist.mat.uniforms.cameraNear.value = this.camera.near;
+        this._mist.mat.uniforms.cameraFar.value = this.camera.far;
+        this._mist.mat.uniforms.resolution.value.set(window.innerWidth, window.innerHeight);
+      }
+      
+      // 3. Show mist again so the main app renderer will draw it
+      this.mistGroup.visible = true;
+      renderer.setRenderTarget(null);
     }
   }
 
@@ -6768,6 +7680,12 @@ export class RioScene extends BaseScene {
 
   onResize(w, h) {
     super.onResize(w, h);
+    if (this.depthTarget) {
+      this.depthTarget.setSize(w, h);
+    }
+    if (this._mist && this._mist.mat && this._mist.mat.uniforms.resolution) {
+      this._mist.mat.uniforms.resolution.value.set(w, h);
+    }
     this.camera.lookAt(this.camera.position.clone().add(this.forward));
     if (this.model) {
       this.scene.updateMatrixWorld(true);

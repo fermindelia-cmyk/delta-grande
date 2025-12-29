@@ -55,6 +55,11 @@ function collectAssets(dir, baseDir = dir, assets = []) {
                 const relPath = path.relative(baseDir, fullPath);
                 let urlPath = '/' + relPath.replace(/\\/g, '/');
 
+                // FIX: If path starts with /assets/, remove /assets prefix because Vite serves it at root
+                if (urlPath.startsWith('/assets/')) {
+                    urlPath = urlPath.substring(7); // remove '/assets'
+                }
+
                 // Skip excluded patterns
                 if (shouldExclude(urlPath)) {
                     continue;

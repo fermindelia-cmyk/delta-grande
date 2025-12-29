@@ -140,7 +140,7 @@ export const DEFAULT_PARAMS = Object.freeze({
   }),
   water: Object.freeze({
     surfaceSegments: 200,
-    baseLevel: 0.35,
+    baseLevel: 0.0,
     levelDelta: 0.25,
     bottom: -0.4,
     smoothing: 2.2,
@@ -187,6 +187,21 @@ export const DEFAULT_PARAMS = Object.freeze({
     plateauStart: 0.15,
     plateauEnd: 0.85,
     transitionWidth: 0.12,
+    growthCap: Object.freeze({
+      enabled: true,
+      // Maximum riverbed height within the island plateau (innerStart..innerEnd),
+      // expressed relative to the *average* (medium) water level.
+      // This keeps the final island surface more even and prevents sharp peaks.
+      baseAboveAverageWater: 0.02,
+      // Subtle parabola: slightly lower in the center, slightly higher at the sides.
+      sideLift: 0.17,
+      // Gentle x-variation so the cap isn't perfectly smooth/straight.
+      noiseAmplitude: 0.05,
+      noiseFrequency: 8.0,
+      // Blend the cap in/out near the plateau edges (still preserves existing transitions).
+      edgeBlendWidth: 0.0,
+      seed: 18.37
+    }),
     noise: Object.freeze({
       lowAmplitude: 0.008,
       lowFrequency: 6.0,
@@ -218,8 +233,8 @@ export const DEFAULT_PARAMS = Object.freeze({
     arrivalThreshold: 0.008,
     dissolveSpeed: 0.3,
     depositRadius: 0.06,
-    depositAmount: 0.007,
-    particleSize: 0.015,
+    depositAmount: 0.012,
+    particleSize: 0.03,
     minAlpha: 0.35
   }),
   seeds: Object.freeze({
@@ -268,7 +283,7 @@ export const DEFAULT_PARAMS = Object.freeze({
       }),
       Object.freeze({
         id: 'distichlis',
-        label: 'Distichlis',
+        label: 'Paja Brava',
         color: '#4e7d5a',
         width: 0.03,
         height: 0.13,
@@ -486,14 +501,13 @@ export const DEFAULT_PARAMS = Object.freeze({
         introMessage: 'Formá el nuevo banco de arena depositando sedimentos.',
         completionMessage: 'La isla emergió sobre el agua: ¡nuevo hábitat disponible!',
         goal: Object.freeze({
-          type: 'riverbedCoverage',
-          coverage: 0.5,
-          minElevationAboveWater: 0.0
+          type: 'riverbedMaxHeight',
+          epsilon: 0.002
         }),
         allowedSeedGroups: Object.freeze([]),
         hints: Object.freeze([
           'Formá el banco de arena depositando sedimentos.',
-          'Elevá el banco por encima de la línea blanca del agua promedio.',
+          'Elevá el banco hasta su altura máxima.',
           'Elevá el nivel del agua para tener más espacio y seguir depositando sedimentos.'
         ])
       }),
@@ -514,7 +528,8 @@ export const DEFAULT_PARAMS = Object.freeze({
         allowedSeedGroups: Object.freeze(['colonizers']),
         hints: Object.freeze([
           'Estabilizá la isla sembrando las especies colonizadoras.',
-          'En el Delta las plantas crecen cuando cambia el nivel del agua; probá mover la crecida.',
+          'En el Delta las plantas crecen cuando cambia el nivel del agua; probá modificar la altura del río.',
+          'Si las plantas pasan mucho tiempo bajo el agua morirán; ¡mantené el nivel del agua bajo control!',
           'Plantá al menos una semilla de cada especie colonizadora y hacelas crecer hasta la etapa final.'
         ])
       }),
@@ -574,7 +589,7 @@ export const DEFAULT_PARAMS = Object.freeze({
   plantCompetition: Object.freeze({
     neighborRadius: 0.02,
     minNeighbors: 2,
-    minPlantDistance: 0.016
+    minPlantDistance: 0.03
   })
 });
 
@@ -638,6 +653,7 @@ export class SimuladorScene extends BaseScene {
     this._plantSequenceCache = new Map();
     this._plantMaterialCache = new Map();
     this._removeEnabled = false;
+    this._sedimentEnabled = true;
 
     this._audioTimers = new Set();
     this._ambientAudio = null;
@@ -701,6 +717,8 @@ export class SimuladorScene extends BaseScene {
     this._loadingLogoUrl = null;
     this._isReady = false;
     this._uiRectEntries = [];
+
+    this._depthMeter = null;
 
     this._tutorial = { active: false, paused: false, queue: [], current: null };
     this._tutorialCompleted = new Set();
@@ -816,6 +834,8 @@ export class SimuladorScene extends BaseScene {
     if (this._lastPointerInfo) {
       this._refreshCursor();
     }
+
+    this._updateDepthMeterPointer();
   }
 
   onResize(width, height) {
@@ -1792,7 +1812,7 @@ export class SimuladorScene extends BaseScene {
       const idx = i * 3;
       positions[idx + 0] = x;
       positions[idx + 1] = y;
-      positions[idx + 2] = 0.06;
+      positions[idx + 2] = 0.8;
       alphas[i] = 1;
 
       const dir = (Math.random() * Math.PI * 2);
@@ -1825,8 +1845,6 @@ export class SimuladorScene extends BaseScene {
     if (!this._seedBursts.length) return;
     const { seeds } = this.params;
     const gravity = seeds.gravity;
-    const segmentsRiverbed = this.params.riverbed.segments;
-    const segmentsWater = this.params.water.surfaceSegments;
     const toRemove = [];
 
     for (let i = 0; i < this._seedBursts.length; i++) {
@@ -1839,27 +1857,18 @@ export class SimuladorScene extends BaseScene {
         const posIdx = j * 3;
         const velIdx = j * 2;
 
-        const vx = burst.velocities[velIdx + 0];
-        let vy = burst.velocities[velIdx + 1];
-        vy -= gravity * dt;
-        burst.velocities[velIdx + 1] = vy;
+        // Update velocity with gravity
+        burst.velocities[velIdx + 1] -= gravity * dt;
 
-        const nx = burst.positions[posIdx + 0] + vx * dt;
-        const ny = burst.positions[posIdx + 1] + vy * dt;
+        // Update positions based on velocity
+        burst.positions[posIdx + 0] += burst.velocities[velIdx + 0] * dt;
+        burst.positions[posIdx + 1] += burst.velocities[velIdx + 1] * dt;
 
-        const waterHeight = this._heightAt(this._waterHeights, segmentsWater, nx);
-        const riverbedHeight = this._heightAt(this._riverbedHeights, segmentsRiverbed, nx);
-        const barrier = Math.max(riverbedHeight, waterHeight);
+        // Instead of colliding, we just fade them out over time
+        // This ensures they are visible everywhere
+        burst.alphas[j] = 1.0 - (burst.life / 1.5); // Fades out over 1.5 seconds
 
-        if (ny <= barrier) {
-          burst.alphas[j] = 0;
-          burst.positions[posIdx + 0] = nx;
-          burst.positions[posIdx + 1] = barrier;
-          burst.positions[posIdx + 2] = 0.04;
-          burst.aliveCount -= 1;
-        } else {
-          burst.positions[posIdx + 0] = nx;
-          burst.positions[posIdx + 1] = ny;
+        if (burst.alphas[j] > 0) {
           anyAlive = true;
         }
       }
@@ -1867,11 +1876,13 @@ export class SimuladorScene extends BaseScene {
       burst.geometry.attributes.position.needsUpdate = true;
       burst.geometry.attributes.alpha.needsUpdate = true;
 
-      if (!anyAlive || burst.aliveCount <= 0 || burst.life >= 4) {
+      // Remove the burst once life exceeds a limit or all particles are faded
+      if (!anyAlive || burst.life >= 1.5) {
         toRemove.push(i);
       }
     }
 
+    // Cleanup code...
     for (let i = toRemove.length - 1; i >= 0; i--) {
       const idx = toRemove[i];
       const burst = this._seedBursts[idx];
@@ -2013,10 +2024,10 @@ export class SimuladorScene extends BaseScene {
 
   _prepareTexture(texture) {
     if (!texture) return;
-    if ('colorSpace' in texture && THREE && typeof THREE.SRGBColorSpace !== 'undefined') {
+    if ('colorSpace' in texture && THREE && THREE.SRGBColorSpace) {
       texture.colorSpace = THREE.SRGBColorSpace;
-    } else if ('encoding' in texture && THREE && typeof THREE.sRGBEncoding !== 'undefined') {
-      // texture.encoding = THREE.sRGBEncoding; // Deprecated in newer Three.js
+    } else if ('encoding' in texture) {
+      // Fallback for older Three.js - texture.encoding = THREE.sRGBEncoding
       texture.colorSpace = THREE.SRGBColorSpace;
     }
     texture.needsUpdate = true;
@@ -3478,6 +3489,7 @@ export class SimuladorScene extends BaseScene {
         const dy = plant.baseY - worldY;
         if (Math.hypot(dx, dy) < minDistanceWorld) {
             this._showGoalMessage('¡Demasiado cerca de otra planta!');
+            setTimeout(() => this._hideGoalMessage(), 1500);
             return false;
         }
     }
@@ -3549,12 +3561,81 @@ export class SimuladorScene extends BaseScene {
     loaderMesh.renderOrder = 10;
     this.scene.add(loaderMesh);
 
+    // Create death mesh (red progress ring + exclamation)
+    const deathMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        progress: { value: 0.0 },
+        color: { value: new THREE.Color(0xFF4D4D) }
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        varying vec2 vUv;
+        uniform float progress;
+        uniform vec3 color;
+
+        float smooth01(float edge0, float edge1, float x) {
+          float t = clamp((x - edge0) / max(1e-5, (edge1 - edge0)), 0.0, 1.0);
+          return t * t * (3.0 - 2.0 * t);
+        }
+
+        void main() {
+          vec2 center = vec2(0.5);
+          vec2 diff = vUv - center;
+          float dist = length(diff);
+
+          // Ring
+          float angle = atan(diff.y, diff.x);
+          float a = (angle + 3.14159) / (2.0 * 3.14159);
+          float ring = smooth01(0.30, 0.35, dist) * (1.0 - smooth01(0.45, 0.50, dist));
+          float arcMask = step(a, progress);
+          float ringAlpha = ring * arcMask;
+
+          // Exclamation mark
+          // Map to -1..1 space
+          vec2 p = (vUv - 0.5) * 2.0;
+          float aa = 0.02;
+
+          float barHalfW = 0.08;
+          float barBottom = -0.05;
+          float barTop = 0.55;
+          float barX = 1.0 - smooth01(barHalfW, barHalfW + aa, abs(p.x));
+          float barY = smooth01(barBottom, barBottom + aa, p.y) * (1.0 - smooth01(barTop - aa, barTop, p.y));
+          float bar = barX * barY;
+
+          vec2 dotCenter = vec2(0.0, -0.55);
+          float dotR = 0.12;
+          float dot = 1.0 - smooth01(dotR, dotR + aa, length(p - dotCenter));
+
+          float exclamAlpha = max(bar, dot);
+
+          float alpha = max(ringAlpha, exclamAlpha);
+          if (alpha <= 0.001) discard;
+          gl_FragColor = vec4(color, alpha);
+        }
+      `,
+      transparent: true,
+      depthTest: false,
+      depthWrite: false
+    });
+
+    const deathMesh = new THREE.Mesh(loaderGeometry.clone(), deathMaterial);
+    deathMesh.visible = false;
+    deathMesh.renderOrder = 11;
+    this.scene.add(deathMesh);
+
     const anchorX = this.worldWidth > 0 ? clamp(x / this.worldWidth, 0, 1) : 0;
     const plant = {
       id: `${seed.id}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
       seed,
       mesh,
       loaderMesh,
+      deathMesh,
       x,
       baseY,
       anchorX,
@@ -3562,6 +3643,9 @@ export class SimuladorScene extends BaseScene {
       stageTimer: 0,
       waterIntakeTimer: 0,
       readyToGrow: false,
+      submergedTimer: 0,
+      deathTimer: 0,
+      deathActive: false,
       currentStageHeight: initialHeight,
       currentStageHalfWidth: Math.max(initialWidth * 0.5, stageInfo?.radius || 0.01),
       competitionBlocked: false,
@@ -3792,14 +3876,54 @@ export class SimuladorScene extends BaseScene {
         plant.stageTimer = 0;
       }
 
-  const waterHeight = this._heightAt(this._waterHeights, waterSegments, plant.x);
-  const plantBase = plant.baseY;
-  const isSubmerged = waterHeight >= plantBase + subOffset;
-  const isAboveWater = waterHeight <= plantBase - emerOffset;
-  const isMaxStage = plant.stageIndex >= this._plantStages.length - 1;
+      const waterHeight = this._heightAt(this._waterHeights, waterSegments, plant.x);
+      const plantBase = plant.baseY;
+      const isSubmerged = waterHeight >= plantBase + subOffset;
+      const isAboveWater = waterHeight <= plantBase - emerOffset;
+      const isMaxStage = plant.stageIndex >= this._plantStages.length - 1;
 
       // Water Intake Logic
-      const intakeDuration = this.params.plantGrowth?.waterIntakeDuration ?? 5.0;
+      const intakeDuration = Math.max(0.05, this.params.plantGrowth?.waterIntakeDuration ?? 5.0);
+
+      // --- Underwater death logic ---
+      // Fixed schedule for ALL plants:
+      // start death circle after (intakeDuration + 5s) submerged, then die after another intakeDuration.
+      const deathDelayAfterSubmerge = intakeDuration + 5.0;
+      const deathProgressDuration = intakeDuration;
+
+      if (isSubmerged) {
+        plant.submergedTimer = (plant.submergedTimer || 0) + dt;
+        const t = plant.submergedTimer;
+
+        if (t >= deathDelayAfterSubmerge) {
+          plant.deathActive = true;
+          plant.deathTimer = clamp(t - deathDelayAfterSubmerge, 0, deathProgressDuration);
+
+          if (plant.deathMesh) {
+            plant.deathMesh.visible = true;
+            plant.deathMesh.material.uniforms.progress.value = plant.deathTimer / deathProgressDuration;
+            const centerY = plant.baseY - 0.09;
+            plant.deathMesh.position.set(plant.mesh.position.x, centerY, 0.11);
+            const loaderScale = 0.035;
+            plant.deathMesh.scale.set(loaderScale, loaderScale, 1);
+          }
+
+          if (plant.deathTimer >= deathProgressDuration) {
+            this._removePlant(plant, { playSound: false });
+            i -= 1;
+            continue;
+          }
+        } else {
+          plant.deathActive = false;
+          plant.deathTimer = 0;
+          if (plant.deathMesh) plant.deathMesh.visible = false;
+        }
+      } else {
+        plant.submergedTimer = 0;
+        plant.deathTimer = 0;
+        plant.deathActive = false;
+        if (plant.deathMesh) plant.deathMesh.visible = false;
+      }
       
       if (isSubmerged && !isMaxStage) {
         // While submerged, accumulate water intake
@@ -3811,7 +3935,7 @@ export class SimuladorScene extends BaseScene {
             }
         }
         
-        // Show loader if not fully charged
+        // Show loader if not fully charged (and no death circle active yet)
         if (plant.loaderMesh && !plant.readyToGrow) {
             plant.loaderMesh.visible = true;
             plant.loaderMesh.material.uniforms.progress.value = plant.waterIntakeTimer / intakeDuration;
@@ -3961,11 +4085,13 @@ export class SimuladorScene extends BaseScene {
     return closest;
   }
 
-  _removePlant(plant) {
+  _removePlant(plant, { playSound = true } = {}) {
     if (!plant) return;
     const index = this._plants.indexOf(plant);
     if (index === -1) return;
-    this._playRemovePlantSound();
+    if (playSound) {
+      this._playRemovePlantSound();
+    }
     this._clearPlantSequenceCallbacks(plant);
     this._releasePlantAnimation(plant);
     if (plant.mesh) {
@@ -3975,6 +4101,11 @@ export class SimuladorScene extends BaseScene {
       this.scene.remove(plant.loaderMesh);
       if (plant.loaderMesh.geometry) plant.loaderMesh.geometry.dispose();
       if (plant.loaderMesh.material) plant.loaderMesh.material.dispose();
+    }
+    if (plant.deathMesh) {
+      this.scene.remove(plant.deathMesh);
+      if (plant.deathMesh.geometry) plant.deathMesh.geometry.dispose();
+      if (plant.deathMesh.material) plant.deathMesh.material.dispose();
     }
     if (plant.glowMesh) {
       this.scene.remove(plant.glowMesh);
@@ -4062,11 +4193,24 @@ export class SimuladorScene extends BaseScene {
       });
     }
     this._removeEnabled = this._currentStageIndex > 0;
+    this._sedimentEnabled = this._currentStageIndex < 1;
+
+    const pickDefaultTool = () => {
+      if (this._sedimentEnabled) return 'sediment';
+      if (this._removeEnabled) return 'remove';
+      const iterator = this._availableSeedIds.values();
+      const next = iterator.next();
+      return next.done ? null : next.value;
+    };
+
+    if (!this._sedimentEnabled && this._activeTool === 'sediment') {
+      this._activeTool = pickDefaultTool();
+    }
     if (!this._isToolAvailable(this._activeTool)) {
-      this._activeTool = 'sediment';
+      this._activeTool = pickDefaultTool();
     }
     if (!this._activeTool) {
-      this._activeTool = 'sediment';
+      this._activeTool = pickDefaultTool();
     }
     this._syncToolButtons();
     this._restartStageHints();
@@ -4078,10 +4222,6 @@ export class SimuladorScene extends BaseScene {
 
   _updateSeedLabels() {
     const stage = this._stages[this._currentStageIndex];
-    // If not plantCounts, we might still want to show counts if we want to be consistent, 
-    // but the requirement was "target amount". If there is no target, maybe just show name?
-    // Or maybe we should look at the cumulative goal if we are in stage 3?
-    // The user said "current amount of planted plants from that species and the target amount".
     
     // Let's try to find the goal for this species in the current stage.
     let speciesGoals = {};
@@ -4095,17 +4235,15 @@ export class SimuladorScene extends BaseScene {
         const seedDef = buttonData.seed;
         const baseLabel = seedDef.label || seedId;
         
-        if (speciesGoals[seedId] !== undefined) {
-            const target = speciesGoals[seedId];
-            // Count planted plants of this species (any stage)
-            const current = this._plants.filter(p => 
-                p.seed?.id === seedId
-            ).length;
-            
-            buttonData.label.textContent = `${baseLabel} (${current}/${target})`;
-        } else {
-            buttonData.label.textContent = baseLabel;
-        }
+        // Always show count, defaulting target to 0 if not defined in current stage
+        const target = speciesGoals[seedId] !== undefined ? speciesGoals[seedId] : 0;
+        
+        // Count planted plants of this species (any stage)
+        const current = this._plants.filter(p => 
+            p.seed?.id === seedId
+        ).length;
+        
+        buttonData.label.textContent = `${baseLabel} (${current}/${target})`;
     }
   }
 
@@ -4490,6 +4628,51 @@ export class SimuladorScene extends BaseScene {
     const leftSpan = Math.max(1e-5, innerStart - outerStart);
     const rightSpan = Math.max(1e-5, outerEnd - innerEnd);
 
+    // --- Island growth ceiling (plateau-only): noisy parabola above average water level ---
+    const capCfg = riverbed.growthCap ?? {};
+    const capEnabled = capCfg.enabled !== false;
+    const islandSpan = Math.max(1e-5, innerEnd - innerStart);
+
+    const avgWaterLevel = (this._waterLevels?.medium ?? this.params.water?.baseLevel ?? 0);
+    const noiseAmp = Math.max(0, capCfg.noiseAmplitude ?? 0);
+    // Ensure the cap always stays above average water level (even with negative noise).
+    const baseAboveAverage = Math.max(noiseAmp + 0.02, capCfg.baseAboveAverageWater ?? 0.09);
+    const baseCap = avgWaterLevel + baseAboveAverage;
+    const sideLift = Math.max(0, capCfg.sideLift ?? 0);
+    const noiseFreq = Math.max(1e-4, capCfg.noiseFrequency ?? 1);
+    const capSeed = (typeof capCfg.seed === 'number' && Number.isFinite(capCfg.seed)) ? capCfg.seed : 0;
+
+    const plateauCapAtU = (u) => {
+      const uClamped = clamp(u, 0, 1);
+      const parabola = 4 * (uClamped - 0.5) * (uClamped - 0.5); // 0 at center, 1 at sides
+      const capNoise = this._noise2D(uClamped * noiseFreq + capSeed * 0.13, capSeed) * noiseAmp;
+      const profile = baseCap + sideLift * parabola + capNoise;
+      return clamp(profile, riverbed.bottom, riverbed.maxHeight);
+    };
+
+    const capAtIndex = (i, normalized) => {
+      if (!capEnabled) return riverbed.maxHeight;
+      if (normalized < outerStart || normalized > outerEnd) return riverbed.maxHeight;
+
+      const baseAtX = (this._riverbedBase?.[i] ?? riverbed.bottom);
+      const leftEdgeCap = plateauCapAtU(0);
+      const rightEdgeCap = plateauCapAtU(1);
+
+      // Plateau: parabolic (with subtle noise) maximum height.
+      if (normalized >= innerStart && normalized <= innerEnd) {
+        const u = (normalized - innerStart) / islandSpan;
+        return plateauCapAtU(u);
+      }
+
+      // Transition zones: smoothly blend down to the baseline so we don't get spikes.
+      if (normalized < innerStart) {
+        const t = saturate((normalized - outerStart) / leftSpan);
+        return lerp(baseAtX, leftEdgeCap, smoothstep(0, 1, t));
+      }
+      const t = saturate((outerEnd - normalized) / rightSpan);
+      return lerp(baseAtX, rightEdgeCap, smoothstep(0, 1, t));
+    };
+
     let changed = false;
     for (let i = 0; i <= segments; i++) {
       const px = this.worldWidth * (i / segments);
@@ -4512,7 +4695,9 @@ export class SimuladorScene extends BaseScene {
 
       const weight = Math.cos((dist / radius) * Math.PI * 0.5);
       const delta = amount * weight * weight * boundaryFactor;
-      const next = clamp(this._riverbedHeights[i] + delta, riverbed.bottom, riverbed.maxHeight);
+
+      const maxAtX = capAtIndex(i, normalized);
+      const next = clamp(this._riverbedHeights[i] + delta, riverbed.bottom, maxAtX);
       if (next !== this._riverbedHeights[i]) {
         this._riverbedHeights[i] = next;
         changed = true;
@@ -5203,6 +5388,8 @@ export class SimuladorScene extends BaseScene {
 
     this._ensureTutorialOverlay(root);
 
+    this._createDepthMeter(root);
+
     this._createProgressBar(root);
 
     this.app.root.appendChild(root);
@@ -5245,6 +5432,8 @@ export class SimuladorScene extends BaseScene {
     }
     this._updateGoalMessageLayout(metrics);
     this._updateTutorialLayout();
+
+    this._layoutDepthMeter(metrics);
   }
 
   _computeUILayoutMetrics() {
@@ -5279,6 +5468,300 @@ export class SimuladorScene extends BaseScene {
     goalEl.style.maxWidth = `${toPx(design.maxWidth)}px`;
     goalEl.style.fontSize = `${toPx(design.fontSize)}px`;
     goalEl.style.borderRadius = `${toPx(design.borderRadius)}px`;
+  }
+
+  _createDepthMeter(root) {
+    if (!root || this._depthMeter) return;
+    const { colors, ui } = this.params;
+
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.top = '0';
+    container.style.bottom = '0';
+    container.style.left = '0';
+    container.style.opacity = '0.38';
+    container.style.pointerEvents = 'none';
+    container.style.userSelect = 'none';
+    container.style.webkitUserSelect = 'none';
+    container.style.zIndex = '12';
+
+    const canvas = document.createElement('canvas');
+    canvas.style.position = 'absolute';
+    canvas.style.inset = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.pointerEvents = 'none';
+    canvas.style.display = 'block';
+    container.appendChild(canvas);
+
+    const labels = document.createElement('div');
+    labels.style.position = 'absolute';
+    labels.style.inset = '0';
+    labels.style.pointerEvents = 'none';
+    container.appendChild(labels);
+
+    const pointerSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    pointerSvg.setAttribute('viewBox', '0 0 10 10');
+    pointerSvg.style.position = 'absolute';
+    pointerSvg.style.pointerEvents = 'none';
+    pointerSvg.style.display = 'block';
+    pointerSvg.style.overflow = 'visible';
+    const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    // Tip at the right: points to the right.
+    poly.setAttribute('points', '10,5 0,0 0,10');
+    poly.setAttribute('fill', colors.uiAccent || '#ffd166');
+    pointerSvg.appendChild(poly);
+    container.appendChild(pointerSvg);
+
+    root.appendChild(container);
+
+    this._depthMeter = {
+      container,
+      canvas,
+      ctx: canvas.getContext('2d'),
+      labels,
+      pointerSvg,
+      design: {
+        leftOffsetVW: 1.2,
+        widthVW: 14,
+        fontSizeVW: 1.15,
+        pointerSizeVW: 1.6,
+        labelPaddingVW: 0.35,
+        labelPaddingVH: 0.15,
+        labelOffsetVW: 0.9,
+        spineOffsetRatio: 0.42,
+        majorTickRatio: 0.36,
+        minorTickRatio: 0.22
+      },
+      colors: {
+        text: colors.uiText,
+        lines: colors.uiText,
+        accent: colors.uiAccent
+      },
+      ui
+    };
+
+    this._layoutDepthMeter(this._computeUILayoutMetrics());
+  }
+
+  _layoutDepthMeter(metrics) {
+    const meter = this._depthMeter;
+    if (!meter?.container || !meter.canvas || !meter.ctx) return;
+    const root = this._uiRoot || this.app?.root;
+    if (!root) return;
+
+    const data = metrics || this._computeUILayoutMetrics();
+    if (!data) return;
+
+    const { viewportH, baseH, scale } = data;
+    const toPx = (vwValue) => (vwValue / 100) * baseH * scale;
+
+    const left = toPx(meter.design.leftOffsetVW);
+    const width = Math.max(40, toPx(meter.design.widthVW));
+    meter.container.style.left = `${Math.round(left)}px`;
+    meter.container.style.width = `${Math.round(width)}px`;
+
+    // Meter range (in "mts" relative to nivel medio).
+    // IMPORTANT: scale does not depend on these limits.
+    const meterMin = -10;
+    const meterMax = 35;
+
+    // Fixed scale: a constant pixels-per-meter based on viewport height.
+    // This ensures changing meterMin/meterMax doesn't change spacing.
+    const pxPer10m = Math.max(70, Math.round(viewportH * 0.14));
+    const pxPerM = pxPer10m / 10;
+
+    const trackHeight = Math.max(80, Math.round((meterMax - meterMin) * pxPerM));
+
+    // Align "0 mts" with the average water level height in screen space.
+    const medium = this._waterLevels?.medium ?? 0;
+    const camTop = this.camera?.top ?? 5;
+    const camBottom = this.camera?.bottom ?? -5;
+    const yMediumScreen = ((medium - camTop) / (camBottom - camTop)) * viewportH;
+
+    // The "0 mts" mark is at (meterMax - 0) * pxPerM from the top of the container.
+    const trackTop = Math.round(yMediumScreen - (meterMax * pxPerM));
+
+    meter.container.style.top = `${trackTop}px`;
+    meter.container.style.height = `${trackHeight}px`;
+    meter.container.style.bottom = 'auto';
+
+    const pointerSize = Math.max(10, toPx(meter.design.pointerSizeVW));
+    meter.pointerSvg.style.width = `${Math.round(pointerSize)}px`;
+    meter.pointerSvg.style.height = `${Math.round(pointerSize)}px`;
+
+    // Resize canvas to match CSS pixels.
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const cssW = Math.max(1, meter.container.clientWidth);
+    const cssH = Math.max(1, meter.container.clientHeight);
+    const nextW = Math.floor(cssW * dpr);
+    const nextH = Math.floor(cssH * dpr);
+    if (meter.canvas.width !== nextW || meter.canvas.height !== nextH) {
+      meter.canvas.width = nextW;
+      meter.canvas.height = nextH;
+    }
+
+    meter._layout = {
+      viewportH: cssH,
+      viewportW: cssW,
+      spineX: cssW * meter.design.spineOffsetRatio,
+      majorLen: cssW * meter.design.majorTickRatio,
+      minorLen: cssW * meter.design.minorTickRatio,
+      labelX: cssW * (meter.design.spineOffsetRatio + 0.08),
+      fontSizePx: Math.max(11, toPx(meter.design.fontSizeVW)),
+      labelPadX: Math.max(2, toPx(meter.design.labelPaddingVW)),
+      labelPadY: Math.max(1, toPx(meter.design.labelPaddingVH)),
+      labelOffsetX: Math.max(4, toPx(meter.design.labelOffsetVW)),
+      pointerSizePx: pointerSize,
+      dpr,
+      meterMin,
+      meterMax,
+      pxPerM
+    };
+
+    this._redrawDepthMeter();
+    this._updateDepthMeterPointer();
+  }
+
+  _redrawDepthMeter() {
+    const meter = this._depthMeter;
+    const layout = meter?._layout;
+    if (!meter?.ctx || !layout) return;
+
+    const ctx = meter.ctx;
+    const dpr = layout.dpr;
+    const w = meter.canvas.width;
+    const h = meter.canvas.height;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const spineX = layout.spineX;
+    const majorLen = layout.majorLen;
+    const minorLen = layout.minorLen;
+    const lineWidth = Math.max(1, Math.round(1.25 * dpr)) / dpr;
+    const faintLineWidth = Math.max(1, Math.round(0.9 * dpr)) / dpr;
+
+    // Vertical spine (bounded track)
+    ctx.strokeStyle = meter.colors.lines || 'rgba(248,250,252,0.9)';
+    ctx.globalAlpha = 0.42;
+    ctx.lineWidth = faintLineWidth;
+    ctx.beginPath();
+    ctx.moveTo(spineX, 0);
+    ctx.lineTo(spineX, layout.viewportH);
+    ctx.stroke();
+
+    const medium = this._waterLevels?.medium ?? 0;
+    const delta = this.params?.water?.levelDelta ?? 0.25;
+    if (!Number.isFinite(delta) || delta === 0) return;
+
+    // Fixed range in meters, relative to "nivel medio".
+    // Render marks from -10 to +29, but only label multiples of 10.
+    const meterMin = layout.meterMin ?? -10;
+    const meterMax = layout.meterMax ?? 35;
+
+    // Clear and rebuild labels each layout pass.
+    while (meter.labels.firstChild) meter.labels.removeChild(meter.labels.firstChild);
+
+    const makeLabel = (text, yPx) => {
+      const el = document.createElement('div');
+      el.textContent = text;
+      el.style.position = 'absolute';
+      // Place labels to the right of the tick lines to avoid overlap.
+      el.style.left = `${Math.round(spineX + majorLen + layout.labelOffsetX)}px`;
+      el.style.top = `${Math.round(yPx)}px`;
+      el.style.transform = 'translateY(-50%)';
+      el.style.whiteSpace = 'nowrap';
+      el.style.color = meter.colors.text;
+      el.style.fontSize = `${Math.round(layout.fontSizePx)}px`;
+      el.style.lineHeight = '1.1';
+      el.style.fontWeight = '600';
+      el.style.padding = `${Math.round(layout.labelPadY)}px ${Math.round(layout.labelPadX)}px`;
+      el.style.borderRadius = `${Math.round(layout.labelPadX)}px`;
+      el.style.background = 'transparent';
+      if (this._uiFontFamily) {
+        el.style.fontFamily = this._uiFontFamily;
+      }
+      meter.labels.appendChild(el);
+    };
+
+    const pxPerM = layout.pxPerM ?? (layout.viewportH / Math.max(1e-6, (meterMax - meterMin)));
+    const metersToScreenY = (metersRelToMedium) => (meterMax - metersRelToMedium) * pxPerM;
+
+    // Ticks
+    ctx.globalAlpha = 0.75;
+    ctx.strokeStyle = meter.colors.lines || 'rgba(248,250,252,0.9)';
+    ctx.lineWidth = lineWidth;
+
+    for (let m = meterMin; m <= meterMax; m++) {
+      const yMajor = metersToScreenY(m);
+      if (yMajor < -40 || yMajor > layout.viewportH + 40) continue;
+
+      // Major tick
+      ctx.beginPath();
+      ctx.moveTo(spineX, yMajor);
+      ctx.lineTo(spineX + majorLen, yMajor);
+      ctx.stroke();
+
+      // Label
+      if (m === 0) {
+        makeLabel('0 mts: nivel medio', yMajor);
+      } else if (m % 10 === 0) {
+        const sign = m > 0 ? '+' : '';
+        makeLabel(`${sign}${m} mts`, yMajor);
+      }
+
+      // Minor ticks between this and next major
+      if (m < meterMax) {
+        ctx.globalAlpha = 0.35;
+        ctx.lineWidth = faintLineWidth;
+        const subdivisions = 10;
+        const denom = subdivisions + 1; // 10 internal ticks
+        for (let i = 1; i <= subdivisions; i++) {
+          const frac = i / denom;
+          const yMinor = metersToScreenY(m + frac);
+          if (yMinor < -20 || yMinor > layout.viewportH + 20) continue;
+          ctx.beginPath();
+          ctx.moveTo(spineX, yMinor);
+          ctx.lineTo(spineX + minorLen, yMinor);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 0.75;
+        ctx.lineWidth = lineWidth;
+      }
+    }
+  }
+
+  _updateDepthMeterPointer() {
+    const meter = this._depthMeter;
+    const layout = meter?._layout;
+    if (!meter?.pointerSvg || !layout) return;
+
+    const low = this._waterLevels?.low ?? 0;
+    const medium = this._waterLevels?.medium ?? 0;
+    const high = this._waterLevels?.high ?? 0;
+    const aboveDen = high - medium;
+    const belowDen = medium - low;
+    const meterMin = layout.meterMin ?? -10;
+    const meterMax = layout.meterMax ?? 35;
+    const pxPerM = layout.pxPerM ?? (layout.viewportH / Math.max(1e-6, (meterMax - meterMin)));
+
+    // Map water level to "meter units":
+    // -10..0 spans low→medium, 0..10 spans medium→high.
+    let meters = 0;
+    if (this._currentWaterLevel >= medium) {
+      meters = aboveDen !== 0 ? (10 * (this._currentWaterLevel - medium)) / aboveDen : 0;
+    } else {
+      meters = belowDen !== 0 ? (10 * (this._currentWaterLevel - medium)) / belowDen : 0;
+    }
+
+    const clampedMeters = clamp(meters, meterMin, meterMax);
+    const yPx = (meterMax - clampedMeters) * pxPerM;
+
+    // Triangle sits just to the left of the spine, pointing right into it.
+    const left = layout.spineX - layout.pointerSizePx;
+    meter.pointerSvg.style.left = `${Math.round(left)}px`;
+    meter.pointerSvg.style.top = `${Math.round(yPx - layout.pointerSizePx / 2)}px`;
   }
 
   _ensureTutorialOverlay(root) {
@@ -5430,6 +5913,7 @@ export class SimuladorScene extends BaseScene {
       { type: 'modal', text: '¡Bienvenido al Simulador Delta+! El objetivo de este juego es crear una isla como las que pueden encontrarse en el Delta del Paraná.' },
       { type: 'modal', text: 'Las islas del Delta del Paraná, aunque suene increíble, empiezan así: tan solo un banco de arena en el fondo del río.' },
       { type: 'modal', text: 'A medida que se deposita sedimento, ese banco va creciendo hasta emerger sobre el nivel del agua, permitiendo que algunas especies vegetales colonicen esa tierra y la fijen...' },
+      { type: 'modal', text: 'Te proponemos que construyas una nueva isla, aportando sedimento, semillas de distintas especies vegetales y cambiando el nivel del agua para que nuevas plantas puedan crecer.' },
       { type: 'modal', text: '¿Te animás a probar?' },
       { type: 'highlight', target: 'sediment', text: 'Cuando la herramienta Sedimento está activa, podés presionar bajo el agua para hacer crecer el banco de arena.' },
       { type: 'highlight', target: 'weather', text: 'Podés subir o bajar el nivel del agua si lo necesitás.' }
@@ -5442,9 +5926,10 @@ export class SimuladorScene extends BaseScene {
     if (stageId === 'colonization') {
       const steps = [
         { type: 'modal', text: 'Lograste llevar el banco de arena por sobre el nivel promedio del agua. ¡Buen trabajo! Eso permite que algunas especies vegetales empiecen a colonizar el suelo.' },
-        { type: 'modal', text: 'Las semillas solo pueden sembrarse y crecer cuando la isla está sobre el agua, pero necesitan agua para sobrevivir.' },
+        { type: 'modal', text: 'Las semillas solo pueden instalarse y crecer cuando la isla está sobre el agua, pero necesitan agua para sobrevivir.' },
+        { type: 'modal', text: '¡Cuidado! Si las plantas pasan demasiado tiempo bajo el agua, morirán y tendrás que empezar su crecimiento desde cero.' },
         { type: 'modal', text: 'Hacé crecer completamente a todas las especies disponibles para avanzar.' },
-        { type: 'highlight', target: 'seeder', text: 'Elegí las semillas que quieras sembrar y tocá el suelo para sembrar.' },
+        { type: 'highlight', target: 'seeder', text: 'Elegí las semillas que quieras hacer crecer y tocá el suelo para que crezcan en ese lugar.' },
         { type: 'highlight', target: 'remove', text: 'Si querés eliminar semillas o plantas ya crecidas, podés hacerlo utilizando la herramienta Pala.' }
       ];
       this._startTutorialSequence('colonization', steps);
@@ -5452,7 +5937,7 @@ export class SimuladorScene extends BaseScene {
 
     if (stageId === 'expansion') {
       const steps = [
-        { type: 'modal', text: 'Ahora podés sembrar las semillas no colonizadoras. Completá el ecosistema de la isla.' }
+        { type: 'modal', text: 'Ahora podés instalar las semillas no colonizadoras. Completá el ecosistema de la isla.' }
       ];
       this._startTutorialSequence('expansion', steps);
     }
@@ -6170,7 +6655,7 @@ export class SimuladorScene extends BaseScene {
       }
     };
 
-    highlightButton(this._buttons.sediment, activeId === 'sediment', true);
+    highlightButton(this._buttons.sediment, activeId === 'sediment', this._sedimentEnabled);
     highlightButton(this._buttons.remove, activeId === 'remove', this._removeEnabled);
 
     const unavailableFilter = 'grayscale(100%) brightness(0.65)';
@@ -6219,6 +6704,7 @@ export class SimuladorScene extends BaseScene {
     if (activeId !== 'sediment') {
       this._pointerDown = false;
     }
+    this._updateSeedLabels();
     this._updateSeedLabelDisplay(activeId);
     this._refreshCursor();
   }
@@ -6238,9 +6724,6 @@ export class SimuladorScene extends BaseScene {
       const hiddenTransform = labelEl.dataset.hiddenTransform || fallbackHidden;
       const visibleTransform = labelEl.dataset.visibleTransform || fallbackVisible;
       if (shouldShow) {
-        if (entry.seed?.label) {
-          labelEl.textContent = entry.seed.label;
-        }
         labelEl.style.opacity = '1';
         labelEl.style.transform = visibleTransform;
       } else {
@@ -6253,7 +6736,7 @@ export class SimuladorScene extends BaseScene {
   _isToolAvailable(toolId) {
     if (!toolId) return false;
     if (toolId === 'sediment') {
-      return true;
+      return this._sedimentEnabled;
     }
     if (toolId === 'remove') {
       return this._removeEnabled;
@@ -6292,6 +6775,7 @@ export class SimuladorScene extends BaseScene {
     this._seedButtons = {};
     this._cursorEl = null;
     this._goalMessageEl = null;
+    this._depthMeter = null;
     this._lastPointerInfo = null;
     this._activeTool = null;
     this._removeEnabled = false;
@@ -6797,7 +7281,9 @@ export class SimuladorScene extends BaseScene {
     const goal = stage.goal;
     
     if (goal.type === 'riverbedCoverage') {
-        return this._calculateLandCoverage(goal);
+      return this._calculateLandCoverage(goal);
+    } else if (goal.type === 'riverbedMaxHeight') {
+      return this._calculateRiverbedMaxHeightProgress(goal);
     } else if (goal.type === 'plantCounts') {
         return this._calculatePlantProgress(goal);
     }
@@ -6820,6 +7306,88 @@ export class SimuladorScene extends BaseScene {
     
     const coverage = elevated / heights.length;
     return coverage / threshold;
+  }
+
+  _calculateRiverbedMaxHeightProgress(goal) {
+    const heights = this._riverbedHeights;
+    if (!heights?.length) return 0;
+
+    const riverbed = this.params.riverbed || {};
+    const segments = riverbed.segments ?? (heights.length - 1);
+    if (!Number.isFinite(segments) || segments <= 0) return 0;
+
+    const plateauStartRaw = clamp(riverbed.plateauStart ?? 0.2, 0, 1);
+    const plateauEndRaw = clamp(riverbed.plateauEnd ?? 0.8, 0, 1);
+    const innerStart = Math.min(plateauStartRaw, plateauEndRaw);
+    const innerEnd = Math.max(plateauStartRaw, plateauEndRaw);
+
+    const transitionWidth = Math.max(0.0001, riverbed.transitionWidth ?? 0.1);
+    const halfTransition = transitionWidth * 0.5;
+    const outerStart = clamp(innerStart - halfTransition, 0, 1);
+    const outerEnd = clamp(innerEnd + halfTransition, 0, 1);
+    const leftSpan = Math.max(1e-5, innerStart - outerStart);
+    const rightSpan = Math.max(1e-5, outerEnd - innerEnd);
+
+    const capCfg = riverbed.growthCap ?? {};
+    const capEnabled = capCfg.enabled !== false;
+    const islandSpan = Math.max(1e-5, innerEnd - innerStart);
+
+    const avgWaterLevel = (this._waterLevels?.medium ?? this.params.water?.baseLevel ?? 0);
+    const noiseAmp = Math.max(0, capCfg.noiseAmplitude ?? 0);
+    const baseAboveAverage = Math.max(noiseAmp + 0.02, capCfg.baseAboveAverageWater ?? 0.09);
+    const baseCap = avgWaterLevel + baseAboveAverage;
+    const sideLift = Math.max(0, capCfg.sideLift ?? 0);
+    const noiseFreq = Math.max(1e-4, capCfg.noiseFrequency ?? 1);
+    const capSeed = (typeof capCfg.seed === 'number' && Number.isFinite(capCfg.seed)) ? capCfg.seed : 0;
+
+    const plateauCapAtU = (u) => {
+      const uClamped = clamp(u, 0, 1);
+      const parabola = 4 * (uClamped - 0.5) * (uClamped - 0.5);
+      const capNoise = this._noise2D(uClamped * noiseFreq + capSeed * 0.13, capSeed) * noiseAmp;
+      const profile = baseCap + sideLift * parabola + capNoise;
+      return clamp(profile, riverbed.bottom, riverbed.maxHeight);
+    };
+
+    const capAtIndex = (i, normalized) => {
+      if (!capEnabled) return riverbed.maxHeight;
+      if (normalized < outerStart || normalized > outerEnd) return riverbed.maxHeight;
+
+      const baseAtX = (this._riverbedBase?.[i] ?? riverbed.bottom);
+      const leftEdgeCap = plateauCapAtU(0);
+      const rightEdgeCap = plateauCapAtU(1);
+
+      if (normalized >= innerStart && normalized <= innerEnd) {
+        const u = (normalized - innerStart) / islandSpan;
+        return plateauCapAtU(u);
+      }
+
+      if (normalized < innerStart) {
+        const t = saturate((normalized - outerStart) / leftSpan);
+        return lerp(baseAtX, leftEdgeCap, smoothstep(0, 1, t));
+      }
+      const t = saturate((outerEnd - normalized) / rightSpan);
+      return lerp(baseAtX, rightEdgeCap, smoothstep(0, 1, t));
+    };
+
+    const epsilon = Math.max(0, goal?.epsilon ?? 0.0015);
+    let total = 0;
+    let reached = 0;
+
+    for (let i = 0; i <= segments; i++) {
+      const normalized = i / segments;
+      if (normalized < outerStart || normalized > outerEnd) continue;
+      total += 1;
+
+      const maxAtX = capAtIndex(i, normalized);
+      if ((heights[i] ?? riverbed.bottom) >= maxAtX - epsilon) {
+        reached += 1;
+      }
+    }
+
+    if (total <= 0) return 1;
+    const progress = reached / total;
+    const threshold = 0.8;
+    return Math.min(1, progress / threshold);
   }
 
   _calculatePlantProgress(goal) {
