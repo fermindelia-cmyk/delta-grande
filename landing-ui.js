@@ -1041,6 +1041,101 @@ window.addEventListener('keydown', (ev) => {
     }
 })();
 
+// Fade down global audio when the YouTube iframe section is in view
+(function() {
+    const targetSection = document.getElementById('main-video-section');
+    if (!targetSection) return;
+
+    const FADE_MS = 700;
+    let savedVolumes = null;
+    let dimmed = false;
+    let fadeId = null;
+
+    const getLayers = () => window.audioLayers || {
+        ambient: document.getElementById('audio-ambient'),
+        music: document.getElementById('audio-music'),
+        dialog: document.getElementById('audio-dialog')
+    };
+
+    const fadeTo = (targets) => {
+        if (fadeId) cancelAnimationFrame(fadeId);
+        const layers = getLayers();
+        const start = performance.now();
+        const startVolumes = {};
+
+        Object.keys(targets).forEach((name) => {
+            const layer = layers[name];
+            startVolumes[name] = layer ? layer.volume : 0;
+        });
+
+        const step = (now) => {
+            const t = Math.min((now - start) / FADE_MS, 1);
+            Object.keys(targets).forEach((name) => {
+                const layer = layers[name];
+                if (!layer) return;
+                const from = startVolumes[name];
+                const to = targets[name];
+                layer.volume = from + (to - from) * t;
+            });
+
+            if (t < 1) {
+                fadeId = requestAnimationFrame(step);
+            }
+        };
+
+        fadeId = requestAnimationFrame(step);
+    };
+
+    const dimAudio = () => {
+        if (dimmed) return;
+        const layers = getLayers();
+        savedVolumes = {};
+        Object.keys(layers).forEach((name) => {
+            const layer = layers[name];
+            if (layer) savedVolumes[name] = layer.volume;
+        });
+
+        const targets = {};
+        Object.keys(savedVolumes).forEach((name) => { targets[name] = 0; });
+        fadeTo(targets);
+        dimmed = true;
+    };
+
+    const restoreAudio = () => {
+        if (!dimmed || !savedVolumes) return;
+        fadeTo(savedVolumes);
+        dimmed = false;
+    };
+
+    const handleVisibilityFallback = () => {
+        const rect = targetSection.getBoundingClientRect();
+        const inView = rect.top < window.innerHeight * 0.75 && rect.bottom > window.innerHeight * 0.25;
+        if (inView) {
+            dimAudio();
+        } else {
+            restoreAudio();
+        }
+    };
+
+    if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    dimAudio();
+                } else {
+                    restoreAudio();
+                }
+            });
+        }, { threshold: 0.45 });
+
+        observer.observe(targetSection);
+    } else {
+        handleVisibilityFallback();
+        window.addEventListener('scroll', handleVisibilityFallback, { passive: true });
+        window.addEventListener('resize', handleVisibilityFallback);
+    }
+})();
+
 
 // Extracted scripts from index.html
 
