@@ -45,6 +45,13 @@ def build():
         'environment - unzip to use.zip'
     ]
 
+    print("Generating offline manifest...")
+    try:
+        import generate_offline_manifest
+        generate_offline_manifest.generate_manifest(project_root, os.path.join(project_root, 'offline-manifest.json'))
+    except Exception as e:
+        print(f"Warning: Failed to generate offline manifest: {e}")
+
     print("Starting build...")
 
     for item in items_to_copy:
