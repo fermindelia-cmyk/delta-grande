@@ -100,7 +100,7 @@ export class MenuScene extends BaseScene {
       `;
 
       const exterior = new Image();
-      exterior.src = '/game-assets/menu/laboratorio_exterior.png';
+      exterior.src = '/game-assets/menu/laboratorio_exterior.webp';
       exterior.style.cssText = `
         position: absolute;
         inset: 0;
