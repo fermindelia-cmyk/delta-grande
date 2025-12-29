@@ -1096,7 +1096,10 @@ window.addEventListener('keydown', (ev) => {
         });
 
         const targets = {};
-        Object.keys(savedVolumes).forEach((name) => { targets[name] = 0; });
+        Object.keys(savedVolumes).forEach((name) => { 
+            // Keep ambient playing in the background, only dim music and dialog
+            targets[name] = name === 'ambient' ? savedVolumes[name] : 0;
+        });
         fadeTo(targets);
         dimmed = true;
     };
