@@ -25,8 +25,11 @@ def build():
     # (favicons, service worker, webmanifest, offline manifest, etc.)
     extra_patterns = [
         'service-worker.js',
+        'sw-register.js',
+        'landing-ui.js',
+        'landing-style.css',
         'offline-manifest.json',
-        'manifest.webmanifest',
+        'site.webmanifest',
         'manifest.json',
         'favicon.ico',
         'favicon*.png',
