@@ -1136,6 +1136,89 @@ window.addEventListener('keydown', (ev) => {
     }
 })();
 
+// Custom controls for the self-hosted Poema video
+(function() {
+    const video = document.getElementById('poema-video');
+    const playBtn = document.getElementById('poema-play-toggle');
+    const audioBtn = document.getElementById('poema-audio-toggle');
+    if (!video || !playBtn || !audioBtn) return;
+
+    // Keep muted by default; start paused until fully in view
+    video.muted = true;
+    video.pause();
+    video.currentTime = 0;
+
+    const updatePlayLabel = () => {
+        const playing = !video.paused && !video.ended;
+        playBtn.textContent = playing ? 'Pausa' : 'Reproducir';
+        playBtn.setAttribute('aria-pressed', playing ? 'true' : 'false');
+    };
+
+    const updateAudioLabel = () => {
+        const muted = video.muted;
+        audioBtn.textContent = muted ? 'Habilitar audio' : 'Deshabilitar audio';
+        audioBtn.setAttribute('aria-pressed', muted ? 'false' : 'true');
+    };
+
+    playBtn.addEventListener('click', () => {
+        if (video.paused || video.ended) {
+            video.play().catch(() => {});
+        } else {
+            video.pause();
+        }
+        updatePlayLabel();
+    });
+
+    audioBtn.addEventListener('click', () => {
+        video.muted = !video.muted;
+        updateAudioLabel();
+    });
+
+    video.addEventListener('play', updatePlayLabel);
+    video.addEventListener('pause', updatePlayLabel);
+    video.addEventListener('ended', updatePlayLabel);
+
+    const ensurePlayWhenVisible = () => {
+        const section = document.getElementById('main-video-section');
+        if (!section) return;
+
+        const attemptPlay = () => {
+            if (video.paused) video.play().catch(() => {});
+        };
+
+        const attemptPause = () => {
+            if (!video.paused) video.pause();
+        };
+
+        if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    const fullyInView = entry.intersectionRatio >= 0.9;
+                    if (fullyInView) {
+                        attemptPlay();
+                    } else if (!entry.isIntersecting || entry.intersectionRatio < 0.5) {
+                        attemptPause();
+                    }
+                });
+            }, { threshold: [0, 0.5, 0.9] });
+            observer.observe(section);
+        } else {
+            // Fallback: check once on load
+            const rect = section.getBoundingClientRect();
+            const inView = rect.top >= 0 && rect.bottom <= window.innerHeight;
+            if (inView) {
+                attemptPlay();
+            } else {
+                attemptPause();
+            }
+        }
+    };
+
+    ensurePlayWhenVisible();
+    updatePlayLabel();
+    updateAudioLabel();
+})();
+
 
 // Extracted scripts from index.html
 
