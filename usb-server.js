@@ -1,10 +1,8 @@
-import http from 'http';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// __dirname and __filename are provided by CommonJS
 
 const args = parseArgs(process.argv.slice(2));
 const rootDir = path.resolve(__dirname, args.dir || 'dist');

@@ -30,8 +30,14 @@ if not exist "%SERVER_JS%" (
   exit /b 1
 )
 
-rem Start server in the background and capture its PID
-for /f "usebackq tokens=1" %%p in (`powershell -NoProfile -Command "(Start-Process -FilePath '%NODE_EXE%' -ArgumentList '%SERVER_JS%','--dir','%APP_DIR%','--port','%PORT%' -PassThru).Id"`) do set SERVERPID=%%p
+rem Start server in the background and capture its PID (with safe quoting for spaces)
+for /f "usebackq tokens=1" %%p in (`powershell -NoProfile -Command "$p = Start-Process -FilePath \"\"\"%NODE_EXE%\"\"\" -ArgumentList @(\"\"\"%SERVER_JS%\"\"\", '--dir', \"\"\"%APP_DIR%\"\"\", '--port', '%PORT%') -PassThru; $p.Id"`) do set SERVERPID=%%p
+
+if "%SERVERPID%"=="" (
+  echo Failed to start server. Check paths and try again.
+  pause
+  exit /b 1
+)
 
 echo Server running on http://localhost:%PORT% (PID %SERVERPID%)
 
