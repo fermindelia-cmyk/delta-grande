@@ -1264,9 +1264,10 @@
             justify-content: center;
             gap: clamp(20px, 8vw, 120px);
             width: 100%;
-            margin-top: 40px;
+            margin: 60px auto 80px;
             flex-wrap: wrap;
-            padding: 0 20px;
+            padding: 40px 60px;
+            max-width: 1200px;
         }
 
         .material-button {
