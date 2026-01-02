@@ -1,6 +1,38 @@
 import os
 import shutil
 import glob
+import time
+import random
+import string
+
+def generate_build_version():
+    """Generate a unique build version string"""
+    timestamp = int(time.time() * 1000)
+    random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=7))
+    return f"v{timestamp}-{random_suffix}"
+
+def inject_version_into_file(file_path, version):
+    """Replace __BUILD_VERSION__ placeholder with actual version in a file"""
+    try:
+        if os.path.exists(file_path):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            original_content = content
+            content = content.replace('__BUILD_VERSION__', version)
+            
+            if content != original_content:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                print(f"✅ Injected version into: {file_path}")
+                return True
+            else:
+                print(f"⚠️  No __BUILD_VERSION__ placeholder found in: {file_path}")
+        else:
+            print(f"⚠️  File not found: {file_path}")
+    except Exception as e:
+        print(f"❌ Error injecting version into {file_path}: {e}")
+    return False
 
 def build():
     project_root = os.path.dirname(os.path.abspath(__file__))
@@ -114,8 +146,6 @@ def build():
             print(f"Copying file: {item}")
             shutil.copy2(src, dst)
 
-    print(f"Build complete! Output is in {dist_dir}")
-
     # Copy extra root files that match patterns so favicons, manifests and SW are included
     for pattern in extra_patterns:
         full_pattern = os.path.join(project_root, pattern)
@@ -128,5 +158,22 @@ def build():
             except Exception as e:
                 print(f"Warning: failed to copy extra file {m}: {e}")
 
+    # Inject BUILD_VERSION into files
+    print("\nInjecting BUILD_VERSION...")
+    build_version = generate_build_version()
+    print(f"Generated version: {build_version}")
+    
+    files_to_inject = [
+        os.path.join(dist_dir, 'service-worker.js'),
+        os.path.join(dist_dir, 'game', 'index.html'),
+        os.path.join(dist_dir, 'index.html')
+    ]
+    
+    for file_path in files_to_inject:
+        inject_version_into_file(file_path, build_version)
+    
+    print(f"\n✅ Build complete! Output is in {dist_dir}")
+
 if __name__ == "__main__":
     build()
+

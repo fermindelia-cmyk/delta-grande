@@ -72,12 +72,19 @@ async function cacheResponse(request, response) {
   // for range requests; Cache.put does not accept partial responses and will
   // throw. Guard against that by only caching when status === 200.
   if (!response || response.status !== 200) return response;
+  
+  // Filter out chrome-extension and other unsupported schemes
+  const url = new URL(request.url);
+  if (url.protocol === 'chrome-extension:' || url.protocol === 'blob:' || url.protocol === 'data:') {
+    return response;
+  }
+  
   const cache = await caches.open(CACHE_NAME);
   try {
     await cache.put(request, response.clone());
   } catch (err) {
-    // If cache.put fails (e.g. partial responses or storage errors), log and
-    // continue — do not crash the worker.
+    // If cache.put fails (e.g. partial responses, unsupported schemes, or storage errors), 
+    // log and continue — do not crash the worker.
     console.warn('[SW] cache.put failed for', request.url, err);
   }
   return response;
@@ -88,8 +95,8 @@ self.addEventListener('fetch', (event) => {
 
   const reqUrl = new URL(event.request.url);
 
-  // Ignore blob: and data: schemes (let browser handle them)
-  if (reqUrl.protocol === 'blob:' || reqUrl.protocol === 'data:') {
+  // Ignore blob:, data:, and chrome-extension: schemes (let browser handle them)
+  if (reqUrl.protocol === 'blob:' || reqUrl.protocol === 'data:' || reqUrl.protocol === 'chrome-extension:') {
     return;
   }
 
