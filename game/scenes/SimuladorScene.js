@@ -3038,75 +3038,57 @@ export class SimuladorScene extends BaseScene {
     if (!this.app?.root || this._loadingOverlay) return;
     if (typeof document === 'undefined') return;
 
-    this._ensureLoadingStyles();
-
     const overlay = document.createElement('div');
-    overlay.style.position = 'absolute';
-    overlay.style.inset = '0';
-    overlay.style.display = 'flex';
-    overlay.style.alignItems = 'center';
-    overlay.style.justifyContent = 'center';
-    overlay.style.background = this.params.colors?.uiBackgroundActive || 'rgba(10, 34, 61, 0.88)';
-    overlay.style.backdropFilter = 'blur(1.2vmin)';
-    overlay.style.zIndex = '999';
-    overlay.style.pointerEvents = 'auto';
-  overlay.style.cursor = 'wait';
-    overlay.style.transition = 'opacity 0.4s ease';
-    overlay.style.opacity = '0';
+    overlay.style.cssText = `
+      position: fixed;
+      inset: 0;
+      background: black;
+      overflow: hidden;
+      z-index: 9999;
+      opacity: 1;
+      pointer-events: none;
+    `;
 
-    const content = document.createElement('div');
-    content.style.display = 'flex';
-    content.style.flexDirection = 'column';
-    content.style.alignItems = 'center';
-    content.style.justifyContent = 'center';
-    content.style.gap = '1.6vmin';
+    const exterior = new Image();
+    exterior.src = '/game-assets/menu/laboratorio_exterior.webp';
+    exterior.style.cssText = `
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 1;
+    `;
 
-    const logoWrapper = document.createElement('div');
-    logoWrapper.style.perspective = '1200px';
+    const loader = document.createElement('video');
+    loader.src = '/game-assets/menu/D+_loader%2003.webm';
+    loader.style.cssText = `
+      position: absolute;
+      right: clamp(16px, 3vw, 64px);
+      bottom: clamp(16px, 3vw, 64px);
+      width: clamp(100px, 15vw, 260px);
+      max-height: 50%;
+      object-fit: contain;
+      opacity: 1;
+      pointer-events: none;
+    `;
+    loader.muted = true;
+    loader.playsInline = true;
+    loader.loop = true;
 
-    const logo = document.createElement('img');
-    const logoUrl = this._getLoadingLogoUrl();
-    if (logoUrl) {
-      logo.src = logoUrl;
-    }
-    logo.alt = 'Logo';
-    logo.draggable = false;
-    logo.style.width = '18vmin';
-    logo.style.maxWidth = '42vw';
-    logo.style.transform = 'rotateX(18deg)';
-    logo.style.transformOrigin = '50% 50%';
-  logo.style.transformStyle = 'preserve-3d';
-    logo.style.animation = 'simulador-loading-spin 3.2s cubic-bezier(0.37, 0, 0.63, 1) infinite';
-    logo.style.willChange = 'transform';
-    logo.style.filter = 'drop-shadow(0 1.2vmin 2.4vmin rgba(0, 0, 0, 0.35))';
-    logo.style.pointerEvents = 'none';
-    logoWrapper.appendChild(logo);
-
-    const text = document.createElement('div');
-    text.textContent = 'Cargando...';
-    text.style.fontSize = '2.4vmin';
-    text.style.letterSpacing = '0.12em';
-    text.style.fontWeight = '600';
-    text.style.textTransform = 'uppercase';
-    text.style.color = this.params.colors?.uiText || '#f8fafc';
-    text.style.textShadow = '0 0.6vmin 1.8vmin rgba(0, 0, 0, 0.4)';
-    text.style.pointerEvents = 'none';
-    const fontFamily = this.params.ui?.fonts?.family || this._uiFontFamily;
-    if (fontFamily) {
-      text.style.fontFamily = fontFamily;
-    }
-
-    content.appendChild(logoWrapper);
-    content.appendChild(text);
-    overlay.appendChild(content);
-
+    overlay.appendChild(exterior);
+    overlay.appendChild(loader);
     this.app.root.appendChild(overlay);
     this._loadingOverlay = overlay;
 
-    requestAnimationFrame(() => {
-      if (!this._loadingOverlay) return;
-      this._loadingOverlay.style.opacity = '1';
-    });
+    // Start video playback
+    if (loader.readyState >= 1) {
+      loader.play().catch(() => {});
+    } else {
+      loader.addEventListener('loadedmetadata', () => {
+        loader.play().catch(() => {});
+      }, { once: true });
+    }
   }
 
   _hideLoadingOverlay(immediate = false) {
@@ -3125,8 +3107,7 @@ export class SimuladorScene extends BaseScene {
       return;
     }
 
-    overlay.style.pointerEvents = 'none';
-    overlay.style.cursor = 'default';
+    overlay.style.transition = 'opacity 0.8s ease';
     overlay.style.opacity = '0';
     this._loadingOverlayHideTimer = setTimeout(() => {
       overlay.parentElement?.removeChild(overlay);
@@ -3134,7 +3115,7 @@ export class SimuladorScene extends BaseScene {
         this._loadingOverlay = null;
       }
       this._loadingOverlayHideTimer = null;
-    }, 450);
+    }, 800);
   }
 
   _ensurePlantMaterial(plant) {

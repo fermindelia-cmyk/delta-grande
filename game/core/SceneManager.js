@@ -1,3 +1,5 @@
+import { EventBus } from './EventBus.js';
+
 export class SceneManager{
 constructor(app, registry){
 this.app = app;
@@ -19,5 +21,7 @@ this.currentName = name;
 console.log(`[SceneManager] Created new scene ${name}`);
 await this.app.setScene(this.instance);
 console.log(`[SceneManager] Set scene ${name} in app`);
+// Emit scene changed event
+EventBus.emit('scene:changed', name);
 }
 }

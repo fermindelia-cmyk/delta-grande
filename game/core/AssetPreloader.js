@@ -153,50 +153,42 @@ export class AssetPreloader {
 
         await Promise.allSettled(loadPromises);
         
-        const memoryUsageMB = (this.getTotalMemoryUsage() / 1024 / 1024).toFixed(2);
-        console.log(`✅ ${this.precachedUrls.size} assets en RAM (${memoryUsageMB} MB total)`);
+        console.log(`✅ ${this.precachedUrls.size} assets precached to HTTP cache`);
         
         return this.precachedUrls;
     }
 
     async precacheAsset(assetPath) {
-        // Descargar y mantener en memoria RAM
+        // 🔥 CRITICAL FIX: Don't create blob URLs at all - use HTTP cache only
+        // Blob URLs cause memory leaks and THREE.js loading issues
+        // The browser's HTTP cache is sufficient for fast loading
+        
         const response = await fetch(assetPath, { 
             method: 'GET',
-            cache: 'force-cache' // Usar caché si está disponible
+            cache: 'force-cache'
         });
         
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
-        // Mantener el blob en memoria RAM
+        // Consume response to ensure it's cached, but don't store blob
         const blob = await response.blob();
-        const objectUrl = URL.createObjectURL(blob);
+        const sizeMB = (blob.size / 1024 / 1024).toFixed(2);
+        console.log(`💾 Asset cached (HTTP): ${assetPath} (${sizeMB} MB)`);
         
-        // Guardar en memoria para acceso rápido
-        this.assetsInMemory.set(assetPath, {
-            blob: blob,
-            url: objectUrl,
-            type: blob.type,
-            size: blob.size
-        });
-        
-        console.log(`💾 Asset en RAM: ${assetPath} (${(blob.size / 1024 / 1024).toFixed(2)} MB)`);
-        
+        // Don't store anything - just let HTTP cache handle it
         return true;
     }
     
     getAssetFromMemory(assetPath) {
-        return this.assetsInMemory.get(assetPath);
+        // No longer storing in memory - return null
+        return null;
     }
     
     getTotalMemoryUsage() {
-        let totalBytes = 0;
-        for (const asset of this.assetsInMemory.values()) {
-            totalBytes += asset.size;
-        }
-        return totalBytes;
+        // No longer tracking memory usage
+        return 0;
     }
 
     isPrecached(assetPath) {
@@ -204,14 +196,10 @@ export class AssetPreloader {
     }
 
     clearCache() {
-        // Liberar object URLs antes de limpiar
-        for (const asset of this.assetsInMemory.values()) {
-            URL.revokeObjectURL(asset.url);
-        }
-        
+        // No blob URLs to revoke anymore
         this.assetsInMemory.clear();
         this.precachedUrls.clear();
         
-        console.log('🗑️ Memoria RAM liberada');
+        console.log('🗑️ Cache references cleared');
     }
 }

@@ -5,6 +5,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>DELTA+ — Juego</title>
+  <link rel="stylesheet" href="https://use.typekit.net/tas7aat.css">
   <style>
     :root {
       --bg: #0d0f12;
@@ -376,6 +377,7 @@
       pointer-events: auto;
       flex-direction: column;
       gap: 18px;
+      font-family: "new-science", 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
     }
 
     .menu-overlay.is-visible {
@@ -406,6 +408,7 @@
       text-transform: uppercase;
       cursor: pointer;
       transition: background 0.2s ease, transform 0.2s ease;
+      font-family: inherit;
     }
 
     .menu-button:hover:not(:disabled),
@@ -534,7 +537,7 @@
       line-height: 1.6;
       max-height: 100%;
       overflow: auto; /* allow scrolling when text is long */
-      text-align: left; /* alinear texto a la izquierda */
+      text-align: center; /* alinear texto al centro */
     }
   </style>
   <link rel="stylesheet" href="./styles/sub/deck-style.css">
@@ -630,6 +633,68 @@
       /* inherit the same font from the overlay container (keeps consistency) */
       font-family: inherit;
     }
+
+    /* Progress Overlay */
+    .progress-overlay {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      width: min(40vw, 544px);
+      height: auto;
+      aspect-ratio: 544 / 232;
+      z-index: 12000;
+      pointer-events: none;
+    }
+
+    .progress-overlay .progress-bg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .progress-overlay .progress-full {
+      width: 100%;
+      height: 100%;
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .progress-bar-mask {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transition: clip-path 0.5s ease-out;
+    }
+
+    .progress-indicator {
+      position: absolute;
+      width: 12.132%; /* 66px / 544px */
+      height: 17.672%; /* 41px / 232px */
+      background: rgba(221, 220, 49, 1);
+      border: 2px solid #212A4F;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: translateY(-50%);
+      transition: left 0.5s ease-out;
+      left: 41.36%; /* 225px / 544px */
+    }
+
+    .progress-indicator .progress-percentage {
+      font-family: "new-science", system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+      font-size: clamp(12px, 1.4vw, 22px);
+      font-weight: normal;
+      color: #000;
+      text-align: center;
+    }
   </style>
   
 
@@ -697,7 +762,7 @@
       <div class="menu-overlay__options">
         <button type="button" class="menu-button" data-action="resume">Reanudar</button>
         <button type="button" class="menu-button" data-action="restart">Reiniciar</button>
-        <button type="button" class="menu-button" data-action="exit">Salir al menú</button>
+        <button type="button" class="menu-button" data-action="exit">Volver al laboratorio</button>
       </div>
     </div>
 
@@ -709,6 +774,29 @@
         <button type="button" class="menu-button" data-action="options">Opciones</button>
         <button type="button" class="menu-button" data-action="quit">Salir</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Progress Overlay -->
+  <div id="progress-overlay" class="progress-overlay" aria-hidden="true" style="display: none;">
+    <img src="../game-assets/menu/progreso/progreso_empty.png" alt="Progreso del juego" class="progress-bg">
+    <div class="progress-bar-mask" data-mask="recorrido" style="clip-path: inset(19.184% 100% 63.144% 0);">
+      <img src="../game-assets/menu/progreso/progreso_full.png" alt="" class="progress-full">
+    </div>
+    <div class="progress-bar-mask" data-mask="subacuatico" style="clip-path: inset(42.024% 100% 40.304% 0);">
+      <img src="../game-assets/menu/progreso/progreso_full.png" alt="" class="progress-full">
+    </div>
+    <div class="progress-bar-mask" data-mask="isla" style="clip-path: inset(64.444% 100% 17.884% 0);">
+      <img src="../game-assets/menu/progreso/progreso_full.png" alt="" class="progress-full">
+    </div>
+    <div class="progress-indicator" data-bar="recorrido" style="top: 28.02%;">
+      <span class="progress-percentage">0 %</span>
+    </div>
+    <div class="progress-indicator" data-bar="subacuatico" style="top: 50.86%;">
+      <span class="progress-percentage">0 %</span>
+    </div>
+    <div class="progress-indicator" data-bar="isla" style="top: 73.28%;">
+      <span class="progress-percentage">0 %</span>
     </div>
   </div>
 

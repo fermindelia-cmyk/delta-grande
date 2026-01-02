@@ -18,11 +18,16 @@ ASSET_EXTENSIONS = {
 # Directories to exclude
 EXCLUDE_DIRS = {
     'node_modules', '.git', '__pycache__', 'dist', 
-    '.antigravity', 'tools', 'bak', '_backup'
+    '.antigravity', 'tools', 'bak', '_backup',
+    'old', 'originals', 'hd', '_old_data_files'
 }
 
 # Patterns to exclude from paths
-EXCLUDE_PATTERNS = ['_old', '/dist/', '/.git/', '/node_modules/']
+EXCLUDE_PATTERNS = [
+    '_old', '/dist/', '/.git/', '/node_modules/',
+    '/bak/', '/_backup/', '/old/', '/originals/',
+    '/hd/', '_old_data_files'
+]
 
 def should_exclude(path_str):
     """Check if a path should be excluded."""
@@ -50,6 +55,10 @@ def collect_assets(root_dir):
             # Get relative path from root
             rel_path = file_path.relative_to(root_path)
             url_path = '/' + str(rel_path).replace('\\', '/')
+            
+            # FIX: If path starts with /assets/, remove /assets prefix because Vite serves it at root
+            if url_path.startswith('/assets/'):
+                url_path = url_path[7:] # remove '/assets'
             
             # Skip excluded patterns
             if should_exclude(url_path):

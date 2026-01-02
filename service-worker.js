@@ -88,6 +88,11 @@ self.addEventListener('fetch', (event) => {
 
   const reqUrl = new URL(event.request.url);
 
+  // Ignore blob: and data: schemes (let browser handle them)
+  if (reqUrl.protocol === 'blob:' || reqUrl.protocol === 'data:') {
+    return;
+  }
+
   // Navigation requests: network-first, fallback to cached shell
   if (event.request.mode === 'navigate') {
     event.respondWith(

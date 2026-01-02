@@ -14,6 +14,7 @@ import { GamerLUTPass } from '../core/GamerLUTPass.js';
 // 👇 Control the starting scene here (0=escena01, 1=escena02, 2=escena03, etc.)
 // Ronda 1, Ambiente 1 = escena 0
 const STARTING_SCENE = 0;
+const TOTAL_ROUNDS = 5;
 
 const _orbitCenter = new THREE.Vector3();
 const _orbitPos = new THREE.Vector3();
@@ -98,7 +99,6 @@ export class RecorridoScene extends BaseScene {
     this._fadeOverlayTimeout = null;
     this._tempClearColor = new THREE.Color(); this.lon = 0; this.lat = 0; // grados
 
-    this.gltfLoader = new GLTFLoader();
     this.stageModel = null;
     this.gltfAnimations = [];
 
@@ -145,10 +145,16 @@ export class RecorridoScene extends BaseScene {
     this.rastroAnimationAction = null;
     this.videoElement = null;
     this.currentVideoTexture = null; // For cleanup
+    this.envTexture = null; // For cleanup
+    this.currentStageModelUrl = null; // Track current model URL
     this.sunObject = null;
     this.lensflare = null;
     this.sunLight = null;
     this.lensflareTextures = [];
+
+    // 🔥 Memory tracking
+    this.loadedTextures = new Set(); // Track all textures we create
+    this.sceneLoadCount = 0; // Track how many scenes we've loaded
     this._flareDebug = { created: false, frameLogged: false };
     this.butterfly = null;
     this.butterflyMixer = null;
@@ -168,6 +174,9 @@ export class RecorridoScene extends BaseScene {
     };
 
     this.glitchFlashState = null;
+    // Usa un flash liviano por defecto para evitar repaints costosos
+    this.glitchFlashLeanMode = true;
+    this.prefersReducedMotion = (typeof window !== 'undefined' && window.matchMedia)?.('(prefers-reduced-motion: reduce)').matches || false;
 
     // 🔊 Spatial audio system for species
     this.speciesAudio = null; // Audio element for current species
@@ -1096,6 +1105,12 @@ export class RecorridoScene extends BaseScene {
       this.currentVideoTexture.dispose();
       this.currentVideoTexture = null;
     }
+    
+    // 🔥 Clean up environment texture
+    if (this.envTexture) {
+      this.envTexture.dispose();
+      this.envTexture = null;
+    }
 
     // 👇 OPTIMIZACIÓN: Limpiar caché de shaders flash
     if (this._flashShaderCache) {
@@ -1110,15 +1125,36 @@ export class RecorridoScene extends BaseScene {
       this.stageModel.traverse((child) => {
         if (child.isMesh) {
           child.geometry.dispose?.();
+          
+          const disposeMat = (mat) => {
+            if (mat.map) { mat.map.dispose(); this.loadedTextures.delete(mat.map); mat.map = null; }
+            if (mat.emissiveMap) { mat.emissiveMap.dispose(); this.loadedTextures.delete(mat.emissiveMap); mat.emissiveMap = null; }
+            if (mat.normalMap) { mat.normalMap.dispose(); this.loadedTextures.delete(mat.normalMap); mat.normalMap = null; }
+            if (mat.roughnessMap) { mat.roughnessMap.dispose(); this.loadedTextures.delete(mat.roughnessMap); mat.roughnessMap = null; }
+            if (mat.metalnessMap) { mat.metalnessMap.dispose(); this.loadedTextures.delete(mat.metalnessMap); mat.metalnessMap = null; }
+            if (mat.aoMap) { mat.aoMap.dispose(); this.loadedTextures.delete(mat.aoMap); mat.aoMap = null; }
+            if (mat.alphaMap) { mat.alphaMap.dispose(); this.loadedTextures.delete(mat.alphaMap); mat.alphaMap = null; }
+            if (mat.envMap) { mat.envMap.dispose(); this.loadedTextures.delete(mat.envMap); mat.envMap = null; }
+            if (mat.userData?.shader) { mat.userData.shader = null; }
+            mat.dispose();
+          };
+
           const material = child.material;
           if (Array.isArray(material)) {
-            material.forEach(mat => mat?.dispose?.());
+            material.forEach(mat => disposeMat(mat));
           } else {
-            material?.dispose?.();
+            if (material) disposeMat(material);
           }
+          
+          child.material = null; // Break reference
         }
       });
+      
+      // Remove from scene immediately
       this.scene.remove(this.stageModel);
+      
+      // Break all references in the graph
+      this.stageModel.clear();
       this.stageModel = null;
     }
     this.shaderMaterials.clear();
@@ -1235,18 +1271,65 @@ export class RecorridoScene extends BaseScene {
       this.videoElement.load();
       this.videoElement = null;
     }
+
+    if (this.currentVideoTexture) {
+      this.currentVideoTexture.dispose();
+      this.currentVideoTexture = null;
+    }
+
+    if (this.preloadedDataVideo) {
+      try {
+        this.preloadedDataVideo.pause();
+        this.preloadedDataVideo.removeAttribute('src');
+        this.preloadedDataVideo.load();
+      } catch (e) {}
+      this.preloadedDataVideo = null;
+    }
+
+    // 🔥 Clean up environment texture from previous stage
+    if (this.envTexture) {
+      this.envTexture.dispose();
+      this.loadedTextures.delete(this.envTexture);
+      this.envTexture = null;
+    }
+    
+    // Clear tracked model URL
+    this.currentStageModelUrl = null;
+
     if (this.stageModel) {
       this.stageModel.traverse(object => {
         if (object.isMesh) {
           object.geometry.dispose();
-          if (object.material.isMaterial) {
-            object.material.dispose();
-          } else {
-            for (const material of object.material) material.dispose();
+          
+          const disposeMat = (mat) => {
+            if (mat.map) { mat.map.dispose(); this.loadedTextures.delete(mat.map); mat.map = null; }
+            if (mat.emissiveMap) { mat.emissiveMap.dispose(); this.loadedTextures.delete(mat.emissiveMap); mat.emissiveMap = null; }
+            if (mat.normalMap) { mat.normalMap.dispose(); this.loadedTextures.delete(mat.normalMap); mat.normalMap = null; }
+            if (mat.roughnessMap) { mat.roughnessMap.dispose(); this.loadedTextures.delete(mat.roughnessMap); mat.roughnessMap = null; }
+            if (mat.metalnessMap) { mat.metalnessMap.dispose(); this.loadedTextures.delete(mat.metalnessMap); mat.metalnessMap = null; }
+            if (mat.aoMap) { mat.aoMap.dispose(); this.loadedTextures.delete(mat.aoMap); mat.aoMap = null; }
+            if (mat.alphaMap) { mat.alphaMap.dispose(); this.loadedTextures.delete(mat.alphaMap); mat.alphaMap = null; }
+            if (mat.envMap) { mat.envMap.dispose(); this.loadedTextures.delete(mat.envMap); mat.envMap = null; }
+            if (mat.userData?.shader) { mat.userData.shader = null; }
+            mat.dispose();
+          };
+
+          if (object.material) {
+            if (Array.isArray(object.material)) {
+              object.material.forEach(mat => disposeMat(mat));
+            } else {
+              disposeMat(object.material);
+            }
           }
+          object.material = null;
         }
       });
+      
+      // Remove from scene immediately
       this.scene.remove(this.stageModel);
+      
+      // Break all references in the graph
+      this.stageModel.clear();
       this.stageModel = null;
     }
     this.shaderMaterials.clear();
@@ -1342,15 +1425,91 @@ export class RecorridoScene extends BaseScene {
     this.sunObject = null;
     this._flareDebug = { created: false, frameLogged: false };
 
+    // 👇 Force GC cycle hint by waiting a frame
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    
+    // Force a render of the empty scene to clear GPU buffers
+    if (this.app && this.app.renderer) {
+      this.app.renderer.render(this.scene, this.camera);
+      this.app.renderer.info.reset();
+    }
+
+    // 🔥 CRITICAL: Multiple GC cycles to clean up blob URLs from previous scene
+    for (let i = 0; i < 3; i++) {
+      await new Promise(resolve => setTimeout(resolve, 150));
+      THREE.Cache.clear();
+    }
+    
+    this.sceneLoadCount++;
+    console.log(`[RecorridoScene] Memory cleanup complete, loading scene #${this.sceneLoadCount}...`);
+    console.log(`[RecorridoScene] Previous textures in memory: ${this.loadedTextures.size}`);
+    
+    // Log memory usage if available
+    if (performance.memory) {
+      const memMB = (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(2);
+      const limitMB = (performance.memory.jsHeapSizeLimit / 1024 / 1024).toFixed(2);
+      console.log(`[RecorridoScene] JS Heap: ${memMB} MB / ${limitMB} MB`);
+    }
+
+    // 🔥 Clear THREE.js texture cache to prevent memory accumulation
+    THREE.Cache.clear();
+
     // Load panorama: prioritize GLB, fallback to photo
     if (st.model) {
-      const gltf = await this.gltfLoader.loadAsync(st.model);
+      // Use a fresh loader instance to avoid memory retention
+      const loader = new GLTFLoader();
+      
+      // Optional: Configure Draco if needed (uncomment if you have Draco files)
+      // const dracoLoader = new DRACOLoader();
+      // dracoLoader.setDecoderPath('/draco/');
+      // loader.setDRACOLoader(dracoLoader);
+
+      let gltf;
+      try {
+        gltf = await loader.loadAsync(st.model);
+        
+        // 🔥 CRITICAL: Wait for all textures to upload to GPU before proceeding
+        // GLTFLoader creates internal blob URLs for embedded textures that need time to process
+        await this.waitForTexturesReady(gltf.scene);
+        
+      } catch (err) {
+        console.error('[RecorridoScene] Error loading GLB:', err);
+        return;
+      }
+      
       this.stageModel = gltf.scene;
+
+      // 👇 FIX: Load environment texture from st.photo if available
+      let envTexture = null;
+      let envTextureUsed = false;
+      
+      // 🔥 Dispose previous environment texture if it exists
+      if (this.envTexture) {
+        this.envTexture.dispose();
+        this.envTexture = null;
+      }
+      
+      if (st.photo) {
+        try {
+          // Load texture with a fresh loader to ensure no caching issues
+          const texLoader = new THREE.TextureLoader();
+          envTexture = await new Promise((resolve, reject) => {
+            texLoader.load(st.photo, resolve, undefined, reject);
+          });
+          envTexture.colorSpace = THREE.SRGBColorSpace;
+          envTexture.flipY = false; 
+        } catch (e) {
+          console.warn('Could not load environment texture:', e);
+        }
+      }
 
       // Store animations for later use
       this.gltfAnimations = gltf.animations || [];
 
-      // 🔍 LOG: Información del GLB cargado
+      // � Store current stage model URL for later blob cleanup
+      this.currentStageModelUrl = st.model;
+
+      // �🔍 LOG: Información del GLB cargado
 
 
 
@@ -1361,8 +1520,32 @@ export class RecorridoScene extends BaseScene {
         if (child.isMesh) {
           meshList.push(child.name);
 
+          // 👇 FIX: Apply environment texture to sphere
+          if (envTexture && (child.name.toLowerCase().includes('sphere') || child.name.toLowerCase().includes('esfera'))) {
+             // Dispose old material if it exists
+             if (child.material) {
+               if (child.material.map) child.material.map.dispose();
+               child.material.dispose();
+             }
+
+             child.material = new THREE.MeshBasicMaterial({
+               map: envTexture,
+               side: THREE.DoubleSide
+             });
+             envTextureUsed = true;
+          }
         }
       });
+      
+      // Store or dispose environment texture
+      if (envTexture && envTextureUsed) {
+        // Store reference for later disposal
+        this.envTexture = envTexture;
+      } else if (envTexture && !envTextureUsed) {
+        // If texture was loaded but not used, dispose it immediately to free memory
+        envTexture.dispose();
+        envTexture = null;
+      }
 
       if (this.gltfAnimations.length > 0) {
         this.gltfAnimations.forEach((anim, idx) => {
@@ -1392,6 +1575,14 @@ export class RecorridoScene extends BaseScene {
         if (child.isMesh) {
           // 👇 Detectar TODAS las especies en el GLB (no solo la actual del turno)
           const meshName = child.name;
+
+          // 👇 FIX: Apply environment texture to sphere
+          if (envTexture && (meshName.toLowerCase().includes('sphere') || meshName.toLowerCase().includes('esfera'))) {
+             child.material = new THREE.MeshBasicMaterial({
+               map: envTexture,
+               side: THREE.DoubleSide
+             });
+          }
 
           // Verificar si este mesh es un glitch o rastro de alguna especie
           const isGlitchMesh = meshName.endsWith('_glitch');
@@ -2332,13 +2523,13 @@ export class RecorridoScene extends BaseScene {
       }
     }
 
-    console.log('🔍 DEBUG CLICK:', {
-      tieneGlitchObject: !!this.glitchObject,
-      glitchVisible: this.glitchObject?.visible,
-      hitboxTestPoints: testPoints.length,
-      encontradoHit: !!bestHit,
-      especieActual: this.currentSpecies?.commonName || 'ninguna'
-    });
+    // console.log('🔍 DEBUG CLICK:', {
+    //   tieneGlitchObject: !!this.glitchObject,
+    //   glitchVisible: this.glitchObject?.visible,
+    //   hitboxTestPoints: testPoints.length,
+    //   encontradoHit: !!bestHit,
+    //   especieActual: this.currentSpecies?.commonName || 'ninguna'
+    // });
 
     if (bestHit) {
       // 👇 Desbloquear cámara para permitir movimiento libre
@@ -2367,6 +2558,10 @@ export class RecorridoScene extends BaseScene {
       // Segundo: marcar especie (no visual, sin lag)
       if (this.currentSpecies) {
         this.speciesManager.markSpeciesFound(this.currentSpecies.id);
+        // 👇 Actualizar progress overlay
+        if (window.progressManager) {
+          window.progressManager.updateAllProgress();
+        }
         // 👇 El panel se actualizará cuando el usuario cierre el overlay
       }
 
@@ -2652,32 +2847,77 @@ export class RecorridoScene extends BaseScene {
 
     if (!hasMoreStages) {
       // Completed round, advance to next round
-
       const progressBefore = this.speciesManager.getProgress();
-
 
       const hasMoreRounds = this.speciesManager.advanceRound();
 
       const progressAfter = this.speciesManager.getProgress();
 
-
       if (!hasMoreRounds) {
-
         // TODO: Handle game completion
       }
 
       // 🎬 Play carpa_flota video when completing a round
-
       // El video se encargará de navegar al laboratorio
       // La próxima vez que se vuelva al recorrido, ya estará en el round 2
       return this.playRoundCompletionVideo();
     }
 
-    // Cycle through stages array
-    const next = (this.current + 1) % this.stages.length;
+    // Continue to next stage in current round: preload and stay in RecorridoScene
+    const nextIndex = (this.current + 1) % 6;
+    return this.loadStage(nextIndex, options);
+  }
 
+  // Waits until all textures in a scene graph have their image data ready
+  async waitForTexturesReady(root) {
+    if (!root) return;
 
-    return this.loadStage(next, options);
+    const textures = [];
+    root.traverse((child) => {
+      if (!child.isMesh || !child.material) return;
+      const mats = Array.isArray(child.material) ? child.material : [child.material];
+      mats.forEach((mat) => {
+        if (!mat) return;
+        ['map', 'emissiveMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'alphaMap', 'envMap'].forEach((key) => {
+          const tex = mat[key];
+          if (tex && tex.isTexture && !textures.includes(tex)) {
+            textures.push(tex);
+          }
+        });
+      });
+    });
+
+    if (!textures.length) return;
+
+    const waiters = textures.map((tex) => new Promise((resolve) => {
+      const img = tex.image;
+      if (!img) return resolve();
+
+      // Image element
+      if (img instanceof HTMLImageElement) {
+        if (img.complete && img.naturalWidth > 0) return resolve();
+        img.addEventListener('load', () => resolve(), { once: true });
+        img.addEventListener('error', () => resolve(), { once: true });
+        return;
+      }
+
+      // Video element
+      if (img instanceof HTMLVideoElement) {
+        if (img.readyState >= 2) return resolve();
+        img.addEventListener('loadeddata', () => resolve(), { once: true });
+        img.addEventListener('error', () => resolve(), { once: true });
+        return;
+      }
+
+      // Canvas / ImageBitmap / others assumed ready
+      resolve();
+    }));
+
+    await Promise.all(waiters);
+
+    // Give a couple of frames for GPU upload
+    await new Promise((r) => requestAnimationFrame(r));
+    await new Promise((r) => requestAnimationFrame(r));
   }
 
   update(dt) {
@@ -3120,7 +3360,8 @@ export class RecorridoScene extends BaseScene {
     try {
       const stageRef = this.stageModel;
       const glitchRef = this.glitchObject;
-      const gltf = await this.gltfLoader.loadAsync('/game-assets/recorrido/butter_flying.glb');
+      const loader = new GLTFLoader();
+      const gltf = await loader.loadAsync('/game-assets/recorrido/butter_flying.glb');
       if (stageRef !== this.stageModel || glitchRef !== this.glitchObject || !this.stageModel) {
         return;
       }
@@ -3684,6 +3925,12 @@ export class RecorridoScene extends BaseScene {
 
   // Crea un overlay DOM con un flash "glitch" de hasta 0.5s usando la paleta dada
   triggerGlitchFlash() {
+    // En modo liviano o cuando el usuario pide menos movimiento, usar overlay simple
+    if (this.glitchFlashLeanMode || this.prefersReducedMotion) {
+      this.triggerLeanGlitchFlash();
+      return;
+    }
+
     try {
       // 👇 OPTIMIZACIÓN: Reutilizar elementos existentes en lugar de crear nuevos
       if (this._glitchFlashEl) {
@@ -3743,6 +3990,51 @@ export class RecorridoScene extends BaseScene {
           }
         } catch { }
       }, 500);
+    } catch { }
+  }
+
+  // Variante liviana: fade blanco breve sin bandas (menos pintura de toda la pantalla)
+  triggerLeanGlitchFlash() {
+    try {
+      if (!this._glitchFlashLeanStyle) {
+        const style = document.createElement('style');
+        style.textContent = `
+          .dg-glitch-flash-lean {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 10000;
+            background: linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.08) 100%);
+            mix-blend-mode: screen;
+            opacity: 0;
+          }
+        `;
+        document.head.appendChild(style);
+        this._glitchFlashLeanStyle = style;
+      }
+
+      const el = document.createElement('div');
+      el.className = 'dg-glitch-flash-lean';
+      document.body.appendChild(el);
+      this._glitchFlashEl = el;
+
+      const anim = el.animate([
+        { opacity: 0 },
+        { opacity: 0.32 },
+        { opacity: 0 }
+      ], {
+        duration: 200,
+        easing: 'ease-out'
+      });
+
+      anim.onfinish = () => {
+        try {
+          el.remove();
+          if (this._glitchFlashEl === el) {
+            this._glitchFlashEl = null;
+          }
+        } catch { }
+      };
     } catch { }
   }
 
@@ -3967,9 +4259,10 @@ export class RecorridoScene extends BaseScene {
     return 1 - Math.pow(1 - t, 3);
   }
 
-  showCompletionOverlay() {
+  showCompletionOverlay({ isFinalRound = false } = {}) {
     const round = this.speciesManager.getProgress().round;
-    
+    const finalRound = isFinalRound || round >= TOTAL_ROUNDS;
+
     const overlay = document.createElement('div');
     overlay.id = 'completion-overlay';
     overlay.style.cssText = `
@@ -3988,7 +4281,9 @@ export class RecorridoScene extends BaseScene {
     `;
 
     const title = document.createElement('h2');
-    title.textContent = `Felicidades, terminaste el recorrido ${round}/6`;
+    title.textContent = finalRound
+      ? '¡Completaste los 5 recorridos del Delta Grande!'
+      : `Felicidades, terminaste el recorrido ${round}/${TOTAL_ROUNDS}`;
     title.style.cssText = `
       font-size: clamp(24px, 4vw, 36px);
       margin-bottom: 40px;
@@ -4019,49 +4314,71 @@ export class RecorridoScene extends BaseScene {
       outline: none;
       transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
     `;
+    if (!finalRound) {
+      const btnContinue = document.createElement('button');
+      btnContinue.textContent = 'Seguir descubriendo especies';
+      btnContinue.style.cssText = btnStyle;
+      btnContinue.onmouseover = () => {
+        btnContinue.style.transform = 'translateY(-2px) scale(1.02)';
+        btnContinue.style.background = 'rgba(251, 254, 94, 0.1)';
+      };
+      btnContinue.onmouseout = () => {
+        btnContinue.style.transform = 'none';
+        btnContinue.style.background = 'transparent';
+      };
+      btnContinue.onclick = () => {
+        const advanced = this.speciesManager.advanceRound();
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+          overlay.remove();
+          if (advanced) {
+            // Usar la transición dedicada antes de volver al recorrido
+            location.hash = '#recorrido-transition';
+          } else {
+            window.location.href = '/index.html';
+          }
+        }, 500);
+      };
 
-    const btnContinue = document.createElement('button');
-    btnContinue.textContent = 'Seguir descubriendo especies';
-    btnContinue.style.cssText = btnStyle;
-    btnContinue.onmouseover = () => {
-      btnContinue.style.transform = 'translateY(-2px) scale(1.02)';
-      btnContinue.style.background = 'rgba(251, 254, 94, 0.1)';
-    };
-    btnContinue.onmouseout = () => {
-      btnContinue.style.transform = 'none';
-      btnContinue.style.background = 'transparent';
-    };
-    btnContinue.onclick = () => {
-      const advanced = this.speciesManager.advanceRound();
-      overlay.style.opacity = '0';
-      setTimeout(() => {
-        overlay.remove();
-        if (advanced) {
-          // Usar la transición dedicada antes de volver al recorrido
-          location.hash = '#recorrido-transition';
-        } else {
-          window.location.href = '/index.html';
-        }
-      }, 500);
-    };
+      const btnMenu = document.createElement('button');
+      btnMenu.textContent = 'Volver a la base';
+      btnMenu.style.cssText = btnStyle;
+      btnMenu.onmouseover = () => {
+        btnMenu.style.transform = 'translateY(-2px) scale(1.02)';
+        btnMenu.style.background = 'rgba(251, 254, 94, 0.1)';
+      };
+      btnMenu.onmouseout = () => {
+        btnMenu.style.transform = 'none';
+        btnMenu.style.background = 'transparent';
+      };
+      btnMenu.onclick = () => {
+        window.location.href = '/index.html';
+      };
 
-    const btnMenu = document.createElement('button');
-    btnMenu.textContent = 'Volver a la base';
-    btnMenu.style.cssText = btnStyle;
-    btnMenu.onmouseover = () => {
-      btnMenu.style.transform = 'translateY(-2px) scale(1.02)';
-      btnMenu.style.background = 'rgba(251, 254, 94, 0.1)';
-    };
-    btnMenu.onmouseout = () => {
-      btnMenu.style.transform = 'none';
-      btnMenu.style.background = 'transparent';
-    };
-    btnMenu.onclick = () => {
-      window.location.href = '/index.html';
-    };
+      buttonsContainer.appendChild(btnContinue);
+      buttonsContainer.appendChild(btnMenu);
+    } else {
+      const btnLab = document.createElement('button');
+      btnLab.textContent = 'Ir al laboratorio';
+      btnLab.style.cssText = btnStyle;
+      btnLab.onmouseover = () => {
+        btnLab.style.transform = 'translateY(-2px) scale(1.02)';
+        btnLab.style.background = 'rgba(251, 254, 94, 0.1)';
+      };
+      btnLab.onmouseout = () => {
+        btnLab.style.transform = 'none';
+        btnLab.style.background = 'transparent';
+      };
+      btnLab.onclick = () => {
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+          overlay.remove();
+          location.hash = '#menu';
+        }, 500);
+      };
 
-    buttonsContainer.appendChild(btnContinue);
-    buttonsContainer.appendChild(btnMenu);
+      buttonsContainer.appendChild(btnLab);
+    }
     overlay.appendChild(title);
     overlay.appendChild(buttonsContainer);
 
@@ -4280,14 +4597,17 @@ export class RecorridoScene extends BaseScene {
     }
 
     // 👇 Check if this is the last scene of the round
-    if (this.current === 5) {
-      this.showCompletionOverlay();
+    const progress = this.speciesManager.getProgress();
+    const isFinalRound = progress.round >= TOTAL_ROUNDS;
+    const isLastStageOfRound = this.current === (this.stages.length - 1);
+    if (isLastStageOfRound) {
+      this.showCompletionOverlay({ isFinalRound });
       return;
     }
 
     // New transition system with barrida.webm overlay
     return import('../core/UI.js').then(({ UI }) => {
-      console.log('[RecorridoScene] Starting transition sequence');
+      // console.log('[RecorridoScene] Starting transition sequence');
       // 👇 Ocultar zócalo al iniciar la transición
       const zocaloVideo = document.getElementById('zocaloVideo');
       if (zocaloVideo) {
@@ -4417,25 +4737,64 @@ export class RecorridoScene extends BaseScene {
       };
 
       const hideBarridaOverlay = () => {
-        console.log('[RecorridoScene] hideBarridaOverlay called');
+        // console.log('[RecorridoScene] hideBarridaOverlay called');
         barridaOverlay.style.opacity = '0';
         barridaOverlay.style.visibility = 'hidden';
         
-        // Make sure video overlay stays visible
-        const videoOverlay = document.getElementById('videoOverlay');
-        if (videoOverlay) {
-          console.log('[RecorridoScene] Ensuring videoOverlay stays visible, current display:', videoOverlay.style.display);
-          if (videoOverlay.style.display === 'none') {
-            console.warn('[RecorridoScene] videoOverlay was hidden! Forcing display: block');
-            videoOverlay.style.display = 'block';
+        // Make sure video overlay stays visible unless we intentionally cut the transition video
+        if (!transitionVideoStopped) {
+          const videoOverlay = document.getElementById('videoOverlay');
+          if (videoOverlay) {
+            // console.log('[RecorridoScene] Ensuring videoOverlay stays visible, current display:', videoOverlay.style.display);
+            if (videoOverlay.style.display === 'none') {
+              console.warn('[RecorridoScene] videoOverlay was hidden! Forcing display: block');
+              videoOverlay.style.display = 'block';
+            }
           }
         }
       };
 
+      // Stop/hide the transition video cleanly while keeping audio playing
+      const stopTransitionVideo = () => {
+        if (!transitionVideoStarted || transitionVideoStopped) return;
+        transitionVideoStopped = true;
+        transitionVideoPlaying = false;
+
+        if (this._keepVideoVisibleInterval) {
+          clearInterval(this._keepVideoVisibleInterval);
+          this._keepVideoVisibleInterval = null;
+        }
+
+        if (this._stopTransitionSequence) {
+          this._stopTransitionSequence();
+          this._stopTransitionSequence = null;
+        }
+
+        // Clear transition guard so hideVideo actually hides the overlay
+        try { UI._transitionVideoActive = false; } catch (e) { /* ignore */ }
+        // Hide the video overlay so the 3D scene is visible
+        UI.hideVideo();
+
+        // Restore z-index to default in case it was raised
+        const videoOverlay = document.getElementById('videoOverlay');
+        if (videoOverlay) {
+          videoOverlay.style.zIndex = '9999';
+        }
+
+        const el = transitionVideoEl || document.getElementById('transition_video');
+        if (el) {
+          try { el.pause(); } catch (e) { /* ignore */ }
+          try { el.currentTime = 0; } catch (e) { /* ignore */ }
+        }
+      };
+
       let transitionVideoStarted = false;
+      let transitionVideoPlaying = false; // Track when the transition video is actually playing
+      let transitionVideoStopped = false; // Stop the transition video once we cut it
       let secondBarridaStarted = false;
       let nextStagePromise = null;
       let textOverlayShown = false;
+      let transitionVideoEl = null; // Keep a ref to the video element returned by UI.showVideo
 
       // 📝 Función para mostrar el texto overlay con efecto typewriter
       // Now backed by a static DOM element in `game/index.html` when available.
@@ -4616,7 +4975,7 @@ export class RecorridoScene extends BaseScene {
 
 
       const handleFirstBarridaEnd = () => {
-        console.log('[RecorridoScene] First barrida ended');
+        // console.log('[RecorridoScene] First barrida ended');
 
 
         hideBarridaOverlay();
@@ -4628,7 +4987,7 @@ export class RecorridoScene extends BaseScene {
       };
       barridaVideo.addEventListener('ended', handleFirstBarridaEnd, { once: true });      // Handle second barrida end - only remove after it finishes
       const handleSecondBarridaEnd = async () => {
-        console.log('[RecorridoScene] Second barrida ended');
+        // console.log('[RecorridoScene] Second barrida ended');
         
         // Clear the interval that keeps video visible
         if (this._keepVideoVisibleInterval) {
@@ -4701,7 +5060,7 @@ export class RecorridoScene extends BaseScene {
 
       // Start the transition video (guarded so we can call from multiple triggers)
       const startTransitionVideo = () => {
-        console.log('[RecorridoScene] startTransitionVideo called');
+        // console.log('[RecorridoScene] startTransitionVideo called');
         if (transitionVideoStarted) return;
         transitionVideoStarted = true;
 
@@ -4746,10 +5105,10 @@ export class RecorridoScene extends BaseScene {
           muted: true,
           immersive: false,
           onended: () => {
-            console.log('[RecorridoScene] Transition video onended fired');
-            console.log('[RecorridoScene] Video currentTime:', transitionEl?.currentTime);
-            console.log('[RecorridoScene] Video duration:', transitionEl?.duration);
-            console.log('[RecorridoScene] Video ended:', transitionEl?.ended);
+            // console.log('[RecorridoScene] Transition video onended fired');
+            // console.log('[RecorridoScene] Video currentTime:', transitionEl?.currentTime);
+            // console.log('[RecorridoScene] Video duration:', transitionEl?.duration);
+            // console.log('[RecorridoScene] Video ended:', transitionEl?.ended);
             // Ocultar el video cuando termina, la segunda barrida ya está encima
             if (this._stopTransitionSequence) {
               this._stopTransitionSequence();
@@ -4758,17 +5117,49 @@ export class RecorridoScene extends BaseScene {
           }
         });
         
-        console.log('[RecorridoScene] UI.showVideo promise:', showVideoPromise);
+        // console.log('[RecorridoScene] UI.showVideo promise:', showVideoPromise);
         
         showVideoPromise.then(async (transitionVideo) => {
-          console.log('[RecorridoScene] Transition video element:', transitionVideo);
-          console.log('[RecorridoScene] Video readyState:', transitionVideo.readyState);
-          console.log('[RecorridoScene] Video duration:', transitionVideo.duration);
-          console.log('[RecorridoScene] Video currentTime:', transitionVideo.currentTime);
-          console.log('[RecorridoScene] Video paused:', transitionVideo.paused);
-          console.log('[RecorridoScene] Video src:', transitionVideo.src);
+          // console.log('[RecorridoScene] Transition video element:', transitionVideo);
+          // console.log('[RecorridoScene] Video readyState:', transitionVideo.readyState);
+          // console.log('[RecorridoScene] Video duration:', transitionVideo.duration);
+          // console.log('[RecorridoScene] Video currentTime:', transitionVideo.currentTime);
+          // console.log('[RecorridoScene] Video paused:', transitionVideo.paused);
+          // console.log('[RecorridoScene] Video src:', transitionVideo.src);
+          transitionVideoEl = transitionVideo;
+          transitionVideoPlaying = !transitionVideo.paused && !transitionVideo.ended;
+
+          // Track when playback actually starts
+          transitionVideo.addEventListener('playing', () => {
+            transitionVideoPlaying = true;
+          });
+          transitionVideo.addEventListener('pause', () => {
+            transitionVideoPlaying = false;
+          });
+
+          // If autoplay was blocked for any reason, force a play attempt now
+          const tryPlayTransition = () => {
+            if (transitionVideoStopped) return;
+            const playPromise = transitionVideo.play();
+            if (playPromise && typeof playPromise.then === 'function') {
+              playPromise.then(() => { transitionVideoPlaying = true; }).catch(err => {
+                console.warn('[RecorridoScene] Transition video play retry failed', err);
+              });
+            }
+          };
+
+          // Initial play retry after ready
+          tryPlayTransition();
+
+          // Safety: retry once more shortly after
+          setTimeout(() => {
+            if (!transitionVideoPlaying && !transitionVideoStopped) {
+              console.warn('[RecorridoScene] Transition video still paused, retrying play');
+              tryPlayTransition();
+            }
+          }, 200);
           const videoOverlay = document.getElementById('videoOverlay');
-          console.log('[RecorridoScene] videoOverlay display after showVideo:', videoOverlay?.style.display);
+          // console.log('[RecorridoScene] videoOverlay display after showVideo:', videoOverlay?.style.display);
           
           // Safety: Force display block if it's somehow hidden
           if (videoOverlay && videoOverlay.style.display === 'none') {
@@ -4840,6 +5231,13 @@ export class RecorridoScene extends BaseScene {
               }
             };
             tryPlaySequenceVideo();
+
+            // Force a second attempt shortly after in case autoplay was blocked
+            setTimeout(() => {
+              if (sequenceVideo.paused && !transitionVideoStopped) {
+                tryPlaySequenceVideo();
+              }
+            }, 200);
 
             const detachOverlay = () => {
               try {
@@ -4935,14 +5333,24 @@ export class RecorridoScene extends BaseScene {
 
           // Monitor transition video to trigger second barrida 19 frames before end
           const monitorTransition = () => {
-            if (!transitionVideo || transitionVideo.paused) {
-              console.log('[RecorridoScene] Monitor stopped - video paused or null');
+            if (transitionVideoStopped) return;
+            if (!transitionVideo) {
+              // console.log('[RecorridoScene] Monitor stopped - video null');
+              return;
+            }
+            if (transitionVideo.paused && !transitionVideo.ended) {
+              // Try to kick playback if it got paused/blocked
+              const retry = transitionVideo.play();
+              if (retry && typeof retry.catch === 'function') {
+                retry.catch(err => console.warn('[RecorridoScene] Transition monitor play retry failed', err));
+              }
+              requestAnimationFrame(monitorTransition);
               return;
             }
             
             // Log every 0.5 seconds
             if (!this._lastLogTime || Date.now() - this._lastLogTime > 500) {
-              console.log('[RecorridoScene] Video playing:', transitionVideo.currentTime.toFixed(2), '/', transitionVideo.duration.toFixed(2));
+              // console.log('[RecorridoScene] Video playing:', transitionVideo.currentTime.toFixed(2), '/', transitionVideo.duration.toFixed(2));
               this._lastLogTime = Date.now();
             }
 
@@ -5021,6 +5429,17 @@ export class RecorridoScene extends BaseScene {
           requestAnimationFrame(checkBarridaFrame);
         }
       };
+
+      // Cut the transition video at 0.74s of the SECOND barrida so the 3D scene is revealed
+      const BARRIDA_VIDEO_CUTOFF = 0.74;
+      barridaVideo.addEventListener('timeupdate', () => {
+        // Only cut during the second barrida (the one ending the transition)
+        if (!secondBarridaStarted) return;
+
+        if (!transitionVideoStopped && barridaVideo.currentTime >= BARRIDA_VIDEO_CUTOFF) {
+          stopTransitionVideo();
+        }
+      });
 
       // Fallback: if frame-based trigger misses (e.g., dropped frames), start after 800ms
       setTimeout(() => {

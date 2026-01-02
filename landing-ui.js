@@ -872,9 +872,23 @@ window.addEventListener('keydown', (ev) => {
 
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
+            const container = entry.target;
             if (entry.isIntersecting) {
-                animateTypewriter(entry.target);
-                observer.unobserve(entry.target); // Animate only once
+                // Initial animation
+                animateTypewriter(container);
+                
+                // Setup repeating interval if not already set
+                if (!container._repeatIntervalId) {
+                    container._repeatIntervalId = setInterval(() => {
+                        animateTypewriter(container);
+                    }, 10000); // Repeat every 10 seconds
+                }
+            } else {
+                // Stop interval when not visible to save resources
+                if (container._repeatIntervalId) {
+                    clearInterval(container._repeatIntervalId);
+                    container._repeatIntervalId = null;
+                }
             }
         });
     }, observerOptions);

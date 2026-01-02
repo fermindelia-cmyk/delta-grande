@@ -16,9 +16,114 @@ export class RecorridoTransitionScene extends BaseScene {
   constructor(app) {
     super(app);
     this.name = 'recorrido-transition';
+
+    // Tracking for cleanup when navigation happens mid-transition
+    this._overlay = null;
+    this._backgroundAudio = null;
+    this._activeVideos = new Set();
+    this._rafIds = new Set();
+    this._timeoutIds = new Set();
+    this._intervalIds = new Set();
+    this._skipHandler = null;
+    this._cleanupRequested = false;
+  }
+
+  _resetCleanupState() {
+    this._cleanupRequested = false;
+    this._activeVideos.clear();
+    this._rafIds.clear();
+    this._timeoutIds.clear();
+    this._intervalIds.clear();
+    this._skipHandler = null;
+    this._overlay = null;
+    this._backgroundAudio = null;
+  }
+
+  _trackRaf(fn) {
+    const id = requestAnimationFrame((ts) => {
+      this._rafIds.delete(id);
+      fn(ts);
+    });
+    this._rafIds.add(id);
+    return id;
+  }
+
+  _trackTimeout(fn, ms) {
+    const id = setTimeout(() => {
+      this._timeoutIds.delete(id);
+      fn();
+    }, ms);
+    this._timeoutIds.add(id);
+    return id;
+  }
+
+  _trackInterval(fn, ms) {
+    const id = setInterval(fn, ms);
+    this._intervalIds.add(id);
+    return id;
+  }
+
+  _stopTimers() {
+    this._rafIds.forEach(cancelAnimationFrame);
+    this._timeoutIds.forEach(clearTimeout);
+    this._intervalIds.forEach(clearInterval);
+    this._rafIds.clear();
+    this._timeoutIds.clear();
+    this._intervalIds.clear();
+  }
+
+  _stopVideos() {
+    this._activeVideos.forEach((video) => {
+      try {
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+      } catch { /* ignore */ }
+      if (video.parentNode) {
+        video.parentNode.removeChild(video);
+      }
+    });
+    this._activeVideos.clear();
+  }
+
+  _stopAudio() {
+    if (this._backgroundAudio) {
+      try {
+        this._backgroundAudio.pause();
+        this._backgroundAudio.currentTime = 0;
+        this._backgroundAudio.src = '';
+      } catch { /* ignore */ }
+      this._backgroundAudio = null;
+    }
+  }
+
+  _removeOverlay() {
+    if (this._overlay) {
+      if (this._skipHandler) {
+        this._overlay.removeEventListener('click', this._skipHandler);
+      }
+      if (this._overlay.parentNode) {
+        this._overlay.parentNode.removeChild(this._overlay);
+      }
+      this._overlay = null;
+      this._skipHandler = null;
+    }
+  }
+
+  _forceCleanup() {
+    this._cleanupRequested = true;
+    this._stopTimers();
+    this._stopVideos();
+    this._stopAudio();
+    this._removeOverlay();
+    document.body.style.cursor = 'auto';
+    if (this.app?.canvas) {
+      this.app.canvas.style.display = '';
+    }
   }
 
   async mount() {
+    this._resetCleanupState();
     // 👇 Limpiar cualquier overlay del menú que haya quedado abierto
     const menuOverlays = document.querySelectorAll('body > div');
     menuOverlays.forEach(overlay => {
@@ -59,6 +164,7 @@ export class RecorridoTransitionScene extends BaseScene {
       opacity: 1;
     `;
     document.body.appendChild(overlay);
+    this._overlay = overlay;
 
     
 
@@ -67,6 +173,7 @@ export class RecorridoTransitionScene extends BaseScene {
     backgroundAudio.volume = 1.0;
     backgroundAudio.loop = false;
     backgroundAudio.play().catch(() => { });
+    this._backgroundAudio = backgroundAudio;
 
     // Variable para controlar si se hace skip
     let skipped = false;
@@ -75,6 +182,7 @@ export class RecorridoTransitionScene extends BaseScene {
     const skipHandler = () => {
       skipped = true;
     };
+    this._skipHandler = skipHandler;
     overlay.addEventListener('click', skipHandler);
 
     // Reproducir primer video de transición con texto
@@ -97,16 +205,39 @@ export class RecorridoTransitionScene extends BaseScene {
 
     // Remover event listener
     overlay.removeEventListener('click', skipHandler);
+    this._skipHandler = null;
 
     // Detener música de fondo
     backgroundAudio.pause();
     backgroundAudio.currentTime = 0;
+    this._backgroundAudio = null;
 
     // Limpiar overlay
     overlay.style.transition = 'opacity 0.5s';
     overlay.style.opacity = '0';
     await new Promise(resolve => setTimeout(resolve, 500));
     document.body.removeChild(overlay);
+    this._overlay = null;
+
+    // Wait a bit more to allow GC to clear video buffers
+    console.log('[RecorridoTransitionScene] Waiting for GC...');
+    
+    // 🔥 AGGRESSIVE MEMORY CLEANUP
+    // Clear THREE.js caches multiple times to ensure blob URLs are released
+    if (typeof THREE !== 'undefined' && THREE.Cache) {
+      THREE.Cache.clear();
+    }
+    
+    // Multiple GC cycles to ensure blob URLs and textures are cleaned up
+    for (let i = 0; i < 5; i++) {
+      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      if (typeof THREE !== 'undefined' && THREE.Cache) {
+        THREE.Cache.clear();
+      }
+    }
+    
+    console.log('[RecorridoTransitionScene] GC complete, transitioning...');
 
     // Restaurar cursor
     document.body.style.cursor = 'auto';
@@ -116,6 +247,9 @@ export class RecorridoTransitionScene extends BaseScene {
   }
 
   async playTransitionVideo(overlay, videoSrc, isSkipped, textContent = null) {
+    if (this._cleanupRequested) {
+      return;
+    }
     return new Promise((resolve) => {
       const video = document.createElement('video');
       video.src = videoSrc;
@@ -132,17 +266,14 @@ export class RecorridoTransitionScene extends BaseScene {
       video.muted = true; // Muted para que solo se escuche el audio de fondo
       video.playsInline = true;
 
+      this._activeVideos.add(video);
+
       overlay.appendChild(video);
 
       // Crear overlay de texto si se proporciona contenido
       let textOverlay = null;
       let textEl = null;
       if (textContent) {
-        // Calcular altura aproximada basada en el texto
-        // Scaling values based on 1700px reference width
-        const charsPerLine = 50;
-        const lines = Math.ceil(textContent.length / charsPerLine);
-
         // Use CSS classes defined in `game/index.html` for responsive sizing.
         textOverlay = document.createElement('div');
         textOverlay.className = 'recorrido-transition-text-overlay';
@@ -150,16 +281,15 @@ export class RecorridoTransitionScene extends BaseScene {
 
         textEl = document.createElement('div');
         textEl.className = 'recorrido-transition-text-inner';
-        // Keep a content-dependent min-height using the same font-size formula
-        // (match CSS: font-size uses clamp(12px, 4vmin, 28px) so use min equivalent)
-        textEl.style.minHeight = `calc(${lines} * 1.6 * min(28px, 4vmin))`;
+        textEl.style.position = 'relative'; // enable absolutely-positioned glitch layer without affecting layout
 
         textOverlay.appendChild(textEl);
         overlay.appendChild(textOverlay);
       }
 
       // Fade in desde negro
-      requestAnimationFrame(() => {
+      this._trackRaf(() => {
+        if (this._cleanupRequested) return;
         video.style.opacity = '1';
       });
 
@@ -168,7 +298,22 @@ export class RecorridoTransitionScene extends BaseScene {
 
       // Iniciar efecto typewriter después de 2 segundos
       if (textContent && textOverlay && textEl) {
-        setTimeout(() => {
+        // Pre-measure final height so the block is centered from the start (no jump on typewriter start)
+        textEl.textContent = textContent;
+        textEl.style.visibility = 'hidden';
+        textEl.style.position = 'absolute';
+        textEl.style.left = '-9999px';
+        textEl.style.top = '-9999px';
+        const measuredHeight = textEl.getBoundingClientRect().height;
+        textEl.style.minHeight = `${Math.ceil(measuredHeight)}px`;
+        textEl.textContent = '';
+        textEl.style.visibility = 'visible';
+        textEl.style.position = '';
+        textEl.style.left = '';
+        textEl.style.top = '';
+
+        this._trackTimeout(() => {
+          if (this._cleanupRequested) return;
           // Fade in del overlay (make visible via aria attribute so CSS handles opacity)
           textOverlay.setAttribute('aria-hidden', 'false');
           textOverlay.style.opacity = '1';
@@ -203,13 +348,23 @@ export class RecorridoTransitionScene extends BaseScene {
           
           // Crear contenedor para caracteres glitch
           const glitchSpan = document.createElement('span');
+          glitchSpan.style.position = 'absolute';
+          glitchSpan.style.left = '0';
+          glitchSpan.style.bottom = '0';
+          glitchSpan.style.pointerEvents = 'none';
+          glitchSpan.style.whiteSpace = 'pre';
           glitchSpan.style.opacity = '0.3';
           glitchSpan.style.animation = 'glitch-flicker 0.1s infinite';
+          glitchSpan.style.transform = 'translateY(100%)'; // render just below the baseline to avoid layout jitter
           textEl.appendChild(glitchSpan);
           
           let currentIndex = 0;
 
-          const typewriterInterval = setInterval(() => {
+          const typewriterInterval = this._trackInterval(() => {
+            if (this._cleanupRequested) {
+              clearInterval(typewriterInterval);
+              return;
+            }
             if (currentIndex < charSpans.length) {
               // Revelar el siguiente carácter
               charSpans[currentIndex].style.opacity = '1';
@@ -246,19 +401,28 @@ export class RecorridoTransitionScene extends BaseScene {
       }
 
       // Chequear si se hace skip cada frame
+      let skipRafId = null;
       const checkSkip = () => {
         if (isSkipped()) {
           endVideo();
         } else {
-          requestAnimationFrame(checkSkip);
+          skipRafId = this._trackRaf(checkSkip);
         }
       };
       checkSkip();
 
       const endVideo = () => {
+        if (skipRafId) {
+          cancelAnimationFrame(skipRafId);
+          this._rafIds.delete(skipRafId);
+        }
         video.pause();
+        video.src = ''; // Release memory
+        video.load();
 
-        setTimeout(() => {
+        this._activeVideos.delete(video);
+
+        this._trackTimeout(() => {
           if (video.parentNode) video.parentNode.removeChild(video);
           if (textOverlay && textOverlay.parentNode) textOverlay.parentNode.removeChild(textOverlay);
           resolve();
@@ -266,6 +430,7 @@ export class RecorridoTransitionScene extends BaseScene {
       };
 
       // Monitorear el video para iniciar fade out 1 segundo antes del final
+      let monitorRafId = null;
       const monitorVideoEnd = () => {
         if (video.paused || video.ended) return;
 
@@ -284,7 +449,7 @@ export class RecorridoTransitionScene extends BaseScene {
         }
 
         if (!video.ended) {
-          requestAnimationFrame(monitorVideoEnd);
+          monitorRafId = this._trackRaf(monitorVideoEnd);
         }
       };
 
@@ -294,14 +459,18 @@ export class RecorridoTransitionScene extends BaseScene {
       });
 
       // Cuando termine el video, limpiar
-      video.addEventListener('ended', endVideo);
+      video.addEventListener('ended', () => {
+        if (monitorRafId) {
+          cancelAnimationFrame(monitorRafId);
+          this._rafIds.delete(monitorRafId);
+        }
+        endVideo();
+      });
     });
   }
 
   async unmount() {
-    // Restaurar canvas
-    this.app.canvas.style.display = '';
-    document.body.style.cursor = 'auto';
+    this._forceCleanup();
   }
 
   update(dt) {

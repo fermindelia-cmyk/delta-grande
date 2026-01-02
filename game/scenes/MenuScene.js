@@ -58,6 +58,17 @@ export class MenuScene extends BaseScene {
     // Mostrar loader de laboratorio
     await this.playLoaderSequence(overlay);
 
+    // Fade in progress overlay after loading screen completes
+    if (window.progressManager) {
+      window.progressManager.updateAllProgress();
+      window.progressManager.overlay.style.display = 'block';
+      window.progressManager.overlay.style.opacity = '0';
+      window.progressManager.overlay.style.transition = 'opacity 0.8s ease';
+      requestAnimationFrame(() => {
+        window.progressManager.overlay.style.opacity = '1';
+      });
+    }
+
     // Mostrar menú principal con botones
     const menuAction = await this.showMainMenu(overlay);
 
@@ -65,7 +76,9 @@ export class MenuScene extends BaseScene {
     overlay.style.transition = 'opacity 0.5s';
     overlay.style.opacity = '0';
     await new Promise(resolve => setTimeout(resolve, 500));
-    document.body.removeChild(overlay);
+    if (document.body.contains(overlay)) {
+      document.body.removeChild(overlay);
+    }
     
     // Restaurar cursor
     document.body.style.cursor = 'auto';

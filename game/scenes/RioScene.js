@@ -5980,145 +5980,89 @@ export class RioScene extends BaseScene {
     // Already created?
     if (this._loadingEl) return;
 
-    this._loadingProgressTotal = 0;
-    this._loadingProgressCompleted = 0;
-    this._loadingTextEl = null;
-    this._loadingBarFillEl = null;
-
-    const styleId = '__rio_loading_css';
-    if (!document.getElementById(styleId)) {
-      const css = document.createElement('style');
-      css.id = styleId;
-      css.textContent = `
-        /* full-screen blackout */
-        #rio-loading-overlay {
-          position: fixed; inset: 0;
-          background: #000;
-          display: flex; flex-direction: column;
-          align-items: center; justify-content: center;
-          z-index: 100000; /* above everything */
-          color: #fff;
-          font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-          user-select: none; -webkit-user-select: none; -ms-user-select: none;
-        }
-        #rio-loading-logo {
-          width: min(42vmin, 320px);
-          height: auto;
-          transform-style: preserve-3d;
-          /* give some depth so Y-rotation reads as 3D */
-          perspective: 800px;
-          /* slow -> fast -> slow, returns to same orientation each loop */
-          animation: rio-spin-y 2.4s ease-in-out infinite;
-          margin-bottom: 20px;
-          filter: drop-shadow(0 10px 30px rgba(255,212,0,0.18));
-        }
-        #rio-loading-bar {
-          width: min(70vmin, 420px);
-          height: 10px;
-          border-radius: 999px;
-          background: rgba(255, 255, 255, 0.18);
-          overflow: hidden;
-          position: relative;
-          margin-bottom: 12px;
-        }
-        #rio-loading-bar-fill {
-          width: 0%;
-          height: 100%;
-          border-radius: 999px;
-          background: linear-gradient(90deg, #ffd360, #ff9c5d, #ffd360);
-          transition: width 0.35s ease;
-        }
-        #rio-loading-text {
-          font-weight: 400;
-          font-size: clamp(12px, 1.6vmin, 16px);
-          letter-spacing: 0.02em;
-          max-width: 90vw;
-          text-align: center;
-          line-height: 1.4;
-          margin-top: 4px;
-        }
-        @keyframes rio-spin-y {
-          from { transform: rotateY(0deg); }
-          to   { transform: rotateY(360deg); }
-        }
-        /* optional: fade-out when done */
-        .rio-loading-fade {
-          transition: opacity .35s ease;
-        }
-      `;
-      document.head.appendChild(css);
-    }
-
     const wrap = document.createElement('div');
-    wrap.id = 'rio-loading-overlay';
-    wrap.className = 'rio-loading-fade';
+    wrap.style.cssText = `
+      position: fixed;
+      inset: 0;
+      background: black;
+      overflow: hidden;
+      z-index: 9999;
+      opacity: 1;
+      pointer-events: none;
+    `;
 
-    const img = document.createElement('img');
-    img.id = 'rio-loading-logo';
-    // reuse the same logo you already load for the deck
-    img.src = (this.params?.deckUI?.assets?.logo) || '/game-assets/sub/interfaz/logo.png';
-    img.alt = 'Logo';
+    const exterior = new Image();
+    exterior.src = '/game-assets/menu/laboratorio_exterior.webp';
+    exterior.style.cssText = `
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 1;
+    `;
 
-    const bar = document.createElement('div');
-    bar.id = 'rio-loading-bar';
-    const fill = document.createElement('div');
-    fill.id = 'rio-loading-bar-fill';
-    bar.appendChild(fill);
+    const loader = document.createElement('video');
+    loader.src = '/game-assets/menu/D+_loader%2003.webm';
+    loader.style.cssText = `
+      position: absolute;
+      right: clamp(16px, 3vw, 64px);
+      bottom: clamp(16px, 3vw, 64px);
+      width: clamp(100px, 15vw, 260px);
+      max-height: 50%;
+      object-fit: contain;
+      opacity: 1;
+      pointer-events: none;
+    `;
+    loader.muted = true;
+    loader.playsInline = true;
+    loader.loop = true;
 
-    this._loadingBarFillEl = fill;
-
-    const txt = document.createElement('div');
-    txt.id = 'rio-loading-text';
-    this._loadingTextEl = txt;
-    this._setLoadingText('Cargando');
-
-    wrap.appendChild(img);
-    wrap.appendChild(bar);
-    wrap.appendChild(txt);
+    wrap.appendChild(exterior);
+    wrap.appendChild(loader);
     document.body.appendChild(wrap);
 
     this._loadingEl = wrap;
 
-    this._updateLoadingBar();
+    // Start video playback
+    if (loader.readyState >= 1) {
+      loader.play().catch(() => {});
+    } else {
+      loader.addEventListener('loadedmetadata', () => {
+        loader.play().catch(() => {});
+      }, { once: true });
+    }
   }
 
   _setLoadingText(message) {
-    if (!this._loadingTextEl) return;
-    this._loadingTextEl.textContent = message || 'Cargando';
+    // No-op: video loader doesn't show text
   }
 
   _updateLoadingBar() {
-    if (!this._loadingBarFillEl) return;
-    const total = this._loadingProgressTotal;
-    const completed = this._loadingProgressCompleted;
-    const ratio = total > 0 ? Math.min(1, completed / total) : 0;
-    this._loadingBarFillEl.style.width = `${(ratio * 100).toFixed(2)}%`;
+    // No-op: video loader doesn't have progress bar
   }
 
   async _trackLoadingStep(message, fn) {
     if (typeof fn !== 'function') fn = () => undefined;
-    this._loadingProgressTotal++;
-    this._updateLoadingBar();
-    this._setLoadingText(message);
     try {
       const result = await fn();
       return result;
     } finally {
-      this._loadingProgressCompleted++;
-      this._updateLoadingBar();
+      // No progress tracking needed for video loader
     }
   }
 
   _hideLoadingOverlay() {
     if (!this._loadingEl) return;
-    // nice fade-out, then remove node
-    requestAnimationFrame(() => {
-      this._loadingEl.style.opacity = '0';
-      setTimeout(() => {
-        this._loadingEl?.parentNode?.removeChild(this._loadingEl);
-        this._loadingEl = null;
-      }, 380);
-    });
+    // Fade out and remove
+    this._loadingEl.style.transition = 'opacity 0.8s ease';
+    this._loadingEl.style.opacity = '0';
+    setTimeout(() => {
+      if (this._loadingEl?.parentNode) {
+        this._loadingEl.parentNode.removeChild(this._loadingEl);
+      }
+      this._loadingEl = null;
+    }, 800);
   }
 
 
