@@ -6,3 +6,4 @@ game-assets/sub/environments/environment.blend1
 *.blend1
 dist/
 node_modules/
+portable/
