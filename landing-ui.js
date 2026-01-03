@@ -1055,6 +1055,28 @@ window.addEventListener('keydown', (ev) => {
     }
 })();
 
+// Auto-pause videos when out of view to reduce concurrent decoding
+(function() {
+    const vids = document.querySelectorAll('[data-autopause]');
+    if (!('IntersectionObserver' in window) || !vids.length) return;
+
+    vids.forEach((v) => {
+        v.preload = 'metadata';
+    });
+
+    const obs = new IntersectionObserver((entries) => {
+        entries.forEach(({ target, isIntersecting }) => {
+            if (isIntersecting) {
+                target.play?.().catch(() => {});
+            } else {
+                target.pause?.();
+            }
+        });
+    }, { threshold: 0.35 });
+
+    vids.forEach((v) => obs.observe(v));
+})();
+
 // Fade down global audio when the YouTube iframe section is in view
 (function() {
     const targetSection = document.getElementById('main-video-section');
