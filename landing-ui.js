@@ -2255,6 +2255,7 @@ const WELCOME_THEME = {
 
             const loader = document.getElementById('page-loader');
             const loaderVideo = loader ? loader.querySelector('video') : null;
+            const loaderCounter = document.getElementById('loader-counter');
             const body = document.body;
             const entryGate = document.getElementById('entry-gate');
             const entryButton = document.getElementById('entry-button');
@@ -2276,9 +2277,25 @@ const WELCOME_THEME = {
             let entryStarted = false;
             let uiRevealed = false;
 
+            const startLoaderCounter = () => {
+                if (!loaderCounter) return;
+                const start = performance.now();
+                const duration = MIN_DISPLAY_MS;
+                const step = (now) => {
+                    if (loaderHidden) return;
+                    const pct = Math.min(100, Math.round(((now - start) / duration) * 100));
+                    loaderCounter.textContent = `${pct}%`;
+                    loaderCounter.setAttribute('aria-label', `Cargando ${pct}%`);
+                    if (pct < 100) requestAnimationFrame(step);
+                };
+                requestAnimationFrame(step);
+            };
+
             if (disableBirds && birdsOverlay) {
                 birdsOverlay.style.display = 'none';
             }
+
+            startLoaderCounter();
 
             const sparkState = {
                 running: false,
@@ -2504,6 +2521,10 @@ const WELCOME_THEME = {
             function hideLoader() {
                 if (!loader || loaderHidden) return;
                 loaderHidden = true;
+                if (loaderCounter) {
+                    loaderCounter.textContent = '100%';
+                    loaderCounter.setAttribute('aria-label', 'Cargando 100%');
+                }
                 loader.classList.add('is-hidden');
                 body && body.classList.remove('is-loading');
             }

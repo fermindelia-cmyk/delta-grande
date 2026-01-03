@@ -3917,9 +3917,9 @@ export class RioScene extends BaseScene {
       this.camera.position.set(this.params.start.x, yMax, this.params.start.z);
       this.camera.lookAt(this.camera.position.clone().add(this.forward));
 
-      // Overlay de intro: arranca como “Cargando...”
+      // Overlay de intro: oculto durante la carga
       this._createIntroOverlay();
-      this._setIntroOverlayText('Cargando...');
+      this._setIntroOverlayText('');
     }
 
 
@@ -4555,7 +4555,7 @@ export class RioScene extends BaseScene {
       justifyContent: 'center',
       pointerEvents: 'none',
       zIndex: 9999,
-      fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
+      fontFamily: '"new-science", "New Science", system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
       fontWeight: '600',
       lineHeight: '1.35',
       color: 'white',
@@ -5980,6 +5980,14 @@ export class RioScene extends BaseScene {
     // Already created?
     if (this._loadingEl) return;
 
+    // Remove any legacy loading spinners/overlays so only the new photo+video+bar shows
+    const legacySelectors = [
+      '#preloader', '.preloader-container', '#loading-logo', '#loading-spinner', '#loading-screen', '#loading', '#rio-loading-logo'
+    ];
+    legacySelectors.forEach(sel => {
+      document.querySelectorAll(sel).forEach(el => el.parentNode?.removeChild(el));
+    });
+
     this._loadingProgressTotal = 0;
     this._loadingProgressCompleted = 0;
     this._loadingTextEl = null;
@@ -5991,7 +5999,7 @@ export class RioScene extends BaseScene {
       inset: 0;
       background: black;
       overflow: hidden;
-      z-index: 9999;
+      z-index: 13000;
       opacity: 1;
       pointer-events: none;
     `;
@@ -6026,15 +6034,16 @@ export class RioScene extends BaseScene {
     // Progress Bar Container
     const barContainer = document.createElement('div');
     barContainer.style.cssText = `
-        position: absolute;
-        bottom: clamp(20px, 5vh, 60px);
-        left: 50%;
-        transform: translateX(-50%);
-        width: min(60vmin, 360px);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        z-index: 2;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(70vmin, 440px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      z-index: 2;
     `;
 
     const bar = document.createElement('div');
@@ -6061,16 +6070,17 @@ export class RioScene extends BaseScene {
 
     const txt = document.createElement('div');
     txt.style.cssText = `
-        font-family: system-ui, -apple-system, sans-serif;
-        font-weight: 400;
-        font-size: 14px;
-        letter-spacing: 0.02em;
-        color: rgba(255, 255, 255, 0.9);
-        text-align: center;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+      font-family: "new-science", 'New Science', system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: 0.06em;
+      color: rgba(255, 255, 255, 0.92);
+      text-align: center;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.55);
+      text-transform: uppercase;
     `;
     this._loadingTextEl = txt;
-    this._setLoadingText('Cargando...');
+    this._setLoadingText('');
 
     barContainer.appendChild(bar);
     barContainer.appendChild(txt);

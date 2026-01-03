@@ -55,11 +55,39 @@ export class MenuScene extends BaseScene {
     `;
     document.body.appendChild(overlay);
 
+    // Colocar la barra de progreso dentro del overlay del menú para controlar la pila
+    this._progressOverlay = window.progressManager?.overlay || null;
+    this._progressOverlayParent = this._progressOverlay?.parentElement || null;
+    this._progressOverlayNextSibling = this._progressOverlay?.nextSibling || null;
+    this._progressOverlayOriginalZ = this._progressOverlay?.style.zIndex || '';
+
+    this._restoreProgressOverlay = () => {
+      if (!this._progressOverlay || !this._progressOverlayParent) return;
+      this._progressOverlay.style.zIndex = this._progressOverlayOriginalZ;
+      if (this._progressOverlayNextSibling) {
+        this._progressOverlayParent.insertBefore(this._progressOverlay, this._progressOverlayNextSibling);
+      } else {
+        this._progressOverlayParent.appendChild(this._progressOverlay);
+      }
+      this._progressOverlay = null;
+      this._progressOverlayParent = null;
+      this._progressOverlayNextSibling = null;
+    };
+
+    if (this._progressOverlay) {
+      this._progressOverlay.style.zIndex = '1';
+      // Ocultar mientras corre el loading; se mostrará después del fade-in del laboratorio
+      this._progressOverlay.style.display = 'none';
+      this._progressOverlay.style.opacity = '0';
+      overlay.appendChild(this._progressOverlay);
+    }
+
     // Mostrar loader de laboratorio
     await this.playLoaderSequence(overlay);
 
     // Fade in progress overlay after loading screen completes
     if (window.progressManager) {
+      window.progressManager.setVisible(false, true); // asegurar que no apareció durante el loader
       window.progressManager.updateAllProgress();
       window.progressManager.overlay.style.display = 'block';
       window.progressManager.overlay.style.opacity = '0';
@@ -76,6 +104,9 @@ export class MenuScene extends BaseScene {
     overlay.style.transition = 'opacity 0.5s';
     overlay.style.opacity = '0';
     await new Promise(resolve => setTimeout(resolve, 500));
+    if (this._restoreProgressOverlay) {
+      this._restoreProgressOverlay();
+    }
     if (document.body.contains(overlay)) {
       document.body.removeChild(overlay);
     }
@@ -108,7 +139,7 @@ export class MenuScene extends BaseScene {
         inset: 0;
         background: black;
         overflow: hidden;
-        z-index: 1;
+        z-index: 2;
         opacity: 1;
       `;
 
@@ -305,6 +336,9 @@ export class MenuScene extends BaseScene {
             window.removeEventListener('resize', this._menuResizeHandler);
           }
         } catch (e) {}
+        if (window.progressManager) {
+          window.progressManager.setVisible(false, true);
+        }
         if (menuWrapper && menuWrapper.parentNode) menuWrapper.parentNode.removeChild(menuWrapper);
         this._menuResizeHandler = null;
         this._menuWrapper = null;
@@ -450,12 +484,35 @@ export class MenuScene extends BaseScene {
       });
       
       resetBtn.addEventListener('click', () => {
-        if (confirm('¿Estás seguro de que quieres borrar todo el progreso?')) {
-          State.resetProgress();
-          localStorage.removeItem('deltaPlus.speciesProgress.v1');
-          console.log('🗑️ Todo el progreso ha sido borrado del localStorage');
-          alert('Progreso borrado exitosamente');
+        if (!confirm('¿Estás seguro de que quieres borrar todo el progreso?')) return;
+
+        // Limpieza completa del progreso (recorrido, río y simulador)
+        State.resetProgress();
+        const keysToClear = [
+          'deltaPlus.speciesProgress.v1',
+          'deltaPlus.rio.state',
+          'deltaPlus.simulador.state'
+        ];
+        keysToClear.forEach(key => localStorage.removeItem(key));
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('deltaPlus.') && !keysToClear.includes(key)) {
+            localStorage.removeItem(key);
+          }
+        });
+
+        // Refrescar de inmediato el overlay de progreso a 0%
+        if (window.progressManager) {
+          window.progressManager.setVisible(true);
+          window.progressManager.updateAllProgress();
+        } else if (typeof window.updateProgressOverlay === 'function') {
+          window.updateProgressOverlay();
         }
+
+        // Volver a la pantalla de especies para iniciar desde cero
+        location.hash = '#recorrido';
+
+        console.log('🗑️ Todo el progreso ha sido borrado del localStorage');
+        alert('Progreso borrado exitosamente');
       });
       
       // Colocar el botón de reset fuera del contenedor escalable, en el wrapper
@@ -538,6 +595,17 @@ export class MenuScene extends BaseScene {
       this._menuWrapper.parentNode.removeChild(this._menuWrapper);
       this._menuWrapper = null;
       this._menuContainer = null;
+    }
+
+    // Restaurar barra de progreso si quedó dentro del overlay del menú
+    if (this._restoreProgressOverlay) {
+      this._restoreProgressOverlay();
+      this._restoreProgressOverlay = null;
+    }
+
+    // Ocultar por completo la barra de progreso al salir del menú
+    if (window.progressManager) {
+      window.progressManager.setVisible(false, true);
     }
 
     // Limpiar cualquier overlay del menú que pueda haber quedado (fallback)

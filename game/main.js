@@ -227,13 +227,8 @@ async function startApp() {
 
   EventBus.on('scene:changed', updateContinueAvailability);
   
-  // Check initial scene for progress overlay
-  setTimeout(() => {
-    if (sceneManager.currentName === 'menu' && window.progressManager) {
-      window.progressManager.setVisible(true);
-      window.progressManager.updateAllProgress();
-    }
-  }, 100);
+  // No mostrar el overlay de progreso automáticamente al inicio.
+  // El MenuScene controla cuándo se muestra (después del loader de laboratorio).
 }
 
 // Start the application

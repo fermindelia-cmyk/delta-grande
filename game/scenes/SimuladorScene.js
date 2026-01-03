@@ -3049,34 +3049,27 @@ export class SimuladorScene extends BaseScene {
       pointer-events: none;
     `;
 
-    const exterior = new Image();
-    exterior.src = '/game-assets/menu/laboratorio_exterior.webp';
-    exterior.style.cssText = `
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      opacity: 1;
-    `;
-
     const loader = document.createElement('video');
     loader.src = '/game-assets/menu/loader_yellow.webm';
     loader.style.cssText = `
       position: absolute;
-      right: clamp(16px, 3vw, 64px);
-      bottom: clamp(16px, 3vw, 64px);
-      width: clamp(100px, 15vw, 260px);
-      max-height: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: clamp(140px, 18vw, 300px);
+      max-width: 60vmin;
+      max-height: 60vmin;
       object-fit: contain;
       opacity: 1;
       pointer-events: none;
+      background: transparent;
     `;
     loader.muted = true;
     loader.playsInline = true;
     loader.loop = true;
+    loader.autoplay = true;
+    loader.preload = 'auto';
 
-    overlay.appendChild(exterior);
     overlay.appendChild(loader);
     this.app.root.appendChild(overlay);
     this._loadingOverlay = overlay;
