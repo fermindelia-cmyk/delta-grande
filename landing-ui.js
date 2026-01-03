@@ -1474,13 +1474,7 @@ window.addEventListener('keydown', (ev) => {
                     const info = speciesData.find(s => s.id === speciesId);
                     if (info && info.text) {
                         video.playbackRate = info.dataVideoSpeed || 0.5;
-
-                        const header = (info.commonName || info.scientificName)
-                            ? `<p><strong>${info.commonName || ''}</strong>${info.scientificName ? ` — <em>${info.scientificName}</em>` : ''}</p>`
-                            : '';
-                        const overlayHTML = `${header}${info.text}`;
-
-                        startTypewriter(overlayHTML);
+                        startTypewriter(info.text);
                     } else {
                         // Fallback: load legacy txt and wrap in <p> for consistent formatting
                         video.playbackRate = info?.dataVideoSpeed || 0.5;

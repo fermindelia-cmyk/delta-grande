@@ -6035,13 +6035,13 @@ export class RioScene extends BaseScene {
     const barContainer = document.createElement('div');
     barContainer.style.cssText = `
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      bottom: clamp(16px, 3vw, 64px);
+      left: clamp(16px, 3vw, 64px);
+      transform: none;
       width: min(70vmin, 440px);
       display: flex;
       flex-direction: column;
-      align-items: center;
+      align-items: flex-start;
       gap: 10px;
       z-index: 2;
     `;
