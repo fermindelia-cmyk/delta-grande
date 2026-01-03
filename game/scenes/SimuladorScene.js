@@ -3061,7 +3061,7 @@ export class SimuladorScene extends BaseScene {
     `;
 
     const loader = document.createElement('video');
-    loader.src = '/game-assets/menu/D+_loader%2003.webm';
+    loader.src = '/game-assets/menu/loader_yellow.webm';
     loader.style.cssText = `
       position: absolute;
       right: clamp(16px, 3vw, 64px);

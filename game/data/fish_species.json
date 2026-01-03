@@ -1,0 +1,60 @@
+{
+  "species": [
+    {
+      "id": "dorado",
+      "commonName": "Dorado",
+      "scientificName": "Salminus brasiliensis",
+      "text": "<p><strong>Pez carnívoro migratorio</strong> que se alimenta de mojarras, sábalos y bogas. Los adultos prefieren <strong>aguas rápidas</strong>, mientras que los jóvenes buscan sectores con fondos blandos y corrientes suaves. Se reproduce en <strong>aguas con corriente</strong>, realizando la piracema entre <strong>octubre y noviembre</strong>, cuando varios machos acompañan a una hembra y pueden verse saltos fuera del agua. Puede alcanzar <strong>120 cm</strong> y superar los <strong>30 kg</strong>.</p><p><strong>Emblema de la pesca deportiva</strong> y protegido en varias provincias. Según una <strong>leyenda guaraní</strong>, su origen está en Angá, un joven castigado por Tupá convirtiéndolo en oro y arrojándolo al Paraná; de allí habría surgido el dorado, símbolo de codicia y apetito insaciable.</p>",
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "id": "pacu",
+      "commonName": "Pacú",
+      "scientificName": "Piaractus mesopotamicus",
+      "text": "<p><strong>Pez migratorio y omnívoro</strong> que consume moluscos, crustáceos, pequeños peces y frutos. Mide habitualmente <strong>40–60 cm</strong> y ronda los <strong>4 kg</strong>, aunque puede llegar a <strong>1 m</strong> y <strong>20 kg</strong>, ejemplares hoy poco frecuentes.</p><p>Pertenece al género <strong>Piaractus</strong> (del griego \"graso\" + \"rayo\" por su aleta adiposa con radios). El epíteto <strong>mesopotamicus</strong> alude a la región entre los ríos Paraná y Uruguay, donde es característico.</p>",
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "id": "armado_chancho",
+      "commonName": "Armado chancho",
+      "scientificName": "Pterodoras granulosus",
+      "text": "<p><strong>Pez acorazado</strong> que puede medir hasta <strong>70 cm</strong> y pesar unos <strong>9 kg</strong>. Su cuerpo alargado luce <strong>hilera de escudos óseos</strong> en los flancos, cabeza más larga que ancha con granulaciones, hocico extendido y boca gruesa con barbillas cortas.</p><p>El dorso y los costados son <strong>gris oscuro casi negro</strong>, contraste con vientre blanco; pectorales gris-parduzcas, pélvicas y anales rosadas, caudal gris. Los juveniles muestran <strong>pardo claro moteado</strong>.</p><p>A menudo subestimado, ofrece <strong>pesca desafiante</strong> si se usan equipos adecuados: fuerza, peso y disposición a tomar carnada lo vuelven atractivo cuando otras especies no están activas.</p>",
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "id": "palometa_brava",
+      "commonName": "Palometa brava",
+      "scientificName": "Serrasalmus maculatus",
+      "text": "<p><strong>Carnívora diurna</strong> que se alimenta de peces, crustáceos y larvas de insectos. Se desplaza en <strong>grupos de ~20</strong> individuos y se vuelve más agresiva con <strong>temperaturas altas</strong>, sobre todo en aguas someras o con poco alimento.</p><p>Cuerpo <strong>comprimido y alto</strong> con perfil dorsal curvado; alcanza <strong>26 cm</strong> y <strong>420 g</strong>. Línea lateral completa, escamas pequeñas cicloides; color gris iridiscente con vientre amarillento.</p>",
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "id": "raya_negra",
+      "commonName": "Raya negra",
+      "scientificName": "Potamotrygon spp.",
+      "text": "<p><strong>Cuerpo ovalado</strong> con ojos pequeños y <strong>cola corta</strong> respecto al cuerpo. Presenta <strong>espinas aserradas</strong> en la línea dorsal media y hileras laterales. El dorso es <strong>pardo a negro</strong> con manchas anaranjadas bordeadas de gris; la parte ventral es gris salvo cabeza y branquias, que son blancas.</p><p>Usa un <strong>aguijón defensivo</strong> en la cola: al ser pisada arquea el cuerpo y lo clava, generando heridas muy dolorosas y de cicatrización difícil. En zonas ribereñas se la evita <strong>golpeando el agua</strong> antes de entrar para ahuyentarla.</p>",
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "id": "sabalo",
+      "commonName": "Sábalo",
+      "scientificName": "Prochilodus lineatus",
+      "text": "<p><strong>Especie clave</strong> del Paraná: se alimenta de <strong>barro y materia orgánica</strong> de los sedimentos, alcanzando gran biomasa. Es el <strong>recurso pesquero más abundante</strong> de la Cuenca del Plata y los adultos superan los <strong>70 cm</strong>.</p><p>Su régimen <strong>iliófago</strong> y sus <strong>migraciones</strong> de cientos de kilómetros río arriba lo hacen fundamental. Desova en planicies de inundación típicas de la cuenca.</p><p>Para pueblos originarios como los <strong>Timbúes</strong> fue una fuente principal de grasa; sus escamas en restos arqueológicos evidencian su rol ancestral en la dieta y cultura ribereña.</p>",
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "id": "surubi_pintado",
+      "commonName": "Surubí pintado",
+      "scientificName": "Pseudoplatystoma corruscans",
+      "text": "<p><strong>Bagre emblemático</strong> de importancia alimentaria y cultural para pueblos originarios del Paraná y del Plata. El conocimiento sobre sus <strong>ciclos del río</strong> y pesca sostenible se transmitió por generaciones.</p><p>Cuerpo <strong>alargado y delgado</strong>, cabeza ancha y aplanada, <strong>boca amplia</strong> con bigotes sensoriales. Color pardo oscuro con vientre blanco y <strong>manchas circulares</strong> oscuras en cuerpo y aletas. Puede medir <strong>hasta 2 m</strong>.</p>",
+      "dataVideoSpeed": 0.5
+    },
+    {
+      "id": "vieja_del_agua",
+      "commonName": "Vieja del agua",
+      "scientificName": "Hypostomus commersoni",
+      "text": "<p><strong>Una de las más grandes</strong> del grupo \"viejas del agua\": alcanza <strong>53 cm</strong>. Cuerpo robusto y alto con <strong>placas óseas</strong> en todo el cuerpo, incluida la cabeza. Cabeza triangular, ojos pequeños, hocico redondeado y <strong>boca inferior suctora</strong>; dientes pequeños. Aleta adiposa con espina corta y curvada. Color <strong>pardo grisáceo</strong> con manchas oscuras redondeadas y vientre más claro.</p><p>Puede <strong>respirar por el intestino</strong>, tolerando aguas con poco oxígeno. Excava <strong>cuevas en orillas</strong> donde deposita huevos y cuida crías hasta que nadan libremente.</p>",
+      "dataVideoSpeed": 0.5
+    }
+  ]
+}

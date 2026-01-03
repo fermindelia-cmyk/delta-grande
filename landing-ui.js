@@ -201,7 +201,7 @@ function initWaveform() {
 
 
 // Preload background music and SFX to avoid playback delay on first click
-const PRELOAD_BG_SRC = '/assets/web_musica.ogg';
+const PRELOAD_BG_SRC = 'assets/music/13-verano.mp3';
 const PRELOAD_SFX_SRC = '/assets/exito.mp3';
 
 // Prepare SFX element and preload it
@@ -256,7 +256,7 @@ async function enableGlobalAudio(onlyContext = false) {
     if (!anyPlaying) {
         // Start music by default if nothing playing
         if (audioLayers.music) {
-            audioLayers.music.src = PRELOAD_BG_SRC;
+            audioLayers.music.src = 'assets/music/13-verano.mp3';
             try { await audioLayers.music.play(); } catch (e) { }
             // Update UI state
             /* We can't easily update `state` from here as it's in another scope. 
@@ -1296,6 +1296,18 @@ window.addEventListener('keydown', (ev) => {
             audioOpen.volume = 0.4;
             audioClose.volume = 0.5;
 
+            // Mapping for card names to actual species IDs (for underwater species)
+            const cardToSpeciesMap = {
+                'surubi': 'surubi_pintado',
+                'armado': 'armado_chancho',
+                'palometa': 'palometa_brava',
+                'raya': 'raya_negra',
+                'vieja': 'vieja_del_agua',
+                'pacu': 'pacu',
+                'dorado': 'dorado',
+                'sabalo': 'sabalo'
+            };
+
             // Glitch animation variables
             let typeWriterTimeout = null;
             let typeWriterInterval = null;
@@ -1367,20 +1379,54 @@ window.addEventListener('keydown', (ev) => {
                 return alpha < 128;
             };
 
-            // Fetch species data
-            fetch('game/data/especies.json')
-                .then(response => response.json())
-                .then(data => {
-                    speciesData = data.species;
+            // Fetch species data (land + fish)
+            let speciesDataPromise = Promise.all([
+                fetch('game/data/especies.json').then(r => r.json()),
+                fetch('game/data/fish_species.json').then(r => r.json()).catch(() => ({ species: [] }))
+            ])
+                .then(([land, fish]) => {
+                    const landSpecies = land?.species || [];
+                    const fishSpecies = fish?.species || [];
+                    speciesData = [...landSpecies, ...fishSpecies];
                 })
                 .catch(err => console.error('Error loading species data:', err));
 
-            function openVideoOverlay(src, speciesId) {
+            async function openVideoOverlay(src, speciesId) {
                 const overlay = document.getElementById('video-overlay');
                 const video = document.getElementById('overlay-video');
                 const textOverlay = document.getElementById('overlay-text');
 
                 if (!overlay || !video) return;
+
+                const startTypewriter = (fullText) => {
+                    if (!textOverlay) return;
+
+                    textOverlay.innerHTML = '';
+                    textOverlay.classList.add('is-visible');
+
+                    if (typeWriterTimeout) clearTimeout(typeWriterTimeout);
+                    if (typeWriterInterval) clearInterval(typeWriterInterval);
+
+                    typeWriterTimeout = setTimeout(() => {
+                        const totalChars = getPlainTextLength(fullText);
+                        let currentIndex = 0;
+
+                        typeWriterInterval = setInterval(() => {
+                            if (currentIndex <= totalChars) {
+                                let displayText = getPartialHTML(fullText, currentIndex);
+                                const glitchCount = Math.min(3, totalChars - currentIndex);
+                                for (let i = 0; i < glitchCount; i++) {
+                                    displayText += `<span style="opacity: 0.6; animation: glitch-flicker 0.1s infinite;">${getRandomGlitchChar()}</span>`;
+                                }
+                                textOverlay.innerHTML = displayText;
+                                currentIndex++;
+                            } else {
+                                textOverlay.innerHTML = fullText;
+                                clearInterval(typeWriterInterval);
+                            }
+                        }, 5);
+                    }, 3000);
+                };
 
                 // Clear any existing animations
                 if (typeWriterTimeout) clearTimeout(typeWriterTimeout);
@@ -1398,45 +1444,45 @@ window.addEventListener('keydown', (ev) => {
 
                 // Populate text if data exists
                 if (textOverlay && speciesId) {
+                    // Ensure species data loaded
+                    if (typeof speciesDataPromise !== 'undefined') {
+                        try { await speciesDataPromise; } catch (e) { /* ignore */ }
+                    }
+
                     const info = speciesData.find(s => s.id === speciesId);
-                    if (info) {
-                        // Set video speed
+                    if (info && info.text) {
                         video.playbackRate = info.dataVideoSpeed || 0.5;
 
-                        if (info.text) {
-                            textOverlay.innerHTML = ''; // Start empty
-                            textOverlay.classList.add('is-visible');
+                        const header = (info.commonName || info.scientificName)
+                            ? `<p><strong>${info.commonName || ''}</strong>${info.scientificName ? ` — <em>${info.scientificName}</em>` : ''}</p>`
+                            : '';
+                        const overlayHTML = `${header}${info.text}`;
 
-                            // Start animation after 3 seconds
-                            typeWriterTimeout = setTimeout(() => {
-                                const fullText = info.text;
-                                const totalChars = getPlainTextLength(fullText);
-                                let currentIndex = 0;
-
-                                typeWriterInterval = setInterval(() => {
-                                    if (currentIndex <= totalChars) {
-                                        let displayText = getPartialHTML(fullText, currentIndex);
-                                        const glitchCount = Math.min(3, totalChars - currentIndex);
-                                        for (let i = 0; i < glitchCount; i++) {
-                                            displayText += `<span style="opacity: 0.6; animation: glitch-flicker 0.1s infinite;">${getRandomGlitchChar()}</span>`;
-                                        }
-                                        textOverlay.innerHTML = displayText;
-                                        currentIndex++;
-                                    } else {
-                                        textOverlay.innerHTML = fullText;
-                                        clearInterval(typeWriterInterval);
-                                    }
-                                }, 5);
-                            }, 3000);
-                        } else {
-                            textOverlay.classList.remove('is-visible');
-                            textOverlay.innerHTML = '';
-                        }
+                        startTypewriter(overlayHTML);
                     } else {
-                        // Default speed if no info found
-                        video.playbackRate = 0.5;
-                        textOverlay.classList.remove('is-visible');
-                        textOverlay.innerHTML = '';
+                        // Fallback: load legacy txt and wrap in <p> for consistent formatting
+                        video.playbackRate = info?.dataVideoSpeed || 0.5;
+                        const infoPath = `game-assets/sub/data_videos/${speciesId}.txt`;
+                        fetch(infoPath)
+                            .then(res => res.ok ? res.text() : '')
+                            .then(text => {
+                                if (!text) {
+                                    textOverlay.classList.remove('is-visible');
+                                    textOverlay.innerHTML = '';
+                                    return;
+                                }
+                                const fullText = text
+                                    .split(/\n\n+/)
+                                    .map(p => p.trim())
+                                    .filter(Boolean)
+                                    .map(p => `<p>${p}</p>`)
+                                    .join('');
+                                startTypewriter(fullText);
+                            })
+                            .catch(() => {
+                                textOverlay.classList.remove('is-visible');
+                                textOverlay.innerHTML = '';
+                            });
                     }
                 } else if (textOverlay) {
                     video.playbackRate = 0.5;
@@ -1459,12 +1505,183 @@ window.addEventListener('keydown', (ev) => {
                 };
             }
 
+            function openInfoOnlyOverlay(speciesId) {
+                const overlay = document.getElementById('video-overlay');
+                const video = document.getElementById('overlay-video');
+                const textOverlay = document.getElementById('overlay-text');
+
+                if (!overlay || !video || !textOverlay) return;
+
+                // Clear any existing animations
+                if (typeWriterTimeout) clearTimeout(typeWriterTimeout);
+                if (typeWriterInterval) clearInterval(typeWriterInterval);
+
+                // Map card name to actual species ID (for underwater species)
+                const actualSpeciesId = cardToSpeciesMap[speciesId] || speciesId;
+
+                // Hide video, show overlay with image
+                video.src = '';
+                video.style.display = 'none';
+
+                // Create or get image element for species
+                let speciesImg = overlay.querySelector('.species-info-image');
+                if (!speciesImg) {
+                    speciesImg = document.createElement('img');
+                    speciesImg.className = 'species-info-image';
+                    speciesImg.style.cssText = `
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        max-width: 40%;
+                        max-height: 50vh;
+                        object-fit: contain;
+                        z-index: 1;
+                        pointer-events: none;
+                    `;
+                    overlay.querySelector('div').appendChild(speciesImg);
+                }
+
+                // Load species image
+                const imagePath = `game-assets/sub/completed_fish_data/${actualSpeciesId}.png`;
+                speciesImg.src = imagePath;
+                speciesImg.style.display = 'block';
+
+                overlay.classList.add('is-visible');
+                overlay.setAttribute('aria-hidden', 'false');
+
+                // Play sound
+                audioOpen.currentTime = 0;
+                audioOpen.play().catch(e => console.log('Audio play failed', e));
+
+                // Position text overlay to the right or below image
+                textOverlay.style.position = 'absolute';
+                textOverlay.style.right = '5%';
+                textOverlay.style.top = '50%';
+                textOverlay.style.transform = 'translateY(-50%)';
+                textOverlay.style.width = '45%';
+
+                // Get species info from especies.json or fetch from sub species data
+                const info = speciesData.find(s => s.id === actualSpeciesId);
+                
+                if (info && info.text) {
+                    // Show text with typewriter effect
+                    textOverlay.innerHTML = '';
+                    textOverlay.classList.add('is-visible');
+                    textOverlay.style.background = 'rgba(0, 0, 0, 0.85)';
+                    textOverlay.style.padding = '2rem';
+                    textOverlay.style.borderRadius = '8px';
+                    textOverlay.style.maxHeight = '80vh';
+                    textOverlay.style.overflow = 'auto';
+
+                    typeWriterTimeout = setTimeout(() => {
+                        const fullText = info.text;
+                        const totalChars = getPlainTextLength(fullText);
+                        let currentIndex = 0;
+
+                        typeWriterInterval = setInterval(() => {
+                            if (currentIndex <= totalChars) {
+                                let displayText = getPartialHTML(fullText, currentIndex);
+                                const glitchCount = Math.min(3, totalChars - currentIndex);
+                                for (let i = 0; i < glitchCount; i++) {
+                                    displayText += `<span style="opacity: 0.6; animation: glitch-flicker 0.1s infinite;">${getRandomGlitchChar()}</span>`;
+                                }
+                                textOverlay.innerHTML = displayText;
+                                currentIndex++;
+                            } else {
+                                textOverlay.innerHTML = fullText;
+                                clearInterval(typeWriterInterval);
+                            }
+                        }, 5);
+                    }, 500); // Start immediately (shorter delay)
+                } else {
+                    // Try to fetch info from sub species data (for underwater species)
+                    const infoPath = `game-assets/sub/completed_fish_data/${actualSpeciesId}.txt`;
+                    
+                    fetch(infoPath)
+                        .then(response => {
+                            if (response.ok) return response.text();
+                            throw new Error('Info not found');
+                        })
+                        .then(text => {
+                            textOverlay.innerHTML = '';
+                            textOverlay.classList.add('is-visible');
+                            textOverlay.style.background = 'rgba(0, 0, 0, 0.85)';
+                            textOverlay.style.padding = '2rem';
+                            textOverlay.style.borderRadius = '8px';
+                            textOverlay.style.maxHeight = '80vh';
+                            textOverlay.style.overflow = 'auto';
+                            textOverlay.style.whiteSpace = 'pre-wrap';
+
+                            // Convert plain text to HTML paragraphs (only for final display)
+                            const formattedText = text.split('\n\n').map(para => `<p>${para}</p>`).join('');
+                            
+                            typeWriterTimeout = setTimeout(() => {
+                                const totalChars = text.length;
+                                let currentIndex = 0;
+
+                                typeWriterInterval = setInterval(() => {
+                                    if (currentIndex <= totalChars) {
+                                        // Display as plain text during animation to avoid partial HTML tags
+                                        const displayText = text.substring(0, currentIndex);
+                                        const glitchCount = Math.min(3, totalChars - currentIndex);
+                                        let glitchChars = '';
+                                        for (let i = 0; i < glitchCount; i++) {
+                                            glitchChars += getRandomGlitchChar();
+                                        }
+                                        textOverlay.textContent = displayText + glitchChars;
+                                        currentIndex++;
+                                    } else {
+                                        // At the end, show formatted HTML
+                                        textOverlay.style.whiteSpace = 'normal';
+                                        textOverlay.innerHTML = formattedText;
+                                        clearInterval(typeWriterInterval);
+                                    }
+                                }, 5);
+                            }, 500);
+                        })
+                        .catch(err => {
+                            console.error('Failed to load species info:', err);
+                            textOverlay.innerHTML = '<p>Información no disponible para esta especie.</p>';
+                            textOverlay.classList.add('is-visible');
+                            textOverlay.style.background = 'rgba(0, 0, 0, 0.85)';
+                            textOverlay.style.padding = '2rem';
+                            textOverlay.style.borderRadius = '8px';
+                        });
+                }
+
+                // Close on click
+                overlay.onclick = (e) => {
+                    if (e.target === overlay) {
+                        closeVideoOverlay();
+                    }
+                };
+            }
+
             function closeVideoOverlay() {
                 const overlay = document.getElementById('video-overlay');
                 const video = document.getElementById('overlay-video');
                 const textOverlay = document.getElementById('overlay-text');
 
                 if (!overlay || !video) return;
+
+                // Show video again in case it was hidden
+                video.style.display = '';
+
+                // Hide species image if it exists
+                const speciesImg = overlay.querySelector('.species-info-image');
+                if (speciesImg) {
+                    speciesImg.style.display = 'none';
+                }
+
+                // Reset text overlay styles
+                if (textOverlay) {
+                    textOverlay.style.position = '';
+                    textOverlay.style.right = '';
+                    textOverlay.style.top = '';
+                    textOverlay.style.transform = '';
+                    textOverlay.style.width = '';
+                }
 
                 // Clear animations
                 if (typeWriterTimeout) clearTimeout(typeWriterTimeout);
@@ -1538,21 +1755,33 @@ window.addEventListener('keydown', (ev) => {
                         e.stopPropagation();
                         const filename = src.split('/').pop();
                         const species = filename.split('.')[0];
-                        const videoPath = `game-assets/recorrido/criaturas/${species}/${species}_data.webm`;
+                        // Map to actual species id when needed (e.g., underwater fish)
+                        const actualSpeciesId = cardToSpeciesMap[species] || species;
 
-                        // Check if video exists before opening
-                        fetch(videoPath, { method: 'HEAD' })
-                            .then(res => {
-                                const type = res.headers.get('content-type');
-                                if (res.ok && type && type.startsWith('video/')) {
-                                    openVideoOverlay(videoPath, species);
-                                } else {
-                                    console.warn('Video not found or invalid type for species:', species, type);
+                        const candidateVideos = [
+                            // New fish/underwater data videos live here
+                            `game-assets/sub/data_videos/${actualSpeciesId}_data.webm`,
+                            // Fallback to the original path used by land species
+                            `game-assets/recorrido/criaturas/${actualSpeciesId}/${actualSpeciesId}_data.webm`
+                        ];
+
+                        // Try each candidate video path until one exists
+                        (async () => {
+                            for (const videoPath of candidateVideos) {
+                                try {
+                                    const res = await fetch(videoPath, { method: 'HEAD' });
+                                    const type = res.headers.get('content-type') || '';
+                                    if (res.ok && type.startsWith('video/')) {
+                                        openVideoOverlay(videoPath, actualSpeciesId);
+                                        return;
+                                    }
+                                } catch (err) {
+                                    // Continue to next candidate
                                 }
-                            })
-                            .catch(e => {
-                                console.warn('Error checking video existence:', e);
-                            });
+                            }
+                            console.warn('No video found for species:', actualSpeciesId);
+                            openInfoOnlyOverlay(species);
+                        })();
                     });
                 }
 
@@ -2756,6 +2985,13 @@ const WELCOME_THEME = {
                 'ruben-angel-alarcon.mp3'
             ];
 
+            const musicFiles = [
+                '02-carnaval.mp3',
+                '10-lluvia.mp3',
+                '11-dorado.mp3',
+                '13-verano.mp3'
+            ];
+
             // Wire click handlers
             // Wire click handlers
             Object.keys(hotspots).forEach((k) => {
@@ -2773,23 +3009,24 @@ const WELCOME_THEME = {
 
                     const wasActive = state[k];
 
-                    // 1. If clicking the currently active selector -> Toggle OFF (Stop All)
+                    // 1. If clicking the currently active selector -> For music/dialog, play new random; for ambient, toggle OFF
                     if (wasActive) {
-                        // Reset State
-                        Object.keys(state).forEach(s => { state[s] = false; updateHotspotUI(s); });
-                        refreshSelectorImage();
-
-                        // Stop All Layers
-                        Object.values(layers).forEach(layer => {
-                            if (layer) {
-                                layer.pause();
-                                layer.currentTime = 0;
-                            }
-                        });
-                        return;
+                        if (k === 'ambient') {
+                            // Toggle OFF ambient
+                            Object.keys(state).forEach(s => { state[s] = false; updateHotspotUI(s); });
+                            refreshSelectorImage();
+                            Object.values(layers).forEach(layer => {
+                                if (layer) {
+                                    layer.pause();
+                                    layer.currentTime = 0;
+                                }
+                            });
+                            return;
+                        }
+                        // For music/dialog, continue to play a new random track (don't return)
                     }
 
-                    // 2. Switching TO a mode
+                    // 2. Switching TO a mode (or replaying same mode for music/dialog)
 
                     // Update UI State: Only clicked one is ON
                     Object.keys(state).forEach(s => { state[s] = (s === k); updateHotspotUI(s); });
@@ -2823,7 +3060,7 @@ const WELCOME_THEME = {
                         }
                     };
 
-                    const SRC_MUSIC = 'assets/web_musica.ogg';
+                    const SRC_MUSIC = 'assets/music/13-verano.mp3';
                     const SRC_AMBIENT = 'assets/delta-web-ambiente.mp3';
 
                     // 3. Logic Branches based on selection
@@ -2833,25 +3070,20 @@ const WELCOME_THEME = {
                         const randomFile = relatosFiles[Math.floor(Math.random() * relatosFiles.length)];
                         await play('dialog', 1.0, `assets/relatos/${randomFile}`, false, true);
 
-                        // 2. Ambient BG (50%)
-                        await play('ambient', 0.5, SRC_AMBIENT, true, false);
+                        // 2. Ambient BG (30%)
+                        await play('ambient', 0.3, SRC_AMBIENT, true, false);
 
-                        // 3. Music BG (50%) - only if it was already playing or part of the vibe?
-                        // "lo mismo con la musica" -> imply treating it like ambient. 
-                        // We check if it is active or simple assume if it was playing we keep it.
-                        if (layers.music && !layers.music.paused) {
-                            await play('music', 0.5, SRC_MUSIC, true, false);
-                        } else {
-                            stop('music');
-                        }
+                        // 3. Stop Music
+                        stop('music');
 
                     } else if (k === 'music') {
                         // MUSIC MODE
-                        // 1. Music (100%)
-                        await play('music', 1.0, SRC_MUSIC, true, false);
+                        // 1. Play Random Music (80%)
+                        const randomMusic = musicFiles[Math.floor(Math.random() * musicFiles.length)];
+                        await play('music', 0.8, `assets/music/${randomMusic}`, true, true);
 
-                        // 2. Ambient BG (50%)
-                        await play('ambient', 0.5, SRC_AMBIENT, true, false);
+                        // 2. Ambient BG (30%)
+                        await play('ambient', 0.3, SRC_AMBIENT, true, false);
 
                         // 3. Stop Dialog
                         stop('dialog');

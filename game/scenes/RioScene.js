@@ -5980,6 +5980,11 @@ export class RioScene extends BaseScene {
     // Already created?
     if (this._loadingEl) return;
 
+    this._loadingProgressTotal = 0;
+    this._loadingProgressCompleted = 0;
+    this._loadingTextEl = null;
+    this._loadingBarFillEl = null;
+
     const wrap = document.createElement('div');
     wrap.style.cssText = `
       position: fixed;
@@ -6003,7 +6008,7 @@ export class RioScene extends BaseScene {
     `;
 
     const loader = document.createElement('video');
-    loader.src = '/game-assets/menu/D+_loader%2003.webm';
+    loader.src = '/game-assets/menu/loader_yellow.webm';
     loader.style.cssText = `
       position: absolute;
       right: clamp(16px, 3vw, 64px);
@@ -6018,8 +6023,61 @@ export class RioScene extends BaseScene {
     loader.playsInline = true;
     loader.loop = true;
 
+    // Progress Bar Container
+    const barContainer = document.createElement('div');
+    barContainer.style.cssText = `
+        position: absolute;
+        bottom: clamp(20px, 5vh, 60px);
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(60vmin, 360px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 2;
+    `;
+
+    const bar = document.createElement('div');
+    bar.style.cssText = `
+        width: 100%;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.2);
+        overflow: hidden;
+        position: relative;
+        margin-bottom: 8px;
+    `;
+
+    const fill = document.createElement('div');
+    fill.style.cssText = `
+        width: 0%;
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #ffd360, #ff9c5d, #ffd360);
+        transition: width 0.3s ease;
+    `;
+    bar.appendChild(fill);
+    this._loadingBarFillEl = fill;
+
+    const txt = document.createElement('div');
+    txt.style.cssText = `
+        font-family: system-ui, -apple-system, sans-serif;
+        font-weight: 400;
+        font-size: 14px;
+        letter-spacing: 0.02em;
+        color: rgba(255, 255, 255, 0.9);
+        text-align: center;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    `;
+    this._loadingTextEl = txt;
+    this._setLoadingText('Cargando...');
+
+    barContainer.appendChild(bar);
+    barContainer.appendChild(txt);
+
     wrap.appendChild(exterior);
     wrap.appendChild(loader);
+    wrap.appendChild(barContainer);
     document.body.appendChild(wrap);
 
     this._loadingEl = wrap;
@@ -6035,20 +6093,29 @@ export class RioScene extends BaseScene {
   }
 
   _setLoadingText(message) {
-    // No-op: video loader doesn't show text
+    if (!this._loadingTextEl) return;
+    this._loadingTextEl.textContent = message || 'Cargando...';
   }
 
   _updateLoadingBar() {
-    // No-op: video loader doesn't have progress bar
+    if (!this._loadingBarFillEl) return;
+    const total = this._loadingProgressTotal;
+    const completed = this._loadingProgressCompleted;
+    const ratio = total > 0 ? Math.min(1, completed / total) : 0;
+    this._loadingBarFillEl.style.width = `${(ratio * 100).toFixed(1)}%`;
   }
 
   async _trackLoadingStep(message, fn) {
     if (typeof fn !== 'function') fn = () => undefined;
+    this._loadingProgressTotal++;
+    this._updateLoadingBar();
+    this._setLoadingText(message);
     try {
       const result = await fn();
       return result;
     } finally {
-      // No progress tracking needed for video loader
+      this._loadingProgressCompleted++;
+      this._updateLoadingBar();
     }
   }
 
