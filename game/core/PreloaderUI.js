@@ -53,6 +53,7 @@ export class PreloaderUI {
                 left: 0;
                 width: 100vw;
                 height: 100vh;
+                height: 100dvh;
                 background: linear-gradient(135deg, #0d0f12 0%, #1a1f26 100%);
                 color: #eef2f6;
                 font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;

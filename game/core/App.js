@@ -74,6 +74,15 @@ export class App {
     addEventListener('resize', () => this._resize());
     new ResizeObserver(() => this._resize()).observe(document.body);
 
+    // On mobile (especially landscape), the browser UI bars can change the
+    // *visual* viewport without reliably firing a window resize. VisualViewport
+    // tracks the actually visible area.
+    this._onVisualViewportChange = () => this._resize();
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', this._onVisualViewportChange);
+        window.visualViewport.addEventListener('scroll', this._onVisualViewportChange);
+    }
+
     this._setupLandscapeEnforcer();
 
     // Ajuste inicial
@@ -81,6 +90,17 @@ export class App {
     }
 
     get canvas() { return this.renderer.domElement; }
+
+
+    _getViewportSize() {
+        const vv = window.visualViewport;
+        const w = Math.round((vv && vv.width) ? vv.width : window.innerWidth);
+        const h = Math.round((vv && vv.height) ? vv.height : window.innerHeight);
+        return {
+            w: Math.max(1, w || 1),
+            h: Math.max(1, h || 1)
+        };
+    }
 
 
     start() {
@@ -240,7 +260,10 @@ export class App {
         document.body.appendChild(overlay);
         this._landscapeOverlay = { overlay };
 
-        const isPortrait = () => window.innerHeight > window.innerWidth;
+        const isPortrait = () => {
+            const { w, h } = this._getViewportSize();
+            return h > w;
+        };
 
         const setVisible = (visible) => {
             overlay.style.display = visible ? 'flex' : 'none';
@@ -282,8 +305,7 @@ export class App {
 
 
     _resize() {
-        const viewportW = window.innerWidth;
-        const viewportH = window.innerHeight;
+        const { w: viewportW, h: viewportH } = this._getViewportSize();
 
         this.root.style.width = viewportW + 'px';
         this.root.style.height = viewportH + 'px';
