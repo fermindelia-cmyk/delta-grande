@@ -138,6 +138,7 @@ class SpatialHash {
  * ------------------------------------------------------------- */
 class BubbleSystem {
   constructor(container, baseColor = null) {
+    this.container = container;
     this.canvas = document.createElement('canvas');
     this.ctx = this.canvas.getContext('2d');
     this.baseColor = baseColor; // THREE.Color or null
@@ -160,16 +161,30 @@ class BubbleSystem {
     this.resize();
     this._onResize = () => this.resize();
     window.addEventListener('resize', this._onResize);
+
+    this._onVVResize = () => this.resize();
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', this._onVVResize);
+      window.visualViewport.addEventListener('scroll', this._onVVResize);
+    }
   }
 
   destroy() {
     window.removeEventListener('resize', this._onResize);
+    if (window.visualViewport && this._onVVResize) {
+      window.visualViewport.removeEventListener('resize', this._onVVResize);
+      window.visualViewport.removeEventListener('scroll', this._onVVResize);
+    }
     if (this.canvas.parentNode) this.canvas.parentNode.removeChild(this.canvas);
   }
 
   resize() {
-    this.canvas.width = window.innerWidth;
-    this.canvas.height = window.innerHeight;
+    const parent = this.container || this.canvas.parentElement;
+    const vv = window.visualViewport;
+    const w = Math.floor(parent?.clientWidth || vv?.width || window.innerWidth || 1);
+    const h = Math.floor(parent?.clientHeight || vv?.height || window.innerHeight || 1);
+    this.canvas.width = Math.max(1, w);
+    this.canvas.height = Math.max(1, h);
     // Area-based cap so “full intensity” can cover the screen across resolutions.
     // Tuned so 1080p lands around ~400 bubbles.
     const area = Math.max(1, this.canvas.width * this.canvas.height);

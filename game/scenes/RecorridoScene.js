@@ -4838,7 +4838,7 @@ export class RecorridoScene extends BaseScene {
       barridaOverlay.style.top = '0';
       barridaOverlay.style.left = '0';
       barridaOverlay.style.width = `100vw`;
-      barridaOverlay.style.height = `100vh`;
+      barridaOverlay.style.height = `100dvh`;
       barridaOverlay.style.zIndex = '10002';
       barridaOverlay.style.pointerEvents = 'none';
       barridaOverlay.style.display = 'flex';
