@@ -6,6 +6,11 @@ export class App {
         this.root = document.querySelector(rootSelector);
         if (!this.root) throw new Error('App root not found');
 
+        // Landscape enforcement (global across all scenes)
+        this._landscapeOverlay = null;
+        this._landscapePrevPaused = false;
+        this._landscapeHandlersBound = false;
+
         // Fondo negro en el body
         document.body.style.backgroundColor = '#000';
         document.body.style.margin = '0';
@@ -68,6 +73,8 @@ export class App {
         // Resize
     addEventListener('resize', () => this._resize());
     new ResizeObserver(() => this._resize()).observe(document.body);
+
+    this._setupLandscapeEnforcer();
 
     // Ajuste inicial
     this._resize();
@@ -174,6 +181,106 @@ export class App {
     }
 
 
+    _setupLandscapeEnforcer() {
+        if (this._landscapeHandlersBound) return;
+        this._landscapeHandlersBound = true;
+
+        const overlay = document.createElement('div');
+        overlay.id = 'landscape-required-overlay';
+        overlay.setAttribute('aria-hidden', 'true');
+        overlay.style.position = 'fixed';
+        overlay.style.inset = '0';
+        // Stay above everything: HUD video overlays, pause/main menus, progress overlays, etc.
+        overlay.style.zIndex = '9999999';
+        overlay.style.display = 'none';
+        overlay.style.pointerEvents = 'auto';
+        // Match the game's palette/typography defined in game/index.html (:root variables).
+        overlay.style.background = 'rgba(0, 0, 0, 0.92)';
+        overlay.style.color = 'var(--fg, #eef2f6)';
+        overlay.style.fontFamily = '"new-science", "New Science", system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial';
+        overlay.style.textAlign = 'center';
+        overlay.style.padding = '24px';
+        overlay.style.boxSizing = 'border-box';
+        overlay.style.cursor = 'default';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+        overlay.style.flexDirection = 'column';
+        overlay.style.gap = '14px';
+        overlay.style.backdropFilter = 'none';
+
+        const wrap = document.createElement('div');
+        wrap.style.maxWidth = '560px';
+        wrap.style.width = '100%';
+        wrap.style.background = 'rgba(18, 24, 34, 0.95)';
+        wrap.style.border = '1px solid #1f2732';
+        wrap.style.borderRadius = '12px';
+        wrap.style.padding = '18px 16px';
+        wrap.style.boxSizing = 'border-box';
+
+        const title = document.createElement('div');
+        title.textContent = 'Rotá el dispositivo para jugar';
+        title.style.fontSize = '20px';
+        title.style.fontWeight = '600';
+        title.style.marginBottom = '6px';
+        title.style.letterSpacing = '0.08em';
+        title.style.textTransform = 'uppercase';
+
+        const body = document.createElement('div');
+        body.textContent = 'Este juego funciona en modo horizontal (landscape). Girá el dispositivo para continuar.';
+        body.style.fontSize = '16px';
+        body.style.color = 'var(--muted, #94a3b8)';
+        body.style.letterSpacing = '0.04em';
+        body.style.marginBottom = '14px';
+
+        wrap.appendChild(title);
+        wrap.appendChild(body);
+        overlay.appendChild(wrap);
+
+        // Put overlay at the end of body so it sits above everything (including menus).
+        document.body.appendChild(overlay);
+        this._landscapeOverlay = { overlay };
+
+        const isPortrait = () => window.innerHeight > window.innerWidth;
+
+        const setVisible = (visible) => {
+            overlay.style.display = visible ? 'flex' : 'none';
+            overlay.setAttribute('aria-hidden', visible ? 'false' : 'true');
+        };
+
+        const update = () => {
+            const portrait = isPortrait();
+            if (portrait) {
+                setVisible(true);
+                // Pause rendering/updates, but remember if we were already paused.
+                if (overlay.dataset.prevPaused === undefined) {
+                    overlay.dataset.prevPaused = this._paused ? '1' : '0';
+                }
+                if (!this._paused) this.pause();
+            } else {
+                setVisible(false);
+                const prevPaused = overlay.dataset.prevPaused === '1';
+                delete overlay.dataset.prevPaused;
+                // Only resume if we weren't paused before the portrait-lock overlay appeared.
+                if (!prevPaused && this._paused) {
+                    this.resume();
+                }
+            }
+        };
+
+        // Keep in sync with viewport/orientation changes.
+        window.addEventListener('orientationchange', update);
+        window.addEventListener('resize', update);
+        try {
+            screen?.orientation?.addEventListener?.('change', update);
+        } catch (_) {
+            // ignore
+        }
+
+        // Initial state
+        update();
+    }
+
+
     _resize() {
         const viewportW = window.innerWidth;
         const viewportH = window.innerHeight;
@@ -208,6 +315,31 @@ export class App {
 
         if (this._currentScene && this._currentScene.onResize) {
             this._currentScene.onResize(viewportW, viewportH);
+        }
+
+        // If orientation changed due to resize, reflect it immediately.
+        if (this._landscapeOverlay) {
+            // Keep logic centralized in the enforcer.
+            const portrait = viewportH > viewportW;
+            const overlayEl = this._landscapeOverlay.overlay;
+            const visible = overlayEl.style.display !== 'none';
+
+            if (portrait && !visible) {
+                overlayEl.style.display = 'flex';
+                overlayEl.setAttribute('aria-hidden', 'false');
+                if (overlayEl.dataset.prevPaused === undefined) {
+                    overlayEl.dataset.prevPaused = this._paused ? '1' : '0';
+                }
+                if (!this._paused) this.pause();
+            } else if (!portrait && visible) {
+                overlayEl.style.display = 'none';
+                overlayEl.setAttribute('aria-hidden', 'true');
+                const prevPaused = overlayEl.dataset.prevPaused === '1';
+                delete overlayEl.dataset.prevPaused;
+                if (!prevPaused && this._paused) {
+                    this.resume();
+                }
+            }
         }
     }
 }
