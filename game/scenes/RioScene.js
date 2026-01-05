@@ -3951,7 +3951,7 @@ export class RioScene extends BaseScene {
     // When the camera gets very close to the water plane, a near clip of 0.1
     // can clip the surface itself, revealing the underwater scene or causing
     // the depth-only occluder to “punch a hole” (gray).
-    this.camera.near = 0.02;
+    this.camera.near = 0.0002;
     this.camera.far  = 90;   // try 80–150; lower = faster
     this.camera.updateProjectionMatrix();
 

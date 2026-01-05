@@ -978,9 +978,8 @@ export class RecorridoScene extends BaseScene {
       inset: 0;
       display: flex;
       align-items: center;
-      justify-content: flex-start;
+      justify-content: center;
       gap: 12px;
-      padding-top: min(78vh, calc(100vh - 80px));
       background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.06), rgba(0,0,0,0.9));
       color: #fff;
       font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -4492,7 +4491,7 @@ export class RecorridoScene extends BaseScene {
             // Usar la transición dedicada antes de volver al recorrido
             location.hash = '#recorrido-transition';
           } else {
-            window.location.href = '/game/index.html';
+            window.location.href = '/index.html';
           }
         }, 500);
       };
@@ -4509,7 +4508,7 @@ export class RecorridoScene extends BaseScene {
         btnMenu.style.background = 'transparent';
       };
       btnMenu.onclick = () => {
-        window.location.href = '/game/index.html';
+        window.location.href = '/index.html';
       };
 
       buttonsContainer.appendChild(btnContinue);
