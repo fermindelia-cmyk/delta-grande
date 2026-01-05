@@ -87,6 +87,17 @@ function makeMaterialsUnique(root) {
   });
 }
 
+// Unified helper so any UI element (map overlays, deck logos, etc.) can mimic the ESC shortcut.
+const triggerPauseMenuOverlay = () => {
+  if (typeof window === 'undefined') return;
+  if (typeof window.showPauseMenu === 'function') {
+    window.showPauseMenu();
+    return;
+  }
+  const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+  window.dispatchEvent(escapeEvent);
+};
+
 
 /* -------------------------------------------------------------
  * Spatial hash (O(n) neighborhood queries)
@@ -1436,6 +1447,14 @@ class Deck {
     this.logoEl.id = 'deck-logo';
     this.logoEl.src = this.cfg.assets.logo;
     this.logoEl.style.visibility = 'hidden';
+    this.logoEl.style.pointerEvents = 'auto';
+    this.logoEl.style.cursor = 'pointer';
+    this._logoPointerHandler = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      triggerPauseMenuOverlay();
+    };
+    this.logoEl.addEventListener('pointerup', this._logoPointerHandler);
     document.body.appendChild(this.logoEl);
 
     // inject CSS once
@@ -1709,7 +1728,13 @@ class Deck {
 
   destroy() {
     if (this.container && this.container.parentNode) this.container.parentNode.removeChild(this.container);
-    if (this.logoEl && this.logoEl.parentNode) this.logoEl.parentNode.removeChild(this.logoEl);
+    if (this.logoEl && this.logoEl.parentNode) {
+      if (this._logoPointerHandler) {
+        this.logoEl.removeEventListener('pointerup', this._logoPointerHandler);
+      }
+      this.logoEl.parentNode.removeChild(this.logoEl);
+    }
+    this._logoPointerHandler = null;
   }
 
   // === interactions with gameplay ===

@@ -124,6 +124,10 @@ app.resume();
 }
 };
 
+// Expose pause menu controls so in-scene interactions (e.g., map overlay) can trigger them
+window.showPauseMenu = showPauseMenu;
+window.hidePauseMenu = hidePauseMenu;
+
 pauseButtons.resume?.addEventListener('click', () => hidePauseMenu());
 
 pauseButtons.restart?.addEventListener('click', async () => {

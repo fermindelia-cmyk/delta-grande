@@ -68,6 +68,10 @@ export class RecorridoScene extends BaseScene {
     this.use3DInventory = false; // 👈 switch inicial
     this.inventoryModel = null;
     this.inventoryOverlay = null;
+    this.mapOverlayEl = null;
+    this._mapOverlayClickHandler = null;
+    this._mapOverlayPrevPointerEvents = '';
+    this._mapOverlayPrevCursor = '';
     this.overlayRoot = app?.root || document.body;
     this.stageLoadingOverlay = null;
     this._stageLoadingHideTimeout = null;
@@ -257,7 +261,10 @@ export class RecorridoScene extends BaseScene {
     // Mostrar overlays de recorrido (mapa y metadata)
     const mapOverlay = document.querySelector('.map-overlay');
     const metadataOverlay = document.querySelector('.metadata-overlay');
-    if (mapOverlay) mapOverlay.style.display = 'block';
+    if (mapOverlay) {
+      mapOverlay.style.display = 'block';
+      this.setupMapOverlayShortcut(mapOverlay);
+    }
     if (metadataOverlay) metadataOverlay.style.display = 'block';
 
     this.isLUTReady = false;
@@ -720,6 +727,55 @@ export class RecorridoScene extends BaseScene {
     //this.setupCameraDebugOverlay();
   }
 
+  // Allow the HUD map to act as the ESC/pause shortcut while this scene is active
+  setupMapOverlayShortcut(mapOverlay) {
+    if (!mapOverlay) return;
+    // Avoid reattaching if we're already wired up
+    if (this.mapOverlayEl === mapOverlay && this._mapOverlayClickHandler) return;
+
+    this.mapOverlayEl = mapOverlay;
+    this._mapOverlayPrevPointerEvents = mapOverlay.style.pointerEvents;
+    this._mapOverlayPrevCursor = mapOverlay.style.cursor;
+
+    mapOverlay.style.pointerEvents = 'auto';
+    mapOverlay.style.cursor = 'pointer';
+
+    this._mapOverlayClickHandler = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (typeof window.showPauseMenu === 'function') {
+        window.showPauseMenu();
+        return;
+      }
+
+      // Fallback: emulate Escape key press if global helper is unavailable
+      const escapeEvent = new KeyboardEvent('keydown', {
+        key: 'Escape',
+        bubbles: true
+      });
+      window.dispatchEvent(escapeEvent);
+    };
+
+    mapOverlay.addEventListener('pointerup', this._mapOverlayClickHandler);
+  }
+
+  teardownMapOverlayShortcut() {
+    if (!this.mapOverlayEl) return;
+
+    if (this._mapOverlayClickHandler) {
+      this.mapOverlayEl.removeEventListener('pointerup', this._mapOverlayClickHandler);
+    }
+
+    this.mapOverlayEl.style.pointerEvents = this._mapOverlayPrevPointerEvents || '';
+    this.mapOverlayEl.style.cursor = this._mapOverlayPrevCursor || '';
+
+    this.mapOverlayEl = null;
+    this._mapOverlayClickHandler = null;
+    this._mapOverlayPrevPointerEvents = '';
+    this._mapOverlayPrevCursor = '';
+  }
+
   // --- Input handlers (touch joystick)
   setupInputHandlers() {
     // Bind handlers so we can add/remove listeners reliably
@@ -1123,6 +1179,7 @@ export class RecorridoScene extends BaseScene {
     const mapOverlay = document.querySelector('.map-overlay');
     const metadataOverlay = document.querySelector('.metadata-overlay');
     if (mapOverlay) mapOverlay.style.display = 'none';
+    this.teardownMapOverlayShortcut();
     if (metadataOverlay) metadataOverlay.style.display = 'none';
 
     if (this._lutReadyRaf) {

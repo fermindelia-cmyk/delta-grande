@@ -13,6 +13,17 @@ const smoothstep = (edge0, edge1, x) => {
   return t * t * (3 - 2 * t);
 };
 
+// Shared opener so scene-specific UI buttons can toggle the ESC/pause overlay.
+const triggerPauseMenuOverlay = () => {
+  if (typeof window === 'undefined') return;
+  if (typeof window.showPauseMenu === 'function') {
+    window.showPauseMenu();
+    return;
+  }
+  const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+  window.dispatchEvent(escapeEvent);
+};
+
 const FONT_LINK_DATA_ATTR = 'data-simulador-fontkit';
 let loadedFontHref = null;
 
@@ -717,6 +728,12 @@ export class SimuladorScene extends BaseScene {
     this._loadingLogoUrl = null;
     this._isReady = false;
     this._uiRectEntries = [];
+    this._uiLogoEl = null;
+    this._onUiLogoPointerUp = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      triggerPauseMenuOverlay();
+    };
 
     this._depthMeter = null;
 
@@ -5285,17 +5302,25 @@ export class SimuladorScene extends BaseScene {
     }
 
     if (elements.logo?.image) {
+      if (this._uiLogoEl && this._onUiLogoPointerUp) {
+        this._uiLogoEl.removeEventListener('pointerup', this._onUiLogoPointerUp);
+      }
       const logo = document.createElement('img');
       logo.src = resolveAsset(elements.logo.image);
       logo.style.position = 'absolute';
       this._applyViewportRect(logo, elements.logo);
-      logo.style.pointerEvents = 'none';
+      logo.style.pointerEvents = 'auto';
+      logo.style.cursor = 'pointer';
       logo.style.objectFit = 'contain';
       if (Number.isFinite(elements.logo.zIndex)) {
         logo.style.zIndex = String(elements.logo.zIndex);
       }
       logo.draggable = false;
+      logo.addEventListener('pointerup', this._onUiLogoPointerUp);
+      this._uiLogoEl = logo;
       root.appendChild(logo);
+    } else {
+      this._uiLogoEl = null;
     }
 
     const goalMessage = document.createElement('div');
@@ -6744,6 +6769,10 @@ export class SimuladorScene extends BaseScene {
       this.app.canvas.style.cursor = this._originalCanvasCursor;
       this._originalCanvasCursor = null;
     }
+    if (this._uiLogoEl && this._onUiLogoPointerUp) {
+      this._uiLogoEl.removeEventListener('pointerup', this._onUiLogoPointerUp);
+    }
+    this._uiLogoEl = null;
     this._uiRoot = null;
     this._buttons = {};
     this._seedButtons = {};
