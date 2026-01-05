@@ -13,23 +13,23 @@ set CHROME_EXE_FALLBACK=%ROOT%portable\chromium\chrome.exe
 set PROFILE_DIR=%ROOT%chromium-profile
 
 if not exist "%APP_DIR%" (
-  echo Missing app folder: %APP_DIR%
-  echo Copy your built dist/ into "app" on the USB.
-  pause
-  exit /b 1
+	echo Missing app folder: %APP_DIR%
+	echo Copy your built dist/ into "app" on the USB.
+	pause
+	exit /b 1
 )
 
 if not exist "%NODE_EXE%" (
-  echo Missing Node runtime at %NODE_EXE%
-  echo Place the portable Node ZIP contents in portable\node\
-  pause
-  exit /b 1
+	echo Missing Node runtime at %NODE_EXE%
+	echo Place the portable Node ZIP contents in portable\node\
+	pause
+	exit /b 1
 )
 
 if not exist "%SERVER_JS%" (
-  echo Missing server script: %SERVER_JS%
-  pause
-  exit /b 1
+	echo Missing server script: %SERVER_JS%
+	pause
+	exit /b 1
 )
 
 rem Start server in a new minimized window
@@ -45,14 +45,14 @@ if exist "%CHROME_EXE_PRIMARY%" set CHROME_EXE=%CHROME_EXE_PRIMARY%
 if not defined CHROME_EXE if exist "%CHROME_EXE_FALLBACK%" set CHROME_EXE=%CHROME_EXE_FALLBACK%
 
 if defined CHROME_EXE (
-  echo Invocando Chromium portatil: %CHROME_EXE%
-  start "" "%CHROME_EXE%" --user-data-dir="%PROFILE_DIR%" --app=http://localhost:%PORT%
+	echo Invocando Chromium portatil: %CHROME_EXE%
+	start "" "%CHROME_EXE%" --user-data-dir="%PROFILE_DIR%" --app=http://localhost:%PORT%
 ) else (
-  echo No se encontro Chromium en:
-  echo   %CHROME_EXE_PRIMARY%
-  echo   %CHROME_EXE_FALLBACK%
-  echo El delta se abrira en tu navegador por defecto.
-  start "" http://localhost:%PORT%
+	echo No se encontro Chromium en:
+	echo   %CHROME_EXE_PRIMARY%
+	echo   %CHROME_EXE_FALLBACK%
+	echo El delta se abrira en tu navegador por defecto.
+	start "" http://localhost:%PORT%
 )
 
 echo.
@@ -68,17 +68,17 @@ exit /b 0
 set MAX_ATTEMPTS=10
 set STATUS=
 set /a ATTEMPT=0
-echo Esperando portal en http://localhost:%PORT%
+echo Despertando Delta Grande en http://localhost:%PORT%
 :poll_loop
 set /a ATTEMPT+=1
 for /f "usebackq tokens=1" %%s in (`powershell -NoProfile -Command "try { (Invoke-WebRequest -UseBasicParsing -Uri 'http://localhost:%PORT%' -Method Head -TimeoutSec 2).StatusCode } catch { if ($_.Exception.Response) { $_.Exception.Response.StatusCode.value__ } else { '' } }"`) do set STATUS=%%s
 if "%STATUS%"=="200" goto :eof
 echo   intento %ATTEMPT%/%MAX_ATTEMPTS% ...
 if %ATTEMPT% GEQ %MAX_ATTEMPTS% (
-  echo No se pudo abrir el portal en http://localhost:%PORT%.
-  echo Revisa que el puerto no este ocupado o que la carpeta app exista.
-  pause
-  exit /b 1
+	echo No se pudo abrir Delta Grande en http://localhost:%PORT%.
+	echo Revisa que el puerto no este ocupado o que la carpeta app exista.
+	pause
+	exit /b 1
 )
 ping 127.0.0.1 -n 2 >nul
 goto poll_loop
@@ -86,27 +86,26 @@ goto poll_loop
 :matrix_intro
 set FRAME_DELAY=1
 for %%F in (frame1 frame2 frame3 frame4) do (
-  call :%%F
-  ping 127.0.0.1 -n %FRAME_DELAY% >nul
+	call :%%F
+	ping 127.0.0.1 -n %FRAME_DELAY% >nul
 )
 cls
-echo 010101 PORTAL DELTA LISTO 010101
+echo Delta Grande es un ecosistema digital en marcha.
+echo Donde podes explorar el Delta del Parana a traves de juegos y recorridos.
+echo Voces, paisajes 3D y microdocumentales ya laten en este puerto.
 echo.
-echo        /\\\\\\\\\ MATRIX \\\\\\\\
-echo       /  D+  4173:ABIERTO  \
-echo      /   SERVER: RUNNING      \
-echo      \   ESPERA \ ENTRA \ CIERRA /
-echo       \//////////////////////////
+echo El Delta entrerriano es un largo abrazo de rios sobre la llanura.
+echo Nuestro equilibrio anfibio: la tierra camina en el agua y el agua camina en la tierra.
 echo.
-echo 011001 BAJA CROMA, SUBE PULSO 100110
+echo 011001 listo para entrar en http://localhost:%PORT%
 goto :eof
 
 :frame1
 cls
 echo 101001001001 AWAKE 100101010001
 echo.
-echo        /\\\\\\\\\\\\\\\\\\\
-echo       /  D+  _PORTAL_   \\
+echo        /\\\\\\\\\\
+echo       /  D+  DELTA+    \\
 echo      /   LATIDOS: 4173  \\
 echo      \   SERVER: STARTING  /
 echo       \///////////////////
@@ -118,7 +117,7 @@ goto :eof
 cls
 echo 001101010010 CHANNEL OPEN 1110001
 echo.
-echo        /\\\\\\\\\\\\\\\\\\\
+echo        /\\\\\\\\\\
 echo       /  D+  DATA FLOW   \\
 echo      /   NAV: CHROMIUM   \\
 echo      \   USER = KEY      /
@@ -131,9 +130,9 @@ goto :eof
 cls
 echo 11101100  DELTA MATRIX  00011110
 echo.
-echo        /\\\\\\\\\\\\\\\\\\\
+echo        /\\\\\\\\\\
 echo       /  D+  VECTOR     \\
-echo      /   /\\   /\\   /\\ \\
+echo      /   /\   /\   /\ \\
 echo      \   \\//   \\//   \\// /
 echo       \///////////////////
 echo.
@@ -144,11 +143,12 @@ goto :eof
 cls
 echo 000111000111 FINALIZE LINK 111000111000
 echo.
-echo        /\\\\\\\\\\\\\\\\\\\
-echo       /  D+  PORTAL      \\
+echo        /\\\\\\\\\\
+echo       /  D+  DELTA+      \\
 echo      /   entra y escucha \\
 echo      \   cierra y duerme /
 echo       \///////////////////
 echo.
 echo 111000111000 ready >>nul
 goto :eof
+
