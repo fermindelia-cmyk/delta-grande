@@ -4,8 +4,8 @@
 <FileTypeBox Size="20" Type="ftyp" Specification="p12" Container="file otyp" MajorBrand="isom" MinorVersion="1">
 <BrandEntry AlternateBrand="isom"/>
 </FileTypeBox>
-<MovieBox Size="12287" Type="moov" Specification="p12" Container="file cmvd" >
-<MovieHeaderBox Size="108" Type="mvhd" Version="0" Flags="0" Specification="p12" Container="moov" CreationTime="3850472315" ModificationTime="3850472315" TimeScale="1000" Duration="10052" NextTrackID="3">
+<MovieBox Size="12231" Type="moov" Specification="p12" Container="file cmvd" >
+<MovieHeaderBox Size="108" Type="mvhd" Version="0" Flags="0" Specification="p12" Container="moov" CreationTime="3850477231" ModificationTime="3850477231" TimeScale="1000" Duration="10052" NextTrackID="3">
 </MovieHeaderBox>
 <ObjectDescriptorBox Size="21" Type="iods" Version="0" Flags="0" Specification="p14" Container="moov" >
  <MP4InitialObjectDescriptor objectDescriptorID="od1" binaryID="1" >
@@ -15,7 +15,7 @@
  </MP4InitialObjectDescriptor>
 </ObjectDescriptorBox>
 <TrackBox Size="6079" Type="trak" Specification="p12" Container="moov" >
-<TrackHeaderBox Size="92" Type="tkhd" Version="0" Flags="3" Specification="p12" Container="trak" CreationTime="0" ModificationTime="3850473086" TrackID="1" Duration="10052" Width="640.00" Height="360.00">
+<TrackHeaderBox Size="92" Type="tkhd" Version="0" Flags="3" Specification="p12" Container="trak" CreationTime="0" ModificationTime="3850477241" TrackID="1" Duration="10052" AlternateGroupID="2" Width="640.00" Height="360.00">
 <Matrix m11="0x00010000" m12="0x00000000" m13="0x00000000" m21="0x00000000" m22="0x00010000" m23="0x00000000" m31="0x00000000" m32="0x00000000" m33="0x40000000"/>
 </TrackHeaderBox>
 <EditBox Size="36" Type="edts" Specification="p12" Container="trak" >
@@ -24,7 +24,7 @@
 </EditListBox>
 </EditBox>
 <MediaBox Size="5943" Type="mdia" Specification="p12" Container="trak" >
-<MediaHeaderBox Size="32" Type="mdhd" Version="0" Flags="0" Specification="p12" Container="mdia" CreationTime="0" ModificationTime="3850472315" TimeScale="24000" Duration="243243" LanguageCode="und">
+<MediaHeaderBox Size="32" Type="mdhd" Version="0" Flags="0" Specification="p12" Container="mdia" CreationTime="0" ModificationTime="3850477231" TimeScale="24000" Duration="243243" LanguageCode="und">
 </MediaHeaderBox>
 <HandlerBox Size="45" Type="hdlr" Version="0" Flags="0" Specification="p12" Container="mdia meta minf" hdlrType="vide" Name="VideoHandler" reserved1="0" reserved2="data:application/octet-string,000000000000000000000000">
 </HandlerBox>
@@ -544,28 +544,28 @@
 <SampleSizeEntry Size="65"/>
 </SampleSizeBox>
 <ChunkOffsetBox Size="104" Type="stco" Version="0" Flags="0" Specification="p12" Container="stbl" EntryCount="22">
-<ChunkEntry offset="12323"/>
-<ChunkEntry offset="112062"/>
-<ChunkEntry offset="216851"/>
-<ChunkEntry offset="314737"/>
-<ChunkEntry offset="396956"/>
-<ChunkEntry offset="510782"/>
-<ChunkEntry offset="597888"/>
-<ChunkEntry offset="679742"/>
-<ChunkEntry offset="796619"/>
-<ChunkEntry offset="873685"/>
-<ChunkEntry offset="971663"/>
-<ChunkEntry offset="1051257"/>
-<ChunkEntry offset="1149942"/>
-<ChunkEntry offset="1238304"/>
-<ChunkEntry offset="1323768"/>
-<ChunkEntry offset="1420604"/>
-<ChunkEntry offset="1496361"/>
-<ChunkEntry offset="1596940"/>
-<ChunkEntry offset="1686777"/>
-<ChunkEntry offset="1783245"/>
-<ChunkEntry offset="1866541"/>
-<ChunkEntry offset="1964096"/>
+<ChunkEntry offset="12267"/>
+<ChunkEntry offset="112006"/>
+<ChunkEntry offset="216795"/>
+<ChunkEntry offset="314681"/>
+<ChunkEntry offset="396900"/>
+<ChunkEntry offset="510726"/>
+<ChunkEntry offset="597832"/>
+<ChunkEntry offset="679686"/>
+<ChunkEntry offset="796563"/>
+<ChunkEntry offset="873629"/>
+<ChunkEntry offset="971607"/>
+<ChunkEntry offset="1051201"/>
+<ChunkEntry offset="1149886"/>
+<ChunkEntry offset="1238248"/>
+<ChunkEntry offset="1323712"/>
+<ChunkEntry offset="1420548"/>
+<ChunkEntry offset="1496305"/>
+<ChunkEntry offset="1596884"/>
+<ChunkEntry offset="1686721"/>
+<ChunkEntry offset="1783189"/>
+<ChunkEntry offset="1866485"/>
+<ChunkEntry offset="1964040"/>
 </ChunkOffsetBox>
 <SampleDependencyTypeBox Size="253" Type="sdtp" Version="0" Flags="0" Specification="p12" Container="stbl traf" SampleCount="241">
 <SampleDependencyEntry isLeading="unknown" dependsOnOther="no" dependedOn="unknown" hasRedundancy="unknown"/>
@@ -814,8 +814,8 @@
 </MediaInformationBox>
 </MediaBox>
 </TrackBox>
-<TrackBox Size="6071" Type="trak" Specification="p12" Container="moov" >
-<TrackHeaderBox Size="92" Type="tkhd" Version="0" Flags="3" Specification="p12" Container="trak" CreationTime="0" ModificationTime="3850473086" TrackID="2" Duration="10052" AlternateGroupID="1" Width="640.00" Height="360.00">
+<TrackBox Size="6015" Type="trak" Specification="p12" Container="moov" >
+<TrackHeaderBox Size="92" Type="tkhd" Version="0" Flags="3" Specification="p12" Container="trak" CreationTime="0" ModificationTime="3850477241" TrackID="2" Duration="10052" AlternateGroupID="2" Width="640.00" Height="360.00">
 <Matrix m11="0x00010000" m12="0x00000000" m13="0x00000000" m21="0x00000000" m22="0x00010000" m23="0x00000000" m31="0x00000000" m32="0x00000000" m33="0x40000000"/>
 </TrackHeaderBox>
 <EditBox Size="36" Type="edts" Specification="p12" Container="trak" >
@@ -823,12 +823,12 @@
 <EditListEntry Duration="10052" MediaTime="2002" MediaRate="1"/>
 </EditListBox>
 </EditBox>
-<MediaBox Size="5871" Type="mdia" Specification="p12" Container="trak" >
-<MediaHeaderBox Size="32" Type="mdhd" Version="0" Flags="0" Specification="p12" Container="mdia" CreationTime="0" ModificationTime="3850472315" TimeScale="24000" Duration="243243" LanguageCode="und">
+<MediaBox Size="5815" Type="mdia" Specification="p12" Container="trak" >
+<MediaHeaderBox Size="32" Type="mdhd" Version="0" Flags="0" Specification="p12" Container="mdia" CreationTime="0" ModificationTime="3850477231" TimeScale="24000" Duration="243243" LanguageCode="und">
 </MediaHeaderBox>
 <HandlerBox Size="45" Type="hdlr" Version="0" Flags="0" Specification="p12" Container="mdia meta minf" hdlrType="vide" Name="VideoHandler" reserved1="0" reserved2="data:application/octet-string,000000000000000000000000">
 </HandlerBox>
-<MediaInformationBox Size="5786" Type="minf" Specification="p12" Container="mdia" >
+<MediaInformationBox Size="5730" Type="minf" Specification="p12" Container="mdia" >
 <VideoMediaHeaderBox Size="20" Type="vmhd" Version="0" Flags="1" Specification="p12" Container="minf" >
 </VideoMediaHeaderBox>
 <DataInformationBox Size="36" Type="dinf" Specification="p12" Container="minf meta" >
@@ -838,10 +838,9 @@
 </URLDataEntryBox>
 </DataReferenceBox>
 </DataInformationBox>
-<SampleTableBox Size="5722" Type="stbl" Specification="p12" Container="minf" >
-<SampleDescriptionBox Size="2649" Type="stsd" Version="0" Flags="0" Specification="p12" Container="stbl" >
-<HEVCSampleEntryBox Size="2633" Type="hvc1" Specification="p15" Container="stsd"  DataReferenceIndex="1" Width="640" Height="360" XDPI="4718592" YDPI="4718592" BitDepth="24" CompressorName="Lavc60.3.100 libx265"
->
+<SampleTableBox Size="5666" Type="stbl" Specification="p12" Container="minf" >
+<SampleDescriptionBox Size="2593" Type="stsd" Version="0" Flags="0" Specification="p12" Container="stbl" >
+<VisualSampleDescriptionBox Size="0" Type="hvcA" Specification="unknown" Container="stsd" DataReferenceIndex="1" Version="0" Revision="0" Vendor="0" TemporalQuality="0" SpacialQuality="0" Width="640" Height="360" HorizontalResolution="4718592" VerticalResolution="4718592" CompressorName="Lavc60.3.100 libx265" BitDepth="24">
 <HEVCConfigurationBox Size="2445" Type="hvcC" Specification="p15" Container="hvc1 hev1 hvc2 hev2 encv resv ipco dvh1 dvhe" >
 <HEVCDecoderConfigurationRecord nal_unit_size="4" configurationVersion="1" profile_space="0" tier_flag="0" profile_idc="2" general_profile_compatibility_flags="20000000" progressive_source_flag="1" interlaced_source_flag="0" non_packed_constraint_flag="0" frame_only_constraint_flag="1" constraint_indicator_flags="0" level_idc="63" min_spatial_segmentation_idc="0" parallelismType="0" chroma_format="YUV 4:2:0" luma_bit_depth="10" chroma_bit_depth="10" avgFrameRate="0" constantFrameRate="0" numTemporalLayers="1" temporalIdNested="1">
 <ParameterSetArray nalu_type="32" complete_set="1">
@@ -864,9 +863,7 @@
 </PixelAspectRatioBox>
 <BitRateBox Size="20" Type="btrt" Specification="p12" Container="sample_entry" BufferSizeDB="122" avgBitRate="8200" maxBitRate="9048">
 </BitRateBox>
-<AuxiliaryTypeInfoBox Size="56" Type="auxi" Version="0" Flags="0" Specification="iff" Container="sample_entry" aux_track_type="urn:mpeg:mpegB:cicp:systems:auxiliary:alpha" >
-</AuxiliaryTypeInfoBox>
-</HEVCSampleEntryBox>
+</VisualSampleDescriptionBox>
 </SampleDescriptionBox>
 <TimeToSampleBox Size="24" Type="stts" Version="0" Flags="0" Specification="p12" Container="stbl" EntryCount="1">
 <TimeToSampleEntry SampleDelta="1001" SampleCount="241"/>
@@ -1330,28 +1327,28 @@
 <SampleSizeEntry Size="40"/>
 </SampleSizeBox>
 <ChunkOffsetBox Size="104" Type="stco" Version="0" Flags="0" Specification="p12" Container="stbl" EntryCount="22">
-<ChunkEntry offset="111525"/>
-<ChunkEntry offset="216379"/>
-<ChunkEntry offset="314260"/>
-<ChunkEntry offset="396481"/>
-<ChunkEntry offset="510319"/>
-<ChunkEntry offset="597418"/>
-<ChunkEntry offset="679265"/>
-<ChunkEntry offset="796145"/>
-<ChunkEntry offset="873221"/>
-<ChunkEntry offset="971187"/>
-<ChunkEntry offset="1050783"/>
-<ChunkEntry offset="1149467"/>
-<ChunkEntry offset="1237841"/>
-<ChunkEntry offset="1323298"/>
-<ChunkEntry offset="1420127"/>
-<ChunkEntry offset="1495887"/>
-<ChunkEntry offset="1596476"/>
-<ChunkEntry offset="1686301"/>
-<ChunkEntry offset="1782771"/>
-<ChunkEntry offset="1866066"/>
-<ChunkEntry offset="1963633"/>
-<ChunkEntry offset="2029971"/>
+<ChunkEntry offset="111469"/>
+<ChunkEntry offset="216323"/>
+<ChunkEntry offset="314204"/>
+<ChunkEntry offset="396425"/>
+<ChunkEntry offset="510263"/>
+<ChunkEntry offset="597362"/>
+<ChunkEntry offset="679209"/>
+<ChunkEntry offset="796089"/>
+<ChunkEntry offset="873165"/>
+<ChunkEntry offset="971131"/>
+<ChunkEntry offset="1050727"/>
+<ChunkEntry offset="1149411"/>
+<ChunkEntry offset="1237785"/>
+<ChunkEntry offset="1323242"/>
+<ChunkEntry offset="1420071"/>
+<ChunkEntry offset="1495831"/>
+<ChunkEntry offset="1596420"/>
+<ChunkEntry offset="1686245"/>
+<ChunkEntry offset="1782715"/>
+<ChunkEntry offset="1866010"/>
+<ChunkEntry offset="1963577"/>
+<ChunkEntry offset="2029915"/>
 </ChunkOffsetBox>
 <SampleDependencyTypeBox Size="253" Type="sdtp" Version="0" Flags="0" Specification="p12" Container="stbl traf" SampleCount="241">
 <SampleDependencyEntry isLeading="unknown" dependsOnOther="no" dependedOn="unknown" hasRedundancy="unknown"/>
