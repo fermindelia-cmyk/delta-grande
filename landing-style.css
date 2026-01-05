@@ -801,6 +801,21 @@
             height: auto;
         }
 
+        .logo-naranja canvas {
+            display: none;
+            width: 100%;
+            height: auto;
+            pointer-events: none;
+        }
+
+        .logo-naranja.is-canvas-active canvas {
+            display: block;
+        }
+
+        .logo-naranja.is-canvas-active video {
+            display: none;
+        }
+
         /* Jugar button */
         .jugar-button {
             position: absolute;

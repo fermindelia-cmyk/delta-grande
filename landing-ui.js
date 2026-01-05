@@ -38,6 +38,178 @@ const audioLayers = window.audioLayers;
 window.browserInfo = browserInfo; // Expose for game code
 window.getVideoSource = getVideoSource; // Expose for game code
 
+const LOGO_SEQ_FRAME_COUNT = 240;
+const LOGO_SEQ_FPS = 24000 / 1001;
+const LOGO_SEQ_WIDTH = 600;
+const LOGO_SEQ_HEIGHT = 338;
+
+const getLogoFramePath = (index) => {
+    const normalized = ((index % LOGO_SEQ_FRAME_COUNT) + LOGO_SEQ_FRAME_COUNT) % LOGO_SEQ_FRAME_COUNT;
+    return `assets/logo_sequence/logo_${String(normalized + 1).padStart(4, '0')}.png`;
+};
+
+class CanvasSequencePlayer {
+    constructor(canvas, options = {}) {
+        this.canvas = canvas;
+        this.ctx = canvas?.getContext('2d');
+        this.frameCount = options.frameCount ?? LOGO_SEQ_FRAME_COUNT;
+        this.frameDuration = 1000 / (options.fps ?? LOGO_SEQ_FPS);
+        this.pathResolver = options.pathResolver ?? getLogoFramePath;
+        this.preloadAhead = options.preloadAhead ?? 24;
+        this.maxCache = options.maxCache ?? 80;
+        this.frameCache = new Map();
+        this.cacheOrder = [];
+        this.loadingSet = new Set();
+        this.currentFrame = 0;
+        this.isPlaying = false;
+        this.rafId = null;
+        this.lastTick = 0;
+
+        if (this.ctx) {
+            this.ctx.imageSmoothingEnabled = true;
+            this.ctx.imageSmoothingQuality = 'high';
+        }
+    }
+
+    async prepare() {
+        const firstFrame = await this.loadFrame(0);
+        this.storeFrame(0, firstFrame);
+        this.drawFrame(0);
+        this.preloadWindow();
+    }
+
+    play() {
+        if (this.isPlaying) return;
+        this.isPlaying = true;
+        this.lastTick = performance.now();
+        this.rafId = requestAnimationFrame(this.tick);
+    }
+
+    pause() {
+        if (!this.isPlaying) return;
+        this.isPlaying = false;
+        if (this.rafId) cancelAnimationFrame(this.rafId);
+        this.rafId = null;
+    }
+
+    tick = (timestamp) => {
+        if (!this.isPlaying) return;
+        if (timestamp - this.lastTick >= this.frameDuration) {
+            this.advanceFrame();
+            this.lastTick = timestamp;
+        }
+        this.rafId = requestAnimationFrame(this.tick);
+    };
+
+    advanceFrame() {
+        this.currentFrame = (this.currentFrame + 1) % this.frameCount;
+        this.drawFrame(this.currentFrame);
+        this.preloadWindow();
+    }
+
+    drawFrame(index) {
+        if (!this.ctx) return;
+        const frame = this.frameCache.get(index);
+        if (!frame) {
+            this.requestFrame(index);
+            return;
+        }
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.drawImage(frame, 0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    preloadWindow() {
+        for (let offset = 1; offset <= this.preloadAhead; offset++) {
+            const idx = (this.currentFrame + offset) % this.frameCount;
+            this.requestFrame(idx);
+        }
+    }
+
+    requestFrame(index) {
+        if (this.frameCache.has(index) || this.loadingSet.has(index)) return;
+        this.loadingSet.add(index);
+        this.loadFrame(index)
+            .then((frame) => this.storeFrame(index, frame))
+            .catch((err) => console.warn('Logo frame load failed', err))
+            .finally(() => this.loadingSet.delete(index));
+    }
+
+    async loadFrame(index) {
+        const src = this.pathResolver(index);
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.decoding = 'async';
+            img.crossOrigin = 'anonymous';
+            img.onload = async () => {
+                try {
+                    if (typeof window.createImageBitmap === 'function') {
+                        const bitmap = await createImageBitmap(img);
+                        resolve(bitmap);
+                    } else {
+                        resolve(img);
+                    }
+                } catch (error) {
+                    reject(error);
+                }
+            };
+            img.onerror = reject;
+            img.src = src;
+        });
+    }
+
+    storeFrame(index, frame) {
+        this.frameCache.set(index, frame);
+        this.cacheOrder.push(index);
+        if (this.cacheOrder.length > this.maxCache) {
+            const evictIndex = this.cacheOrder.shift();
+            if (typeof evictIndex === 'number' && evictIndex !== index) {
+                const cached = this.frameCache.get(evictIndex);
+                if (cached && typeof cached.close === 'function') {
+                    cached.close();
+                }
+                this.frameCache.delete(evictIndex);
+            }
+        }
+    }
+}
+
+async function initLogoCanvasFallback() {
+    const container = document.querySelector('.logo-naranja');
+    const canvas = document.getElementById('logo-canvas');
+    const video = container ? container.querySelector('video') : null;
+    const forceCanvas = typeof window !== 'undefined' && window.forceLogoCanvas === true;
+
+    if (!container || !canvas || !video) return;
+    if (!(browserInfo.isSafari || browserInfo.isIOS || forceCanvas)) return;
+
+    canvas.width = LOGO_SEQ_WIDTH;
+    canvas.height = LOGO_SEQ_HEIGHT;
+
+    const player = new CanvasSequencePlayer(canvas, {
+        frameCount: LOGO_SEQ_FRAME_COUNT,
+        fps: LOGO_SEQ_FPS,
+        pathResolver: getLogoFramePath
+    });
+
+    try {
+        await player.prepare();
+        container.classList.add('is-canvas-active');
+        video.pause();
+        video.currentTime = 0;
+        player.play();
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                player.pause();
+            } else {
+                player.play();
+            }
+        });
+        window.logoSequencePlayer = player;
+    } catch (err) {
+        console.warn('Logo canvas fallback failed, keeping video playback', err);
+    }
+}
+
 const enableBtn = document.getElementById('enable-audio-global');
 // Legacy reference removed: audioEl (web-music)
 const islandEl = document.querySelector('.floating-island');
@@ -234,6 +406,7 @@ function initIslandInteractions() {
 }
 
 initIslandInteractions();
+initLogoCanvasFallback();
 
 let audioAnalyzer = null;
 let dataArray = null;
