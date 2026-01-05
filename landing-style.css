@@ -116,6 +116,33 @@
             object-fit: cover;
         }
 
+        #splat-container,
+        #main-video-section {
+            transition: opacity 450ms ease;
+        }
+
+        body.is-splat-priority #main-video-section {
+            opacity: 0;
+            pointer-events: none;
+            visibility: hidden;
+        }
+
+        body.is-video-priority #main-video-section {
+            opacity: 1;
+            pointer-events: auto;
+            visibility: visible;
+        }
+
+        body.is-video-priority #splat-container {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        body.is-splat-priority #splat-container {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
         /* Loader overlay appears before the homepage renders */
         #page-loader {
             position: fixed;

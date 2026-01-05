@@ -50,6 +50,62 @@ const splatContainer = document.getElementById('splat-container');
 const splatIframe = document.getElementById('splat-iframe');
 let splatOverlay = null;
 let splatCamera = null;
+let splatApp = null;
+let splatPrevAutoRender = true;
+let splatPrevTimeScale = 1;
+let splatDesiredPauseState = false;
+let splatAppliedPauseState = false;
+
+const resolveSplatApp = () => {
+    if (splatApp) return splatApp;
+    if (!splatIframe) return null;
+    try {
+        const iframeWin = splatIframe.contentWindow;
+        if (!iframeWin || !iframeWin.document) return null;
+        const appEl = iframeWin.document.querySelector('pc-app');
+        if (appEl && appEl.app) {
+            splatApp = appEl.app;
+            return splatApp;
+        }
+    } catch (err) {
+        return null;
+    }
+    return null;
+};
+
+const setSplatPaused = (shouldPause) => {
+    splatDesiredPauseState = shouldPause;
+    const app = resolveSplatApp();
+    if (!app) return;
+    if (splatAppliedPauseState === shouldPause) return;
+
+    if (shouldPause) {
+        splatPrevAutoRender = app.autoRender;
+        splatPrevTimeScale = typeof app.timeScale === 'number' ? app.timeScale : 1;
+        if (typeof app.pause === 'function') {
+            try { app.pause(); } catch (err) {}
+        } else {
+            app.autoRender = false;
+        }
+        if (typeof app.timeScale === 'number') {
+            app.timeScale = 0;
+        }
+    } else {
+        if (typeof app.timeScale === 'number') {
+            app.timeScale = splatPrevTimeScale;
+        }
+        if (typeof app.resume === 'function') {
+            try { app.resume(); } catch (err) {}
+        } else {
+            app.autoRender = splatPrevAutoRender;
+        }
+        if (typeof app.render === 'function') {
+            try { app.render(); } catch (err) {}
+        }
+    }
+
+    splatAppliedPauseState = shouldPause;
+};
 
 let isDragging = false;
 let previousMouseX = 0;
@@ -68,7 +124,9 @@ function initIslandInteractions() {
             if (!iframeWin || !iframeWin.document) return;
             const appEl = iframeWin.document.querySelector('pc-app');
             if (appEl && appEl.app) {
-                const cam = appEl.app.root.findByName('camera');
+                splatApp = appEl.app;
+                const cam = splatApp.root.findByName('camera');
+                setSplatPaused(splatDesiredPauseState);
                 if (cam) {
                     splatCamera = cam;
                     return; // success, stop polling
@@ -1095,9 +1153,16 @@ window.addEventListener('keydown', (ev) => {
         v.preload = 'metadata';
     });
 
+    const allowsAutoplay = (target) => {
+        if (target.id === 'poema-video') {
+            return document.body.classList.contains('is-video-priority');
+        }
+        return true;
+    };
+
     const obs = new IntersectionObserver((entries) => {
         entries.forEach(({ target, isIntersecting }) => {
-            if (isIntersecting) {
+            if (isIntersecting && allowsAutoplay(target)) {
                 target.play?.().catch(() => {});
             } else {
                 target.pause?.();
@@ -1106,6 +1171,63 @@ window.addEventListener('keydown', (ev) => {
     }, { threshold: 0.35 });
 
     vids.forEach((v) => obs.observe(v));
+})();
+
+// Gate heavy media so the splat and Poema video never run simultaneously
+(function() {
+    const firstFloatingText = document.querySelector('.floating-text');
+    const videoSection = document.getElementById('main-video-section');
+    const video = document.getElementById('poema-video');
+    if (!firstFloatingText || !videoSection || !video) return;
+
+    const body = document.body;
+    let currentMode = null;
+
+    const updateAria = (isVideoMode) => {
+        videoSection.setAttribute('aria-hidden', isVideoMode ? 'false' : 'true');
+        if (splatContainer) {
+            splatContainer.setAttribute('aria-hidden', isVideoMode ? 'true' : 'false');
+        }
+    };
+
+    const applyMode = (mode) => {
+        if (currentMode === mode) return;
+        currentMode = mode;
+        const isVideoMode = mode === 'video';
+
+        body.classList.toggle('is-video-priority', isVideoMode);
+        body.classList.toggle('is-splat-priority', !isVideoMode);
+        updateAria(isVideoMode);
+
+        if (isVideoMode) {
+            setSplatPaused(true);
+        } else {
+            setSplatPaused(false);
+            video.pause();
+        }
+    };
+
+    const computeMode = () => {
+        const rect = firstFloatingText.getBoundingClientRect();
+        return rect.bottom <= 0 ? 'video' : 'splat';
+    };
+
+    const applyCurrentMode = () => applyMode(computeMode());
+
+    if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.target !== firstFloatingText) return;
+                const passed = !entry.isIntersecting && entry.boundingClientRect.top < 0;
+                applyMode(passed ? 'video' : 'splat');
+            });
+        }, { threshold: 0 });
+        observer.observe(firstFloatingText);
+        applyCurrentMode();
+    } else {
+        applyCurrentMode();
+        window.addEventListener('scroll', applyCurrentMode, { passive: true });
+    }
 })();
 
 // Fade down global audio when the YouTube iframe section is in view
@@ -1213,6 +1335,8 @@ window.addEventListener('keydown', (ev) => {
     const audioBtn = document.getElementById('poema-audio-toggle');
     if (!video || !playBtn || !audioBtn) return;
 
+    const gateAllowsPlayback = () => document.body.classList.contains('is-video-priority');
+
     // Keep muted by default; start paused until fully in view
     video.muted = true;
     video.pause();
@@ -1253,6 +1377,7 @@ window.addEventListener('keydown', (ev) => {
         if (!section) return;
 
         const attemptPlay = () => {
+            if (!gateAllowsPlayback()) return;
             if (video.paused) video.play().catch(() => {});
         };
 
