@@ -69,6 +69,8 @@ export class RecorridoScene extends BaseScene {
     this.inventoryModel = null;
     this.inventoryOverlay = null;
     this.overlayRoot = app?.root || document.body;
+    this.stageLoadingOverlay = null;
+    this._stageLoadingHideTimeout = null;
 
     this.metadataOverlayAudio = null;
 
@@ -910,6 +912,95 @@ export class RecorridoScene extends BaseScene {
     this._lutOverlayTimeout = setTimeout(cleanup, 700);
   }
 
+  showStageLoadingOverlay(message = 'Cargando escena...') {
+    if (this.stageLoadingOverlay || !this.overlayRoot) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'stage-loading-overlay';
+    overlay.style.cssText = `
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.06), rgba(0,0,0,0.9));
+      color: #fff;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      text-shadow: 0 0 12px rgba(0,0,0,0.35);
+      pointer-events: none;
+      z-index: 10020;
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    `;
+
+    const spinner = document.createElement('div');
+    spinner.style.cssText = `
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.25);
+      border-top-color: #fff;
+      animation: stageLoadingSpin 0.9s linear infinite;
+      box-shadow: 0 0 18px rgba(0,0,0,0.35);
+      flex-shrink: 0;
+    `;
+
+    const textEl = document.createElement('div');
+    textEl.textContent = message || 'Cargando...';
+
+    const styleEl = document.createElement('style');
+    styleEl.textContent = `@keyframes stageLoadingSpin { to { transform: rotate(360deg); } }`;
+
+    overlay.appendChild(styleEl);
+    overlay.appendChild(spinner);
+    overlay.appendChild(textEl);
+
+    this.overlayRoot.appendChild(overlay);
+    this.stageLoadingOverlay = overlay;
+
+    if (this._stageLoadingHideTimeout) {
+      clearTimeout(this._stageLoadingHideTimeout);
+      this._stageLoadingHideTimeout = null;
+    }
+  }
+
+  hideStageLoadingOverlay({ immediate = false } = {}) {
+    const overlay = this.stageLoadingOverlay;
+    if (!overlay) return;
+
+    if (this._stageLoadingHideTimeout) {
+      clearTimeout(this._stageLoadingHideTimeout);
+      this._stageLoadingHideTimeout = null;
+    }
+
+    const cleanup = () => {
+      overlay.removeEventListener('transitionend', cleanup);
+      if (overlay.parentNode) {
+        overlay.parentNode.removeChild(overlay);
+      }
+      if (this.stageLoadingOverlay === overlay) {
+        this.stageLoadingOverlay = null;
+      }
+    };
+
+    if (immediate) {
+      cleanup();
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      overlay.style.opacity = '0';
+    });
+
+    overlay.addEventListener('transitionend', cleanup, { once: true });
+    this._stageLoadingHideTimeout = setTimeout(cleanup, 600);
+  }
+
   setupCameraDebugOverlay() {
     // Create HTML overlay element
     this.cameraDebugOverlay = document.createElement('div');
@@ -1048,6 +1139,7 @@ export class RecorridoScene extends BaseScene {
     }
     this.hideLUTLoadingOverlay({ immediate: true });
     this.hideFadeOverlay({ immediate: true });
+    this.hideStageLoadingOverlay({ immediate: true });
     this.isLUTReady = false;
 
     this.app.canvas.removeEventListener('mousemove', this._onMouseMove);
@@ -1191,9 +1283,13 @@ export class RecorridoScene extends BaseScene {
   }
 
   async loadStage(i, options = {}) {
+    this.showStageLoadingOverlay();
     this.current = i;
     const st = this.stages[i];
-    if (!st) return;
+    if (!st) {
+      this.hideStageLoadingOverlay({ immediate: true });
+      return;
+    }
 
     // 👇 NO resetear flechaClicked aquí - se resetea después de la transición completa
 
@@ -1474,6 +1570,7 @@ export class RecorridoScene extends BaseScene {
         
       } catch (err) {
         console.error('[RecorridoScene] Error loading GLB:', err);
+        this.hideStageLoadingOverlay({ immediate: true });
         return;
       }
       
@@ -2205,6 +2302,8 @@ export class RecorridoScene extends BaseScene {
         this.preloadedDataVideo = null;
       }
     }
+
+    this.hideStageLoadingOverlay();
 
     // �🔍 LOG: Resumen de carga completada
 
