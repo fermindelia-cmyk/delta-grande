@@ -1,3 +1,32 @@
+// Browser detection utility
+const detectBrowser = () => {
+    const ua = navigator.userAgent || '';
+    const isSafari = /Safari/.test(ua) && !/Chrome|CriOS|FxiOS|Edg/i.test(ua);
+    const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+    return { isSafari, isIOS, supportsWebMAlpha: !isSafari };
+};
+const browserInfo = detectBrowser();
+
+// Video source helper - returns appropriate source based on browser
+// For Safari, replaces .webm with .mov (HEVC with alpha channel)
+const getVideoSource = (webmPath, options = {}) => {
+    const { fallback = null, hideIfUnsupported = false } = options;
+    
+    if (browserInfo.supportsWebMAlpha) {
+        return webmPath;
+    }
+    
+    // Safari: try .mov version (HEVC with alpha)
+    if (fallback) {
+        return fallback;
+    }
+    
+    // Auto-generate .mov path by replacing extension
+    const movPath = webmPath.replace(/\.webm$/i, '.mov');
+    
+    // Return null to hide if specified and no fallback
+    return hideIfUnsupported ? null : movPath;
+};
 
 // Expose globally for the other script
 window.audioLayers = {
@@ -6,6 +35,8 @@ window.audioLayers = {
     dialog: document.getElementById('audio-dialog')
 };
 const audioLayers = window.audioLayers;
+window.browserInfo = browserInfo; // Expose for game code
+window.getVideoSource = getVideoSource; // Expose for game code
 
 const enableBtn = document.getElementById('enable-audio-global');
 // Legacy reference removed: audioEl (web-music)
@@ -1783,7 +1814,9 @@ window.addEventListener('keydown', (ev) => {
 
                         // Try each candidate video path until one exists
                         (async () => {
-                            for (const videoPath of candidateVideos) {
+                            for (const videoPathWebm of candidateVideos) {
+                                const videoPath = getVideoSource(videoPathWebm);
+                                if (!videoPath) continue; // Skip if browser doesn't support
                                 try {
                                     const res = await fetch(videoPath, { method: 'HEAD' });
                                     const type = res.headers.get('content-type') || '';
@@ -1902,7 +1935,10 @@ const WELCOME_THEME = {
 
             // Background video
             const bgVideo = document.createElement('video');
-            bgVideo.src = 'assets/web-bgs/web-bg01.webm';
+            const bgVideoSrc = getVideoSource('assets/web-bgs/web-bg01.webm', { hideIfUnsupported: true });
+            if (bgVideoSrc) {
+                bgVideo.src = bgVideoSrc;
+            }
             bgVideo.style.cssText = `
                 position: absolute;
                 top: 0;
@@ -2256,9 +2292,7 @@ const WELCOME_THEME = {
             const floatingIsland = document.querySelector('.floating-island');
             const birdsOverlay = document.getElementById('birds-overlay');
             const birdsVideo = document.getElementById('birds-video');
-            const ua = navigator.userAgent || '';
-            const isSafari = /Safari/.test(ua) && !/Chrome|CriOS|FxiOS|Edg/i.test(ua);
-            const disableBirds = isSafari; // Safari cannot show WebM alpha
+            const disableBirds = !browserInfo.supportsWebMAlpha; // Safari cannot show WebM alpha
             const splatContainer = document.getElementById('splat-container');
             const sparkCanvas = document.getElementById('spark-canvas');
             const sparkCtx = sparkCanvas ? sparkCanvas.getContext('2d') : null;
